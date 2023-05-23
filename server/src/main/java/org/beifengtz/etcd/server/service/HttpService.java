@@ -4,7 +4,6 @@ import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.EventLoopGroup;
-import org.beifengtz.etcd.server.config.Configuration;
 import org.beifengtz.etcd.server.handler.HttpHandlerProvider;
 import org.beifengtz.jvmm.convey.channel.ChannelInitializers;
 import org.beifengtz.jvmm.convey.channel.HttpServerChannelInitializer;
@@ -25,11 +24,12 @@ public class HttpService {
 
     public void start(int port) {
         long st = System.currentTimeMillis();
-        EventLoopGroup group = ChannelInitializers.newEventLoopGroup(1);
+        EventLoopGroup boosGroup = ChannelInitializers.newEventLoopGroup(1);
+        EventLoopGroup workGroup = ChannelInitializers.newEventLoopGroup(2 * Runtime.getRuntime().availableProcessors() + 1);
         ChannelFuture future = new ServerBootstrap()
-                .group(group)
-                .channel(ChannelInitializers.serverChannelClass(group))
-                .childHandler(new HttpServerChannelInitializer(new HttpHandlerProvider(5, group)))
+                .group(boosGroup, workGroup)
+                .channel(ChannelInitializers.serverChannelClass(workGroup))
+                .childHandler(new HttpServerChannelInitializer(new HttpHandlerProvider(5, workGroup)))
                 .bind(port)
                 .syncUninterruptibly();
 

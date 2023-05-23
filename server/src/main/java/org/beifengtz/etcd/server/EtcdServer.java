@@ -63,6 +63,8 @@ public class EtcdServer {
                             Configuration.INSTANCE.setUsername(value);
                         } else if ("password".equalsIgnoreCase(key)) {
                             Configuration.INSTANCE.setPassword(value);
+                        } else if ("etcdExecuteTimeoutMillis".equals(key)) {
+                            Configuration.INSTANCE.setEtcdExecuteTimeoutMillis(Integer.parseInt(value));
                         }
                     } else if ("log".equalsIgnoreCase(part)) {
                         System.setProperty("jvmm.log." + key, value);

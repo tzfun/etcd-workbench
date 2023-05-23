@@ -13,6 +13,7 @@ public class Configuration {
     private int port = 8080;
     private String username;
     private String password;
+    private int etcdExecuteTimeoutMillis = 3000;
 
     private Configuration() {
     }
@@ -46,5 +47,14 @@ public class Configuration {
 
     public boolean isEnableAuth() {
         return username != null;
+    }
+
+    public int getEtcdExecuteTimeoutMillis() {
+        return etcdExecuteTimeoutMillis;
+    }
+
+    public Configuration setEtcdExecuteTimeoutMillis(int etcdExecuteTimeoutMillis) {
+        this.etcdExecuteTimeoutMillis = etcdExecuteTimeoutMillis;
+        return this;
     }
 }
