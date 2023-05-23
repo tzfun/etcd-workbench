@@ -45,9 +45,9 @@ public class EtcdConnectorFactory {
 
     public static String newConnector(Client client) {
         EtcdConnector connector = new EtcdConnector(client);
-        CONNECTORS.put(connector.getKey(), connector);
-        logger.debug("Create a new etcd connector {}", connector.getKey());
-        return connector.getKey();
+        CONNECTORS.put(connector.getConnKey(), connector);
+        logger.debug("Create a new etcd connector {}", connector.getConnKey());
+        return connector.getConnKey();
     }
 
     public static void onClose(String key) {
