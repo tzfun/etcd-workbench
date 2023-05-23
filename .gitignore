@@ -1,0 +1,5 @@
+/server/.idea/
+/server/logs/
+/server/*/build/
+/server/build/
+/server/.gradle/
