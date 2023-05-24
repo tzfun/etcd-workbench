@@ -1,5 +1,10 @@
 package org.beifengtz.etcd.server.controller;
 
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpVersion;
 import org.beifengtz.jvmm.convey.annotation.HttpController;
 import org.beifengtz.jvmm.convey.annotation.HttpRequest;
 
@@ -13,7 +18,9 @@ import org.beifengtz.jvmm.convey.annotation.HttpRequest;
 public class Controller {
 
     @HttpRequest("/")
-    public String get() {
-        return "hello world";
+    public HttpResponse get() {
+        HttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.PERMANENT_REDIRECT);
+        response.headers().set(HttpHeaderNames.LOCATION, "/index.html");
+        return response;
     }
 }
