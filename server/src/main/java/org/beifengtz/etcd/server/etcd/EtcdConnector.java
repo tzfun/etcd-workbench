@@ -8,22 +8,34 @@ import io.etcd.jetcd.auth.AuthRoleListResponse;
 import io.etcd.jetcd.auth.AuthUserGetResponse;
 import io.etcd.jetcd.auth.AuthUserListResponse;
 import io.etcd.jetcd.auth.Permission;
+import io.etcd.jetcd.cluster.Member;
+import io.etcd.jetcd.cluster.MemberAddResponse;
+import io.etcd.jetcd.cluster.MemberListResponse;
+import io.etcd.jetcd.cluster.MemberRemoveResponse;
+import io.etcd.jetcd.cluster.MemberUpdateResponse;
 import io.etcd.jetcd.common.exception.ClosedClientException;
 import io.etcd.jetcd.kv.DeleteResponse;
 import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.kv.PutResponse;
 import io.etcd.jetcd.kv.TxnResponse;
+import io.etcd.jetcd.maintenance.AlarmMember;
+import io.etcd.jetcd.maintenance.AlarmResponse;
+import io.etcd.jetcd.maintenance.AlarmType;
+import io.etcd.jetcd.maintenance.SnapshotResponse;
+import io.etcd.jetcd.maintenance.StatusResponse;
 import io.etcd.jetcd.op.Cmp;
 import io.etcd.jetcd.op.CmpTarget;
 import io.etcd.jetcd.op.Op;
 import io.etcd.jetcd.options.DeleteOption;
 import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.options.PutOption;
+import io.grpc.stub.StreamObserver;
 import org.beifengtz.etcd.server.config.Configuration;
 import org.beifengtz.etcd.server.exception.EtcdExecuteException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -475,6 +487,167 @@ public class EtcdConnector {
             client.getAuthClient()
                     .roleRevokePermission(toByte(role), toByte(key), toByte(rangeEnd))
                     .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
+        } catch (Throwable e) {
+            onExecuteError(e);
+        }
+    }
+
+    /**
+     * 获取集群所有节点
+     *
+     * @return 节点列表
+     */
+    public List<Member> clusterList() {
+        onActive();
+        try {
+            MemberListResponse memberList = client.getClusterClient()
+                    .listMember()
+                    .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
+            return memberList.getMembers();
+        } catch (Throwable e) {
+            onExecuteError(e);
+        }
+        return null;
+    }
+
+    /**
+     * 从集群中移除一个节点
+     *
+     * @param memberId 成员节点ID
+     * @return 移除后集群的节点列表
+     */
+    public List<Member> clusterRemove(long memberId) {
+        onActive();
+        try {
+            MemberRemoveResponse memberRemove = client.getClusterClient()
+                    .removeMember(memberId)
+                    .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
+            return memberRemove.getMembers();
+        } catch (Throwable e) {
+            onExecuteError(e);
+        }
+        return null;
+    }
+
+    /**
+     * 向集群中添加一个节点
+     *
+     * @param urls 节点地址，集群通过此地址与之通信
+     * @return 添加的节点信息
+     */
+    public Member clusterAdd(List<URI> urls) {
+        onActive();
+        try {
+            MemberAddResponse memberAdd = client.getClusterClient()
+                    .addMember(urls)
+                    .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
+            return memberAdd.getMember();
+        } catch (Throwable e) {
+            onExecuteError(e);
+        }
+        return null;
+    }
+
+    /**
+     * 更新集群中一个节点信息
+     *
+     * @param memberId 节点ID
+     * @param urls     节点地址，集群通过此地址与之通信
+     * @return 更新的节点列表
+     */
+    public List<Member> clusterUpdate(long memberId, List<URI> urls) {
+        onActive();
+        try {
+            MemberUpdateResponse memberUpdate = client.getClusterClient()
+                    .updateMember(memberId, urls)
+                    .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
+            return memberUpdate.getMembers();
+        } catch (Throwable e) {
+            onExecuteError(e);
+        }
+        return null;
+    }
+
+    /**
+     * 运维相关接口，获取所有报警信息
+     *
+     * @return List of {@link AlarmMember}
+     */
+    public List<AlarmMember> maintenanceAlarmList() {
+        onActive();
+        try {
+            AlarmResponse alarmResponse = client.getMaintenanceClient()
+                    .listAlarms()
+                    .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
+            return alarmResponse.getAlarms();
+        } catch (Throwable e) {
+            onExecuteError(e);
+        }
+        return null;
+    }
+
+    /**
+     * 消除一个警报
+     *
+     * @param memberId 节点ID
+     * @param type     警报类型
+     * @return 剩余的警报
+     */
+    public List<AlarmMember> maintenanceAlarmDisarm(long memberId, AlarmType type) {
+        onActive();
+        try {
+            AlarmResponse alarmResponse = client.getMaintenanceClient()
+                    .alarmDisarm(new AlarmMember(memberId, type))
+                    .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
+            return alarmResponse.getAlarms();
+        } catch (Throwable e) {
+            onExecuteError(e);
+        }
+        return null;
+    }
+
+    /**
+     * 获取节点的状态信息
+     *
+     * @param target 目标端口 endpoints，也可以是Peer URL
+     * @return {@link StatusResponse}
+     */
+    public StatusResponse maintenanceMemberStatus(String target) {
+        onActive();
+        try {
+            return client.getMaintenanceClient()
+                    .statusMember(target)
+                    .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
+        } catch (Throwable e) {
+            onExecuteError(e);
+        }
+        return null;
+    }
+
+    /**
+     * 对节点进行碎片清理。这是一个比较消耗资源的操作，谨慎调用。
+     *
+     * @param target 目标端口endpoints，也可以是Peer URL
+     */
+    public void maintenanceGc(String target) {
+        onActive();
+        try {
+            client.getMaintenanceClient().defragmentMember(target)
+                    .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
+        } catch (Throwable e) {
+            onExecuteError(e);
+        }
+    }
+
+    /**
+     * 备份当前快照
+     *
+     * @param observer 监视器，当备份完毕后会调用其中的Next方法
+     */
+    public void maintenanceSnapshot(StreamObserver<SnapshotResponse> observer) {
+        onActive();
+        try {
+            client.getMaintenanceClient().snapshot(observer);
         } catch (Throwable e) {
             onExecuteError(e);
         }
