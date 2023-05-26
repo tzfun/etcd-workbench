@@ -9,6 +9,7 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
+import io.netty.util.AsciiString;
 import org.beifengtz.etcd.server.config.Configuration;
 import org.beifengtz.jvmm.common.util.IOUtil;
 import org.beifengtz.jvmm.common.util.StringUtil;
@@ -20,6 +21,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 
 /**
@@ -29,6 +33,11 @@ import java.util.Objects;
  * @author beifengtz
  */
 public class HttpHandler extends HttpChannelHandler {
+
+    static {
+        globalHeaders.put(HttpHeaderNames.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+    }
+
     @Override
     public Logger logger() {
         return LoggerFactory.getLogger(HttpHandler.class);
@@ -36,23 +45,23 @@ public class HttpHandler extends HttpChannelHandler {
 
     @Override
     protected boolean handleBefore(ChannelHandlerContext ctx, String uri, FullHttpRequest msg) {
-        if (Configuration.INSTANCE.isEnableAuth()) {
-            String authStr = msg.headers().get("Authorization");
-            if (StringUtil.isEmpty(authStr) || !authStr.startsWith("Basic")) {
-                response401(ctx);
-                return false;
-            }
-            try {
-                String[] up = new String(Base64.getDecoder().decode(authStr.split("\\s")[1]), StandardCharsets.UTF_8).split(":");
-                if (!Objects.equals(Configuration.INSTANCE.getUsername(), up[0]) || !Objects.equals(Configuration.INSTANCE.getPassword(), up[1])) {
-                    response401(ctx);
-                    return false;
-                }
-            } catch (Exception e) {
-                response401(ctx);
-                return false;
-            }
-        }
+//        if (Configuration.INSTANCE.isEnableAuth()) {
+//            String authStr = msg.headers().get("Authorization");
+//            if (StringUtil.isEmpty(authStr) || !authStr.startsWith("Basic")) {
+//                response401(ctx);
+//                return false;
+//            }
+//            try {
+//                String[] up = new String(Base64.getDecoder().decode(authStr.split("\\s")[1]), StandardCharsets.UTF_8).split(":");
+//                if (!Objects.equals(Configuration.INSTANCE.getUsername(), up[0]) || !Objects.equals(Configuration.INSTANCE.getPassword(), up[1])) {
+//                    response401(ctx);
+//                    return false;
+//                }
+//            } catch (Exception e) {
+//                response401(ctx);
+//                return false;
+//            }
+//        }
         return true;
     }
 
@@ -67,6 +76,10 @@ public class HttpHandler extends HttpChannelHandler {
             HttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, Unpooled.copiedBuffer(data));
             resp.headers().set(HttpHeaderNames.CONTENT_LENGTH, data.length);
             resp.headers().set(HttpHeaderNames.CONTENT_ENCODING, "UTF-8");
+
+            for (Entry<AsciiString, List<String>> en : globalHeaders.entrySet()) {
+                resp.headers().set(en.getKey(), en.getValue());
+            }
 
             if (path.endsWith(".html")) {
                 resp.headers().set(HttpHeaderNames.CONTENT_TYPE, "text/html;charset=utf-8");

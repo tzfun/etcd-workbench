@@ -9,6 +9,7 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.beifengtz.etcd.server.config.Configuration;
 import org.beifengtz.etcd.server.config.ResultCode;
 import org.beifengtz.etcd.server.entity.dto.NewSessionDTO;
@@ -40,20 +41,23 @@ import java.util.concurrent.TimeoutException;
  * @author beifengtz
  */
 @HttpController
+@Slf4j
 public class EtcdController {
 
-
-    @HttpRequest(value = "/session/connect", method = Method.POST)
+    @HttpRequest(value = "/session/test", method = Method.POST)
     public ResultVO connect(@RequestBody NewSessionDTO data) {
         try (Client client = constructClientBuilder(data).build()) {
             client.getKVClient().get(ByteSequence.EMPTY).get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
             return ResultCode.OK.result(true);
         } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
+            log.error(e.getMessage(), e);
             return ResultCode.INVALID_KEY.result("Invalid key spec: " + (e.getMessage() == null ? "" : e.getMessage()), false);
         } catch (ExecutionException | InterruptedException | TimeoutException e) {
+            log.error(e.getMessage(), e);
             return ResultCode.CONNECT_ERROR.result(e.getMessage(), false);
         } catch (Exception e) {
-            return ResultCode.INTERNAL_ERROR.result(false);
+            log.error(e.getMessage(), e);
+            return ResultCode.INTERNAL_ERROR.result(e.getMessage(), false);
         }
     }
 

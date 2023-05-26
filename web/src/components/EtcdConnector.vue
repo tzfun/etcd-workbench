@@ -4,6 +4,7 @@ import {ref} from "vue";
 import type {UploadInstance, UploadProps, UploadRawFile} from "element-plus";
 import {genFileId} from "element-plus";
 import {Ref} from "@vue/reactivity";
+import {testSession} from "~/services/SessionService";
 
 const caFileInput = ref(null)
 
@@ -28,6 +29,9 @@ const form = ref({
 
 const _testConnect = () => {
   console.log(form.value)
+  testSession(form.value).then(data => {
+    console.log(data)
+  })
 }
 
 const _connect = () => {
