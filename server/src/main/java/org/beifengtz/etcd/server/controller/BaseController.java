@@ -15,7 +15,7 @@ import org.beifengtz.jvmm.convey.annotation.HttpRequest;
  * @author beifengtz
  */
 @HttpController
-public class Controller {
+public class BaseController {
 
     @HttpRequest("/")
     public HttpResponse get() {

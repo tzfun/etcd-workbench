@@ -32,6 +32,7 @@ import io.etcd.jetcd.options.PutOption;
 import io.grpc.stub.StreamObserver;
 import org.beifengtz.etcd.server.config.Configuration;
 import org.beifengtz.etcd.server.exception.EtcdExecuteException;
+import org.beifengtz.etcd.server.util.CommonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -100,10 +101,6 @@ public class EtcdConnector {
         throw new EtcdExecuteException(e);
     }
 
-    private ByteSequence toByte(String str) {
-        return ByteSequence.from(str, UTF_8);
-    }
-
     /**
      * 自定义获取键值对参数
      *
@@ -114,7 +111,7 @@ public class EtcdConnector {
         onActive();
         try {
             GetResponse resp = client.getKVClient()
-                    .get(toByte(connKey), option)
+                    .get(CommonUtil.toByteSequence(connKey), option)
                     .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
             return resp.getKvs();
         } catch (Throwable e) {
@@ -143,7 +140,7 @@ public class EtcdConnector {
     public Map<String, String> kvGet(String key, boolean isPrefix) {
         onActive();
         try {
-            GetResponse resp = client.getKVClient().get(toByte(key), GetOption.newBuilder().isPrefix(isPrefix).build())
+            GetResponse resp = client.getKVClient().get(CommonUtil.toByteSequence(key), GetOption.newBuilder().isPrefix(isPrefix).build())
                     .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
             List<KeyValue> kvs = resp.getKvs();
             Map<String, String> res = new HashMap<>();
@@ -193,7 +190,7 @@ public class EtcdConnector {
         onActive();
         try {
             PutResponse resp = client.getKVClient()
-                    .put(toByte(key), toByte(value))
+                    .put(CommonUtil.toByteSequence(key), CommonUtil.toByteSequence(value))
                     .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
             if (resp.hasPrevKv()) {
                 return resp.getPrevKv().getValue().toString(UTF_8);
@@ -214,9 +211,9 @@ public class EtcdConnector {
      */
     public boolean kvCas(String key, String expectValue, String updateValue) {
         onActive();
-        ByteSequence bsKey = toByte(key);
-        ByteSequence bsExpectValue = toByte(expectValue);
-        ByteSequence bsUpdateValue = toByte(updateValue);
+        ByteSequence bsKey = CommonUtil.toByteSequence(key);
+        ByteSequence bsExpectValue = CommonUtil.toByteSequence(expectValue);
+        ByteSequence bsUpdateValue = CommonUtil.toByteSequence(updateValue);
 
         Cmp cmp = new Cmp(bsKey, Cmp.Op.EQUAL, CmpTarget.value(bsExpectValue));
 
@@ -256,7 +253,7 @@ public class EtcdConnector {
         onActive();
         try {
             DeleteResponse resp = client.getKVClient()
-                    .delete(toByte(key), DeleteOption.newBuilder().isPrefix(isPrefix).build())
+                    .delete(CommonUtil.toByteSequence(key), DeleteOption.newBuilder().isPrefix(isPrefix).build())
                     .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
             return resp.getDeleted();
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
@@ -293,7 +290,7 @@ public class EtcdConnector {
         onActive();
         try {
             AuthUserGetResponse userGet = client.getAuthClient()
-                    .userGet(toByte(user))
+                    .userGet(CommonUtil.toByteSequence(user))
                     .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
             return userGet.getRoles();
         } catch (Throwable e) {
@@ -312,7 +309,7 @@ public class EtcdConnector {
         onActive();
         try {
             client.getAuthClient()
-                    .userAdd(toByte(user), toByte(password))
+                    .userAdd(CommonUtil.toByteSequence(user), CommonUtil.toByteSequence(password))
                     .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
         } catch (Throwable e) {
             onExecuteError(e);
@@ -328,7 +325,7 @@ public class EtcdConnector {
         onActive();
         try {
             client.getAuthClient()
-                    .userDelete(toByte(user))
+                    .userDelete(CommonUtil.toByteSequence(user))
                     .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
         } catch (Throwable e) {
             onExecuteError(e);
@@ -345,7 +342,7 @@ public class EtcdConnector {
         onActive();
         try {
             client.getAuthClient()
-                    .userChangePassword(toByte(user), toByte(newPassword))
+                    .userChangePassword(CommonUtil.toByteSequence(user), CommonUtil.toByteSequence(newPassword))
                     .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
         } catch (Throwable e) {
             onExecuteError(e);
@@ -362,7 +359,7 @@ public class EtcdConnector {
         onActive();
         try {
             client.getAuthClient()
-                    .userGrantRole(toByte(user), toByte(role))
+                    .userGrantRole(CommonUtil.toByteSequence(user), CommonUtil.toByteSequence(role))
                     .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
         } catch (Throwable e) {
             onExecuteError(e);
@@ -379,7 +376,7 @@ public class EtcdConnector {
         onActive();
         try {
             client.getAuthClient()
-                    .userRevokeRole(toByte(user), toByte(role))
+                    .userRevokeRole(CommonUtil.toByteSequence(user), CommonUtil.toByteSequence(role))
                     .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
         } catch (Throwable e) {
             onExecuteError(e);
@@ -396,7 +393,7 @@ public class EtcdConnector {
         onActive();
         try {
             AuthRoleGetResponse roleGet = client.getAuthClient()
-                    .roleGet(toByte(role))
+                    .roleGet(CommonUtil.toByteSequence(role))
                     .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
             return roleGet.getPermissions();
         } catch (Throwable e) {
@@ -432,7 +429,7 @@ public class EtcdConnector {
         onActive();
         try {
             client.getAuthClient()
-                    .roleAdd(toByte(role))
+                    .roleAdd(CommonUtil.toByteSequence(role))
                     .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
         } catch (Throwable e) {
             onExecuteError(e);
@@ -448,7 +445,7 @@ public class EtcdConnector {
         onActive();
         try {
             client.getAuthClient()
-                    .roleDelete(toByte(role))
+                    .roleDelete(CommonUtil.toByteSequence(role))
                     .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
         } catch (Throwable e) {
             onExecuteError(e);
@@ -467,7 +464,7 @@ public class EtcdConnector {
         onActive();
         try {
             client.getAuthClient()
-                    .roleGrantPermission(toByte(role), toByte(key), toByte(rangeEnd), permission)
+                    .roleGrantPermission(CommonUtil.toByteSequence(role), CommonUtil.toByteSequence(key), CommonUtil.toByteSequence(rangeEnd), permission)
                     .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
         } catch (Throwable e) {
             onExecuteError(e);
@@ -485,7 +482,7 @@ public class EtcdConnector {
         onActive();
         try {
             client.getAuthClient()
-                    .roleRevokePermission(toByte(role), toByte(key), toByte(rangeEnd))
+                    .roleRevokePermission(CommonUtil.toByteSequence(role), CommonUtil.toByteSequence(key), CommonUtil.toByteSequence(rangeEnd))
                     .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
         } catch (Throwable e) {
             onExecuteError(e);

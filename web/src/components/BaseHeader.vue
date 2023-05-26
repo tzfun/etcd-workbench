@@ -76,7 +76,6 @@ const handleTabsEdit = (targetName: TabPaneName | undefined, action: 'remove' | 
 <style scoped>
 .tabs, .tab-pane {
   width: 100%;
-  height: 100%;
 }
 </style>
 

@@ -9,7 +9,6 @@ const state = ref('new')
 </script>
 
 <template>
-  {{state}}
   <div v-if="state === 'new'" class="connector">
     <EtcdConnector></EtcdConnector>
   </div>
