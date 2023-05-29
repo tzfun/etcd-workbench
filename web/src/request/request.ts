@@ -1,5 +1,5 @@
 import Axios, {AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig,} from "axios";
-import {Request} from "~/request/type";
+import {Request, ResultData} from "~/request/type";
 
 import {ElMessage} from "element-plus";
 
@@ -11,7 +11,7 @@ import {ElMessage} from "element-plus";
 const message = (msg: string, type?: string) => {
     ElMessage({
         message: msg,
-        type: type || "warning",
+        type:  type || "warning",
         duration: 1500,
     });
 };
@@ -24,21 +24,18 @@ const defaultConfig: AxiosRequestConfig = {
     timeout: 10000, //10秒超时
     withCredentials: true,
     responseType: "json",
+    validateStatus() {
+        return true;
+    },
     transformRequest: [
         (data) => {
-            //对请求的参数进行处理
             data = JSON.stringify(data);
             return data;
         },
     ],
-    validateStatus() {
-        // 使用async-await，处理reject情况较为繁琐，所以全部返回resolve，在业务代码中处理异常
-        return true;
-    },
     transformResponse: [
         (data) => {
-            //对响应的数据进行处理
-            if (typeof data === "string" && data.startsWith("{")) {
+            if (typeof data === "string" && (data.startsWith("{") || data.startsWith("["))) {
                 data = JSON.parse(data);
             }
             return data;
@@ -55,8 +52,8 @@ const defaultConfig: AxiosRequestConfig = {
  * Axios create的时候后去的配置参数
  * @param config
  */
-const getConfig = (config?: AxiosRequestConfig): AxiosRequestConfig => {
-    if (!config) return defaultConfig;
+const getConfig = (config?: AxiosRequestConfig): AxiosRequestConfig | undefined => {
+    if (!config) return config;
     return defaultConfig;
 };
 
@@ -89,7 +86,7 @@ class EnclosureHttp {
                 return config;
             },
             (err) => {
-                return Promise.resolve(err);
+                return Promise.reject(err);
             }
         );
     }
@@ -121,7 +118,6 @@ class EnclosureHttp {
                 //请求出错的验证
                 const {response} = error;
                 if (response) {
-                    // 请求已发出，但是不在2xx的范围
                     this.errorHandle(response.status, response.statusText);
                     return Promise.reject(response);
                 } else {
@@ -168,21 +164,21 @@ class EnclosureHttp {
         params?: unknown,
         config?: AxiosRequestConfig
     ) => {
-        return Axios.get(url, {params, ...config});
+        return EnclosureHttp.axiosInstance.get(url, {params, ...config});
     };
 
     /**
      * Axios init POST 方法
      * @param url 路径
-     * @param params 参数
+     * @param data 参数
      * @param config
      */
     public post: Request = (
         url: string,
-        params: unknown = {},
+        data: unknown = {},
         config?: AxiosRequestConfig
     ) => {
-        return Axios.post(url, {data: params}, config);
+        return EnclosureHttp.axiosInstance.post(url, data, config);
     };
 }
 

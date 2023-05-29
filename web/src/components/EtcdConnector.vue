@@ -1,10 +1,10 @@
 <script lang="ts" setup>
 import etcd from "~/assets/etcd.png"
 import {ref} from "vue";
-import type {UploadInstance, UploadProps, UploadRawFile} from "element-plus";
-import {genFileId} from "element-plus";
-import {Ref} from "@vue/reactivity";
 import {testSession} from "~/services/SessionService";
+import {_isEmpty} from "~/util/BaseUtil";
+import {ElMessage} from "element-plus";
+import {_loading} from "~/util/CommonUtil";
 
 const caFileInput = ref(null)
 
@@ -14,23 +14,81 @@ const form = ref({
   host: '127.0.0.1',
   port: 2379,
   auth: {
-    username: '',
-    password: ''
+    username: <string | null>null,
+    password: <string | null>null
   },
   cert: {
     caType: 'none',
     certMode: 'none',
-    caFile: null,
-    certFile: null,
-    certKeyFile: null,
-    password: ''
+    caFile: <File | null>null,
+    certFile: <File | null>null,
+    certKeyFile: <File | null>null,
+    password: <string | null>null,
+    authority: <string | null>null
   }
 })
 
+const _packFormData = async (): Promise<object | string> => {
+  const data = {
+    target: '',
+    user: <string | null>null,
+    password: <string | null>null,
+    authority: <string | null>null,
+    caType: 'none',
+    caCert: <string | null>null,
+    clientCertMode: 'none',
+    clientCert: <string | null>null,
+    clientCertPassword: <string | null>null,
+    clientCertKey: <string | null>null
+  }
+  let msg: string
+  if (_isEmpty(form.value.host)) {
+    msg = 'Warning, host can not be empty!'
+  } else if (form.value.port <= 0) {
+    msg = 'Warning, invalid port!'
+  } else {
+    data.target = `ip:///${form.value.host}:${form.value.port}`
+    data.user = form.value.auth.username
+    data.password = form.value.auth.password
+    data.authority = form.value.cert.authority
+    data.caType = form.value.cert.caType
+
+    if (form.value.cert.caType === 'custom') {
+      data.caCert = await form.value.cert.caFile?.text()
+      if (form.value.cert.certMode === 'password') {
+        data.clientCert = await form.value.cert.certFile?.text()
+        data.clientCertPassword = form.value.cert.password
+      } else if (form.value.cert.certMode === 'key') {
+        data.clientCert = await form.value.cert.certFile?.text()
+        data.clientCertKey = await form.value.cert.certKeyFile?.text()
+      }
+    }
+    return Promise.resolve(data)
+  }
+  return Promise.reject(msg)
+}
+
 const _testConnect = () => {
-  console.log(form.value)
-  testSession(form.value).then(data => {
-    console.log(data)
+  _packFormData().then(formData => {
+    console.log(formData)
+    let loading = _loading()
+    testSession(formData).then(data => {
+      console.log(data)
+    }).catch(e => {
+      ElMessage({
+        showClose: true,
+        message: e,
+        type: 'warning',
+      })
+    }).finally(() => {
+      loading.close()
+    })
+  }).catch(e => {
+    ElMessage({
+      showClose: true,
+      message: e,
+      type: 'warning',
+    })
   })
 }
 
@@ -38,7 +96,7 @@ const _connect = () => {
 
 }
 
-const triggerClickCaInput = () => {
+const triggerClickInput = (type: string) => {
 
 }
 
@@ -71,7 +129,7 @@ const triggerClickCaInput = () => {
                     placeholder="Please input authentication password"/>
         </el-form-item>
 
-        <el-divider content-position="center" class="divider">Certificate</el-divider>
+        <el-divider content-position="center" class="divider">SSL/TLS</el-divider>
 
         <el-form-item label="Cert Mode">
           <el-radio-group v-model="form.cert.caType">
@@ -84,7 +142,11 @@ const triggerClickCaInput = () => {
         <div v-show="form.cert.caType === 'custom'">
           <el-form-item label="CA File">
             <el-input type="file" class="hidden" ref="caFileInput"></el-input>
-            <el-button type="primary" link @click="triggerClickCaInput">Select CA File</el-button>
+            <el-button type="info" link @click="triggerClickInput('ca')">Select CA File</el-button>
+          </el-form-item>
+
+          <el-form-item label="Authority">
+            <el-input v-model="form.cert.authority" placeholder="127.0.0.1"></el-input>
           </el-form-item>
 
           <el-form-item label="Client Cert">
@@ -97,16 +159,8 @@ const triggerClickCaInput = () => {
 
           <div v-show="form.cert.certMode !== 'none'">
             <el-form-item label="Cert File">
-              <el-upload
-                  ref="certFile"
-                  :limit="1"
-                  :on-exceed="handleCertFileExceed"
-                  :auto-upload="false"
-              >
-                <template #trigger>
-                  <el-button type="primary">select cert file</el-button>
-                </template>
-              </el-upload>
+              <el-input type="file" class="hidden" ref="certFileInput"></el-input>
+              <el-button type="info" link @click="triggerClickInput('cert')">Select Cert File</el-button>
             </el-form-item>
           </div>
 
@@ -121,16 +175,8 @@ const triggerClickCaInput = () => {
           </div>
           <div v-show="form.cert.certMode === 'key'">
             <el-form-item label="Cert Key File">
-              <el-upload
-                  ref="certKeyFile"
-                  :limit="1"
-                  :on-exceed="handleCertKeyFileExceed"
-                  :auto-upload="false"
-              >
-                <template #trigger>
-                  <el-button type="primary">select key file</el-button>
-                </template>
-              </el-upload>
+              <el-input type="file" class="hidden" ref="certKeyFileInput"></el-input>
+              <el-button type="info" link @click="triggerClickInput('certKey')">Select Cert Key File</el-button>
             </el-form-item>
           </div>
         </div>

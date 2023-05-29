@@ -34,4 +34,7 @@ declare module '@vue/runtime-core' {
     EtcdConnector: typeof import('./components/EtcdConnector.vue')['default']
     EtcdSession: typeof import('./components/EtcdSession.vue')['default']
   }
+  export interface ComponentCustomProperties {
+    vLoading: typeof import('element-plus/es')['ElLoadingDirective']
+  }
 }

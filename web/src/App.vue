@@ -1,6 +1,6 @@
 <template>
   <el-config-provider namespace="ep">
-    <BaseHeader />
+    <BaseHeader v-loading.fullscreen.lock="false"/>
   </el-config-provider>
 </template>
 

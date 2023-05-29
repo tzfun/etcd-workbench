@@ -1,10 +1,9 @@
-import { AxiosRequestConfig } from "axios";
+import {AxiosRequestConfig} from "axios";
 
-export interface CustomSuccessData<T> {
-    code: number;
+export interface ResultData {
+    code: number,
     msg?: string;
-    data: T;
-    [keys: string]: unknown;
+    data?: any;
 }
 
 /**
@@ -15,5 +14,5 @@ export interface Request {
         url: string,
         params?: Record<string, unknown>,
         config?: AxiosRequestConfig
-    ): Promise<CustomSuccessData<T>>;
+    ): Promise<ResultData>;
 }

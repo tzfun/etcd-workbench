@@ -18,7 +18,7 @@ public class NewSessionDTO {
      * CA证书的类型
      * none | custom | public
      */
-    private String CAType = "none";
+    private String caType = "none";
     /**
      * ca证书内容
      */

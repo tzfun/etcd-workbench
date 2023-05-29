@@ -54,7 +54,7 @@ public class EtcdController {
             return ResultCode.INVALID_KEY.result("Invalid key spec: " + (e.getMessage() == null ? "" : e.getMessage()), false);
         } catch (ExecutionException | InterruptedException | TimeoutException e) {
             log.error(e.getMessage(), e);
-            return ResultCode.CONNECT_ERROR.result(e.getMessage(), false);
+            return ResultCode.CONNECT_ERROR.result("Connect timeout", false);
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return ResultCode.INTERNAL_ERROR.result(e.getMessage(), false);
@@ -69,7 +69,8 @@ public class EtcdController {
 
     private ClientBuilder constructClientBuilder(NewSessionDTO data) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
         ClientBuilder builder = Client.builder();
-        builder.target(data.getTarget());
+        builder.target(data.getTarget())
+                .namespace(ByteSequence.EMPTY);
         if (StringUtil.nonEmpty(data.getUser())) {
             builder.user(CommonUtil.toByteSequence(data.getUser()));
         }
@@ -77,12 +78,12 @@ public class EtcdController {
             builder.password(CommonUtil.toByteSequence(data.getPassword()));
         }
         SslContext ssl = null;
-        switch (data.getCAType().toLowerCase()) {
+        ApplicationProtocolConfig alpn = new ApplicationProtocolConfig(ApplicationProtocolConfig.Protocol.ALPN,
+                ApplicationProtocolConfig.SelectorFailureBehavior.NO_ADVERTISE,
+                ApplicationProtocolConfig.SelectedListenerFailureBehavior.ACCEPT,
+                ApplicationProtocolNames.HTTP_2);
+        switch (data.getCaType().toLowerCase()) {
             case "custom": {
-                ApplicationProtocolConfig alpn = new ApplicationProtocolConfig(ApplicationProtocolConfig.Protocol.ALPN,
-                        ApplicationProtocolConfig.SelectorFailureBehavior.NO_ADVERTISE,
-                        ApplicationProtocolConfig.SelectedListenerFailureBehavior.ACCEPT,
-                        ApplicationProtocolNames.HTTP_2);
                 File caFile = new File("temp", UUID.randomUUID().toString());
                 File certFile = new File("temp", UUID.randomUUID().toString());
                 File certKeyFile = new File("temp", UUID.randomUUID().toString());
@@ -114,7 +115,11 @@ public class EtcdController {
                 break;
             }
             case "public": {
-                ssl = SslContextBuilder.forClient().trustManager(InsecureTrustManagerFactory.INSTANCE).build();
+                ssl = SslContextBuilder
+                        .forClient()
+                        .applicationProtocolConfig(alpn)
+                        .trustManager(InsecureTrustManagerFactory.INSTANCE)
+                        .build();
                 break;
             }
         }
