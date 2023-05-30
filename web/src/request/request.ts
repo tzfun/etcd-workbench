@@ -1,17 +1,16 @@
 import Axios, {AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig,} from "axios";
-import {Request, ResultData} from "~/request/type";
+import {Request} from "~/request/type";
 
 import {ElMessage} from "element-plus";
 
 /**
  * 封装的 element-plus 的消息提示框
  * @param msg
- * @param type
  */
-const message = (msg: string, type?: string) => {
+const message = (msg: string) => {
     ElMessage({
         message: msg,
-        type:  type || "warning",
+        type: "warning",
         duration: 1500,
     });
 };

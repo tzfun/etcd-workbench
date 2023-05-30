@@ -15,9 +15,9 @@ import org.beifengtz.etcd.server.config.ResultCode;
 import org.beifengtz.etcd.server.entity.dto.NewSessionDTO;
 import org.beifengtz.etcd.server.entity.vo.ResultVO;
 import org.beifengtz.etcd.server.etcd.EtcdConnectorFactory;
-import org.beifengtz.etcd.server.exception.EtcdExecuteException;
 import org.beifengtz.etcd.server.util.CommonUtil;
 import org.beifengtz.etcd.server.util.RSAKey;
+import org.beifengtz.jvmm.common.factory.ExecutorFactory;
 import org.beifengtz.jvmm.common.util.FileUtil;
 import org.beifengtz.jvmm.common.util.StringUtil;
 import org.beifengtz.jvmm.convey.annotation.HttpController;
@@ -31,9 +31,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * description: TODO
@@ -54,14 +52,15 @@ public class EtcdController {
     }
 
     @HttpRequest(value = "/session/new", method = Method.POST)
-    public ResultVO newSession(@RequestBody NewSessionDTO data) throws Exception  {
+    public ResultVO newSession(@RequestBody NewSessionDTO data) throws Exception {
         String key = EtcdConnectorFactory.newConnector(constructClientBuilder(data).build());
         return ResultCode.OK.result(key);
     }
 
     private ClientBuilder constructClientBuilder(NewSessionDTO data) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
         ClientBuilder builder = Client.builder();
-        builder.target(data.getTarget())
+        builder.executorService(ExecutorFactory.getThreadPool())
+                .target(data.getTarget())
                 .namespace(ByteSequence.EMPTY);
         if (StringUtil.nonEmpty(data.getUser())) {
             builder.user(CommonUtil.toByteSequence(data.getUser()));

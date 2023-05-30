@@ -72,13 +72,11 @@ const _testConnect = () => {
   _packFormData().then(formData => {
     console.log(formData)
     let loading = _loading()
-    testSession(formData).then(data => {
-      console.log(data)
-    }).catch(e => {
+    testSession(formData).then(res => {
       ElMessage({
         showClose: true,
-        message: e,
-        type: 'warning',
+        message: "Connect successful!",
+        type: 'success',
       })
     }).finally(() => {
       loading.close()

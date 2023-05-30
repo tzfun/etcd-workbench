@@ -114,10 +114,10 @@ public class HttpHandler extends HttpChannelHandler {
             response(ctx, HttpResponseStatus.OK, ResultCode.INVALID_KEY.result("Invalid key spec: " + (e.getMessage() == null ? "" : e.getMessage()), false).toString());
         } else if (e instanceof EtcdExecuteException) {
             logger().error(e.getMessage(), e);
-            response(ctx, HttpResponseStatus.OK, ResultCode.CONNECT_ERROR.result(e.getMessage(), false).toString());
+            response(ctx, HttpResponseStatus.OK, ResultCode.CONNECT_ERROR.result(e.getMessage()).toString());
         } else if (e instanceof TimeoutException) {
             logger().debug(e.getMessage(), e);
-            response(ctx, HttpResponseStatus.OK, ResultCode.CONNECT_ERROR.result(e.getMessage(), false).toString());
+            response(ctx, HttpResponseStatus.OK, ResultCode.CONNECT_ERROR.result("Connect timeout " + e.getMessage()).toString());
         } else {
             super.handleException(ctx, req, e);
         }
