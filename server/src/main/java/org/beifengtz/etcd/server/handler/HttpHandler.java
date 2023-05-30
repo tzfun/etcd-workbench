@@ -10,21 +10,20 @@ import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.AsciiString;
-import org.beifengtz.etcd.server.config.Configuration;
+import org.beifengtz.etcd.server.config.ResultCode;
+import org.beifengtz.etcd.server.exception.EtcdExecuteException;
 import org.beifengtz.jvmm.common.util.IOUtil;
-import org.beifengtz.jvmm.common.util.StringUtil;
 import org.beifengtz.jvmm.convey.handler.HttpChannelHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
+import java.util.concurrent.TimeoutException;
 
 /**
  * description: TODO
@@ -106,5 +105,21 @@ public class HttpHandler extends HttpChannelHandler {
             response500(ctx, e.getMessage());
         }
         return true;
+    }
+
+    @Override
+    protected void handleException(ChannelHandlerContext ctx, FullHttpRequest req, Throwable e) {
+        if (e instanceof InvalidKeySpecException || e instanceof NoSuchAlgorithmException) {
+            logger().error(e.getMessage(), e);
+            response(ctx, HttpResponseStatus.OK, ResultCode.INVALID_KEY.result("Invalid key spec: " + (e.getMessage() == null ? "" : e.getMessage()), false).toString());
+        } else if (e instanceof EtcdExecuteException) {
+            logger().error(e.getMessage(), e);
+            response(ctx, HttpResponseStatus.OK, ResultCode.CONNECT_ERROR.result(e.getMessage(), false).toString());
+        } else if (e instanceof TimeoutException) {
+            logger().debug(e.getMessage(), e);
+            response(ctx, HttpResponseStatus.OK, ResultCode.CONNECT_ERROR.result(e.getMessage(), false).toString());
+        } else {
+            super.handleException(ctx, req, e);
+        }
     }
 }

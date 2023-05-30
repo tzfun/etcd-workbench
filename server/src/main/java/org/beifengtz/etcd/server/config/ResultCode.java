@@ -10,9 +10,8 @@ import org.beifengtz.etcd.server.entity.vo.ResultVO;
  */
 public enum ResultCode {
     OK(0, "ok"),
-    INTERNAL_ERROR(10001, "Unknown error"),
-    INVALID_KEY(10002, "Invalid key spec"),
-    CONNECT_ERROR(10003, "Connect error")
+    INVALID_KEY(10001, "Invalid key spec"),
+    CONNECT_ERROR(10002, "Connect error")
     ;
     private final int code;
     private final String msg;

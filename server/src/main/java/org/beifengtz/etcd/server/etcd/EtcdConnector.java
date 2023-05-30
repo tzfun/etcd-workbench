@@ -31,6 +31,8 @@ import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.options.PutOption;
 import io.grpc.stub.StreamObserver;
 import org.beifengtz.etcd.server.config.Configuration;
+import org.beifengtz.etcd.server.entity.bo.KeyBO;
+import org.beifengtz.etcd.server.entity.bo.KeyValueBO;
 import org.beifengtz.etcd.server.exception.EtcdExecuteException;
 import org.beifengtz.etcd.server.util.CommonUtil;
 import org.slf4j.Logger;
@@ -38,10 +40,8 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -66,7 +66,11 @@ public class EtcdConnector {
         this.client = client;
         this.connKey = UUID.randomUUID().toString().replaceAll("-", "").toLowerCase(Locale.ROOT);
         this.activeTime = System.currentTimeMillis();
-        client.close();
+        try {
+            client.getKVClient().get(CommonUtil.toByteSequence(" ")).get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.SECONDS);
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            throw new EtcdExecuteException("Connect error " + e.getMessage(), e);
+        }
     }
 
     public String getConnKey() {
@@ -107,13 +111,18 @@ public class EtcdConnector {
      * @param option 参数选项
      * @return List of {@link KeyValue}
      */
-    public List<KeyValue> kvGet(GetOption option) {
+    public List<KeyValueBO> kvGet(String key, GetOption option) {
         onActive();
         try {
             GetResponse resp = client.getKVClient()
-                    .get(CommonUtil.toByteSequence(connKey), option)
+                    .get(CommonUtil.toByteSequence(key), option)
                     .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
-            return resp.getKvs();
+            List<KeyValue> kvs = resp.getKvs();
+            List<KeyValueBO> res = new ArrayList<>(kvs.size());
+            for (KeyValue kv : kvs) {
+                res.add(KeyValueBO.parseFrom(kv));
+            }
+            return res;
         } catch (Throwable e) {
             onExecuteError(e);
         }
@@ -126,8 +135,9 @@ public class EtcdConnector {
      * @param key 键
      * @return 值
      */
-    public String kvGet(String key) {
-        return kvGet(key, false).get(key);
+    public KeyValueBO kvGet(String key) {
+        List<KeyValueBO> kvs = kvGet(key, false);
+        return kvs.size() > 0 ? kvs.get(0) : null;
     }
 
     /**
@@ -137,46 +147,21 @@ public class EtcdConnector {
      * @param isPrefix 键是否是前缀匹配
      * @return Map 所有满足条件的键值对
      */
-    public Map<String, String> kvGet(String key, boolean isPrefix) {
-        onActive();
-        try {
-            GetResponse resp = client.getKVClient().get(CommonUtil.toByteSequence(key), GetOption.newBuilder().isPrefix(isPrefix).build())
-                    .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
-            List<KeyValue> kvs = resp.getKvs();
-            Map<String, String> res = new HashMap<>();
-            for (KeyValue kv : kvs) {
-                res.put(kv.getKey().toString(UTF_8), kv.getValue().toString(UTF_8));
-            }
-            return res;
-        } catch (Throwable e) {
-            onExecuteError(e);
-        }
-        return null;
+    public List<KeyValueBO> kvGet(String key, boolean isPrefix) {
+        return kvGet(key, GetOption.newBuilder().isPrefix(isPrefix).build());
     }
 
     /**
-     * 获取有绑定租约的键值对
+     * 获取所有key
      *
-     * @return List of {@link KeyValue}
+     * @return keys
      */
-    public List<KeyValue> kvGetLease() {
-        onActive();
-        try {
-            GetResponse resp = client.getKVClient()
-                    .get(ByteSequence.EMPTY, GetOption.newBuilder().isPrefix(true).build())
-                    .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
-            List<KeyValue> kvs = resp.getKvs();
-            List<KeyValue> res = new ArrayList<>();
-            for (KeyValue kv : kvs) {
-                if (kv.getLease() != 0) {
-                    res.add(kv);
-                }
-            }
-            return res;
-        } catch (Throwable e) {
-            onExecuteError(e);
-        }
-        return null;
+    public List<? extends KeyBO> kvGetAllKeys() {
+        return kvGet(" ", GetOption.newBuilder()
+                .isPrefix(true)
+                .withRange(CommonUtil.toByteSequence("\0"))
+                .withKeysOnly(true)
+                .build());
     }
 
     /**

@@ -15,6 +15,7 @@ import org.beifengtz.etcd.server.config.ResultCode;
 import org.beifengtz.etcd.server.entity.dto.NewSessionDTO;
 import org.beifengtz.etcd.server.entity.vo.ResultVO;
 import org.beifengtz.etcd.server.etcd.EtcdConnectorFactory;
+import org.beifengtz.etcd.server.exception.EtcdExecuteException;
 import org.beifengtz.etcd.server.util.CommonUtil;
 import org.beifengtz.etcd.server.util.RSAKey;
 import org.beifengtz.jvmm.common.util.FileUtil;
@@ -45,24 +46,15 @@ import java.util.concurrent.TimeoutException;
 public class EtcdController {
 
     @HttpRequest(value = "/session/test", method = Method.POST)
-    public ResultVO connect(@RequestBody NewSessionDTO data) {
+    public ResultVO connect(@RequestBody NewSessionDTO data) throws Exception {
         try (Client client = constructClientBuilder(data).build()) {
-            client.getKVClient().get(ByteSequence.EMPTY).get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
+            client.getKVClient().get(CommonUtil.toByteSequence(" ")).get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
             return ResultCode.OK.result(true);
-        } catch (InvalidKeySpecException | NoSuchAlgorithmException e) {
-            log.error(e.getMessage(), e);
-            return ResultCode.INVALID_KEY.result("Invalid key spec: " + (e.getMessage() == null ? "" : e.getMessage()), false);
-        } catch (ExecutionException | InterruptedException | TimeoutException e) {
-            log.error(e.getMessage(), e);
-            return ResultCode.CONNECT_ERROR.result("Connect timeout", false);
-        } catch (Exception e) {
-            log.error(e.getMessage(), e);
-            return ResultCode.INTERNAL_ERROR.result(e.getMessage(), false);
         }
     }
 
     @HttpRequest(value = "/session/new", method = Method.POST)
-    public ResultVO newSession(@RequestBody NewSessionDTO data) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
+    public ResultVO newSession(@RequestBody NewSessionDTO data) throws Exception  {
         String key = EtcdConnectorFactory.newConnector(constructClientBuilder(data).build());
         return ResultCode.OK.result(key);
     }

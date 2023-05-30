@@ -12,6 +12,7 @@ import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import org.beifengtz.etcd.server.util.CommonUtil;
 import org.junit.jupiter.api.Test;
 
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -39,11 +40,15 @@ public class EtcdTest {
 //                        .build())
                 .authority("127.0.0.1")
                 .build();
-        GetResponse resp = client.getKVClient().get(ByteSequence.EMPTY, GetOption.newBuilder()
+        GetResponse resp = client.getKVClient().get(CommonUtil.toByteSequence(" "), GetOption.newBuilder()
                         .withKeysOnly(true)
+                        .isPrefix(true)
                         .withRange(CommonUtil.toByteSequence("\0"))
                         .build())
                 .get(5, TimeUnit.SECONDS);
-        System.out.println(resp.getKvs());
+        resp.getKvs().forEach(kv -> {
+            System.out.println(kv.getKey().toString(StandardCharsets.UTF_8) + " = " + kv.getValue().toString(StandardCharsets.UTF_8) + ", lease = " +
+                    kv.getLease() + ", CreateRevision = " + kv.getCreateRevision() + ", ModRevision = " + kv.getModRevision() + ", version = " + kv.getVersion());
+        });
     }
 }

@@ -5,6 +5,7 @@ import io.etcd.jetcd.resolver.HttpResolverProvider;
 import io.etcd.jetcd.resolver.HttpsResolverProvider;
 import io.etcd.jetcd.resolver.IPResolverProvider;
 import io.grpc.NameResolverRegistry;
+import org.beifengtz.etcd.server.exception.EtcdExecuteException;
 import org.beifengtz.jvmm.common.factory.ExecutorFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +44,7 @@ public class EtcdConnectorFactory {
         return CONNECTORS.get(key);
     }
 
-    public static String newConnector(Client client) {
+    public static String newConnector(Client client) throws EtcdExecuteException {
         EtcdConnector connector = new EtcdConnector(client);
         CONNECTORS.put(connector.getConnKey(), connector);
         logger.debug("Create a new etcd connector {}", connector.getConnKey());

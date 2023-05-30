@@ -2,6 +2,7 @@ package org.beifengtz.etcd.server.entity.vo;
 
 import lombok.Builder;
 import lombok.Data;
+import org.beifengtz.jvmm.common.JsonParsable;
 
 /**
  * description: TODO
@@ -11,8 +12,13 @@ import lombok.Data;
  */
 @Data
 @Builder
-public class ResultVO {
+public class ResultVO implements JsonParsable {
     public int code;
     public String msg;
     public Object data;
+
+    @Override
+    public String toString() {
+        return toJsonStr();
+    }
 }
