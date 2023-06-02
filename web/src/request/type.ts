@@ -13,6 +13,7 @@ export interface Request {
     <T>(
         url: string,
         params?: Record<string, unknown>,
-        config?: AxiosRequestConfig
+        config?: AxiosRequestConfig,
+        notifyError?: boolean
     ): Promise<ResultData>;
 }

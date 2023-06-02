@@ -2,7 +2,6 @@ import Axios, {AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse, Int
 import {Request, ResultData} from "~/request/type";
 
 import {ElMessage} from "element-plus";
-import request from "~/request/index";
 import {_loading} from "~/util/CommonUtil";
 
 /**
@@ -58,7 +57,7 @@ const getConfig = (config?: AxiosRequestConfig): AxiosRequestConfig | undefined 
     return defaultConfig;
 };
 
-const handleResponseCode = (res: ResultData) => {
+const handleResponseCode = (res: ResultData, notifyError: boolean | undefined = true) => {
     let msg = null
     switch (res.code) {
         case 10001:
@@ -68,7 +67,7 @@ const handleResponseCode = (res: ResultData) => {
             msg = res.msg ? res.msg : "Connect error!"
             break
     }
-    if (msg) {
+    if (msg && notifyError) {
         ElMessage({
             showClose: true,
             message: msg,
@@ -78,13 +77,15 @@ const handleResponseCode = (res: ResultData) => {
     }
 }
 
-const handleAxiosError = (e: AxiosError) => {
-    ElMessage({
-        showClose: true,
-        message: e.message,
-        type: "error",
-        duration: 3000,
-    })
+const handleAxiosError = (e: AxiosError, notifyError: boolean | undefined = true) => {
+    if (notifyError) {
+        ElMessage({
+            showClose: true,
+            message: e.message,
+            type: "error",
+            duration: 3000,
+        })
+    }
 }
 
 /**
@@ -188,11 +189,13 @@ class EnclosureHttp {
      * @param url 路径
      * @param params 参数
      * @param config
+     * @param notifyError
      */
     public get: Request = (
         url: string,
         params?: unknown,
-        config?: AxiosRequestConfig
+        config?: AxiosRequestConfig,
+        notifyError?: boolean
     ) => {
         return new Promise<any>((resolve, reject) => {
             let loading = _loading()
@@ -201,11 +204,11 @@ class EnclosureHttp {
                 if (resData.code === 0) {
                     resolve(resData.data)
                 } else {
-                    handleResponseCode(resData)
+                    handleResponseCode(resData, notifyError)
                     reject(resData.msg)
                 }
             }).catch((e: AxiosError) => {
-                handleAxiosError(e)
+                handleAxiosError(e, notifyError)
                 reject(e.message)
             }).finally(() => {
                 loading.close()
@@ -218,11 +221,13 @@ class EnclosureHttp {
      * @param url 路径
      * @param data 参数
      * @param config
+     * @param notifyError
      */
     public post: Request = (
         url: string,
         data: unknown = {},
-        config?: AxiosRequestConfig
+        config?: AxiosRequestConfig,
+        notifyError?: boolean
     ) => {
         return new Promise<any>((resolve, reject) => {
             let loading = _loading()
@@ -231,11 +236,11 @@ class EnclosureHttp {
                 if (resData.code === 0) {
                     resolve(resData.data)
                 } else {
-                    handleResponseCode(resData)
+                    handleResponseCode(resData, notifyError)
                     reject(resData.msg)
                 }
             }).catch((e: AxiosError) => {
-                handleAxiosError(e)
+                handleAxiosError(e, notifyError)
                 reject(e.message)
             }).finally(() => {
                 loading.close()

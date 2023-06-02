@@ -2,12 +2,12 @@
 
 import {ref} from "vue";
 import {heartBeat} from "~/services/SessionService";
+import {ElMessage} from "element-plus";
 
 const emits = defineEmits(['change'])
 defineProps({
   checkSessionName: Function
 })
-
 const state = ref('new')
 const sessionKey = ref<string | undefined>()
 const heartBeatId = ref()
@@ -23,7 +23,15 @@ const onNewSession = ({key, name}) => {
   heartBeatId.value = setInterval(() => {
     if (state.value != 'new') {
       heartBeat(key).catch(e => {
-        onSessionClosed()
+        if (state.value !== 'new') {
+          onSessionClosed()
+          ElMessage({
+            showClose: true,
+            message: e,
+            type: "error",
+            duration: 3000,
+          })
+        }
       })
     }
   }, 3000)

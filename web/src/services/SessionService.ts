@@ -16,7 +16,7 @@ export function testSession(data: NewSessionReq): Promise<any> {
 }
 
 export function heartBeat(key: string): Promise<any> {
-    return request.get(host + "/session/heart_beat", {key: key})
+    return request.get(host + "/session/heart_beat", {key: key}, undefined, false)
 }
 
 export function getAllKeys(key: string): Promise<any> {

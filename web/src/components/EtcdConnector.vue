@@ -6,6 +6,7 @@ import {_isEmpty} from "~/util/BaseUtil";
 import {ElMessage, UploadFile} from "element-plus";
 import {_loading} from "~/util/CommonUtil";
 import {NewSessionReq} from "~/entitys/RequestTypes";
+import {EventCenter} from "~/util/EventCenter";
 
 const emits = defineEmits(["connected"])
 

@@ -3,6 +3,7 @@ import {toggleDark} from "~/composables";
 import {ref} from 'vue'
 import type {TabPaneName} from 'element-plus'
 import {closeSession} from "~/services/SessionService";
+import {EventCenter} from "~/util/EventCenter";
 
 let tabIndex = 1
 const editableTabsValue = ref('1')
@@ -38,6 +39,7 @@ const handleTabsEdit = (targetName: TabPaneName | undefined, action: 'remove' | 
             }
           }
           if (tab.state !== 'new') {
+            EventCenter('closeSession', tab.sessionKey)
             closeSession(tab.sessionKey)
           }
           removeTab()

@@ -72,7 +72,7 @@ public class EtcdController {
     public ResultVO heartBeat(@RequestParam String key) {
         EtcdConnector connector = EtcdConnectorFactory.get(key);
         if (connector == null) {
-            return ResultCode.CONNECT_ERROR.result("Connect has been lost");
+            return ResultCode.CONNECT_ERROR.result("Connect has been lost", null);
         }
         connector.onActive();
         return ResultCode.OK.result(null);
