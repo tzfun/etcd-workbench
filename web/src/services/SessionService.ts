@@ -1,6 +1,8 @@
 import request from '~/request'
 import {ResultData} from "~/request/type";
 import {ElMessage} from "element-plus";
+import {NewSessionReq} from "~/services/RequestTypes";
+import {AxiosError} from "axios";
 
 const handleResponseCode = (res: ResultData) => {
     let msg = null
@@ -22,11 +24,33 @@ const handleResponseCode = (res: ResultData) => {
     }
 }
 
-export function newSession() {
-
+const handleAxiosError = (e: AxiosError) => {
+    ElMessage({
+        showClose: true,
+        message: e.message,
+        type: "error",
+        duration: 3000,
+    })
 }
 
-export function testSession(data: any): Promise<any> {
+export function newSession(data: NewSessionReq) {
+    return new Promise<any>((resolve, reject) => {
+        request.post("http://127.0.0.1:8002/session/new", data).then(res => {
+            let resData: ResultData = res.data
+            if (resData.code === 0) {
+                resolve(resData)
+            } else {
+                handleResponseCode(resData)
+                reject(resData.msg)
+            }
+        }).catch((e: AxiosError) => {
+            handleAxiosError(e)
+            reject(e.message)
+        })
+    })
+}
+
+export function testSession(data: NewSessionReq): Promise<any> {
     return new Promise<any>((resolve, reject) => {
         request.post("http://127.0.0.1:8002/session/test", data).then(res => {
             let resData: ResultData = res.data
@@ -36,7 +60,8 @@ export function testSession(data: any): Promise<any> {
                 handleResponseCode(resData)
                 reject(resData.msg)
             }
-        }).catch(e => {
+        }).catch((e: AxiosError) => {
+            handleAxiosError(e)
             reject(e.message)
         })
     })

@@ -1,12 +1,15 @@
 <script lang="ts" setup>
 import etcd from "~/assets/etcd.png"
-import {ref} from "vue";
+import {Ref, ref} from "vue";
 import {testSession} from "~/services/SessionService";
 import {_isEmpty} from "~/util/BaseUtil";
-import {ElMessage} from "element-plus";
+import {ElMessage, UploadFile} from "element-plus";
 import {_loading} from "~/util/CommonUtil";
+import {NewSessionReq} from "~/services/RequestTypes";
 
-const caFileInput = ref(null)
+const caFile = ref<UploadFile>()
+const certFile = ref<UploadFile>()
+const certKeyFile = ref<UploadFile>()
 
 const etcdLogo = ref(etcd)
 const form = ref({
@@ -20,26 +23,15 @@ const form = ref({
   cert: {
     caType: 'none',
     certMode: 'none',
-    caFile: <File | null>null,
-    certFile: <File | null>null,
-    certKeyFile: <File | null>null,
     password: <string | null>null,
     authority: <string | null>null
   }
 })
 
-const _packFormData = async (): Promise<object | string> => {
-  const data = {
-    target: '',
-    user: <string | null>null,
-    password: <string | null>null,
-    authority: <string | null>null,
-    caType: 'none',
-    caCert: <string | null>null,
-    clientCertMode: 'none',
-    clientCert: <string | null>null,
-    clientCertPassword: <string | null>null,
-    clientCertKey: <string | null>null
+const _packFormData = async (): Promise<NewSessionReq> => {
+  const data: NewSessionReq = {
+    caType: "",
+    target: ""
   }
   let msg: string
   if (_isEmpty(form.value.host)) {
@@ -54,18 +46,45 @@ const _packFormData = async (): Promise<object | string> => {
     data.caType = form.value.cert.caType
 
     if (form.value.cert.caType === 'custom') {
-      data.caCert = await form.value.cert.caFile?.text()
-      if (form.value.cert.certMode === 'password') {
-        data.clientCert = await form.value.cert.certFile?.text()
-        data.clientCertPassword = form.value.cert.password
-      } else if (form.value.cert.certMode === 'key') {
-        data.clientCert = await form.value.cert.certFile?.text()
-        data.clientCertKey = await form.value.cert.certKeyFile?.text()
+      if (!caFile.value) {
+        msg = "Warning, please select CA file!"
+      } else {
+        let keyFileMaxSize = 24 * 1024;
+        if (caFile.value?.size > keyFileMaxSize) {
+          msg = "Warning, CA file is too large!"
+        } else {
+          data.caCert = await (caFile.value?.raw as File).text()
+          if (certFile.value?.size > keyFileMaxSize) {
+            msg = "Warning, Cert file is too large!"
+          } else {
+            if (!certFile.value) {
+              msg = "Warning, please select client cert file!"
+            } else {
+              data.clientCert = await (certFile.value?.raw as File).text()
+              if (form.value.cert.certMode === 'password') {
+                data.clientCertPassword = form.value.cert.password
+              } else if (form.value.cert.certMode === 'key') {
+                if (!certKeyFile.value) {
+                  msg = "Warning, please select client cert key file!"
+                } else {
+                  if (certKeyFile.value?.size > keyFileMaxSize) {
+                    msg = "Warning, Cert key file is too large!"
+                  } else {
+                    data.clientCertKey = await (certKeyFile.value?.raw as File).text()
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
+  }
+  if (msg) {
+    return Promise.reject(msg)
+  } else {
     return Promise.resolve(data)
   }
-  return Promise.reject(msg)
 }
 
 const _testConnect = () => {
@@ -94,9 +113,40 @@ const _connect = () => {
 
 }
 
-const triggerClickInput = (type: string) => {
-
+const caFileChange = (file: UploadFile) => {
+  fileChange(file, caFile)
 }
+
+const certFileChange = (file: UploadFile) => {
+  fileChange(file, certFile)
+}
+
+const certKeyFileChange = (file: UploadFile) => {
+  fileChange(file, certKeyFile)
+}
+
+const fileChange = (file: UploadFile, ref: Ref<UploadFile | undefined>) => {
+  ref.value = file
+  console.debug("change", file)
+}
+
+const caFileRemove = (file: UploadFile) => {
+  fileRemove(file, caFile)
+}
+
+const certFileRemove = (file: UploadFile) => {
+  fileRemove(file, certFile)
+}
+
+const certKeyFileRemove = (file: UploadFile) => {
+  fileRemove(file, certKeyFile)
+}
+
+const fileRemove = (file: UploadFile, ref: Ref<UploadFile | undefined>) => {
+  ref.value = undefined
+  console.debug("remove", file)
+}
+
 
 </script>
 <template>
@@ -139,8 +189,21 @@ const triggerClickInput = (type: string) => {
 
         <div v-show="form.cert.caType === 'custom'">
           <el-form-item label="CA File">
-            <el-input type="file" class="hidden" ref="caFileInput"></el-input>
-            <el-button type="info" link @click="triggerClickInput('ca')">Select CA File</el-button>
+            <el-upload
+                :limit="1"
+                :auto-upload="false"
+                :on-change="caFileChange"
+                :on-remove="caFileRemove"
+            >
+              <template #trigger>
+                <el-button type="info" link>Select CA File</el-button>
+              </template>
+              <template #tip>
+                <div class="el-upload__tip tip">
+                  Key file with a size less than 24kb
+                </div>
+              </template>
+            </el-upload>
           </el-form-item>
 
           <el-form-item label="Authority">
@@ -157,8 +220,21 @@ const triggerClickInput = (type: string) => {
 
           <div v-show="form.cert.certMode !== 'none'">
             <el-form-item label="Cert File">
-              <el-input type="file" class="hidden" ref="certFileInput"></el-input>
-              <el-button type="info" link @click="triggerClickInput('cert')">Select Cert File</el-button>
+              <el-upload
+                  :limit="1"
+                  :auto-upload="false"
+                  :on-change="certFileChange"
+                  :on-remove="certFileRemove"
+              >
+                <template #trigger>
+                  <el-button type="info" link>Select Cert File</el-button>
+                </template>
+                <template #tip>
+                  <div class="el-upload__tip tip">
+                    Key file with a size less than 24kb
+                  </div>
+                </template>
+              </el-upload>
             </el-form-item>
           </div>
 
@@ -173,8 +249,21 @@ const triggerClickInput = (type: string) => {
           </div>
           <div v-show="form.cert.certMode === 'key'">
             <el-form-item label="Cert Key File">
-              <el-input type="file" class="hidden" ref="certKeyFileInput"></el-input>
-              <el-button type="info" link @click="triggerClickInput('certKey')">Select Cert Key File</el-button>
+              <el-upload
+                  :limit="1"
+                  :auto-upload="false"
+                  :on-change="certKeyFileChange"
+                  :on-remove="certKeyFileRemove"
+              >
+                <template #trigger>
+                  <el-button type="info" link>Select Cert Key File</el-button>
+                </template>
+                <template #tip>
+                  <div class="el-upload__tip tip">
+                    Key file with a size less than 24kb
+                  </div>
+                </template>
+              </el-upload>
             </el-form-item>
           </div>
         </div>
@@ -207,5 +296,9 @@ const triggerClickInput = (type: string) => {
 
 .divider {
   margin: 40px 0;
+}
+
+.tip {
+  color: #168f8f;
 }
 </style>
