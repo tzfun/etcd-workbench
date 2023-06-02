@@ -1,16 +1,53 @@
 <script lang="ts" setup>
 
 import {ref} from "vue";
+import {heartBeat} from "~/services/SessionService";
 
+const emits = defineEmits(['change'])
 defineProps({
-  key: String
+  checkSessionName: Function
 })
+
 const state = ref('new')
+const sessionKey = ref<string | undefined>()
+const heartBeatId = ref()
+
+const onNewSession = ({key, name}) => {
+  sessionKey.value = key
+  state.value = 'connected'
+  emits('change', {
+    state: state.value,
+    name: name,
+    key: key
+  })
+  heartBeatId.value = setInterval(() => {
+    if (state.value != 'new') {
+      heartBeat(key).catch(e => {
+        onSessionClosed()
+      })
+    }
+  }, 3000)
+}
+
+const onSessionClosed = () => {
+  clearInterval(heartBeatId.value)
+  console.debug("Session closed", sessionKey.value)
+  state.value = 'new'
+  emits('change', {state: state.value, name: "New Session"})
+  sessionKey.value = undefined
+}
+
 </script>
 
 <template>
   <div v-if="state === 'new'" class="connector">
-    <EtcdConnector></EtcdConnector>
+    <EtcdConnector @connected="onNewSession" :check-session-name="checkSessionName"></EtcdConnector>
+  </div>
+  <div v-else-if="state === 'connected'" class="editor">
+    <EtcdManager :session-key="sessionKey"></EtcdManager>
+  </div>
+  <div v-else>
+    {{ state }}
   </div>
 </template>
 
@@ -18,5 +55,10 @@ const state = ref('new')
 .connector {
   display: flex;
   justify-content: center;
+}
+
+.editor {
+  width: 100%;
+  height: 100%;
 }
 </style>

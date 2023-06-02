@@ -1,12 +1,17 @@
 <script lang="ts" setup>
 import etcd from "~/assets/etcd.png"
 import {Ref, ref} from "vue";
-import {testSession} from "~/services/SessionService";
+import {newSession, testSession} from "~/services/SessionService";
 import {_isEmpty} from "~/util/BaseUtil";
 import {ElMessage, UploadFile} from "element-plus";
 import {_loading} from "~/util/CommonUtil";
-import {NewSessionReq} from "~/services/RequestTypes";
+import {NewSessionReq} from "~/entitys/RequestTypes";
 
+const emits = defineEmits(["connected"])
+
+const props = defineProps({
+  checkSessionName: Function
+})
 const caFile = ref<UploadFile>()
 const certFile = ref<UploadFile>()
 const certKeyFile = ref<UploadFile>()
@@ -29,12 +34,16 @@ const form = ref({
 })
 
 const _packFormData = async (): Promise<NewSessionReq> => {
+  let msg: string
+
   const data: NewSessionReq = {
     caType: "",
     target: ""
   }
-  let msg: string
-  if (_isEmpty(form.value.host)) {
+
+  if (!props.checkSessionName(form.value.name)) {
+    msg = "Session name exists: " + form.value.name
+  } else if (_isEmpty(form.value.host)) {
     msg = 'Warning, host can not be empty!'
   } else if (form.value.port <= 0) {
     msg = 'Warning, invalid port!'
@@ -89,16 +98,12 @@ const _packFormData = async (): Promise<NewSessionReq> => {
 
 const _testConnect = () => {
   _packFormData().then(formData => {
-    console.log(formData)
-    let loading = _loading()
     testSession(formData).then(res => {
       ElMessage({
         showClose: true,
         message: "Connect successful!",
         type: 'success',
       })
-    }).finally(() => {
-      loading.close()
     })
   }).catch(e => {
     ElMessage({
@@ -110,7 +115,18 @@ const _testConnect = () => {
 }
 
 const _connect = () => {
-
+  _packFormData().then(formData => {
+    newSession(formData).then(res => {
+      console.debug("Session connected ", res)
+      emits('connected', {key: res, name: form.value.name})
+    })
+  }).catch(e => {
+    ElMessage({
+      showClose: true,
+      message: e,
+      type: 'warning',
+    })
+  })
 }
 
 const caFileChange = (file: UploadFile) => {
@@ -196,7 +212,7 @@ const fileRemove = (file: UploadFile, ref: Ref<UploadFile | undefined>) => {
                 :on-remove="caFileRemove"
             >
               <template #trigger>
-                <el-button type="info" link>Select CA File</el-button>
+                <el-button type="primary" link>Select CA File</el-button>
               </template>
               <template #tip>
                 <div class="el-upload__tip tip">
@@ -227,7 +243,7 @@ const fileRemove = (file: UploadFile, ref: Ref<UploadFile | undefined>) => {
                   :on-remove="certFileRemove"
               >
                 <template #trigger>
-                  <el-button type="info" link>Select Cert File</el-button>
+                  <el-button type="primary" link>Select Cert File</el-button>
                 </template>
                 <template #tip>
                   <div class="el-upload__tip tip">
@@ -256,7 +272,7 @@ const fileRemove = (file: UploadFile, ref: Ref<UploadFile | undefined>) => {
                   :on-remove="certKeyFileRemove"
               >
                 <template #trigger>
-                  <el-button type="info" link>Select Cert Key File</el-button>
+                  <el-button type="primary" link>Select Cert Key File</el-button>
                 </template>
                 <template #tip>
                   <div class="el-upload__tip tip">
@@ -268,7 +284,7 @@ const fileRemove = (file: UploadFile, ref: Ref<UploadFile | undefined>) => {
           </div>
         </div>
 
-        <div style="margin: 35px 0">
+        <div style="margin: 35px 0;text-align: center">
           <el-button type="info" link @click="_testConnect">Test Connect</el-button>
           <el-button type="success" @click="_connect">Connect</el-button>
         </div>

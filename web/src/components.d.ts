@@ -9,7 +9,8 @@ export {}
 
 declare module '@vue/runtime-core' {
   export interface GlobalComponents {
-    BaseHeader: typeof import('./components/BaseHeader.vue')['default']
+    BaseBody: typeof import('./components/BaseBody.vue')['default']
+    ClusterManager: typeof import('./components/managers/ClusterManager.vue')['default']
     ElButton: typeof import('element-plus/es')['ElButton']
     ElCard: typeof import('element-plus/es')['ElCard']
     ElConfigProvider: typeof import('element-plus/es')['ElConfigProvider']
@@ -27,12 +28,18 @@ declare module '@vue/runtime-core' {
     ElRadio: typeof import('element-plus/es')['ElRadio']
     ElRadioGroup: typeof import('element-plus/es')['ElRadioGroup']
     ElSubMenu: typeof import('element-plus/es')['ElSubMenu']
+    ElTable: typeof import('element-plus/es')['ElTable']
+    ElTableColumn: typeof import('element-plus/es')['ElTableColumn']
     ElTabPane: typeof import('element-plus/es')['ElTabPane']
     ElTabs: typeof import('element-plus/es')['ElTabs']
     ElTag: typeof import('element-plus/es')['ElTag']
     ElUpload: typeof import('element-plus/es')['ElUpload']
     EtcdConnector: typeof import('./components/EtcdConnector.vue')['default']
+    EtcdManager: typeof import('./components/EtcdManager.vue')['default']
     EtcdSession: typeof import('./components/EtcdSession.vue')['default']
+    KeyManager: typeof import('./components/managers/KeyManager.vue')['default']
+    RoleManager: typeof import('./components/managers/RoleManager.vue')['default']
+    UserManager: typeof import('./components/managers/UserManager.vue')['default']
   }
   export interface ComponentCustomProperties {
     vLoading: typeof import('element-plus/es')['ElLoadingDirective']

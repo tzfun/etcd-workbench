@@ -77,7 +77,7 @@ public class EtcdConnector {
         return connKey;
     }
 
-    private void onActive() {
+    public void onActive() {
         activeTime = System.currentTimeMillis();
     }
 

@@ -14,6 +14,7 @@ import org.beifengtz.etcd.server.config.Configuration;
 import org.beifengtz.etcd.server.config.ResultCode;
 import org.beifengtz.etcd.server.entity.dto.NewSessionDTO;
 import org.beifengtz.etcd.server.entity.vo.ResultVO;
+import org.beifengtz.etcd.server.etcd.EtcdConnector;
 import org.beifengtz.etcd.server.etcd.EtcdConnectorFactory;
 import org.beifengtz.etcd.server.util.CommonUtil;
 import org.beifengtz.etcd.server.util.RSAKey;
@@ -23,6 +24,7 @@ import org.beifengtz.jvmm.common.util.StringUtil;
 import org.beifengtz.jvmm.convey.annotation.HttpController;
 import org.beifengtz.jvmm.convey.annotation.HttpRequest;
 import org.beifengtz.jvmm.convey.annotation.RequestBody;
+import org.beifengtz.jvmm.convey.annotation.RequestParam;
 import org.beifengtz.jvmm.convey.enums.Method;
 
 import java.io.File;
@@ -55,6 +57,31 @@ public class EtcdController {
     public ResultVO newSession(@RequestBody NewSessionDTO data) throws Exception {
         String key = EtcdConnectorFactory.newConnector(constructClientBuilder(data).build());
         return ResultCode.OK.result(key);
+    }
+
+    @HttpRequest("/session/close")
+    public ResultVO closeSession(@RequestParam String key) {
+        EtcdConnector connector = EtcdConnectorFactory.get(key);
+        if (connector != null) {
+            connector.close();
+        }
+        return ResultCode.OK.result(null);
+    }
+
+    @HttpRequest("/session/heart_beat")
+    public ResultVO heartBeat(@RequestParam String key) {
+        EtcdConnector connector = EtcdConnectorFactory.get(key);
+        if (connector == null) {
+            return ResultCode.CONNECT_ERROR.result("Connect has been lost");
+        }
+        connector.onActive();
+        return ResultCode.OK.result(null);
+    }
+
+    @HttpRequest("/session/get_all_keys")
+    public ResultVO getAllKeys(@RequestParam String key) {
+        EtcdConnector connector = EtcdConnectorFactory.get(key);
+        return ResultCode.OK.result(connector.kvGetAllKeys());
     }
 
     private ClientBuilder constructClientBuilder(NewSessionDTO data) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {

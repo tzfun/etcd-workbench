@@ -1,10 +1,12 @@
 import path from 'path'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-
+import Icons from 'unplugin-icons/vite'
+import IconsResolver from 'unplugin-icons/resolver'
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
+import Inspect from 'vite-plugin-inspect'
 
 import Unocss from 'unocss/vite'
 import {
@@ -34,9 +36,20 @@ export default defineConfig({
   plugins: [
     vue(),
     AutoImport({
-      resolvers: [ElementPlusResolver({
-        importStyle: 'sass',
-      })],
+      imports: ['vue'],
+      // Auto import functions from Element Plus, e.g. ElMessage, ElMessageBox... (with style)
+      // 自动导入 Element Plus 相关函数，如：ElMessage, ElMessageBox... (带样式)
+      resolvers: [
+        ElementPlusResolver({
+          importStyle: 'sass',
+        }),
+
+        // Auto import icon components
+        // 自动导入图标组件
+        IconsResolver({
+          // prefix: 'Icon',
+        }),
+      ],
     }),
     Components({
       // allow auto load markdown components under `./src/components/`
@@ -44,6 +57,10 @@ export default defineConfig({
       // allow auto import and register components used in markdown
       include: [/\.vue$/, /\.vue\?vue/, /\.md$/],
       resolvers: [
+        // 自动注册图标组件
+        IconsResolver({
+          enabledCollections: ['ep'],
+        }),
         ElementPlusResolver({
           importStyle: 'sass',
         }),
@@ -67,5 +84,9 @@ export default defineConfig({
         transformerVariantGroup(),
       ]
     }),
+    Icons({
+      autoInstall: true,
+    }),
+    Inspect(),
   ],
 })

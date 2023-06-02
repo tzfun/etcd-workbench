@@ -2,16 +2,16 @@
 import {toggleDark} from "~/composables";
 import {ref} from 'vue'
 import type {TabPaneName} from 'element-plus'
+import {closeSession} from "~/services/SessionService";
 
-let tabIndex = 2
+let tabIndex = 1
 const editableTabsValue = ref('1')
 const tabs = ref([
   {
     title: 'New Session',
     name: '1',
-    session: {
-      key: ''
-    }
+    state: 'new',
+    sessionKey: undefined
   },
 ])
 
@@ -19,11 +19,10 @@ const handleTabsEdit = (targetName: TabPaneName | undefined, action: 'remove' | 
   if (action === 'add') {
     const newTabName = `${++tabIndex}`
     tabs.value.push({
-      title: 'New Session',
+      title: `New Session(${newTabName})`,
       name: newTabName,
-      session: {
-        key: ''
-      }
+      state: 'new',
+      sessionKey: undefined
     })
     editableTabsValue.value = newTabName
   } else if (action === 'remove') {
@@ -32,10 +31,17 @@ const handleTabsEdit = (targetName: TabPaneName | undefined, action: 'remove' | 
     if (activeName === targetName) {
       tabsVal.forEach((tab, index) => {
         if (tab.name === targetName) {
-          const nextTab = tabsVal[index + 1] || tabsVal[index - 1]
-          if (nextTab) {
-            activeName = nextTab.name
+          const removeTab = () => {
+            const nextTab = tabsVal[index + 1] || tabsVal[index - 1]
+            if (nextTab) {
+              activeName = nextTab.name
+            }
           }
+          if (tab.state !== 'new') {
+            closeSession(tab.sessionKey)
+          }
+          removeTab()
+          return
         }
       })
     }
@@ -43,6 +49,14 @@ const handleTabsEdit = (targetName: TabPaneName | undefined, action: 'remove' | 
     editableTabsValue.value = activeName
     tabs.value = tabsVal.filter((tab) => tab.name !== targetName)
   }
+}
+
+const onSessionChange = (args: { state: number, name: number, key: string | undefined }, idx: number) => {
+  console.log(idx, args)
+  const item = tabs.value[idx]
+  item.title = args.name
+  item.state = args.state
+  item.sessionKey = args.key
 }
 </script>
 
@@ -61,13 +75,15 @@ const handleTabsEdit = (targetName: TabPaneName | undefined, action: 'remove' | 
       <i inline-flex i="dark:ep-moon ep-sunny"/>
     </button>
     <el-tab-pane
-        v-for="item in tabs"
+        v-for="(item,idx) in tabs"
         :key="item.name"
         :label="item.title"
         :name="item.name"
         class="tab-pane"
     >
-      <EtcdSession :key="item.session.key"></EtcdSession>
+      <EtcdSession @change="onSessionChange($event, idx)"
+                   :check-session-name="name => tabs.filter(o => o.title === name).length === 0"
+      ></EtcdSession>
     </el-tab-pane>
 
   </el-tabs>

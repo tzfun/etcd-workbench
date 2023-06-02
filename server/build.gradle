@@ -27,3 +27,7 @@ dependencies {
 test {
     useJUnitPlatform()
 }
+
+compileJava {
+    options.compilerArgs << "-parameters" << "-Xlint:unchecked" << "-Xlint:deprecation"
+}

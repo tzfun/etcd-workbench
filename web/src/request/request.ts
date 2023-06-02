@@ -1,7 +1,9 @@
 import Axios, {AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig,} from "axios";
-import {Request} from "~/request/type";
+import {Request, ResultData} from "~/request/type";
 
 import {ElMessage} from "element-plus";
+import request from "~/request/index";
+import {_loading} from "~/util/CommonUtil";
 
 /**
  * 封装的 element-plus 的消息提示框
@@ -55,6 +57,35 @@ const getConfig = (config?: AxiosRequestConfig): AxiosRequestConfig | undefined 
     if (!config) return config;
     return defaultConfig;
 };
+
+const handleResponseCode = (res: ResultData) => {
+    let msg = null
+    switch (res.code) {
+        case 10001:
+            msg = res.msg ? res.msg : "Invalid key file!"
+            break
+        case 10002:
+            msg = res.msg ? res.msg : "Connect error!"
+            break
+    }
+    if (msg) {
+        ElMessage({
+            showClose: true,
+            message: msg,
+            type: "warning",
+            duration: 3000,
+        })
+    }
+}
+
+const handleAxiosError = (e: AxiosError) => {
+    ElMessage({
+        showClose: true,
+        message: e.message,
+        type: "error",
+        duration: 3000,
+    })
+}
 
 /**
  * 自定义封装的Axios 类
@@ -163,7 +194,23 @@ class EnclosureHttp {
         params?: unknown,
         config?: AxiosRequestConfig
     ) => {
-        return EnclosureHttp.axiosInstance.get(url, {params, ...config});
+        return new Promise<any>((resolve, reject) => {
+            let loading = _loading()
+            EnclosureHttp.axiosInstance.get(url, {params, ...config}).then(res => {
+                let resData: ResultData = res.data
+                if (resData.code === 0) {
+                    resolve(resData.data)
+                } else {
+                    handleResponseCode(resData)
+                    reject(resData.msg)
+                }
+            }).catch((e: AxiosError) => {
+                handleAxiosError(e)
+                reject(e.message)
+            }).finally(() => {
+                loading.close()
+            })
+        });
     };
 
     /**
@@ -177,7 +224,23 @@ class EnclosureHttp {
         data: unknown = {},
         config?: AxiosRequestConfig
     ) => {
-        return EnclosureHttp.axiosInstance.post(url, data, config);
+        return new Promise<any>((resolve, reject) => {
+            let loading = _loading()
+            EnclosureHttp.axiosInstance.post(url, data, config).then(res => {
+                let resData: ResultData = res.data
+                if (resData.code === 0) {
+                    resolve(resData.data)
+                } else {
+                    handleResponseCode(resData)
+                    reject(resData.msg)
+                }
+            }).catch((e: AxiosError) => {
+                handleAxiosError(e)
+                reject(e.message)
+            }).finally(() => {
+                loading.close()
+            })
+        });
     };
 }
 

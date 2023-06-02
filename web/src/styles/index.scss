@@ -1,9 +1,9 @@
 // import dark theme
 @use "element-plus/theme-chalk/src/dark/css-vars.scss" as *;
 
-// :root {
-//   --ep-color-primary: red;
-// }
+ :root {
+   --ep-custom-aside-width: 300px;
+ }
 
 body {
   font-family: Inter, system-ui, Avenir, "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB",
@@ -27,4 +27,12 @@ code {
 html, body, #app {
   width: 100%;
   height: 100%;
+}
+
+#app {
+  color: var(--ep-text-color-primary);
+}
+
+.main-container {
+  height: calc(100vh - var(--ep-menu-item-height) - 3px);
 }
