@@ -3,6 +3,7 @@ package org.beifengtz.etcd.server.controller;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.ClientBuilder;
+import io.etcd.jetcd.options.GetOption;
 import io.netty.handler.ssl.ApplicationProtocolConfig;
 import io.netty.handler.ssl.ApplicationProtocolNames;
 import io.netty.handler.ssl.SslContext;
@@ -12,6 +13,7 @@ import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.beifengtz.etcd.server.config.Configuration;
 import org.beifengtz.etcd.server.config.ResultCode;
+import org.beifengtz.etcd.server.entity.bo.KeyValueBO;
 import org.beifengtz.etcd.server.entity.dto.NewSessionDTO;
 import org.beifengtz.etcd.server.entity.vo.ResultVO;
 import org.beifengtz.etcd.server.etcd.EtcdConnector;
@@ -33,6 +35,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -59,8 +62,8 @@ public class EtcdController {
     @HttpRequest(value = "/session/new", method = Method.POST)
     public ResultVO newSession(@RequestBody NewSessionDTO data) throws Exception {
         try {
-            String key = EtcdConnectorFactory.newConnector(constructClientBuilder(data).build());
-            return ResultCode.OK.result(key);
+            String sessionId = EtcdConnectorFactory.newConnector(constructClientBuilder(data).build());
+            return ResultCode.OK.result(sessionId);
         } catch (EtcdExecuteException e) {
             log.debug(e.getMessage(), e);
             log.info("Connect etcd failed. {}", e.getMessage());
@@ -69,8 +72,8 @@ public class EtcdController {
     }
 
     @HttpRequest("/session/close")
-    public ResultVO closeSession(@RequestParam String key) {
-        EtcdConnector connector = EtcdConnectorFactory.get(key);
+    public ResultVO closeSession(@RequestParam String sessionId) {
+        EtcdConnector connector = EtcdConnectorFactory.get(sessionId);
         if (connector != null) {
             connector.close();
         }
@@ -78,8 +81,8 @@ public class EtcdController {
     }
 
     @HttpRequest("/session/heart_beat")
-    public ResultVO heartBeat(@RequestParam String key) {
-        EtcdConnector connector = EtcdConnectorFactory.get(key);
+    public ResultVO heartBeat(@RequestParam String sessionId) {
+        EtcdConnector connector = EtcdConnectorFactory.get(sessionId);
         if (connector == null) {
             return ResultCode.CONNECT_ERROR.result("Connect has been lost", null);
         }
@@ -87,10 +90,35 @@ public class EtcdController {
         return ResultCode.OK.result(null);
     }
 
-    @HttpRequest("/session/get_all_keys")
-    public ResultVO getAllKeys(@RequestParam String key) {
-        EtcdConnector connector = EtcdConnectorFactory.get(key);
+    @HttpRequest("/session/etcd/kv/get_all_keys")
+    public ResultVO getAllKeys(@RequestParam String sessionId) {
+        EtcdConnector connector = EtcdConnectorFactory.get(sessionId);
         return ResultCode.OK.result(connector.kvGetAllKeys());
+    }
+
+    @HttpRequest("/session/etcd/kv/get")
+    public ResultVO getKV(@RequestParam String sessionId, @RequestParam String key, @RequestParam Long version) {
+        EtcdConnector connector = EtcdConnectorFactory.get(sessionId);
+        if (version == null) {
+            return ResultCode.OK.result(connector.kvGet(key));
+        } else {
+            List<KeyValueBO> kvs = connector.kvGet(key, GetOption.newBuilder()
+                    .withRevision(version)
+                    .build());
+            return ResultCode.OK.result(kvs.size() > 0 ? kvs.get(0) : null);
+        }
+    }
+
+    @HttpRequest("/session/etcd/kv/delete")
+    public ResultVO deleteKey(@RequestParam String sessionId, @RequestParam String key) {
+        EtcdConnectorFactory.get(sessionId).kvDel(key);
+        return ResultCode.OK.result();
+    }
+
+    @HttpRequest("/session/etcd/kv/put")
+    public ResultVO putKV(@RequestParam String sessionId, @RequestParam String key, @RequestParam String value) {
+        String preValue = EtcdConnectorFactory.get(sessionId).kvPut(key, value);
+        return ResultCode.OK.result(preValue);
     }
 
     private ClientBuilder constructClientBuilder(NewSessionDTO data) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {

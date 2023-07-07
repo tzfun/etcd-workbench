@@ -9,3 +9,13 @@ export interface KeyDTO {
 export interface KeyValueDTO extends KeyDTO {
     value: string | undefined;
 }
+
+export type EditorConfig = {
+    disabled: boolean
+    indentWithTab: boolean
+    tabSize: number
+    autofocus: boolean
+    height: number | 'auto'
+    language: string
+    theme: string
+}

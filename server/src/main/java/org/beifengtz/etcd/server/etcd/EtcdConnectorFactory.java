@@ -40,8 +40,11 @@ public class EtcdConnectorFactory {
         logger.info("Initialized the connector factory");
     }
 
-    public static EtcdConnector get(String key) {
-        return CONNECTORS.get(key);
+    public static EtcdConnector get(String sessionId) {
+        if (sessionId == null) {
+            throw new EtcdExecuteException("Session lost");
+        }
+        return CONNECTORS.get(sessionId);
     }
 
     public static String newConnector(Client client) throws EtcdExecuteException {
@@ -51,7 +54,7 @@ public class EtcdConnectorFactory {
         return connector.getConnKey();
     }
 
-    public static void onClose(String key) {
-        CONNECTORS.remove(key);
+    public static void onClose(String sessionId) {
+        CONNECTORS.remove(sessionId);
     }
 }

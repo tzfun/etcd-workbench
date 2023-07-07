@@ -119,7 +119,6 @@ const _testConnect = () => {
 const _connect = () => {
   _packFormData().then(formData => {
     newSession(formData).then(res => {
-      console.debug("Session connected ", res)
       emits('connected', {key: res, name: form.value.name})
     })
   }).catch(e => {
@@ -146,7 +145,6 @@ const certKeyFileChange = (file: UploadFile) => {
 
 const fileChange = (file: UploadFile, ref: Ref<UploadFile | undefined>) => {
   ref.value = file
-  console.debug("change", file)
 }
 
 const caFileRemove = (file: UploadFile) => {
@@ -163,7 +161,6 @@ const certKeyFileRemove = (file: UploadFile) => {
 
 const fileRemove = (file: UploadFile, ref: Ref<UploadFile | undefined>) => {
   ref.value = undefined
-  console.debug("remove", file)
 }
 
 
