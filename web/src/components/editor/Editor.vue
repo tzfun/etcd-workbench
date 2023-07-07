@@ -1,158 +1,168 @@
+<script lang="ts" setup>
+import {EditorConfig} from "~/entitys/TransformTypes";
+import {computed, onMounted, reactive, shallowRef, watch} from "vue";
+import {oneDark} from "@codemirror/theme-one-dark";
+import {EditorView, ViewUpdate} from "@codemirror/view";
+import {redo, undo} from "@codemirror/commands";
+import {Codemirror} from "vue-codemirror";
+import jsonLanguage from "./lang/json";
+import xmlLanguage from "./lang/xml";
+import yamlLanguage from "./lang/yaml";
+
+const props = defineProps({
+  config: {
+    type: Object as EditorConfig,
+    required: true
+  },
+  code: {
+    type: String,
+    required: true
+  }
+})
+
+const allLanguages = reactive([
+    'text',
+    'json',
+    'yaml',
+    'xml'
+])
+const allTabSize = reactive([2,4,8])
+const code = shallowRef(props.code)
+const extensions = computed(() => {
+  const result = []
+  switch (props.config.language) {
+    case 'json':
+      result.push(jsonLanguage())
+      break
+    case 'yml':
+      result.push(xmlLanguage())
+      break
+    case 'yaml':
+      result.push(yamlLanguage())
+      break
+  }
+
+  result.push(props.config.theme !== 'default' ? oneDark : void 0)
+  return result
+})
+
+const cmView = shallowRef<EditorView>()
+const handleReady = ({view}: any) => {
+  cmView.value = view
+}
+
+// https://github.com/codemirror/commands/blob/main/test/test-history.ts
+const handleUndo = () => {
+  undo({
+    state: cmView.value!.state,
+    dispatch: cmView.value!.dispatch
+  })
+}
+
+const handleRedo = () => {
+  redo({
+    state: cmView.value!.state,
+    dispatch: cmView.value!.dispatch
+  })
+}
+
+const state = reactive({
+  lines: null as null | number,
+  cursor: null as null | number,
+  selected: null as null | number,
+  length: null as null | number
+})
+
+const handleStateUpdate = (viewUpdate: ViewUpdate) => {
+  // selected
+  const ranges = viewUpdate.state.selection.ranges
+  state.selected = ranges.reduce((plus, range) => plus + range.to - range.from, 0)
+  state.cursor = ranges[0].anchor
+  // length
+  state.length = viewUpdate.state.doc.length
+  state.lines = viewUpdate.state.doc.lines
+  // log('viewUpdate', viewUpdate)
+}
+
+onMounted(() => {
+  watch(
+      () => props.code,
+      (_code) => {
+        code.value = _code
+      }
+  )
+})
+
+defineExpose({
+  code: code
+})
+</script>
 <template>
-  <div class="editor">
-    <div class="main">
-      <codemirror
-          v-model="code"
-          :style="{
-          width: preview ? '50%' : '100%',
+  <div>
+    Language:
+    <el-select v-model="config.language"
+               fit-input-width
+               style="width: 100px"
+               class="m-2"
+               placeholder="Select language">
+      <el-option
+          v-for="item in allLanguages"
+          :key="item"
+          :label="item"
+          :value="item"
+      />
+    </el-select>
+    Tab Size:
+    <el-select v-model="config.tabSize"
+               fit-input-width
+               style="width: 80px"
+               class="m-2"
+               placeholder="Select tab size">
+      <el-option
+          v-for="item in allTabSize"
+          :key="item"
+          :label="item"
+          :value="item"
+      />
+    </el-select>
+    <div class="editor">
+      <div class="main">
+        <codemirror
+            v-model="code"
+            :style="{
+          width: '100%',
           height: config.height,
           backgroundColor: '#fff',
           color: '#333'
         }"
-          placeholder="Please enter the code."
-          :extensions="extensions"
-          :autofocus="config.autofocus"
-          :disabled="config.disabled"
-          :indent-with-tab="config.indentWithTab"
-          :tab-size="config.tabSize"
-          @update="handleStateUpdate"
-          @ready="handleReady"
-          @focus="log('focus', $event)"
-          @blur="log('blur', $event)"
-      />
-      <pre
-          v-if="preview"
-          class="code"
-          :style="{ height: config.height, width: preview ? '50%' : '0px' }"
-      >{{ code }}</pre
-      >
-    </div>
-    <div class="divider"></div>
-    <div class="footer">
-      <div class="buttons">
-        <button class="item" @click="togglePreview">
-          <span>Preview</span>
-          <i class="iconfont" :class="preview ? 'icon-eye' : 'icon-eye-close'"></i>
-        </button>
-        <button class="item" @click="handleUndo">Undo</button>
-        <button class="item" @click="handleRedo">Redo</button>
+            placeholder="Please enter the content."
+            :extensions="extensions"
+            :autofocus="config.autofocus"
+            :disabled="config.disabled"
+            :indent-with-tab="config.indentWithTab"
+            :tab-size="config.tabSize"
+            @update="handleStateUpdate"
+            @ready="handleReady"
+        />
       </div>
-      <div class="infos">
-        <span class="item">Spaces: {{ config.tabSize }}</span>
-        <span class="item">Length: {{ state.length }}</span>
-        <span class="item">Lines: {{ state.lines }}</span>
-        <span class="item">Cursor: {{ state.cursor }}</span>
-        <span class="item">Selected: {{ state.selected }}</span>
+      <div class="divider"></div>
+      <div class="footer">
+        <div class="buttons">
+          <button class="item" @click="handleUndo">Undo</button>
+          <button class="item" @click="handleRedo">Redo</button>
+        </div>
+        <div class="infos">
+          <span class="item">Spaces: {{ config.tabSize }}</span>
+          <span class="item">Length: {{ state.length }}</span>
+          <span class="item">Lines: {{ state.lines }}</span>
+          <span class="item">Cursor: {{ state.cursor }}</span>
+          <span class="item">Selected: {{ state.selected }}</span>
+        </div>
       </div>
     </div>
   </div>
+
 </template>
-
-<script lang="ts">
-import { defineComponent, reactive, shallowRef, computed, watch, onMounted } from 'vue'
-import { EditorView, ViewUpdate } from '@codemirror/view'
-import { redo, undo } from '@codemirror/commands'
-import { Codemirror } from 'vue-codemirror'
-import {EditorConfig} from "~/entitys/TransformTypes";
-import {oneDark} from "@codemirror/theme-one-dark";
-import {json} from "@codemirror/lang-json";
-
-export default defineComponent({
-  name: 'vue-codemirror-example',
-  title: 'Web IDE example',
-  url: import.meta.url,
-  props: {
-    config: {
-      type: Object as EditorConfig,
-      required: true
-    },
-    code: {
-      type: String,
-      required: true
-    }
-  },
-  components: {
-    Codemirror
-  },
-  setup(props) {
-    const log = console.log
-    const code = shallowRef(props.code)
-    const extensions = computed(() => {
-      const result = []
-      if (props.config.language === 'json') {
-        result.push(json)
-      }
-      result.push(props.config.theme !== 'default' ? oneDark : void 0)
-      return result
-    })
-
-    const preview = shallowRef(false)
-    const togglePreview = () => {
-      preview.value = !preview.value
-    }
-
-    const cmView = shallowRef<EditorView>()
-    const handleReady = ({ view }: any) => {
-      cmView.value = view
-    }
-
-    // https://github.com/codemirror/commands/blob/main/test/test-history.ts
-    const handleUndo = () => {
-      undo({
-        state: cmView.value!.state,
-        dispatch: cmView.value!.dispatch
-      })
-    }
-
-    const handleRedo = () => {
-      redo({
-        state: cmView.value!.state,
-        dispatch: cmView.value!.dispatch
-      })
-    }
-
-    const state = reactive({
-      lines: null as null | number,
-      cursor: null as null | number,
-      selected: null as null | number,
-      length: null as null | number
-    })
-
-    const handleStateUpdate = (viewUpdate: ViewUpdate) => {
-      // selected
-      const ranges = viewUpdate.state.selection.ranges
-      state.selected = ranges.reduce((plus, range) => plus + range.to - range.from, 0)
-      state.cursor = ranges[0].anchor
-      // length
-      state.length = viewUpdate.state.doc.length
-      state.lines = viewUpdate.state.doc.lines
-      // log('viewUpdate', viewUpdate)
-    }
-
-    onMounted(() => {
-      watch(
-          () => props.code,
-          (_code) => {
-            code.value = _code
-          }
-      )
-    })
-
-    return {
-      log,
-      code,
-      extensions,
-      preview,
-      state,
-      togglePreview,
-      handleReady,
-      handleStateUpdate,
-      handleRedo,
-      handleUndo
-    }
-  }
-})
-</script>
 
 <style lang="scss" scoped>
 @import './variables.scss';
@@ -197,9 +207,11 @@ export default defineComponent({
         font-size: $font-size-small;
         color: $text-secondary;
         cursor: pointer;
+
         .iconfont {
           margin-left: $xs-gap;
         }
+
         &:hover {
           color: $text-color;
           border-color: $text-color;

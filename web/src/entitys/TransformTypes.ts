@@ -15,7 +15,7 @@ export type EditorConfig = {
     indentWithTab: boolean
     tabSize: number
     autofocus: boolean
-    height: number | 'auto'
+    height: string | 'auto'
     language: string
     theme: string
 }

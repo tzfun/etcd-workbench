@@ -117,8 +117,8 @@ public class EtcdController {
 
     @HttpRequest("/session/etcd/kv/put")
     public ResultVO putKV(@RequestParam String sessionId, @RequestParam String key, @RequestParam String value) {
-        String preValue = EtcdConnectorFactory.get(sessionId).kvPut(key, value);
-        return ResultCode.OK.result(preValue);
+        EtcdConnectorFactory.get(sessionId).kvPut(key, value);
+        return ResultCode.OK.result();
     }
 
     private ClientBuilder constructClientBuilder(NewSessionDTO data) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {

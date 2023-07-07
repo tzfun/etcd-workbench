@@ -185,21 +185,16 @@ public class EtcdConnector {
      *
      * @param key   键
      * @param value 值
-     * @return 返回设置值之前的值
      */
-    public String kvPut(String key, String value) {
+    public void kvPut(String key, String value) {
         onActive();
         try {
-            PutResponse resp = client.getKVClient()
+            client.getKVClient()
                     .put(CommonUtil.toByteSequence(key), CommonUtil.toByteSequence(value))
                     .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
-            if (resp.hasPrevKv()) {
-                return resp.getPrevKv().getValue().toString(UTF_8);
-            }
         } catch (Throwable e) {
             onExecuteError(e);
         }
-        return null;
     }
 
     /**
