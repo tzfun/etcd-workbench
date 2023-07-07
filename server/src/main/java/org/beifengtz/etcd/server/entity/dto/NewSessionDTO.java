@@ -10,6 +10,7 @@ import lombok.Data;
  */
 @Data
 public class NewSessionDTO {
+    private String namespace;
     private String target;
     private String user;
     private String password;

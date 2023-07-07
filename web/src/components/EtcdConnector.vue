@@ -4,9 +4,7 @@ import {Ref, ref} from "vue";
 import {newSession, testSession} from "~/services/SessionService";
 import {_isEmpty} from "~/util/BaseUtil";
 import {ElMessage, UploadFile} from "element-plus";
-import {_loading} from "~/util/CommonUtil";
 import {NewSessionReq} from "~/entitys/RequestTypes";
-import {EventCenter} from "~/util/EventCenter";
 
 const emits = defineEmits(["connected"])
 
@@ -22,6 +20,7 @@ const form = ref({
   name: 'localhost',
   host: '127.0.0.1',
   port: 2379,
+  namespace: '',
   auth: {
     username: <string | null>null,
     password: <string | null>null
@@ -41,6 +40,8 @@ const _packFormData = async (): Promise<NewSessionReq> => {
     caType: "",
     target: ""
   }
+
+  data.namespace = _isEmpty(form.value.namespace) ? null : form.value.namespace
 
   if (!props.checkSessionName(form.value.name)) {
     msg = "Session name exists: " + form.value.name
@@ -126,6 +127,7 @@ const _connect = () => {
       showClose: true,
       message: e,
       type: 'warning',
+      duration: 5000,
     })
   })
 }
@@ -173,7 +175,7 @@ const fileRemove = (file: UploadFile, ref: Ref<UploadFile | undefined>) => {
       <h1 class="header-title">Etcd Connection</h1>
     </div>
     <el-card class="box-card">
-      <el-form v-model="form" :label-width="150" label-suffix=":">
+      <el-form reg="connectionForm" v-model="form" :label-width="150" label-suffix=":">
         <el-form-item label="Session Name">
           <el-input v-model="form.name" placeholder="Please input session name"/>
         </el-form-item>
@@ -183,6 +185,9 @@ const fileRemove = (file: UploadFile, ref: Ref<UploadFile | undefined>) => {
         <el-form-item label="Port">
           <el-input-number v-model="form.port" controls-position="right" placeholder="Please input connect port"/>
         </el-form-item>
+        <el-form-item label="Namespace">
+          <el-input v-model="form.namespace" placeholder="Default is empty"/>
+        </el-form-item>
 
         <el-divider content-position="center" class="divider">Authentication</el-divider>
 
@@ -190,7 +195,10 @@ const fileRemove = (file: UploadFile, ref: Ref<UploadFile | undefined>) => {
           <el-input v-model="form.auth.username" placeholder="Please input authentication username"/>
         </el-form-item>
         <el-form-item label="Password">
-          <el-input v-model="form.auth.password" type="password" show-password
+          <el-input v-model="form.auth.password"
+                    type="password"
+                    show-password
+                    autocomplete="off"
                     placeholder="Please input authentication password"/>
         </el-form-item>
 
@@ -260,6 +268,7 @@ const fileRemove = (file: UploadFile, ref: Ref<UploadFile | undefined>) => {
               <el-input type="password"
                         clearable
                         show-password
+                        autocomplete="off"
                         v-model="form.cert.password"
                         placeholder="Please input cert file password"></el-input>
             </el-form-item>

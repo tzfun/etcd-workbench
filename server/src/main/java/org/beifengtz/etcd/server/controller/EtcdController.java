@@ -16,6 +16,7 @@ import org.beifengtz.etcd.server.entity.dto.NewSessionDTO;
 import org.beifengtz.etcd.server.entity.vo.ResultVO;
 import org.beifengtz.etcd.server.etcd.EtcdConnector;
 import org.beifengtz.etcd.server.etcd.EtcdConnectorFactory;
+import org.beifengtz.etcd.server.exception.EtcdExecuteException;
 import org.beifengtz.etcd.server.util.CommonUtil;
 import org.beifengtz.etcd.server.util.RSAKey;
 import org.beifengtz.jvmm.common.factory.ExecutorFactory;
@@ -48,15 +49,23 @@ public class EtcdController {
     @HttpRequest(value = "/session/test", method = Method.POST)
     public ResultVO connect(@RequestBody NewSessionDTO data) throws Exception {
         try (Client client = constructClientBuilder(data).build()) {
-            client.getKVClient().get(CommonUtil.toByteSequence(" ")).get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
+            client.getKVClient()
+                    .get(CommonUtil.toByteSequence(" "))
+                    .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
             return ResultCode.OK.result(true);
         }
     }
 
     @HttpRequest(value = "/session/new", method = Method.POST)
     public ResultVO newSession(@RequestBody NewSessionDTO data) throws Exception {
-        String key = EtcdConnectorFactory.newConnector(constructClientBuilder(data).build());
-        return ResultCode.OK.result(key);
+        try {
+            String key = EtcdConnectorFactory.newConnector(constructClientBuilder(data).build());
+            return ResultCode.OK.result(key);
+        } catch (EtcdExecuteException e) {
+            log.debug(e.getMessage(), e);
+            log.info("Connect etcd failed. {}", e.getMessage());
+            return ResultCode.CONNECT_ERROR.result(e.getMessage(), null);
+        }
     }
 
     @HttpRequest("/session/close")
@@ -88,7 +97,7 @@ public class EtcdController {
         ClientBuilder builder = Client.builder();
         builder.executorService(ExecutorFactory.getThreadPool())
                 .target(data.getTarget())
-                .namespace(ByteSequence.EMPTY);
+                .namespace(data.getNamespace() == null ? ByteSequence.EMPTY : CommonUtil.toByteSequence(data.getNamespace()));
         if (StringUtil.nonEmpty(data.getUser())) {
             builder.user(CommonUtil.toByteSequence(data.getUser()));
         }

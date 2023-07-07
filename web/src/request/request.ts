@@ -83,7 +83,7 @@ const handleAxiosError = (e: AxiosError, notifyError: boolean | undefined = true
             showClose: true,
             message: e.message,
             type: "error",
-            duration: 3000,
+            duration: 5000,
         })
     }
 }

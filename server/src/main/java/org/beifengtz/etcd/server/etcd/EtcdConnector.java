@@ -29,6 +29,7 @@ import io.etcd.jetcd.op.Op;
 import io.etcd.jetcd.options.DeleteOption;
 import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.options.PutOption;
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import org.beifengtz.etcd.server.config.Configuration;
 import org.beifengtz.etcd.server.entity.bo.KeyBO;
@@ -67,9 +68,24 @@ public class EtcdConnector {
         this.connKey = UUID.randomUUID().toString().replaceAll("-", "").toLowerCase(Locale.ROOT);
         this.activeTime = System.currentTimeMillis();
         try {
-            client.getKVClient().get(CommonUtil.toByteSequence(" ")).get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.SECONDS);
-        } catch (InterruptedException | ExecutionException | TimeoutException e) {
-            throw new EtcdExecuteException("Connect error " + e.getMessage(), e);
+            client.getKVClient()
+                    .get(CommonUtil.toByteSequence(" "))
+                    .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
+        } catch (ExecutionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof ExecutionException) {
+                cause = cause.getCause();
+            }
+
+            if (cause instanceof StatusRuntimeException) {
+                throw new EtcdExecuteException(((StatusRuntimeException) cause).getStatus().getCode().name(), cause);
+            } else {
+                throw new EtcdExecuteException("Connect failed." + (e.getMessage() == null ? "" : (" " + e.getMessage())), e);
+            }
+        } catch (TimeoutException e) {
+            throw new EtcdExecuteException("Connect timeout", e);
+        } catch (InterruptedException e) {
+            throw new EtcdExecuteException("Connect failed." + (e.getMessage() == null ? "" : (" " + e.getMessage())), e);
         }
     }
 

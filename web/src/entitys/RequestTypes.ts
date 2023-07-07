@@ -1,4 +1,5 @@
 export interface NewSessionReq extends Record<string, any> {
+    namespace: string | null;
     target: string | null;
     user?: string | null;
     password?: string | null;

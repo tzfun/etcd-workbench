@@ -3,9 +3,8 @@ import {toggleDark} from "~/composables";
 import {ref} from 'vue'
 import type {TabPaneName} from 'element-plus'
 import {closeSession} from "~/services/SessionService";
-import {EventCenter} from "~/util/EventCenter";
 
-let tabIndex = 1
+const tabIndexArr = [1]
 const editableTabsValue = ref('1')
 const tabs = ref([
   {
@@ -18,7 +17,18 @@ const tabs = ref([
 
 const handleTabsEdit = (targetName: TabPaneName | undefined, action: 'remove' | 'add') => {
   if (action === 'add') {
-    const newTabName = `${++tabIndex}`
+    let newTabName = null;
+    for (let i = 0; i < tabIndexArr.length; i++) {
+      if (tabIndexArr[i] != i + 1) {
+        newTabName = i + 1;
+        tabIndexArr[i] = newTabName
+        break
+      }
+    }
+    if (newTabName == null) {
+      newTabName = tabIndexArr.length + 1;
+      tabIndexArr.push(newTabName)
+    }
     tabs.value.push({
       title: `New Session(${newTabName})`,
       name: newTabName,
@@ -32,6 +42,7 @@ const handleTabsEdit = (targetName: TabPaneName | undefined, action: 'remove' | 
     if (activeName === targetName) {
       tabsVal.forEach((tab, index) => {
         if (tab.name === targetName) {
+          tabIndexArr[parseInt(tab.name) - 1] = 0;
           const removeTab = () => {
             const nextTab = tabsVal[index + 1] || tabsVal[index - 1]
             if (nextTab) {
@@ -39,7 +50,6 @@ const handleTabsEdit = (targetName: TabPaneName | undefined, action: 'remove' | 
             }
           }
           if (tab.state !== 'new') {
-            EventCenter('closeSession', tab.sessionKey)
             closeSession(tab.sessionKey)
           }
           removeTab()
