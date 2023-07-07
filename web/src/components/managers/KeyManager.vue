@@ -7,6 +7,8 @@ import Editor from "~/components/editor/Editor.vue";
 import {isDark} from "~/composables";
 import {reactive} from "vue";
 import {_isEmpty} from "~/util/BaseUtil";
+import {CodeDiff} from "v-code-diff";
+import {Base64} from 'js-base64';
 
 const editorRef = ref(null)
 const props = defineProps({
@@ -31,7 +33,18 @@ const editorConfig = reactive<EditorConfig>({
   language: 'json',
   theme: isDark ? 'oneDark' : 'default'
 })
-const editorLanguage = computed(() => {
+
+const showDiff = ref<Boolean>(false)
+const versionDiffInfo = reactive({
+  key: '',
+  version: 0,
+  createRevision: 0,
+  modRevision: 0,
+  versionHistory: [],
+  versionA: 0,
+  versionAContent: '',
+  versionB: 0,
+  versionBContent:''
 })
 
 const loadAllKeys = () => {
@@ -70,7 +83,61 @@ const edit = (index, row: KeyDTO) => {
 }
 
 const diff = (index, row: KeyDTO) => {
+  if (row.version <= 1) {
+    ElMessage({
+      type: 'warning',
+      message: 'No multiple versions',
+    })
+    return
+  }
 
+  versionDiffInfo.version = row.version
+  versionDiffInfo.key = row.key
+  versionDiffInfo.createRevision = row.createRevision
+  versionDiffInfo.modRevision = row.modRevision
+
+  const history = []
+  for (let i = 1; i <= row.version; i++) {
+    history.push(i)
+  }
+  versionDiffInfo.versionHistory = history
+
+  getKV(props.sessionKey, versionDiffInfo.key).then(data => {
+    versionDiffInfo.versionA = row.version
+    versionDiffInfo.versionAContent = data.value
+
+    versionDiffInfo.versionB = data.version - 1
+    loadDiff(false)
+  }).catch(e => {
+    console.error(e)
+  })
+}
+
+const loadDiff = (forA:Boolean) => {
+  const targetVersion = forA ? versionDiffInfo.versionA : versionDiffInfo.versionB
+  const queryVersion = versionDiffInfo.createRevision +targetVersion-1
+
+  getKV(props.sessionKey, versionDiffInfo.key, queryVersion).then(data => {
+    let queryValue = '';
+    if (data == null) {
+      ElMessage({
+        type: 'warning',
+        message: `History not found with version: ${targetVersion}`,
+      })
+    } else {
+      queryValue = data.value
+    }
+    if (forA) {
+      versionDiffInfo.versionAContent = queryValue
+    } else {
+      versionDiffInfo.versionBContent = queryValue
+    }
+    if (!showDiff.value) {
+      showDiff.value = true
+    }
+  }).catch(e => {
+    console.error(e)
+  })
 }
 
 const del = (index, row: KeyDTO) => {
@@ -116,7 +183,15 @@ const putKey = () => {
     return
   }
 
-  putKV(props.sessionKey, key, value).then(() => {
+  if (value == editingKV.value.value) {
+    ElMessage({
+      type: 'warning',
+      message: 'Content not change',
+    })
+    return
+  }
+
+  putKV(props.sessionKey, key, Base64.encode(value)).then(() => {
     loadAllKeys()
     editing.value = false
   }).catch(e => {
@@ -159,8 +234,7 @@ const putKey = () => {
     <editor ref="editorRef"
             :key="editingKV"
             :code="editingKV.value"
-            :config="editorConfig"
-            :language="editorLanguage"/>
+            :config="editorConfig"/>
     <template #footer>
       <span class="dialog-footer">
         <el-button @click="editing = false">Cancel</el-button>
@@ -169,6 +243,48 @@ const putKey = () => {
         </el-button>
       </span>
     </template>
+  </el-dialog>
+
+  <el-dialog v-model="showDiff"
+             :title="`Version Diff: ${versionDiffInfo.key}`"
+             align-center>
+    Version A:
+    <el-select v-model="versionDiffInfo.versionA"
+               fit-input-width
+               style="width: 100px"
+               class="inline-flex"
+               placeholder="Select language"
+               @change="loadDiff(true)">
+      <el-option
+          v-for="item in versionDiffInfo.versionHistory"
+          :key="item"
+          :label="item"
+          :value="item"
+      />
+    </el-select>
+
+    <div style="float: right">
+      Version B:
+      <el-select v-model="versionDiffInfo.versionB"
+                 fit-input-width
+                 style="width: 100px"
+                 class="inline-flex"
+                 placeholder="Select language"
+                 @change="loadDiff(false)">
+        <el-option
+            v-for="item in versionDiffInfo.versionHistory"
+            :key="item"
+            :label="item"
+            :value="item"
+        />
+      </el-select>
+    </div>
+
+    <code-diff
+        :old-string="versionDiffInfo.versionAContent"
+        :new-string="versionDiffInfo.versionBContent"
+        :file-name="versionDiffInfo.key"
+        output-format="side-by-side"/>
   </el-dialog>
 </template>
 

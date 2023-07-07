@@ -1,8 +1,8 @@
 export interface KeyDTO {
     key: string;
-    version?: number | 0;
-    createVersion?: number | 0;
-    modVersion?: number | 0;
+    version: number | 0;
+    createRevision: number | 0;
+    modRevision: number | 0;
     lease?: number | 0;
 }
 

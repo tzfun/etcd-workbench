@@ -4,6 +4,7 @@ import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.ClientBuilder;
 import io.etcd.jetcd.options.GetOption;
+import io.netty.handler.codec.base64.Base64Decoder;
 import io.netty.handler.ssl.ApplicationProtocolConfig;
 import io.netty.handler.ssl.ApplicationProtocolNames;
 import io.netty.handler.ssl.SslContext;
@@ -35,6 +36,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -117,7 +119,8 @@ public class EtcdController {
 
     @HttpRequest("/session/etcd/kv/put")
     public ResultVO putKV(@RequestParam String sessionId, @RequestParam String key, @RequestParam String value) {
-        EtcdConnectorFactory.get(sessionId).kvPut(key, value);
+        String valueStr = new String(Base64.getDecoder().decode(value), StandardCharsets.UTF_8);
+        EtcdConnectorFactory.get(sessionId).kvPut(key, valueStr);
         return ResultCode.OK.result();
     }
 
