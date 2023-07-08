@@ -44,9 +44,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
-import java.util.Queue;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -184,35 +182,25 @@ public class EtcdConnector {
             assert endRevision > startRevision;
             KV kvClient = client.getKVClient();
             ByteSequence key0 = CommonUtil.toByteSequence(key);
-            long size = endRevision - startRevision + 1;
-            if (size > Integer.MAX_VALUE) {
-                throw new EtcdExecuteException("Version gap is too large");
-            } else if (size > 100_0000) {
-                logger.warn("Version gap is large, may affect performance");
-            }
-            CountDownLatch cdl = new CountDownLatch((int) size);
-            Queue<Long> historyVersion = new ConcurrentLinkedQueue<>();
-            for (long rev = startRevision; rev <= endRevision; rev++) {
-                long curRev = rev;
-                kvClient.get(key0, GetOption.newBuilder()
-                        .withRevision(curRev)
+            List<Long> historyVersion = new ArrayList<>();
+            long rev = endRevision;
+            while (rev >= startRevision && rev <= endRevision) {
+                GetResponse getResponse = kvClient.get(key0, GetOption.newBuilder()
+                        .withRevision(rev)
                         .withKeysOnly(true)
-                        .build()).whenCompleteAsync(((getResponse, throwable) -> {
-                    try {
-                        if (getResponse.getCount() > 0) {
-                            KeyValue kv = getResponse.getKvs().get(0);
-                            if (curRev >= kv.getCreateRevision() && curRev <= kv.getModRevision()) {
-                                historyVersion.add(curRev);
-                            }
-                        } else if (throwable != null) {
-                            logger.error("Get history version failed", throwable);
-                        }
-                    } finally {
-                        cdl.countDown();
+                        .build()).get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
+                if (getResponse.getCount() > 0) {
+                    KeyValue kv = getResponse.getKvs().get(0);
+                    if (rev >= kv.getCreateRevision() && rev <= kv.getModRevision()) {
+                        historyVersion.add(rev);
+                        rev--;
+                    } else {
+                        rev = kv.getModRevision();
                     }
-                }));
+                } else {
+                    break;
+                }
             }
-            cdl.await(10, TimeUnit.SECONDS);
             return historyVersion;
         } catch (Throwable e) {
             onExecuteError(e);
