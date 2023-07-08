@@ -34,7 +34,7 @@ const onNewSession = ({key, name}) => {
         }
       })
     }
-  }, 3000)
+  }, 15000)
 }
 
 const onSessionClosed = () => {

@@ -8,6 +8,7 @@ import {Codemirror} from "vue-codemirror";
 import jsonLanguage from "./lang/json";
 import xmlLanguage from "./lang/xml";
 import yamlLanguage from "./lang/yaml";
+import {_byteFormat, _sizeof} from "~/util/BaseUtil";
 
 const props = defineProps({
   config: {
@@ -71,6 +72,10 @@ const state = reactive({
   cursor: null as null | number,
   selected: null as null | number,
   length: null as null | number
+})
+
+const size = computed(() => {
+  return _byteFormat(_sizeof(code.value))
 })
 
 const handleStateUpdate = (viewUpdate: ViewUpdate) => {
@@ -147,11 +152,8 @@ defineExpose({
       </div>
       <div class="divider"></div>
       <div class="footer">
-        <div class="buttons">
-          <button class="item" @click="handleUndo">Undo</button>
-          <button class="item" @click="handleRedo">Redo</button>
-        </div>
         <div class="infos">
+          <span class="item">Size: {{ size }}</span>
           <span class="item">Spaces: {{ config.tabSize }}</span>
           <span class="item">Length: {{ state.length }}</span>
           <span class="item">Lines: {{ state.lines }}</span>
@@ -195,29 +197,6 @@ defineExpose({
     justify-content: space-between;
     align-items: center;
     font-size: 90%;
-
-    .buttons {
-      .item {
-        margin-right: 1em;
-        display: inline-flex;
-        justify-content: center;
-        align-items: center;
-        background-color: transparent;
-        border: 1px dashed $border-color;
-        font-size: $font-size-small;
-        color: $text-secondary;
-        cursor: pointer;
-
-        .iconfont {
-          margin-left: $xs-gap;
-        }
-
-        &:hover {
-          color: $text-color;
-          border-color: $text-color;
-        }
-      }
-    }
 
     .infos {
       .item {
