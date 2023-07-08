@@ -17,7 +17,6 @@ import io.etcd.jetcd.cluster.MemberUpdateResponse;
 import io.etcd.jetcd.common.exception.ClosedClientException;
 import io.etcd.jetcd.kv.DeleteResponse;
 import io.etcd.jetcd.kv.GetResponse;
-import io.etcd.jetcd.kv.PutResponse;
 import io.etcd.jetcd.kv.TxnResponse;
 import io.etcd.jetcd.maintenance.AlarmMember;
 import io.etcd.jetcd.maintenance.AlarmResponse;
@@ -27,7 +26,6 @@ import io.etcd.jetcd.maintenance.StatusResponse;
 import io.etcd.jetcd.op.Cmp;
 import io.etcd.jetcd.op.CmpTarget;
 import io.etcd.jetcd.op.Op;
-import io.etcd.jetcd.op.Op.GetOp;
 import io.etcd.jetcd.options.DeleteOption;
 import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.options.PutOption;
@@ -42,12 +40,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -55,9 +51,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.function.BiFunction;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * description: TODO
@@ -190,7 +184,13 @@ public class EtcdConnector {
             assert endRevision > startRevision;
             KV kvClient = client.getKVClient();
             ByteSequence key0 = CommonUtil.toByteSequence(key);
-            CountDownLatch cdl = new CountDownLatch((int) (endRevision - startRevision + 1));
+            long size = endRevision - startRevision + 1;
+            if (size > Integer.MAX_VALUE) {
+                throw new EtcdExecuteException("Version gap is too large");
+            } else if (size > 100_0000) {
+                logger.warn("Version gap is large, may affect performance");
+            }
+            CountDownLatch cdl = new CountDownLatch((int) size);
             Queue<Long> historyVersion = new ConcurrentLinkedQueue<>();
             for (long rev = startRevision; rev <= endRevision; rev++) {
                 long curRev = rev;
@@ -204,6 +204,8 @@ public class EtcdConnector {
                             if (curRev >= kv.getCreateRevision() && curRev <= kv.getModRevision()) {
                                 historyVersion.add(curRev);
                             }
+                        } else if (throwable != null) {
+                            logger.error("Get history version failed", throwable);
                         }
                     } finally {
                         cdl.countDown();
@@ -287,6 +289,37 @@ public class EtcdConnector {
      */
     public long kvDel(String key) {
         return kvDel(key, false);
+    }
+
+    /**
+     * 批量删除key，指定key，不按前缀删除
+     *
+     * @param keys 指定的key数组
+     * @return 成功条数
+     */
+    public int kvDelBatch(String... keys) {
+        onActive();
+        try {
+            KV kvClient = client.getKVClient();
+            CountDownLatch cdl = new CountDownLatch(keys.length);
+            AtomicInteger success = new AtomicInteger(0);
+            for (String s : keys) {
+                kvClient.delete(CommonUtil.toByteSequence(s), DeleteOption.newBuilder().isPrefix(false).build())
+                        .whenCompleteAsync((deleteResponse, throwable) -> {
+                            cdl.countDown();
+                            if (throwable != null) {
+                                logger.error("Delete batch error", throwable);
+                            } else {
+                                success.incrementAndGet();
+                            }
+                        });
+            }
+            cdl.await(10, TimeUnit.SECONDS);
+            return success.get();
+        } catch (InterruptedException e) {
+            onExecuteError(e);
+        }
+        return 0;
     }
 
     /**

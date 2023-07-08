@@ -114,9 +114,8 @@ public class EtcdController {
     }
 
     @HttpRequest("/session/etcd/kv/delete")
-    public ResultVO deleteKey(@RequestParam String sessionId, @RequestParam String key) {
-        EtcdConnectorFactory.get(sessionId).kvDel(key);
-        return ResultCode.OK.result();
+    public ResultVO deleteKey(@RequestParam String sessionId, @RequestParam String[] keys) {
+        return ResultCode.OK.result(EtcdConnectorFactory.get(sessionId).kvDelBatch(keys));
     }
 
     @HttpRequest("/session/etcd/kv/put")

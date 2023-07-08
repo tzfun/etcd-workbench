@@ -2,7 +2,6 @@
 import {deleteKey, getAllKeys, getKV, getKVHistory, putKV} from "~/services/SessionService";
 import {Delete, DocumentAdd, DocumentCopy, Edit, Refresh, Search} from "@element-plus/icons-vue";
 import {EditorConfig, KeyDTO, KeyValueDTO} from "~/entitys/TransformTypes";
-import {ElMessageBox} from "element-plus";
 import Editor from "~/components/editor/Editor.vue";
 import {isDark} from "~/composables";
 import {reactive} from "vue";
@@ -30,6 +29,7 @@ const filterTableData = computed(() =>
             data.key.toLowerCase().includes(keySearch.value.toLowerCase())
     )
 )
+const selectedKey = ref<string[]>([])
 const keySearch = ref()
 const editing = ref<Boolean>(false)
 const isNew = ref<Boolean>(false)
@@ -57,6 +57,14 @@ const versionDiffInfo = reactive({
   versionB: 0,
   versionBContent: ''
 })
+
+const handleSelectionChange = (rows: KeyValueDTO[]) => {
+  let selected = []
+  for (let row of rows) {
+    selected.push(row.key)
+  }
+  selectedKey.value = selected
+}
 
 const loadAllKeys = () => {
   getAllKeys(props.sessionKey as string).then(data => {
@@ -96,7 +104,7 @@ const edit = (index, row: KeyDTO) => {
 const diff = (index, row: KeyDTO) => {
   if (row.version <= 1) {
     ElMessage({
-      type: 'warning',
+      type: 'info',
       message: 'No multiple versions',
     })
     return
@@ -126,8 +134,6 @@ const diff = (index, row: KeyDTO) => {
   }).catch(e => {
     console.error(e)
   })
-
-
 }
 
 const loadDiff = (forA: Boolean) => {
@@ -158,7 +164,39 @@ const loadDiff = (forA: Boolean) => {
 
 const del = (index, row: KeyDTO) => {
   ElMessageBox.confirm(
-      'Are you sure to delete this key?',
+      `Are you sure to delete this key? <br><strong>${row.key}</strong>`,
+      'Confirm',
+      {
+        confirmButtonText: 'OK',
+        cancelButtonText: 'Cancel',
+        dangerouslyUseHTMLString: true,
+        type: 'warning',
+      }
+  ).then(() => {
+    deleteKey(props.sessionKey, [row.key]).then(() => {
+      ElMessage({
+        type: 'success',
+        message: 'Deleted successfully',
+      })
+      tableData.value.splice(index, 1)
+    }).catch(e => {
+      console.error(e)
+    })
+  }).catch(() => {
+  })
+}
+
+const delBatch = () => {
+  if (selectedKey.value.length == 0) {
+    ElMessage({
+      type: 'info',
+      message: 'No selected keys',
+    })
+    return
+  }
+
+  ElMessageBox.confirm(
+      'Are you sure to delete this keys?',
       'Confirm',
       {
         confirmButtonText: 'OK',
@@ -166,12 +204,13 @@ const del = (index, row: KeyDTO) => {
         type: 'warning',
       }
   ).then(() => {
-    deleteKey(props.sessionKey, row.key).then(() => {
+    deleteKey(props.sessionKey, selectedKey.value).then(() => {
       ElMessage({
         type: 'success',
-        message: 'Delete completed',
+        message: 'Deleted successfully',
       })
-      tableData.value.splice(index, 1)
+      selectedKey.value = []
+      loadAllKeys()
     }).catch(e => {
       console.error(e)
     })
@@ -220,13 +259,19 @@ const putKey = () => {
   <div>
     <el-button type="primary" :icon="Refresh" @click="loadAllKeys">Refresh</el-button>
     <el-button type="success" :icon="DocumentAdd" @click="add">Add Key/Value</el-button>
+    <el-button type="danger" :icon="Delete" @click="delBatch">Delete Keys</el-button>
   </div>
 
-  <el-table :data="filterTableData" border stripe class="table">
-    <el-table-column prop="key" label="Key" width="180"/>
-    <el-table-column prop="version" label="Version" width="180"/>
-    <el-table-column prop="createRevision" label="Create Revision"/>
-    <el-table-column prop="modRevision" label="Modify Revision"/>
+  <el-table :data="filterTableData"
+            border
+            stripe
+            @selection-change="handleSelectionChange"
+            class="table">
+    <el-table-column type="selection" width="55" />
+    <el-table-column prop="key" label="Key" sortable/>
+    <el-table-column prop="version" label="Version"  sortable/>
+    <el-table-column prop="createRevision" label="Create Revision"  sortable/>
+    <el-table-column prop="modRevision" label="Modify Revision"  sortable/>
     <el-table-column prop="lease" label="Lease"/>
     <el-table-column fixed="right" label="Operations" width="300">
       <template #header>

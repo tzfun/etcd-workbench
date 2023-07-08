@@ -44,10 +44,10 @@ export function getKVHistory(
     })
 }
 
-export function deleteKey(sessionId: string, key: string): Promise<any> {
+export function deleteKey(sessionId: string, keys: string[]): Promise<any> {
     return request.get(host + "/session/etcd/kv/delete", {
         sessionId: sessionId,
-        key: key
+        keys: keys
     })
 }
 
