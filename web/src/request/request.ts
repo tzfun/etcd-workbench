@@ -190,15 +190,17 @@ class EnclosureHttp {
      * @param params 参数
      * @param config
      * @param notifyError
+     * @param withLoading
      */
     public get: Request = (
         url: string,
         params?: unknown,
         config?: AxiosRequestConfig,
-        notifyError?: boolean
+        notifyError?: boolean,
+        withLoading: boolean = true
     ) => {
         return new Promise<any>((resolve, reject) => {
-            let loading = _loading()
+            let loading = withLoading ? _loading() : null
             EnclosureHttp.axiosInstance.get(url, {params, ...config}).then(res => {
                 let resData: ResultData = res.data
                 if (resData.code === 0) {
@@ -211,7 +213,9 @@ class EnclosureHttp {
                 handleAxiosError(e, notifyError)
                 reject(e.message)
             }).finally(() => {
-                loading.close()
+                if (loading) {
+                    loading.close()
+                }
             })
         });
     };
@@ -222,15 +226,17 @@ class EnclosureHttp {
      * @param data 参数
      * @param config
      * @param notifyError
+     * @param withLoading
      */
     public post: Request = (
         url: string,
         data: unknown = {},
         config?: AxiosRequestConfig,
-        notifyError?: boolean
+        notifyError?: boolean,
+        withLoading: boolean = true
     ) => {
         return new Promise<any>((resolve, reject) => {
-            let loading = _loading()
+            let loading = withLoading ? _loading() : null
             EnclosureHttp.axiosInstance.post(url, data, config).then(res => {
                 let resData: ResultData = res.data
                 if (resData.code === 0) {
@@ -243,7 +249,9 @@ class EnclosureHttp {
                 handleAxiosError(e, notifyError)
                 reject(e.message)
             }).finally(() => {
-                loading.close()
+                if (loading) {
+                    loading.close()
+                }
             })
         });
     };

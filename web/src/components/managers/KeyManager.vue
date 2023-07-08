@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import {deleteKey, getAllKeys, getKV, putKV} from "~/services/SessionService";
-import {Delete, DocumentAdd, DocumentCopy, Edit, Refresh} from "@element-plus/icons-vue";
+import {deleteKey, getAllKeys, getKV, getKVHistory, putKV} from "~/services/SessionService";
+import {Delete, DocumentAdd, DocumentCopy, Edit, Refresh, Search} from "@element-plus/icons-vue";
 import {EditorConfig, KeyDTO, KeyValueDTO} from "~/entitys/TransformTypes";
 import {ElMessageBox} from "element-plus";
 import Editor from "~/components/editor/Editor.vue";
@@ -12,7 +12,10 @@ import {Base64} from 'js-base64';
 
 const editorRef = ref(null)
 const props = defineProps({
-  sessionKey: String
+  sessionKey: {
+    type: String,
+    required: true
+  }
 })
 
 onMounted(() => {
@@ -20,6 +23,14 @@ onMounted(() => {
 })
 
 const tableData = ref<Array<KeyDTO>>([])
+const filterTableData = computed(() =>
+    tableData.value.filter(
+        (data) =>
+            !keySearch.value ||
+            data.key.toLowerCase().includes(keySearch.value.toLowerCase())
+    )
+)
+const keySearch = ref()
 const editing = ref<Boolean>(false)
 const isNew = ref<Boolean>(false)
 const editingKV = ref<KeyValueDTO>()
@@ -29,7 +40,7 @@ const editorConfig = reactive<EditorConfig>({
   indentWithTab: true,
   tabSize: 2,
   autofocus: true,
-  height: "500px",
+  height: "50vh",
   language: 'json',
   theme: isDark ? 'oneDark' : 'default'
 })
@@ -44,7 +55,7 @@ const versionDiffInfo = reactive({
   versionA: 0,
   versionAContent: '',
   versionB: 0,
-  versionBContent:''
+  versionBContent: ''
 })
 
 const loadAllKeys = () => {
@@ -96,33 +107,38 @@ const diff = (index, row: KeyDTO) => {
   versionDiffInfo.createRevision = row.createRevision
   versionDiffInfo.modRevision = row.modRevision
 
-  const history = []
-  for (let i = 1; i <= row.version; i++) {
-    history.push(i)
-  }
-  versionDiffInfo.versionHistory = history
+  getKVHistory(
+      props.sessionKey,
+      versionDiffInfo.key,
+      versionDiffInfo.createRevision,
+      versionDiffInfo.modRevision).then(data => {
+    versionDiffInfo.versionHistory = data.sort()
+    getKV(props.sessionKey, versionDiffInfo.key).then(data => {
+      versionDiffInfo.versionA = row.modRevision
+      versionDiffInfo.versionAContent = data.value
 
-  getKV(props.sessionKey, versionDiffInfo.key).then(data => {
-    versionDiffInfo.versionA = row.version
-    versionDiffInfo.versionAContent = data.value
-
-    versionDiffInfo.versionB = data.version - 1
-    loadDiff(false)
+      //  上一个版本
+      versionDiffInfo.versionB = versionDiffInfo.versionHistory[row.version - 2]
+      loadDiff(false)
+    }).catch(e => {
+      console.error(e)
+    })
   }).catch(e => {
     console.error(e)
   })
+
+
 }
 
-const loadDiff = (forA:Boolean) => {
-  const targetVersion = forA ? versionDiffInfo.versionA : versionDiffInfo.versionB
-  const queryVersion = versionDiffInfo.createRevision +targetVersion-1
+const loadDiff = (forA: Boolean) => {
+  const queryVersion = forA ? versionDiffInfo.versionA : versionDiffInfo.versionB
 
   getKV(props.sessionKey, versionDiffInfo.key, queryVersion).then(data => {
     let queryValue = '';
     if (data == null) {
       ElMessage({
         type: 'warning',
-        message: `History not found with version: ${targetVersion}`,
+        message: `History not found with version: ${queryVersion}`,
       })
     } else {
       queryValue = data.value
@@ -206,13 +222,16 @@ const putKey = () => {
     <el-button type="success" :icon="DocumentAdd" @click="add">Add Key/Value</el-button>
   </div>
 
-  <el-table :data="tableData" border stripe class="table">
+  <el-table :data="filterTableData" border stripe class="table">
     <el-table-column prop="key" label="Key" width="180"/>
     <el-table-column prop="version" label="Version" width="180"/>
     <el-table-column prop="createRevision" label="Create Revision"/>
     <el-table-column prop="modRevision" label="Modify Revision"/>
     <el-table-column prop="lease" label="Lease"/>
     <el-table-column fixed="right" label="Operations" width="300">
+      <template #header>
+        <el-input v-model="keySearch" placeholder="Type to search" :prefix-icon="Search"/>
+      </template>
       <template #default="scope">
         <el-button type="primary" :icon="Edit" plain size="small" @click="edit(scope.$index,scope.row)">Edit</el-button>
         <el-button type="info" :icon="DocumentCopy" plain size="small" @click="diff(scope.$index,scope.row)">Version
@@ -223,7 +242,10 @@ const putKey = () => {
     </el-table-column>
   </el-table>
 
-  <el-dialog v-model="editing" title="Key Editor" align-center>
+  <el-dialog v-model="editing"
+             title="Key Editor"
+             :close-on-click-modal="false"
+             align-center>
     <el-row :gutter="20" class="mt-2 mb-2">
       <span style="width: 60px;text-align: center;line-height: 30px;">Key:</span>
       <el-input v-model="editingKV.key"
@@ -247,11 +269,11 @@ const putKey = () => {
 
   <el-dialog v-model="showDiff"
              :title="`Version Diff: ${versionDiffInfo.key}`"
+             :close-on-click-modal="false"
              align-center>
     Version A:
     <el-select v-model="versionDiffInfo.versionA"
                fit-input-width
-               style="width: 100px"
                class="inline-flex"
                placeholder="Select language"
                @change="loadDiff(true)">
@@ -260,14 +282,21 @@ const putKey = () => {
           :key="item"
           :label="item"
           :value="item"
-      />
+      >
+        <span style="float: left">{{ item }}</span>
+        <span v-if="item == versionDiffInfo.modRevision" class="version-option-tag">
+          latest
+        </span>
+        <span v-else-if="item == versionDiffInfo.createRevision" class="version-option-tag">
+          create
+        </span>
+      </el-option>
     </el-select>
 
     <div style="float: right">
       Version B:
       <el-select v-model="versionDiffInfo.versionB"
                  fit-input-width
-                 style="width: 100px"
                  class="inline-flex"
                  placeholder="Select language"
                  @change="loadDiff(false)">
@@ -276,11 +305,20 @@ const putKey = () => {
             :key="item"
             :label="item"
             :value="item"
-        />
+        >
+          <span style="float: left">{{ item }}</span>
+          <span v-if="item == versionDiffInfo.modRevision" class="version-option-tag">
+            latest
+          </span>
+          <span v-else-if="item == versionDiffInfo.createRevision" class="version-option-tag">
+            create
+          </span>
+        </el-option>
       </el-select>
     </div>
 
     <code-diff
+        style="max-height: 70vh;min-height:50vh;"
         :old-string="versionDiffInfo.versionAContent"
         :new-string="versionDiffInfo.versionBContent"
         :file-name="versionDiffInfo.key"
@@ -292,5 +330,11 @@ const putKey = () => {
 .table {
   width: 100%;
   margin: 15px 0;
+}
+
+.version-option-tag {
+  float: right;
+  color: #909399FF;
+  font-size: 13px;
 }
 </style>

@@ -2,6 +2,7 @@ package org.beifengtz.etcd.server.etcd;
 
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
+import io.etcd.jetcd.KV;
 import io.etcd.jetcd.KeyValue;
 import io.etcd.jetcd.auth.AuthRoleGetResponse;
 import io.etcd.jetcd.auth.AuthRoleListResponse;
@@ -26,6 +27,7 @@ import io.etcd.jetcd.maintenance.StatusResponse;
 import io.etcd.jetcd.op.Cmp;
 import io.etcd.jetcd.op.CmpTarget;
 import io.etcd.jetcd.op.Op;
+import io.etcd.jetcd.op.Op.GetOp;
 import io.etcd.jetcd.options.DeleteOption;
 import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.options.PutOption;
@@ -40,13 +42,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
+import java.util.Queue;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.BiFunction;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -165,6 +174,48 @@ public class EtcdConnector {
      */
     public List<KeyValueBO> kvGet(String key, boolean isPrefix) {
         return kvGet(key, GetOption.newBuilder().isPrefix(isPrefix).build());
+    }
+
+    /**
+     * 获取某一个key的所有历史版本
+     *
+     * @param key           key
+     * @param startRevision 开始版本号
+     * @param endRevision   结束版本号
+     * @return 版本号列表
+     */
+    public Collection<Long> kvGetHistoryVersion(String key, long startRevision, long endRevision) {
+        onActive();
+        try {
+            assert endRevision > startRevision;
+            KV kvClient = client.getKVClient();
+            ByteSequence key0 = CommonUtil.toByteSequence(key);
+            CountDownLatch cdl = new CountDownLatch((int) (endRevision - startRevision + 1));
+            Queue<Long> historyVersion = new ConcurrentLinkedQueue<>();
+            for (long rev = startRevision; rev <= endRevision; rev++) {
+                long curRev = rev;
+                kvClient.get(key0, GetOption.newBuilder()
+                        .withRevision(curRev)
+                        .withKeysOnly(true)
+                        .build()).whenCompleteAsync(((getResponse, throwable) -> {
+                    try {
+                        if (getResponse.getCount() > 0) {
+                            KeyValue kv = getResponse.getKvs().get(0);
+                            if (curRev >= kv.getCreateRevision() && curRev <= kv.getModRevision()) {
+                                historyVersion.add(curRev);
+                            }
+                        }
+                    } finally {
+                        cdl.countDown();
+                    }
+                }));
+            }
+            cdl.await(10, TimeUnit.SECONDS);
+            return historyVersion;
+        } catch (Throwable e) {
+            onExecuteError(e);
+        }
+        return List.of();
     }
 
     /**

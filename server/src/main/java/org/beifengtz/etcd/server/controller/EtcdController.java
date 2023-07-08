@@ -3,6 +3,7 @@ package org.beifengtz.etcd.server.controller;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.ClientBuilder;
+import io.etcd.jetcd.op.Op.GetOp;
 import io.etcd.jetcd.options.GetOption;
 import io.netty.handler.codec.base64.Base64Decoder;
 import io.netty.handler.ssl.ApplicationProtocolConfig;
@@ -37,6 +38,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -122,6 +124,16 @@ public class EtcdController {
         String valueStr = new String(Base64.getDecoder().decode(value), StandardCharsets.UTF_8);
         EtcdConnectorFactory.get(sessionId).kvPut(key, valueStr);
         return ResultCode.OK.result();
+    }
+
+    @HttpRequest("/session/etcd/kv/get_history")
+    public ResultVO getKVHistory(@RequestParam String sessionId,
+                                 @RequestParam String key,
+                                 @RequestParam long startVersion,
+                                 @RequestParam long endVersion) {
+        Collection<Long> versions = EtcdConnectorFactory.get(sessionId)
+                .kvGetHistoryVersion(key, startVersion, endVersion);
+        return ResultCode.OK.result(versions);
     }
 
     private ClientBuilder constructClientBuilder(NewSessionDTO data) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {

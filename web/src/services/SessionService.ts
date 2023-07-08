@@ -15,18 +15,32 @@ export function testSession(data: NewSessionReq): Promise<any> {
 }
 
 export function heartBeat(sessionId: string): Promise<any> {
-    return request.get(host + "/session/heart_beat", {sessionId: sessionId}, undefined, false)
+    return request.get(host + "/session/heart_beat", {sessionId: sessionId}, undefined, false, false)
 }
 
 export function getAllKeys(sessionId: string): Promise<any> {
     return request.get(host + "/session/etcd/kv/get_all_keys", {sessionId: sessionId})
 }
 
-export function getKV(sessionId: string, key: string, version: number | null): Promise<any> {
+export function getKV(sessionId: string, key: string, version?: number | null): Promise<any> {
     return request.get(host + "/session/etcd/kv/get", {
         sessionId: sessionId,
         key: key,
         version: version
+    })
+}
+
+export function getKVHistory(
+    sessionId: string,
+    key: string,
+    startVersion: number,
+    endVersion: number
+): Promise<any> {
+    return request.get(host + "/session/etcd/kv/get_history", {
+        sessionId: sessionId,
+        key: key,
+        startVersion: startVersion,
+        endVersion: endVersion
     })
 }
 

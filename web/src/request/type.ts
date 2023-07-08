@@ -14,6 +14,7 @@ export interface Request {
         url: string,
         params?: Record<string, unknown>,
         config?: AxiosRequestConfig,
-        notifyError?: boolean
+        notifyError?: boolean,
+        withLoading?: boolean
     ): Promise<ResultData>;
 }
