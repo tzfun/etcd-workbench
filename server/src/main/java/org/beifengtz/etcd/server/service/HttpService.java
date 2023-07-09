@@ -3,10 +3,13 @@ package org.beifengtz.etcd.server.service;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.EventLoopGroup;
-import org.beifengtz.etcd.server.handler.HttpHandlerProvider;
+import io.netty.util.concurrent.EventExecutorGroup;
+import org.beifengtz.etcd.server.handler.HttpHandler;
 import org.beifengtz.jvmm.convey.channel.ChannelInitializers;
 import org.beifengtz.jvmm.convey.channel.HttpServerChannelInitializer;
+import org.beifengtz.jvmm.convey.handler.HandlerProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,6 +20,8 @@ import org.slf4j.LoggerFactory;
  * @author beifengtz
  */
 public class HttpService {
+
+    public static final String HTTP_SERVER_HANDLER_NAME = "httpHandler";
 
     protected Channel channel;
 
@@ -29,7 +34,22 @@ public class HttpService {
         ChannelFuture future = new ServerBootstrap()
                 .group(boosGroup, workGroup)
                 .channel(ChannelInitializers.serverChannelClass(workGroup))
-                .childHandler(new HttpServerChannelInitializer(new HttpHandlerProvider(5, workGroup)))
+                .childHandler(new HttpServerChannelInitializer(new HandlerProvider() {
+                    @Override
+                    public ChannelHandler getHandler() {
+                        return new HttpHandler();
+                    }
+
+                    @Override
+                    public String getName() {
+                        return HTTP_SERVER_HANDLER_NAME;
+                    }
+
+                    @Override
+                    public int getIdleSeconds() {
+                        return 5;
+                    }
+                }))
                 .bind(port)
                 .syncUninterruptibly();
 

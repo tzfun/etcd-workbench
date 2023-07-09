@@ -302,7 +302,7 @@ public class EtcdConnector {
                             }
                         });
             }
-            cdl.await(10, TimeUnit.SECONDS);
+            cdl.await(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis() * 2L, TimeUnit.SECONDS);
             return success.get();
         } catch (InterruptedException e) {
             onExecuteError(e);

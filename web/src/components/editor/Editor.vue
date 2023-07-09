@@ -79,14 +79,11 @@ const size = computed(() => {
 })
 
 const handleStateUpdate = (viewUpdate: ViewUpdate) => {
-  // selected
   const ranges = viewUpdate.state.selection.ranges
   state.selected = ranges.reduce((plus, range) => plus + range.to - range.from, 0)
   state.cursor = ranges[0].anchor
-  // length
   state.length = viewUpdate.state.doc.length
   state.lines = viewUpdate.state.doc.lines
-  // log('viewUpdate', viewUpdate)
 }
 
 onMounted(() => {

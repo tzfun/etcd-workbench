@@ -135,6 +135,19 @@ public class EtcdController {
         return ResultCode.OK.result(versions);
     }
 
+    @HttpRequest("/session/etcd/user/list")
+    public ResultVO listUser(@RequestParam String sessionId) {
+        List<String> users = EtcdConnectorFactory.get(sessionId).userList();
+        return ResultCode.OK.result(users);
+    }
+
+    @HttpRequest("/session/etcd/user/list")
+    public ResultVO getUserRoles(@RequestParam String sessionId,
+                                 @RequestParam String user) {
+        List<String> roles = EtcdConnectorFactory.get(sessionId).userGetRoles(user);
+        return ResultCode.OK.result(roles);
+    }
+
     private ClientBuilder constructClientBuilder(NewSessionDTO data) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
         ClientBuilder builder = Client.builder();
         builder.executorService(ExecutorFactory.getThreadPool())
