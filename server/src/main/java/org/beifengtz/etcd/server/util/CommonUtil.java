@@ -11,6 +11,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * @author beifengtz
  */
 public class CommonUtil {
+
     public static ByteSequence toByteSequence(String str) {
         return ByteSequence.from(str, UTF_8);
     }

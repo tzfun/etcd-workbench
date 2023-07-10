@@ -3,9 +3,7 @@ package org.beifengtz.etcd.server.controller;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.ClientBuilder;
-import io.etcd.jetcd.op.Op.GetOp;
 import io.etcd.jetcd.options.GetOption;
-import io.netty.handler.codec.base64.Base64Decoder;
 import io.netty.handler.ssl.ApplicationProtocolConfig;
 import io.netty.handler.ssl.ApplicationProtocolNames;
 import io.netty.handler.ssl.SslContext;
@@ -16,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.beifengtz.etcd.server.config.Configuration;
 import org.beifengtz.etcd.server.config.ResultCode;
 import org.beifengtz.etcd.server.entity.bo.KeyValueBO;
+import org.beifengtz.etcd.server.entity.bo.UserBO;
 import org.beifengtz.etcd.server.entity.dto.NewSessionDTO;
 import org.beifengtz.etcd.server.entity.vo.ResultVO;
 import org.beifengtz.etcd.server.etcd.EtcdConnector;
@@ -137,15 +136,59 @@ public class EtcdController {
 
     @HttpRequest("/session/etcd/user/list")
     public ResultVO listUser(@RequestParam String sessionId) {
-        List<String> users = EtcdConnectorFactory.get(sessionId).userList();
+        List<UserBO> users = EtcdConnectorFactory.get(sessionId).userFullList();
         return ResultCode.OK.result(users);
     }
 
-    @HttpRequest("/session/etcd/user/list")
+    @HttpRequest("/session/etcd/user/get_roles")
     public ResultVO getUserRoles(@RequestParam String sessionId,
                                  @RequestParam String user) {
         List<String> roles = EtcdConnectorFactory.get(sessionId).userGetRoles(user);
         return ResultCode.OK.result(roles);
+    }
+
+    @HttpRequest("/session/etcd/user/delete")
+    public ResultVO deleteUser(@RequestParam String sessionId,
+                               @RequestParam String user) {
+        EtcdConnectorFactory.get(sessionId).userDel(user);
+        return ResultCode.OK.result();
+    }
+
+    @HttpRequest("/session/etcd/user/add")
+    public ResultVO addUser(@RequestParam String sessionId,
+                            @RequestParam String user,
+                            @RequestParam String password) {
+        EtcdConnectorFactory.get(sessionId).userAdd(user, password);
+        return ResultCode.OK.result();
+    }
+
+    @HttpRequest("/session/etcd/user/change_password")
+    public ResultVO userChangePassword(@RequestParam String sessionId,
+                                       @RequestParam String user,
+                                       @RequestParam String password) {
+        EtcdConnectorFactory.get(sessionId).userChangePassword(user, password);
+        return ResultCode.OK.result();
+    }
+
+    @HttpRequest("/session/etcd/user/grant_role")
+    public ResultVO userGrantRole(@RequestParam String sessionId,
+                                       @RequestParam String user,
+                                       @RequestParam String role) {
+        EtcdConnectorFactory.get(sessionId).userGrantRole(user, role);
+        return ResultCode.OK.result();
+    }
+
+    @HttpRequest("/session/etcd/user/revoke_role")
+    public ResultVO userRevokeRole(@RequestParam String sessionId,
+                                  @RequestParam String user,
+                                  @RequestParam String role) {
+        EtcdConnectorFactory.get(sessionId).userRevokeRole(user, role);
+        return ResultCode.OK.result();
+    }
+
+    @HttpRequest("/session/etcd/role/list")
+    public ResultVO listRoles(@RequestParam String sessionId) {
+        return ResultCode.OK.result(EtcdConnectorFactory.get(sessionId).roleList());
     }
 
     private ClientBuilder constructClientBuilder(NewSessionDTO data) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {

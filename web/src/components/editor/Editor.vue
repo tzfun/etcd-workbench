@@ -101,32 +101,38 @@ defineExpose({
 </script>
 <template>
   <div>
-    Language:
-    <el-select v-model="config.language"
-               fit-input-width
-               style="width: 100px"
-               class="m-2"
-               placeholder="Select language">
-      <el-option
-          v-for="item in allLanguages"
-          :key="item"
-          :label="item"
-          :value="item"
-      />
-    </el-select>
-    Tab Size:
-    <el-select v-model="config.tabSize"
-               fit-input-width
-               style="width: 80px"
-               class="m-2"
-               placeholder="Select tab size">
-      <el-option
-          v-for="item in allTabSize"
-          :key="item"
-          :label="item"
-          :value="item"
-      />
-    </el-select>
+    <div class="header">
+      <div class="item">
+        Format:
+        <el-select v-model="config.language"
+                   fit-input-width
+                   style="width: 100px"
+                   class="m-2"
+                   placeholder="Select language">
+          <el-option
+              v-for="item in allLanguages"
+              :key="item"
+              :label="item"
+              :value="item"
+          />
+        </el-select>
+      </div>
+      <div class="item">
+        Tab Size:
+        <el-select v-model="config.tabSize"
+                   fit-input-width
+                   style="width: 80px"
+                   class="m-2"
+                   placeholder="Select tab size">
+          <el-option
+              v-for="item in allTabSize"
+              :key="item"
+              :label="item"
+              :value="item"
+          />
+        </el-select>
+      </div>
+    </div>
     <div class="editor">
       <div class="main">
         <codemirror
@@ -164,12 +170,25 @@ defineExpose({
 </template>
 
 <style lang="scss" scoped>
-@import './variables.scss';
+
+.header {
+  height: 3rem;
+  padding: 0 1em;
+  display: flex;
+  justify-content: right;
+  align-items: center;
+  font-size: 90%;
+  .item {
+    margin-left: 2em;
+    display: inline-block;
+    font-feature-settings: 'tnum';
+  }
+}
 
 .editor {
   .divider {
     height: 1px;
-    background-color: $border-color;
+    background-color: var(--theme-border);
   }
 
   .main {
@@ -182,7 +201,7 @@ defineExpose({
       margin: 0;
       padding: 0.4em;
       overflow: scroll;
-      border-left: 1px solid $border-color;
+      border-left: 1px solid var(--theme-border);
       font-family: monospace;
     }
   }
@@ -191,7 +210,7 @@ defineExpose({
     height: 3rem;
     padding: 0 1em;
     display: flex;
-    justify-content: space-between;
+    justify-content: right;
     align-items: center;
     font-size: 90%;
 

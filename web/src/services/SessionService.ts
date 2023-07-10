@@ -58,3 +58,54 @@ export function putKV(sessionId: string, key: string, value: string): Promise<an
         value: value
     })
 }
+
+export function listUser(sessionId: string): Promise<any> {
+    return request.get(host + "/session/etcd/user/list", {
+        sessionId: sessionId
+    })
+}
+
+export function deleteUser(sessionId: string, user: string): Promise<any> {
+    return request.get(host + "/session/etcd/user/delete", {
+        sessionId: sessionId,
+        user: user
+    })
+}
+
+export function addUser(sessionId: string, user: string, password: string): Promise<any> {
+    return request.get(host + "/session/etcd/user/add", {
+        sessionId: sessionId,
+        user: user,
+        password: password
+    })
+}
+
+export function userChangePassword(sessionId: string, user: string, password: string): Promise<any> {
+    return request.get(host + "/session/etcd/user/change_password", {
+        sessionId: sessionId,
+        user: user,
+        password: password
+    })
+}
+
+export function userGrantRole(sessionId: string, user: string, role: string): Promise<any> {
+    return request.get(host + "/session/etcd/user/grant_role", {
+        sessionId: sessionId,
+        user: user,
+        role: role
+    })
+}
+
+export function userRevokeRole(sessionId: string, user: string, role: string): Promise<any> {
+    return request.get(host + "/session/etcd/user/revoke_role", {
+        sessionId: sessionId,
+        user: user,
+        role: role
+    })
+}
+
+export function listRoles(sessionId: string): Promise<any> {
+    return request.get(host + "/session/etcd/role/list", {
+        sessionId: sessionId
+    })
+}

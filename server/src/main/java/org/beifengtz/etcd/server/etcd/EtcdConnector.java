@@ -1,5 +1,6 @@
 package org.beifengtz.etcd.server.etcd;
 
+import io.etcd.jetcd.Auth;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.KV;
@@ -34,6 +35,7 @@ import io.grpc.stub.StreamObserver;
 import org.beifengtz.etcd.server.config.Configuration;
 import org.beifengtz.etcd.server.entity.bo.KeyBO;
 import org.beifengtz.etcd.server.entity.bo.KeyValueBO;
+import org.beifengtz.etcd.server.entity.bo.UserBO;
 import org.beifengtz.etcd.server.exception.EtcdExecuteException;
 import org.beifengtz.etcd.server.util.CommonUtil;
 import org.slf4j.Logger;
@@ -58,6 +60,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author beifengtz
  */
 public class EtcdConnector {
+
     private static final Logger logger = LoggerFactory.getLogger(EtcdConnector.class);
 
     private final String connKey;
@@ -346,6 +349,39 @@ public class EtcdConnector {
             onExecuteError(e);
         }
         return null;
+    }
+
+    public List<UserBO> userFullList() {
+        onActive();
+        try {
+            Auth authClient = client.getAuthClient();
+            AuthUserListResponse userList = authClient
+                    .userList()
+                    .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
+            int count = userList.getUsers().size();
+            if (count == 0) {
+                return List.of();
+            }
+            List<UserBO> result = new ArrayList<>(count);
+            CountDownLatch cdl = new CountDownLatch(count);
+            for (String user : userList.getUsers()) {
+                UserBO userBO = new UserBO();
+                userBO.setUser(user);
+                result.add(userBO);
+                authClient.userGet(CommonUtil.toByteSequence(user)).whenCompleteAsync(((authUserGetResponse, throwable) -> {
+                    try {
+                        userBO.setRoles(authUserGetResponse.getRoles());
+                    } finally {
+                        cdl.countDown();
+                    }
+                }));
+            }
+            cdl.await(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis() * 2L, TimeUnit.SECONDS);
+            return result;
+        } catch (Throwable e) {
+            onExecuteError(e);
+        }
+        return List.of();
     }
 
     /**
@@ -717,4 +753,6 @@ public class EtcdConnector {
             onExecuteError(e);
         }
     }
+
+
 }
