@@ -29,6 +29,7 @@ const keySearch = ref()
 const loadAllUser = () => {
   listUser(props.sessionKey).then(data => {
     tableData.value = data
+    console.log(data)
   }).catch(e => {
     console.error(e)
   })
@@ -62,31 +63,38 @@ const showRoleDialog = ref(false)
 const curUser = ref<User>()
 const curUserIdx = ref()
 const grantRole = ref()
-const allRoles = ref([])
+const allRoles = ref(null)
 
-const openRoleDialog = (user: User, idx: number) => {
-  listRoles(props.sessionKey).then(data => {
-    allRoles.value = data
-    curUser.value = user
-    curUserIdx.value = idx
-    showRoleDialog.value = true
-  }).catch(e => {
-    console.log(e)
-  })
+const openRoleDialog = async (user: User, idx: number) => {
+  if (allRoles.value == null) {
+    await loadAllRoles()
+  }
+  curUser.value = user
+  curUserIdx.value = idx
+  showRoleDialog.value = true
+}
+
+const loadAllRoles = async () => {
+  allRoles.value = await listRoles(props.sessionKey)
 }
 
 const grantUserRole = () => {
   if (_isEmpty(grantRole.value)) {
     ElMessage({
       type: 'warning',
-      message: 'Role name can not be empty',
+      message: 'No role selected',
     })
     return
   }
-
+  if (tableData.value[curUserIdx.value].roles.includes(grantRole.value)) {
+    ElMessage({
+      type: 'info',
+      message: 'Role already exists',
+    })
+    return
+  }
   userGrantRole(props.sessionKey, curUser.value?.user, grantRole.value).then(() => {
-    tableData.value[curUserIdx].roles.push(grantRole.value)
-    curUser.value?.roles.push(grantRole.value)
+    tableData.value[curUserIdx.value].roles.push(grantRole.value)
   }).catch(e => {
     console.error(e)
   })
@@ -94,7 +102,7 @@ const grantUserRole = () => {
 
 const revokeRole = (user: string, role: string, idx: number) => {
   ElMessageBox.confirm(
-      `Are you sure to revoke this role? ${user} :<br><strong> ${role}</strong>`,
+      `Are you sure to revoke this role? ${user} :<strong> ${role}</strong>`,
       'Confirm',
       {
         confirmButtonText: 'OK',
@@ -104,8 +112,7 @@ const revokeRole = (user: string, role: string, idx: number) => {
       }
   ).then(() => {
     userRevokeRole(props.sessionKey, user, role).then(() => {
-      tableData.value[curUserIdx].roles.splice(grantRole.value, 1)
-      curUser.value?.roles.splice(idx, 1)
+      tableData.value[curUserIdx.value].roles.splice(grantRole.value, 1)
     }).catch(e => {
       console.error(e)
     })
@@ -163,7 +170,7 @@ const add = () => {
       <el-table-column prop="user" label="User" sortable/>
       <el-table-column label="Roles">
         <template #default="{row}">
-          {{ row.roles == null ? '' : row.roles.join(",") }}
+          {{ row.roles == null ? '' : row.roles.join(", ") }}
         </template>
       </el-table-column>
       <el-table-column label="Operations">
@@ -171,7 +178,7 @@ const add = () => {
           <el-input v-model="keySearch" placeholder="Type to search" :prefix-icon="Search"/>
         </template>
         <template #default="{row, $index}">
-          <el-button type="primary" :icon="UserFilled" size="small" @click="openRoleDialog(row, $index)">Edit Roles
+          <el-button type="primary" :icon="UserFilled" size="small" @click="openRoleDialog(row, $index)">Roles
           </el-button>
           <el-button type="danger" :icon="Delete" size="small" @click="del(row.user, $index)">Delete</el-button>
         </template>
@@ -200,14 +207,27 @@ const add = () => {
       </template>
     </el-dialog>
 
-
     <el-dialog v-model="showRoleDialog"
                title="User roles"
-               width="500"
+               width="700"
                align-center>
-      <el-row>
-        <el-input v-model="grantRole" placeholder="Input grant role name"></el-input>
-        <el-button type="primary" :icon="Plus" @click="grantUserRole()">Grant Role</el-button>
+      <el-row class="mt-4 mb-4">
+        <el-col :span="12">
+          <el-select v-model="grantRole" placeholder="Select role" style="width: 100%">
+            <el-option v-for="role in allRoles " :key="role" :value="role" :label="role"></el-option>
+          </el-select>
+        </el-col>
+        <el-col :span="11" :offset="1">
+          <el-button-group>
+            <el-button type="primary"
+                       style="padding: 8px 15px;"
+                       :icon="Plus"
+                       @click="grantUserRole">Grant Role</el-button>
+            <el-button :icon="Refresh"
+                       style="padding: 8px 15px;"
+                       @click="loadAllRoles"></el-button>
+          </el-button-group>
+        </el-col>
       </el-row>
       <el-table :data="curUser.roles"
                 border
@@ -220,16 +240,12 @@ const add = () => {
 
         <el-table-column label="Operations">
           <template #default="{row, $index}">
-            <el-button type="danger" size="small" @click="revokeRole(curUser.user, row, $index)"> revoke</el-button>
+            <el-button type="danger"
+                       size="small"
+                       @click="revokeRole(curUser.user, row, $index)">Revoke</el-button>
           </template>
         </el-table-column>
       </el-table>
-      <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="showAddDialog = false">Cancel</el-button>
-          <el-button type="primary" @click="add">Confirm</el-button>
-        </span>
-      </template>
     </el-dialog>
   </div>
 

@@ -13,7 +13,9 @@ declare module '@vue/runtime-core' {
     ClusterManager: typeof import('./components/managers/ClusterManager.vue')['default']
     Editor: typeof import('./components/editor/Editor.vue')['default']
     ElButton: typeof import('element-plus/es')['ElButton']
+    ElButtonGroup: typeof import('element-plus/es')['ElButtonGroup']
     ElCard: typeof import('element-plus/es')['ElCard']
+    ElCol: typeof import('element-plus/es')['ElCol']
     ElConfigProvider: typeof import('element-plus/es')['ElConfigProvider']
     ElDialog: typeof import('element-plus/es')['ElDialog']
     ElDivider: typeof import('element-plus/es')['ElDivider']
@@ -40,6 +42,8 @@ declare module '@vue/runtime-core' {
     EtcdSession: typeof import('./components/EtcdSession.vue')['default']
     KeyManager: typeof import('./components/managers/KeyManager.vue')['default']
     RoleManager: typeof import('./components/managers/RoleManager.vue')['default']
+    RouterLink: typeof import('vue-router')['RouterLink']
+    RouterView: typeof import('vue-router')['RouterView']
     UserManager: typeof import('./components/managers/UserManager.vue')['default']
   }
   export interface ComponentCustomProperties {

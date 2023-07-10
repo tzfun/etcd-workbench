@@ -3,6 +3,7 @@ package org.beifengtz.etcd.server.controller;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.ClientBuilder;
+import io.etcd.jetcd.auth.Permission.Type;
 import io.etcd.jetcd.options.GetOption;
 import io.netty.handler.ssl.ApplicationProtocolConfig;
 import io.netty.handler.ssl.ApplicationProtocolNames;
@@ -16,6 +17,7 @@ import org.beifengtz.etcd.server.config.ResultCode;
 import org.beifengtz.etcd.server.entity.bo.KeyValueBO;
 import org.beifengtz.etcd.server.entity.bo.UserBO;
 import org.beifengtz.etcd.server.entity.dto.NewSessionDTO;
+import org.beifengtz.etcd.server.entity.dto.PermissionDTO;
 import org.beifengtz.etcd.server.entity.vo.ResultVO;
 import org.beifengtz.etcd.server.etcd.EtcdConnector;
 import org.beifengtz.etcd.server.etcd.EtcdConnectorFactory;
@@ -172,16 +174,16 @@ public class EtcdController {
 
     @HttpRequest("/session/etcd/user/grant_role")
     public ResultVO userGrantRole(@RequestParam String sessionId,
-                                       @RequestParam String user,
-                                       @RequestParam String role) {
+                                  @RequestParam String user,
+                                  @RequestParam String role) {
         EtcdConnectorFactory.get(sessionId).userGrantRole(user, role);
         return ResultCode.OK.result();
     }
 
     @HttpRequest("/session/etcd/user/revoke_role")
     public ResultVO userRevokeRole(@RequestParam String sessionId,
-                                  @RequestParam String user,
-                                  @RequestParam String role) {
+                                   @RequestParam String user,
+                                   @RequestParam String role) {
         EtcdConnectorFactory.get(sessionId).userRevokeRole(user, role);
         return ResultCode.OK.result();
     }
@@ -189,6 +191,41 @@ public class EtcdController {
     @HttpRequest("/session/etcd/role/list")
     public ResultVO listRoles(@RequestParam String sessionId) {
         return ResultCode.OK.result(EtcdConnectorFactory.get(sessionId).roleList());
+    }
+
+    @HttpRequest("/session/etcd/role/add")
+    public ResultVO addRole(@RequestParam String sessionId,
+                            @RequestParam String role) {
+        EtcdConnectorFactory.get(sessionId).roleAdd(role);
+        return ResultCode.OK.result();
+    }
+
+    @HttpRequest("/session/etcd/role/delete")
+    public ResultVO deleteRole(@RequestParam String sessionId,
+                               @RequestParam String role) {
+        EtcdConnectorFactory.get(sessionId).roleDel(role);
+        return ResultCode.OK.result();
+    }
+
+    @HttpRequest("/session/etcd/role/get_permissions")
+    public ResultVO getRolePermissions(@RequestParam String sessionId, @RequestParam String role) {
+        return ResultCode.OK.result(EtcdConnectorFactory.get(sessionId).roleGet(role));
+    }
+
+    @HttpRequest("/session/etcd/role/grant_permission")
+    public ResultVO roleGrantPermission(@RequestParam String sessionId,
+                                        @RequestParam String role,
+                                        @RequestParam String type,
+                                        @RequestParam String key,
+                                        @RequestParam String rangeEnd) {
+        EtcdConnectorFactory.get(sessionId).roleGrantPermission(role, key, rangeEnd, Type.valueOf(type));
+        return ResultCode.OK.result();
+    }
+
+    @HttpRequest(value = "/session/etcd/role/revoke_permission", method = Method.POST)
+    public ResultVO roleRevokePermission(@RequestBody PermissionDTO permission) {
+        EtcdConnectorFactory.get(permission.getSessionId()).roleRevokePermission(permission.getRole(), permission.getKey(), permission.parseRangeEnd());
+        return ResultCode.OK.result();
     }
 
     private ClientBuilder constructClientBuilder(NewSessionDTO data) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {

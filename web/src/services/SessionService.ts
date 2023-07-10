@@ -109,3 +109,48 @@ export function listRoles(sessionId: string): Promise<any> {
         sessionId: sessionId
     })
 }
+
+export function addRole(sessionId: string, role: string): Promise<any> {
+    return request.get(host + "/session/etcd/role/add", {
+        sessionId: sessionId,
+        role: role
+    })
+}
+
+export function deleteRole(sessionId: string, role: string): Promise<any> {
+    return request.get(host + "/session/etcd/role/delete", {
+        sessionId: sessionId,
+        role: role
+    })
+}
+
+export function getRolePermission(sessionId: string, role: string): Promise<any> {
+    return request.get(host + "/session/etcd/role/get_permissions", {
+        sessionId: sessionId,
+        role: role
+    })
+}
+
+export function roleGrantPermission(sessionId: string,
+                                    role: string,
+                                    type: string,
+                                    key: string,
+                                    rangeEnd: string): Promise<any> {
+    return request.get(host + "/session/etcd/role/grant_permission", {
+        sessionId: sessionId,
+        role: role,
+        type: type,
+        key: key,
+        rangeEnd: rangeEnd
+    })
+}
+
+export function roleRevokePermission(sessionId: string,
+                                     role: string,
+                                     permission: object): Promise<any> {
+    return request.post(host + "/session/etcd/role/revoke_permission", {
+        sessionId: sessionId,
+        role: role,
+        ...permission
+    })
+}

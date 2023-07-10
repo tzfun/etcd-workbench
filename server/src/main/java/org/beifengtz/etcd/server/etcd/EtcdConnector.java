@@ -16,6 +16,7 @@ import io.etcd.jetcd.cluster.MemberListResponse;
 import io.etcd.jetcd.cluster.MemberRemoveResponse;
 import io.etcd.jetcd.cluster.MemberUpdateResponse;
 import io.etcd.jetcd.common.exception.ClosedClientException;
+import io.etcd.jetcd.common.exception.EtcdException;
 import io.etcd.jetcd.kv.DeleteResponse;
 import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.kv.TxnResponse;
@@ -35,6 +36,8 @@ import io.grpc.stub.StreamObserver;
 import org.beifengtz.etcd.server.config.Configuration;
 import org.beifengtz.etcd.server.entity.bo.KeyBO;
 import org.beifengtz.etcd.server.entity.bo.KeyValueBO;
+import org.beifengtz.etcd.server.entity.bo.PermissionBO;
+import org.beifengtz.etcd.server.entity.bo.PermissionBO.PermissionBOBuilder;
 import org.beifengtz.etcd.server.entity.bo.UserBO;
 import org.beifengtz.etcd.server.exception.EtcdExecuteException;
 import org.beifengtz.etcd.server.util.CommonUtil;
@@ -42,6 +45,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -121,6 +125,9 @@ public class EtcdConnector {
         logger.error("Etcd client execute failed. " + e.getClass().getName() + ": " + e.getMessage(), e);
         if (e instanceof ClosedClientException) {
             close();
+        }
+        if (e.getCause() instanceof EtcdException) {
+            throw new EtcdExecuteException(e.getCause());
         }
         throw new EtcdExecuteException(e);
     }
@@ -297,11 +304,14 @@ public class EtcdConnector {
             for (String s : keys) {
                 kvClient.delete(CommonUtil.toByteSequence(s), DeleteOption.newBuilder().isPrefix(false).build())
                         .whenCompleteAsync((deleteResponse, throwable) -> {
-                            cdl.countDown();
-                            if (throwable != null) {
-                                logger.error("Delete batch error", throwable);
-                            } else {
-                                success.incrementAndGet();
+                            try {
+                                if (throwable != null) {
+                                    logger.error("Delete batch error", throwable);
+                                } else {
+                                    success.incrementAndGet();
+                                }
+                            } finally {
+                                cdl.countDown();
                             }
                         });
             }
@@ -370,7 +380,11 @@ public class EtcdConnector {
                 result.add(userBO);
                 authClient.userGet(CommonUtil.toByteSequence(user)).whenCompleteAsync(((authUserGetResponse, throwable) -> {
                     try {
-                        userBO.setRoles(authUserGetResponse.getRoles());
+                        if (throwable != null) {
+                            logger.error("Query user role failed ", throwable);
+                        } else {
+                            userBO.setRoles(authUserGetResponse.getRoles());
+                        }
                     } finally {
                         cdl.countDown();
                     }
@@ -400,7 +414,7 @@ public class EtcdConnector {
         } catch (Throwable e) {
             onExecuteError(e);
         }
-        return null;
+        return List.of();
     }
 
     /**
@@ -493,17 +507,61 @@ public class EtcdConnector {
      * @param role 角色
      * @return List of {@link Permission}
      */
-    public List<Permission> roleGet(String role) {
+    public List<PermissionBO> roleGet(String role) {
         onActive();
         try {
             AuthRoleGetResponse roleGet = client.getAuthClient()
                     .roleGet(CommonUtil.toByteSequence(role))
                     .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
-            return roleGet.getPermissions();
+            List<Permission> permissions = roleGet.getPermissions();
+            if (permissions.size() == 0) {
+                return List.of();
+            }
+            List<PermissionBO> result = new ArrayList<>();
+            for (Permission permission : permissions) {
+                ByteSequence key = permission.getKey();
+                byte[] keyBytes = key.getBytes();
+                ByteSequence rangeEnd = permission.getRangeEnd();
+                byte[] rangeEndBytes = rangeEnd.getBytes();
+
+                PermissionBOBuilder<?, ?> builder = PermissionBO.builder().type(permission.getPermType());
+                boolean allKeys = keyBytes.length == 1 && rangeEndBytes.length == 1 && keyBytes[0] == 0 && rangeEndBytes[0] == 0;
+                if (allKeys) {
+                    builder.allKeys(true);
+                } else {
+                    if (rangeEndBytes.length >= keyBytes.length) {
+                        boolean prefixEqual = true;
+                        for (int i = 0; i < keyBytes.length - 1; i++) {
+                            if (keyBytes[i] != rangeEndBytes[i]) {
+                                prefixEqual = false;
+                                break;
+                            }
+                        }
+
+                        boolean prefix = false;
+
+                        //  判断是否是前缀匹配
+                        if (prefixEqual) {
+                            if (rangeEndBytes.length - keyBytes.length == 1) {
+                                prefix = rangeEndBytes[rangeEndBytes.length - 1] == 1;
+                            } else if (rangeEndBytes.length == keyBytes.length) {
+                                prefix = rangeEndBytes[rangeEndBytes.length - 1] - keyBytes[keyBytes.length - 1] == 1;
+                            }
+                        }
+
+                        builder.prefix(prefix);
+                    }
+
+                    builder.key(key.toString(StandardCharsets.UTF_8));
+                }
+
+                result.add(builder.build());
+            }
+            return result;
         } catch (Throwable e) {
             onExecuteError(e);
         }
-        return null;
+        return List.of();
     }
 
     /**
@@ -521,7 +579,7 @@ public class EtcdConnector {
         } catch (Throwable e) {
             onExecuteError(e);
         }
-        return null;
+        return List.of();
     }
 
     /**
@@ -580,13 +638,13 @@ public class EtcdConnector {
      *
      * @param role     角色
      * @param key      key
-     * @param rangeEnd 权限范围结束限制
+     * @param rangeEnd 权限结束标识符
      */
-    public void roleRevokePermission(String role, String key, String rangeEnd) {
+    public void roleRevokePermission(String role, String key, ByteSequence rangeEnd) {
         onActive();
         try {
             client.getAuthClient()
-                    .roleRevokePermission(CommonUtil.toByteSequence(role), CommonUtil.toByteSequence(key), CommonUtil.toByteSequence(rangeEnd))
+                    .roleRevokePermission(CommonUtil.toByteSequence(role), CommonUtil.toByteSequence(key), rangeEnd)
                     .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
         } catch (Throwable e) {
             onExecuteError(e);

@@ -14,5 +14,5 @@ import java.util.List;
 @Data
 public class UserBO implements JsonParsable {
     private String user;
-    private List<String> roles;
+    private List<String> roles = List.of();
 }

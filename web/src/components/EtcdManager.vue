@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import {ref} from "vue";
-import {Coin, FolderChecked, Grid, User, View} from "@element-plus/icons-vue";
+import {Coin, FolderChecked, Grid, User, Lock} from "@element-plus/icons-vue";
 import ClusterManager from "~/components/managers/ClusterManager.vue";
 import KeyManager from "~/components/managers/KeyManager.vue";
 import UserManager from "~/components/managers/UserManager.vue";
@@ -9,8 +8,13 @@ import RoleManager from "~/components/managers/RoleManager.vue";
 defineProps({
   sessionKey: String
 })
+
+const visitedPage = ref({})
 const activePage = ref('1')
 const handleSelect = (key: string, keyPath: string[]) => {
+  if (!visitedPage.value[key]) {
+    visitedPage.value[key] = true
+  }
   activePage.value = key
 }
 
@@ -48,9 +52,9 @@ const handleSelect = (key: string, keyPath: string[]) => {
           </el-icon>
           <span>Manage Users</span>
         </el-menu-item>
-        <el-menu-item index="5" disabled>
+        <el-menu-item index="5">
           <el-icon>
-            <View/>
+            <Lock />
           </el-icon>
           <span>Manage Roles</span>
         </el-menu-item>
@@ -58,19 +62,19 @@ const handleSelect = (key: string, keyPath: string[]) => {
     </div>
     <div class="body">
       <div v-show="activePage=== '1'">
-        <ClusterManager :session-key="sessionKey"></ClusterManager>
+        <ClusterManager :session-key="sessionKey" v-if="visitedPage['1']"></ClusterManager>
       </div>
       <div v-show="activePage === '2'">
-        <KeyManager :session-key="sessionKey"></KeyManager>
+        <KeyManager :session-key="sessionKey" v-if="visitedPage['2']"></KeyManager>
       </div>
       <div v-show="activePage === '3'">
 
       </div>
       <div v-show="activePage === '4'">
-        <UserManager :session-key="sessionKey"></UserManager>
+        <UserManager :session-key="sessionKey" v-if="visitedPage['4']"></UserManager>
       </div>
       <div v-show="activePage === '5'">
-        <RoleManager :session-key="sessionKey"></RoleManager>
+        <RoleManager :session-key="sessionKey" v-if="visitedPage['5']"></RoleManager>
       </div>
     </div>
   </div>
