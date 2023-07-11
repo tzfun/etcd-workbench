@@ -80,20 +80,25 @@ const handleSelect = (key: string, keyPath: string[]) => {
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
+@import '../styles/index.scss';
+
 .editor-container {
   width: 100%;
   height: 100%;
   display: flex;
 }
 
-.aside, .aside-menu {
-  width: var(--ep-custom-aside-width);
-  height: 100%;
+.aside {
+  width: $--ep-custom-aside-width;
+  .aside-menu {
+    width: $--ep-custom-aside-width;
+    height: 100%;
+  }
 }
 
 .body {
-  width: calc(100% - var(--ep-custom-aside-width));
+  width: calc(100% - $--ep-custom-aside-width);
   height: 100%;
   padding: 15px;
 }

@@ -2,7 +2,7 @@ import Axios, {AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse, Int
 import {Request, ResultData} from "~/request/type";
 
 import {ElMessage} from "element-plus";
-import {_loading} from "~/util/CommonUtil";
+import {_loading} from "~/util/Util";
 
 /**
  * 封装的 element-plus 的消息提示框

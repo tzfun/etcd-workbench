@@ -8,7 +8,7 @@ import {
   roleGrantPermission,
   roleRevokePermission
 } from "~/services/SessionService";
-import {_isEmpty} from "~/util/BaseUtil";
+import {_isEmpty} from "~/util/Util";
 import {FormInstance} from "element-plus";
 
 const props = defineProps({

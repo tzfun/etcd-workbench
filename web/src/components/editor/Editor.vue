@@ -8,7 +8,7 @@ import {Codemirror} from "vue-codemirror";
 import jsonLanguage from "./lang/json";
 import xmlLanguage from "./lang/xml";
 import yamlLanguage from "./lang/yaml";
-import {_byteFormat, _sizeof} from "~/util/BaseUtil";
+import {_byteFormat, _sizeof} from "~/util/Util";
 
 const props = defineProps({
   config: {
@@ -170,7 +170,6 @@ defineExpose({
 </template>
 
 <style lang="scss" scoped>
-
 .header {
   height: 3rem;
   padding: 0 1em;

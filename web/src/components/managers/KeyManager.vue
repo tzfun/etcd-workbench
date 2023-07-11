@@ -5,7 +5,7 @@ import {EditorConfig, KeyDTO, KeyValueDTO} from "~/entitys/TransformTypes";
 import Editor from "~/components/editor/Editor.vue";
 import {isDark} from "~/composables";
 import {reactive} from "vue";
-import {_isEmpty} from "~/util/BaseUtil";
+import {_isEmpty} from "~/util/Util";
 import {CodeDiff} from "v-code-diff";
 import {Base64} from 'js-base64';
 
@@ -122,12 +122,12 @@ const diff = (index, row: KeyDTO) => {
       versionDiffInfo.modRevision).then(data => {
     versionDiffInfo.versionHistory = data.sort()
     getKV(props.sessionKey, versionDiffInfo.key).then(data => {
-      versionDiffInfo.versionA = row.modRevision
-      versionDiffInfo.versionAContent = data.value
+      versionDiffInfo.versionB = row.modRevision
+      versionDiffInfo.versionBContent = data.value
 
       //  上一个版本
-      versionDiffInfo.versionB = versionDiffInfo.versionHistory[row.version - 2]
-      loadDiff(false)
+      versionDiffInfo.versionA = versionDiffInfo.versionHistory[row.version - 2]
+      loadDiff(true)
     }).catch(e => {
       console.error(e)
     })

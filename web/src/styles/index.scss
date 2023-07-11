@@ -1,9 +1,11 @@
 // import dark theme
 @use "element-plus/theme-chalk/src/dark/css-vars.scss" as *;
 
- :root {
-   --ep-custom-aside-width: 300px;
- }
+$--ep-custom-aside-width: 300px;
+
+$--header-height: 50px;
+$--header-color: rgb(33 142 209 / 50%);
+$--header-color-dark: rgba(0, 0, 0, 0.5);
 
 body {
   font-family: Inter, system-ui, Avenir, "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB",

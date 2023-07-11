@@ -45,6 +45,12 @@ const onSessionClosed = () => {
   sessionKey.value = undefined
 }
 
+onUnmounted(() => {
+  if (heartBeatId.value) {
+    clearInterval(heartBeatId.value)
+  }
+})
+
 </script>
 
 <template>

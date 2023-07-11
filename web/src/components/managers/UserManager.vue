@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {addUser, deleteUser, listRoles, listUser, userGrantRole, userRevokeRole} from "~/services/SessionService";
 import {Delete, Plus, Refresh, Search, UserFilled} from "@element-plus/icons-vue";
-import {_isEmpty} from "~/util/BaseUtil";
+import {_isEmpty} from "~/util/Util";
 
 const props = defineProps({
   sessionKey: String

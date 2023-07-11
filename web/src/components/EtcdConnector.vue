@@ -2,7 +2,7 @@
 import etcd from "~/assets/etcd.png"
 import {Ref, ref} from "vue";
 import {newSession, testSession} from "~/services/SessionService";
-import {_isEmpty} from "~/util/BaseUtil";
+import {_isEmpty} from "~/util/Util";
 import {ElMessage, UploadFile} from "element-plus";
 import {NewSessionReq} from "~/entitys/RequestTypes";
 

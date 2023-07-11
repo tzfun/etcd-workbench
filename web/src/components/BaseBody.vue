@@ -69,10 +69,17 @@ const onSessionChange = (args: { state: number, name: number, key: string | unde
   item.state = args.state
   item.sessionKey = args.key
 }
+
+const checkSessionName = (name: string): boolean => {
+  return tabs.value.filter(o => o.title === name).length === 0
+}
 </script>
 
 <template>
   <div>
+    <div class="header">
+      Etcd Web Client
+    </div>
     <button
         class="border-none bg-transparent cursor-pointer light-switch"
         @click="toggleDark()">
@@ -90,17 +97,38 @@ const onSessionChange = (args: { state: number, name: number, key: string | unde
           :label="item.title"
           :name="item.name"
           class="tab-pane">
-        <EtcdSession @change="onSessionChange($event, idx)"
-                     :check-session-name="name => tabs.filter(o => o.title === name).length === 0"/>
+        <EtcdSession @change="onSessionChange($event, idx)" :check-session-name="checkSessionName"/>
       </el-tab-pane>
     </el-tabs>
   </div>
 </template>
 
-<style scoped>
-.tabs, .tab-pane {
-  width: 100%;
+<style lang="scss" scoped>
+@import '../styles/index.scss';
+
+.dark {
+  .header {
+    background: $--header-color-dark;
+  }
 }
+
+.header {
+  height: $--header-height;
+  width: 100%;
+  color: white;
+  text-align: center;
+  line-height: $--header-height;
+  font-size: 21px;
+  font-weight: 800;
+  background: $--header-color;
+}
+
+.tabs {
+  .tab-pane {
+    width: 100%;
+  }
+}
+
 .light-switch {
   position: fixed;
   width: 50px;
@@ -112,8 +140,16 @@ const onSessionChange = (args: { state: number, name: number, key: string | unde
 }
 </style>
 
-<style>
-.tabs .ep-tabs__content {
-  height: calc(100% - var(--ep-tabs-header-height) - 16px);
+<style lang="scss">
+@import '../styles/index.scss';
+
+
+.tabs {
+  .ep-tabs__header {
+    margin: 0;
+  }
+  .ep-tabs__content {
+    height: calc(100% - var(--ep-tabs-header-height) - $--header-height - 16px);
+  }
 }
 </style>
