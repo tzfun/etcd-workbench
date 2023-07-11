@@ -256,9 +256,9 @@ const putKey = () => {
 </script>
 
 <template>
-  <div>
-    <el-button type="primary" :icon="Refresh" @click="loadAllKeys">Refresh</el-button>
-    <el-button type="success" :icon="DocumentAdd" @click="add">Add Key/Value</el-button>
+  <div class="mb-5">
+    <el-button :icon="Refresh" @click="loadAllKeys">Refresh Table</el-button>
+    <el-button type="primary" :icon="DocumentAdd" @click="add">Add Key/Value</el-button>
     <el-button type="danger" :icon="Delete" @click="delBatch">Delete Keys</el-button>
   </div>
 
@@ -266,7 +266,7 @@ const putKey = () => {
             border
             stripe
             @selection-change="handleSelectionChange"
-            class="table">
+            class="mb-5">
     <el-table-column type="selection" width="55" />
     <el-table-column prop="key" label="Key" sortable/>
     <el-table-column prop="version" label="Version"  sortable/>
@@ -372,10 +372,6 @@ const putKey = () => {
 </template>
 
 <style scoped>
-.table {
-  width: 100%;
-  margin: 15px 0;
-}
 
 .version-option-tag {
   float: right;

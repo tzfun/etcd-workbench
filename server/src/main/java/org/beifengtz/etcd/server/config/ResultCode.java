@@ -11,7 +11,9 @@ import org.beifengtz.etcd.server.entity.vo.ResultVO;
 public enum ResultCode {
     OK(0, "ok"),
     INVALID_KEY(10001, "Invalid key spec"),
-    CONNECT_ERROR(10002, "Connect error");
+    CONNECT_ERROR(10002, "Connect error"),
+    ETCD_ERROR(10003, "Etcd server error"),
+    ;
     private final int code;
     private final String msg;
 
@@ -33,6 +35,6 @@ public enum ResultCode {
     }
 
     public ResultVO result(String message, Object data) {
-        return ResultVO.builder().code(code).msg(message).data(data).build();
+        return ResultVO.builder().code(code).msg(message == null ? msg : message).data(data).build();
     }
 }

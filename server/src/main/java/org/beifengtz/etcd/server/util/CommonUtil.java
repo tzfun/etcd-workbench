@@ -15,7 +15,7 @@ public class CommonUtil {
     public static final String EMPTY_STR = "";
 
     public static ByteSequence toByteSequence(String str) {
-        if (str.length() == 0) {
+        if (str == null || str.length() == 0) {
             return ByteSequence.EMPTY;
         }
         return ByteSequence.from(str, UTF_8);

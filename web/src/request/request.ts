@@ -66,6 +66,9 @@ const handleResponseCode = (res: ResultData, notifyError: boolean | undefined = 
         case 10002:
             msg = res.msg ? res.msg : "Connect error!"
             break
+        case 10003:
+            msg = res.msg ? res.msg : "Etcd server error!"
+            break
     }
     if (msg && notifyError) {
         ElMessage({

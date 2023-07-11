@@ -160,13 +160,14 @@ const add = () => {
 
 <template>
   <div>
-    <el-row>
+    <div class="mb-5">
       <el-button @click="loadAllUser" :icon="Refresh">Refresh Table</el-button>
       <el-button type="primary" :icon="UserFilled" @click="openAddDialog">Add User</el-button>
-    </el-row>
+    </div>
     <el-table :data="filterTableData"
               border
-              stripe>
+              stripe
+              class="mb-5">
       <el-table-column prop="user" label="User" sortable/>
       <el-table-column label="Roles">
         <template #default="{row}">

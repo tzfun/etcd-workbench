@@ -212,19 +212,15 @@ public class EtcdController {
         return ResultCode.OK.result(EtcdConnectorFactory.get(sessionId).roleGet(role));
     }
 
-    @HttpRequest("/session/etcd/role/grant_permission")
-    public ResultVO roleGrantPermission(@RequestParam String sessionId,
-                                        @RequestParam String role,
-                                        @RequestParam String type,
-                                        @RequestParam String key,
-                                        @RequestParam String rangeEnd) {
-        EtcdConnectorFactory.get(sessionId).roleGrantPermission(role, key, rangeEnd, Type.valueOf(type));
+    @HttpRequest(value = "/session/etcd/role/grant_permission",method = Method.POST)
+    public ResultVO roleGrantPermission(@RequestBody PermissionDTO data) {
+        EtcdConnectorFactory.get(data.getSessionId()).roleGrantPermission(data.getRole(), data.getKey(), data.parseRangeEnd(), data.getType());
         return ResultCode.OK.result();
     }
 
     @HttpRequest(value = "/session/etcd/role/revoke_permission", method = Method.POST)
-    public ResultVO roleRevokePermission(@RequestBody PermissionDTO permission) {
-        EtcdConnectorFactory.get(permission.getSessionId()).roleRevokePermission(permission.getRole(), permission.getKey(), permission.parseRangeEnd());
+    public ResultVO roleRevokePermission(@RequestBody PermissionDTO data) {
+        EtcdConnectorFactory.get(data.getSessionId()).roleRevokePermission(data.getRole(), data.getKey(), data.parseRangeEnd());
         return ResultCode.OK.result();
     }
 

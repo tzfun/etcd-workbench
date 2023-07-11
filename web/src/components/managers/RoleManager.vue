@@ -1,7 +1,15 @@
 <script setup lang="ts">
 import {Delete, Lock, Refresh, Search, User} from "@element-plus/icons-vue";
-import {addRole, deleteRole, getRolePermission, listRoles, roleRevokePermission} from "~/services/SessionService";
+import {
+  addRole,
+  deleteRole,
+  getRolePermission,
+  listRoles,
+  roleGrantPermission,
+  roleRevokePermission
+} from "~/services/SessionService";
 import {_isEmpty} from "~/util/BaseUtil";
+import {FormInstance} from "element-plus";
 
 const props = defineProps({
   sessionKey: String
@@ -78,10 +86,11 @@ type Permission = {
   allKeys: boolean,
   prefix: boolean
 }
+
 const showPermissionDialog = ref(false)
 const curRole = ref()
 const permissions = ref<Array<Permission>>([])
-const viewPermissionList = ref(true)
+const grantPermissionFormRef = ref<FormInstance>()
 const grantPermissionForm = reactive<Permission>({
   type: '',
   key: '',
@@ -92,10 +101,7 @@ const openPermissionDialog = (role: string, idx: number) => {
   getRolePermission(props.sessionKey, role).then(data => {
     permissions.value = data
     curRole.value = role
-    grantPermissionForm.type = ''
-    grantPermissionForm.key = ''
-    grantPermissionForm.allKeys = false
-    grantPermissionForm.prefix = false
+    resetGrantPermissionForm()
     showPermissionDialog.value = true
   })
 }
@@ -124,20 +130,50 @@ const revokePermission = (role: string, permission: Permission, idx: number) => 
   })
 }
 
-const switchPermissionTag = () => {
-  viewPermissionList.value = !viewPermissionList.value
+const resetGrantPermissionForm = () => {
+  grantPermissionForm.type = ''
+  grantPermissionForm.key = ''
+  grantPermissionForm.allKeys = false
+  grantPermissionForm.prefix = false
 }
+
+const grantPermission = () => {
+  if (_isEmpty(grantPermissionForm.type)) {
+    ElMessage({
+      type: 'info',
+      message: 'No permission selected',
+    })
+    return
+  }
+  if (!grantPermissionForm.allKeys && _isEmpty(grantPermissionForm.key)) {
+    ElMessage({
+      type: 'info',
+      message: 'Key cannot be empty',
+    })
+    return
+  }
+  const newPermission = grantPermissionForm as Permission
+  roleGrantPermission(props.sessionKey, curRole.value, newPermission).then(() => {
+    ElMessage({
+      type: 'success',
+      message: 'Grant permission successfully',
+    })
+    permissions.value.push(JSON.parse(JSON.stringify(newPermission)))
+  })
+}
+
 </script>
 
 <template>
   <div>
-    <el-row>
+    <div class="mb-5">
       <el-button @click="loadAllRole" :icon="Refresh">Refresh Table</el-button>
       <el-button type="primary" :icon="User" @click="add">Add Role</el-button>
-    </el-row>
+    </div>
     <el-table :data="filterTableData"
               border
-              stripe>
+              stripe
+              class="mb-5">
       <el-table-column label="Role" sortable>
         <template #default="{row}">
           {{ row }}
@@ -165,50 +201,66 @@ const switchPermissionTag = () => {
     </el-table>
 
     <el-dialog v-model="showPermissionDialog"
-               title="Role permissions"
+               :title="`Role permissions: ${curRole}`"
                align-center>
-      <el-button type="primary" @click="switchPermissionTag">Grant Permission</el-button>
+
+      <el-card class="mb-10">
+        <el-form ref="grantPermissionFormRef"
+                 :model="grantPermissionForm"
+                 label-width="100px"
+                 label-position="right"
+                 label-suffix=":">
+          <el-form-item label="Key Type">
+            <el-checkbox v-model="grantPermissionForm.allKeys" label="ALL KEYS" prop="allKeys"/>
+            <el-checkbox v-show="!grantPermissionForm.allKeys" v-model="grantPermissionForm.prefix" label="For Prefix"
+                         prop="prefix"/>
+          </el-form-item>
+          <el-form-item label="Key" v-show="!grantPermissionForm.allKeys" prop="key">
+            <el-input type="text" v-model="grantPermissionForm.key" placeholder="Input key"/>
+          </el-form-item>
+          <el-form-item label="Permission" prop="type">
+            <el-select v-model="grantPermissionForm.type">
+              <el-option value="READ" label="Read Only"></el-option>
+              <el-option value="WRITE" label="Write Only"></el-option>
+              <el-option value="READWRITE" label="Read And Write"></el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" @click="grantPermission()">
+              Add Permission
+            </el-button>
+            <el-button @click="resetGrantPermissionForm()">Reset</el-button>
+          </el-form-item>
+        </el-form>
+      </el-card>
+
+
       <el-table :data="permissions"
-                v-show="viewPermissionList"
                 border
                 stripe>
         <el-table-column label="Key">
           <template #default="{row}">
-            <span v-if="row.allKeys">ALL KEYS</span>
+            <span v-if="row.allKeys" style="font-weight: 600;color: #ab99bb;">ALL KEYS</span>
             <span v-else>{{ row.key }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="prefix" label="Prefix"/>
+        <el-table-column label="Prefix">
+          <template #default="{row}">
+            {{ row.allKeys ? '' : row.prefix }}
+          </template>
+        </el-table-column>
         <el-table-column prop="type" label="Permission"/>
 
         <el-table-column label="Operations">
           <template #default="{row, $index}">
             <el-button type="danger"
                        size="small"
-                       @click="revokePermission(curRole, row, $index)">Revoke</el-button>
+                       @click="revokePermission(curRole, row, $index)">Revoke
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
-      <el-form v-show="!viewPermissionList"
-               :model="grantPermissionForm"
-               label-width="100px"
-               label-position="left"
-               label-suffix=":">
-        <el-form-item label="Key Type">
-          <el-radio v-model="grantPermissionForm.allKeys">ALL KEYS</el-radio>
-        </el-form-item>
-        <el-form-item lable="Key" v-show="!grantPermissionForm.allKeys">
-          <el-input type="text" v-model="grantPermissionForm.key" placeholder="Input key"/>
-        </el-form-item>
-        <el-form-item label="Permission">
-          <el-select v-model="grantPermissionForm.type">
-            <el-option value="READ" label="Read Only"></el-option>
-            <el-option value="WRITE" label="Write Only"></el-option>
-            <el-option value="READWRITE" label="Read And Write"></el-option>
-            <el-option value="UNRECOGNIZED" label="Unrecognized"></el-option>
-          </el-select>
-        </el-form-item>
-      </el-form>
+
     </el-dialog>
   </div>
 </template>

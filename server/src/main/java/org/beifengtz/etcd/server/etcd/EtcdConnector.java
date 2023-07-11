@@ -126,8 +126,13 @@ public class EtcdConnector {
         if (e instanceof ClosedClientException) {
             close();
         }
+
         if (e.getCause() instanceof EtcdException) {
-            throw new EtcdExecuteException(e.getCause());
+            Throwable cause = e.getCause();
+            while (cause.getCause() != null) {
+                cause = cause.getCause();
+            }
+            throw new EtcdExecuteException(cause.getMessage(), cause);
         }
         throw new EtcdExecuteException(e);
     }
@@ -525,7 +530,9 @@ public class EtcdConnector {
                 byte[] rangeEndBytes = rangeEnd.getBytes();
 
                 PermissionBOBuilder<?, ?> builder = PermissionBO.builder().type(permission.getPermType());
-                boolean allKeys = keyBytes.length == 1 && rangeEndBytes.length == 1 && keyBytes[0] == 0 && rangeEndBytes[0] == 0;
+                //  为兼容老版本的etcd，空字符串是一个长度为1且内容为0的byte数组
+                boolean allKeys = (keyBytes.length == 0 && rangeEndBytes.length == 0) ||
+                        (keyBytes.length == 1 && rangeEndBytes.length == 1 && keyBytes[0] == 0 && rangeEndBytes[0] == 0);
                 if (allKeys) {
                     builder.allKeys(true);
                 } else {
@@ -622,11 +629,11 @@ public class EtcdConnector {
      * @param rangeEnd   权限范围结束限制
      * @param permission 权限类型
      */
-    public void roleGrantPermission(String role, String key, String rangeEnd, Permission.Type permission) {
+    public void roleGrantPermission(String role, String key, ByteSequence rangeEnd, Permission.Type permission) {
         onActive();
         try {
             client.getAuthClient()
-                    .roleGrantPermission(CommonUtil.toByteSequence(role), CommonUtil.toByteSequence(key), CommonUtil.toByteSequence(rangeEnd), permission)
+                    .roleGrantPermission(CommonUtil.toByteSequence(role), CommonUtil.toByteSequence(key), rangeEnd, permission)
                     .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
         } catch (Throwable e) {
             onExecuteError(e);
