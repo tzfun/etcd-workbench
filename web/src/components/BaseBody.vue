@@ -5,61 +5,62 @@ import type {TabPaneName} from 'element-plus'
 import {closeSession} from "~/services/SessionService";
 
 const tabIndexArr = [1]
-const editableTabsValue = ref('1')
+const curTab = ref('1')
 const tabs = ref([
   {
-    title: 'New Session',
+    title: 'New Session(1)',
     name: '1',
     state: 'new',
     sessionKey: undefined
   },
 ])
 
-const handleTabsEdit = (targetName: TabPaneName | undefined, action: 'remove' | 'add') => {
-  if (action === 'add') {
-    let newTabName = null;
-    for (let i = 0; i < tabIndexArr.length; i++) {
-      if (tabIndexArr[i] != i + 1) {
-        newTabName = i + 1;
-        tabIndexArr[i] = newTabName
-        break
-      }
+const tabAdd = () => {
+  let newTabName = null;
+  for (let i = 0; i < tabIndexArr.length; i++) {
+    if (tabIndexArr[i] != i + 1) {
+      newTabName = i + 1;
+      tabIndexArr[i] = newTabName
+      break
     }
-    if (newTabName == null) {
-      newTabName = tabIndexArr.length + 1;
-      tabIndexArr.push(newTabName)
-    }
-    tabs.value.push({
-      title: `New Session(${newTabName})`,
-      name: newTabName,
-      state: 'new',
-      sessionKey: undefined
-    })
-    editableTabsValue.value = newTabName
-  } else if (action === 'remove') {
-    const tabsVal = tabs.value
-    let activeName = editableTabsValue.value
-    if (activeName === targetName) {
-      tabsVal.forEach((tab, index) => {
-        if (tab.name === targetName) {
-          tabIndexArr[parseInt(tab.name) - 1] = 0;
-          const removeTab = () => {
-            const nextTab = tabsVal[index + 1] || tabsVal[index - 1]
-            if (nextTab) {
-              activeName = nextTab.name
-            }
-          }
-          if (tab.state !== 'new') {
-            closeSession(tab.sessionKey)
-          }
-          removeTab()
-          return
-        }
-      })
-    }
+  }
+  if (newTabName == null) {
+    newTabName = tabIndexArr.length + 1;
+    tabIndexArr.push(newTabName)
+  }
 
-    editableTabsValue.value = activeName
-    tabs.value = tabsVal.filter((tab) => tab.name !== targetName)
+  tabs.value.push({
+    title: `New Session(${newTabName})`,
+    name: newTabName,
+    state: 'new',
+    sessionKey: undefined
+  })
+  curTab.value = newTabName
+}
+
+const tabRemove = (targetName: TabPaneName) => {
+  let idx = -1;
+  let tab;
+  for (let i = 0; i < tabs.value.length; i++) {
+    if (tabs.value[i].name === targetName) {
+      idx = i
+      tab = tabs.value[i]
+      break
+    }
+  }
+  if (idx >= 0) {
+    tabIndexArr[parseInt(tab.name) - 1] = 0;
+    if (tab.state !== 'new') {
+      closeSession(tab.sessionKey)
+    }
+    const nextTab = tabs.value[idx + 1] || tabs.value[idx - 1]
+    tabs.value.splice(idx, 1)
+    if (nextTab) {
+      curTab.value = nextTab.name
+    }
+  }
+  if (tabs.value.length === 0) {
+    tabAdd()
   }
 }
 
@@ -86,11 +87,12 @@ const checkSessionName = (name: string): boolean => {
       <i inline-flex i="dark:ep-moon ep-sunny"/>
     </button>
     <el-tabs
-        v-model="editableTabsValue"
+        v-model="curTab"
         type="card"
         editable
         class="tabs"
-        @edit="handleTabsEdit">
+        @tab-add="tabAdd"
+        @tab-remove="tabRemove">
       <el-tab-pane
           v-for="(item,idx) in tabs"
           :key="item.name"

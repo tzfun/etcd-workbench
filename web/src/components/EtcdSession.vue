@@ -3,6 +3,7 @@
 import {ref} from "vue";
 import {heartBeat} from "~/services/SessionService";
 import {ElMessage} from "element-plus";
+import {_nonEmpty} from "~/util/Util";
 
 const emits = defineEmits(['change'])
 defineProps({
@@ -25,12 +26,14 @@ const onNewSession = ({key, name}) => {
       heartBeat(key).catch(e => {
         if (state.value !== 'new') {
           onSessionClosed()
-          ElMessage({
-            showClose: true,
-            message: e,
-            type: "error",
-            duration: 3000,
-          })
+          if (_nonEmpty(e)) {
+            ElMessage({
+              showClose: true,
+              message: e,
+              type: "error",
+              duration: 3000,
+            })
+          }
         }
       })
     }

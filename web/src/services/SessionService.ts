@@ -150,3 +150,31 @@ export function roleRevokePermission(sessionId: string,
         ...permission
     })
 }
+
+export function getCluster(sessionId: string): Promise<any> {
+    return request.get(host + "/session/etcd/cluster/get", {
+        sessionId: sessionId
+    })
+}
+
+export function removeClusterMember(sessionId: string, memberId: number): Promise<any> {
+    return request.get(host + "/session/etcd/cluster/remove_member", {
+        sessionId: sessionId,
+        memberId: memberId
+    })
+}
+
+export function addClusterMember(sessionId: string, urlList: string[]): Promise<any> {
+    return request.post(host + "/session/etcd/cluster/add_member", {
+        sessionId: sessionId,
+        urlList: urlList
+    })
+}
+
+export function updateClusterMember(sessionId: string, memberId: number, urlList: string[]): Promise<any> {
+    return request.post(host + "/session/etcd/cluster/update_member", {
+        sessionId: sessionId,
+        memberId: memberId,
+        urlList: urlList
+    })
+}

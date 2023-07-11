@@ -2,7 +2,7 @@ import Axios, {AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse, Int
 import {Request, ResultData} from "~/request/type";
 
 import {ElMessage} from "element-plus";
-import {_loading} from "~/util/Util";
+import {_loading, _nonEmpty} from "~/util/Util";
 
 /**
  * 封装的 element-plus 的消息提示框
@@ -69,13 +69,17 @@ const handleResponseCode = (res: ResultData, notifyError: boolean | undefined = 
         case 10003:
             msg = res.msg ? res.msg : "Etcd server error!"
             break
+        case 10004:
+            msg = res.msg ? res.msg : "Format error!"
+            break
     }
-    if (msg && notifyError) {
+    if (_nonEmpty(msg as string) && notifyError) {
+        console.log("message : ",res)
         ElMessage({
             showClose: true,
-            message: msg,
-            type: "warning",
-            duration: 3000,
+            message: msg as string,
+            type: "error",
+            duration: 5000,
         })
     }
 }

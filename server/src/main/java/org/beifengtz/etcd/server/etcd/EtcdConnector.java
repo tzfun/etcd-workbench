@@ -5,6 +5,8 @@ import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.KV;
 import io.etcd.jetcd.KeyValue;
+import io.etcd.jetcd.Maintenance;
+import io.etcd.jetcd.Response.Header;
 import io.etcd.jetcd.auth.AuthRoleGetResponse;
 import io.etcd.jetcd.auth.AuthRoleListResponse;
 import io.etcd.jetcd.auth.AuthUserGetResponse;
@@ -34,8 +36,11 @@ import io.etcd.jetcd.options.PutOption;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import org.beifengtz.etcd.server.config.Configuration;
+import org.beifengtz.etcd.server.entity.bo.ClusterBO;
 import org.beifengtz.etcd.server.entity.bo.KeyBO;
 import org.beifengtz.etcd.server.entity.bo.KeyValueBO;
+import org.beifengtz.etcd.server.entity.bo.MemberBO;
+import org.beifengtz.etcd.server.entity.bo.MemberStatusBO;
 import org.beifengtz.etcd.server.entity.bo.PermissionBO;
 import org.beifengtz.etcd.server.entity.bo.PermissionBO.PermissionBOBuilder;
 import org.beifengtz.etcd.server.entity.bo.UserBO;
@@ -44,6 +49,7 @@ import org.beifengtz.etcd.server.util.CommonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -56,6 +62,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * description: TODO
@@ -663,13 +670,31 @@ public class EtcdConnector {
      *
      * @return 节点列表
      */
-    public List<Member> clusterList() {
+    public ClusterBO clusterInfo() {
         onActive();
         try {
-            MemberListResponse memberList = client.getClusterClient()
+            MemberListResponse memberListResponse = client.getClusterClient()
                     .listMember()
                     .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
-            return memberList.getMembers();
+            Method getResponseHeader = memberListResponse.getClass().getSuperclass().getDeclaredMethod("getResponseHeader");
+            getResponseHeader.setAccessible(true);
+            String responseHeader = getResponseHeader.invoke(memberListResponse).toString();
+            Header header = memberListResponse.getHeader();
+            ClusterBO cluster = new ClusterBO();
+            for (String s : responseHeader.split("\n")) {
+                if (s.startsWith("cluster_id")) {
+                    cluster.setClusterId(Double.parseDouble(s.substring(s.indexOf(": ") + 2)));
+                } else if (s.startsWith("member_id")) {
+                    cluster.setLeader(Double.parseDouble(s.substring(s.indexOf(": ") + 2)));
+                }
+            }
+            cluster.setRevision(header.getRevision());
+            cluster.setRaftTerm(header.getRaftTerm());
+            List<Member> memberList = memberListResponse.getMembers();
+            if (memberList.size() > 0) {
+                cluster.setMembers(memberList.stream().map(MemberBO::parseFrom).collect(Collectors.toList()));
+            }
+            return cluster;
         } catch (Throwable e) {
             onExecuteError(e);
         }
@@ -682,13 +707,17 @@ public class EtcdConnector {
      * @param memberId 成员节点ID
      * @return 移除后集群的节点列表
      */
-    public List<Member> clusterRemove(long memberId) {
+    public List<MemberBO> clusterRemove(long memberId) {
         onActive();
         try {
             MemberRemoveResponse memberRemove = client.getClusterClient()
                     .removeMember(memberId)
                     .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
-            return memberRemove.getMembers();
+            List<Member> members = memberRemove.getMembers();
+            if (members == null || members.size() == 0) {
+                return List.of();
+            }
+            return members.stream().map(MemberBO::parseFrom).collect(Collectors.toList());
         } catch (Throwable e) {
             onExecuteError(e);
         }
@@ -701,13 +730,13 @@ public class EtcdConnector {
      * @param urls 节点地址，集群通过此地址与之通信
      * @return 添加的节点信息
      */
-    public Member clusterAdd(List<URI> urls) {
+    public MemberBO clusterAdd(List<URI> urls) {
         onActive();
         try {
             MemberAddResponse memberAdd = client.getClusterClient()
                     .addMember(urls)
                     .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
-            return memberAdd.getMember();
+            return MemberBO.parseFrom(memberAdd.getMember());
         } catch (Throwable e) {
             onExecuteError(e);
         }
@@ -818,6 +847,4 @@ public class EtcdConnector {
             onExecuteError(e);
         }
     }
-
-
 }

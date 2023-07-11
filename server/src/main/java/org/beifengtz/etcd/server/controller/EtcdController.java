@@ -3,7 +3,6 @@ package org.beifengtz.etcd.server.controller;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.ClientBuilder;
-import io.etcd.jetcd.auth.Permission.Type;
 import io.etcd.jetcd.options.GetOption;
 import io.netty.handler.ssl.ApplicationProtocolConfig;
 import io.netty.handler.ssl.ApplicationProtocolNames;
@@ -16,6 +15,7 @@ import org.beifengtz.etcd.server.config.Configuration;
 import org.beifengtz.etcd.server.config.ResultCode;
 import org.beifengtz.etcd.server.entity.bo.KeyValueBO;
 import org.beifengtz.etcd.server.entity.bo.UserBO;
+import org.beifengtz.etcd.server.entity.dto.MemberDTO;
 import org.beifengtz.etcd.server.entity.dto.NewSessionDTO;
 import org.beifengtz.etcd.server.entity.dto.PermissionDTO;
 import org.beifengtz.etcd.server.entity.vo.ResultVO;
@@ -35,9 +35,12 @@ import org.beifengtz.jvmm.convey.enums.Method;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.List;
@@ -212,7 +215,7 @@ public class EtcdController {
         return ResultCode.OK.result(EtcdConnectorFactory.get(sessionId).roleGet(role));
     }
 
-    @HttpRequest(value = "/session/etcd/role/grant_permission",method = Method.POST)
+    @HttpRequest(value = "/session/etcd/role/grant_permission", method = Method.POST)
     public ResultVO roleGrantPermission(@RequestBody PermissionDTO data) {
         EtcdConnectorFactory.get(data.getSessionId()).roleGrantPermission(data.getRole(), data.getKey(), data.parseRangeEnd(), data.getType());
         return ResultCode.OK.result();
@@ -222,6 +225,55 @@ public class EtcdController {
     public ResultVO roleRevokePermission(@RequestBody PermissionDTO data) {
         EtcdConnectorFactory.get(data.getSessionId()).roleRevokePermission(data.getRole(), data.getKey(), data.parseRangeEnd());
         return ResultCode.OK.result();
+    }
+
+    @HttpRequest("/session/etcd/cluster/get")
+    public ResultVO getCluster(@RequestParam String sessionId) {
+        return ResultCode.OK.result(EtcdConnectorFactory.get(sessionId).clusterInfo());
+    }
+
+    @HttpRequest("/session/etcd/cluster/remove_member")
+    public ResultVO listClusterMember(@RequestParam String sessionId, @RequestParam long memberId) {
+        return ResultCode.OK.result(EtcdConnectorFactory.get(sessionId).clusterRemove(memberId));
+    }
+
+    @HttpRequest(value = "/session/etcd/cluster/add_member", method = Method.POST)
+    public ResultVO addClusterMember(@RequestBody MemberDTO member) {
+        List<String> urlList = member.getUrlList();
+        if (urlList == null || urlList.size() == 0) {
+            throw new IllegalArgumentException("Missing required param 'urlList'");
+        }
+        List<URI> uris = new ArrayList<>(urlList.size());
+        try {
+            for (String s : urlList) {
+                uris.add(new URI(s));
+            }
+        } catch (URISyntaxException e) {
+            return ResultCode.PARAM_FORMAT_ERROR.result(e.getMessage(), null);
+        }
+
+        return ResultCode.OK.result(EtcdConnectorFactory.get(member.getSessionId()).clusterAdd(uris));
+    }
+
+    @HttpRequest(value = "/session/etcd/cluster/update_member", method = Method.POST)
+    public ResultVO updateClusterMember(@RequestBody MemberDTO member) {
+        List<String> urlList = member.getUrlList();
+        if (urlList == null || urlList.size() == 0) {
+            throw new IllegalArgumentException("Missing required param 'urlList'");
+        }
+        if (member.getMemberId() == 0) {
+            throw new IllegalArgumentException("Missing required param 'memberId'");
+        }
+        List<URI> uris = new ArrayList<>(urlList.size());
+        try {
+            for (String s : urlList) {
+                uris.add(new URI(s));
+            }
+        } catch (URISyntaxException e) {
+            return ResultCode.PARAM_FORMAT_ERROR.result(e.getMessage(), null);
+        }
+
+        return ResultCode.OK.result(EtcdConnectorFactory.get(member.getSessionId()).clusterUpdate(member.getMemberId(), uris));
     }
 
     private ClientBuilder constructClientBuilder(NewSessionDTO data) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {

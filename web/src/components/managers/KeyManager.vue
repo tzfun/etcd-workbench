@@ -258,7 +258,7 @@ const putKey = () => {
 <template>
   <div class="mb-5">
     <el-button :icon="Refresh" @click="loadAllKeys">Refresh Table</el-button>
-    <el-button type="primary" :icon="DocumentAdd" @click="add">Add Key/Value</el-button>
+    <el-button type="primary" :icon="DocumentAdd" @click="add">Add Key / Value</el-button>
     <el-button type="danger" :icon="Delete" @click="delBatch">Delete Keys</el-button>
   </div>
 
