@@ -72,37 +72,43 @@ const onSessionChange = (args: { state: number, name: number, key: string | unde
 </script>
 
 <template>
-  <el-tabs
-      v-model="editableTabsValue"
-      type="card"
-      editable
-      class="tabs"
-      @edit="handleTabsEdit"
-  >
+  <div>
     <button
-        class="border-none bg-transparent cursor-pointer"
-        @click="toggleDark()"
-    >
+        class="border-none bg-transparent cursor-pointer light-switch"
+        @click="toggleDark()">
       <i inline-flex i="dark:ep-moon ep-sunny"/>
     </button>
-    <el-tab-pane
-        v-for="(item,idx) in tabs"
-        :key="item.name"
-        :label="item.title"
-        :name="item.name"
-        class="tab-pane"
-    >
-      <EtcdSession @change="onSessionChange($event, idx)"
-                   :check-session-name="name => tabs.filter(o => o.title === name).length === 0"
-      ></EtcdSession>
-    </el-tab-pane>
-
-  </el-tabs>
+    <el-tabs
+        v-model="editableTabsValue"
+        type="card"
+        editable
+        class="tabs"
+        @edit="handleTabsEdit">
+      <el-tab-pane
+          v-for="(item,idx) in tabs"
+          :key="item.name"
+          :label="item.title"
+          :name="item.name"
+          class="tab-pane">
+        <EtcdSession @change="onSessionChange($event, idx)"
+                     :check-session-name="name => tabs.filter(o => o.title === name).length === 0"/>
+      </el-tab-pane>
+    </el-tabs>
+  </div>
 </template>
 
 <style scoped>
 .tabs, .tab-pane {
   width: 100%;
+}
+.light-switch {
+  position: fixed;
+  width: 50px;
+  height: 50px;
+  right: 15px;
+  bottom: 15px;
+  z-index: 10000;
+  font-size: 25px;
 }
 </style>
 

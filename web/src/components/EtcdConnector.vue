@@ -167,7 +167,7 @@ const fileRemove = (file: UploadFile, ref: Ref<UploadFile | undefined>) => {
 </script>
 <template>
   <div class="container">
-    <div class="header">
+    <div class="header mb-4 mt-4">
       <el-image style="width: 100px; height: 100px" :src="etcdLogo" fit="cover"/>
       <h1 class="header-title">Etcd Connection</h1>
     </div>
