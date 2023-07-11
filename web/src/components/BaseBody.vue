@@ -4,7 +4,7 @@ import {ref} from 'vue'
 import type {TabPaneName} from 'element-plus'
 import {closeSession} from "~/services/SessionService";
 
-const tabIndexArr = [1]
+let tabIndex = 1
 const curTab = ref('1')
 const tabs = ref([
   {
@@ -16,18 +16,7 @@ const tabs = ref([
 ])
 
 const tabAdd = () => {
-  let newTabName = null;
-  for (let i = 0; i < tabIndexArr.length; i++) {
-    if (tabIndexArr[i] != i + 1) {
-      newTabName = i + 1;
-      tabIndexArr[i] = newTabName
-      break
-    }
-  }
-  if (newTabName == null) {
-    newTabName = tabIndexArr.length + 1;
-    tabIndexArr.push(newTabName)
-  }
+  let newTabName = ++tabIndex;
 
   tabs.value.push({
     title: `New Session(${newTabName})`,
@@ -49,7 +38,6 @@ const tabRemove = (targetName: TabPaneName) => {
     }
   }
   if (idx >= 0) {
-    tabIndexArr[parseInt(tab.name) - 1] = 0;
     if (tab.state !== 'new') {
       closeSession(tab.sessionKey)
     }

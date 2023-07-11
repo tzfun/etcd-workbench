@@ -5,7 +5,6 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.beifengtz.jvmm.common.JsonParsable;
 
-import java.lang.reflect.Field;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +18,7 @@ import java.util.List;
 @Data
 @Slf4j
 public class MemberBO implements JsonParsable {
-    private double id;
+    private String id;
     private String name;
     private List<String> peerUri = List.of();
     private List<String> clientUri = List.of();
@@ -27,15 +26,7 @@ public class MemberBO implements JsonParsable {
 
     public static MemberBO parseFrom(Member member) {
         MemberBO memberBO = new MemberBO();
-        String memberString = memberToString(member);
-        String[] split = memberString.split("\n");
-        // id会越界，这里特殊方法去取
-        for (String s : split) {
-            if (s.startsWith("ID")) {
-                memberBO.setId(Double.parseDouble(s.substring(s.indexOf(": ") + 2)));
-                break;
-            }
-        }
+        memberBO.setId(Long.toUnsignedString(member.getId()));
         memberBO.setName(member.getName());
 
         List<URI> peerURIs = member.getPeerURIs();
@@ -56,16 +47,5 @@ public class MemberBO implements JsonParsable {
             memberBO.setClientUri(list);
         }
         return memberBO;
-    }
-
-    private static String memberToString(Member member) {
-        try {
-            Field field = member.getClass().getDeclaredField("member");
-            field.setAccessible(true);
-            return field.get(member).toString();
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            log.debug("member to string", e);
-        }
-        return "";
     }
 }

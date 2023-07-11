@@ -233,7 +233,7 @@ public class EtcdController {
     }
 
     @HttpRequest("/session/etcd/cluster/remove_member")
-    public ResultVO listClusterMember(@RequestParam String sessionId, @RequestParam long memberId) {
+    public ResultVO listClusterMember(@RequestParam String sessionId, @RequestParam String memberId) {
         return ResultCode.OK.result(EtcdConnectorFactory.get(sessionId).clusterRemove(memberId));
     }
 
@@ -261,7 +261,7 @@ public class EtcdController {
         if (urlList == null || urlList.size() == 0) {
             throw new IllegalArgumentException("Missing required param 'urlList'");
         }
-        if (member.getMemberId() == 0) {
+        if (StringUtil.isEmpty(member.getMemberId())) {
             throw new IllegalArgumentException("Missing required param 'memberId'");
         }
         List<URI> uris = new ArrayList<>(urlList.size());

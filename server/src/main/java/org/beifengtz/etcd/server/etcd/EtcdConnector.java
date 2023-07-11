@@ -5,7 +5,6 @@ import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.KV;
 import io.etcd.jetcd.KeyValue;
-import io.etcd.jetcd.Maintenance;
 import io.etcd.jetcd.Response.Header;
 import io.etcd.jetcd.auth.AuthRoleGetResponse;
 import io.etcd.jetcd.auth.AuthRoleListResponse;
@@ -40,7 +39,6 @@ import org.beifengtz.etcd.server.entity.bo.ClusterBO;
 import org.beifengtz.etcd.server.entity.bo.KeyBO;
 import org.beifengtz.etcd.server.entity.bo.KeyValueBO;
 import org.beifengtz.etcd.server.entity.bo.MemberBO;
-import org.beifengtz.etcd.server.entity.bo.MemberStatusBO;
 import org.beifengtz.etcd.server.entity.bo.PermissionBO;
 import org.beifengtz.etcd.server.entity.bo.PermissionBO.PermissionBOBuilder;
 import org.beifengtz.etcd.server.entity.bo.UserBO;
@@ -49,7 +47,7 @@ import org.beifengtz.etcd.server.util.CommonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Method;
+import java.math.BigInteger;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -676,18 +674,11 @@ public class EtcdConnector {
             MemberListResponse memberListResponse = client.getClusterClient()
                     .listMember()
                     .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
-            Method getResponseHeader = memberListResponse.getClass().getSuperclass().getDeclaredMethod("getResponseHeader");
-            getResponseHeader.setAccessible(true);
-            String responseHeader = getResponseHeader.invoke(memberListResponse).toString();
             Header header = memberListResponse.getHeader();
+
             ClusterBO cluster = new ClusterBO();
-            for (String s : responseHeader.split("\n")) {
-                if (s.startsWith("cluster_id")) {
-                    cluster.setClusterId(Double.parseDouble(s.substring(s.indexOf(": ") + 2)));
-                } else if (s.startsWith("member_id")) {
-                    cluster.setLeader(Double.parseDouble(s.substring(s.indexOf(": ") + 2)));
-                }
-            }
+            cluster.setClusterId(Long.toUnsignedString(header.getClusterId()));
+            cluster.setLeaderId(Long.toUnsignedString(header.getMemberId()));
             cluster.setRevision(header.getRevision());
             cluster.setRaftTerm(header.getRaftTerm());
             List<Member> memberList = memberListResponse.getMembers();
@@ -707,11 +698,11 @@ public class EtcdConnector {
      * @param memberId 成员节点ID
      * @return 移除后集群的节点列表
      */
-    public List<MemberBO> clusterRemove(long memberId) {
+    public List<MemberBO> clusterRemove(String memberId) {
         onActive();
         try {
             MemberRemoveResponse memberRemove = client.getClusterClient()
-                    .removeMember(memberId)
+                    .removeMember(new BigInteger(memberId).longValue())
                     .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
             List<Member> members = memberRemove.getMembers();
             if (members == null || members.size() == 0) {
@@ -750,11 +741,11 @@ public class EtcdConnector {
      * @param urls     节点地址，集群通过此地址与之通信
      * @return 更新的节点列表
      */
-    public List<Member> clusterUpdate(long memberId, List<URI> urls) {
+    public List<Member> clusterUpdate(String memberId, List<URI> urls) {
         onActive();
         try {
             MemberUpdateResponse memberUpdate = client.getClusterClient()
-                    .updateMember(memberId, urls)
+                    .updateMember(new BigInteger(memberId).longValue(), urls)
                     .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
             return memberUpdate.getMembers();
         } catch (Throwable e) {

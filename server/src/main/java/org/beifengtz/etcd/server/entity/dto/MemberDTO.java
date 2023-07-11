@@ -13,6 +13,6 @@ import java.util.List;
 @Data
 public class MemberDTO {
     private String sessionId;
-    private long memberId;
+    private String memberId;
     private List<String> urlList;
 }

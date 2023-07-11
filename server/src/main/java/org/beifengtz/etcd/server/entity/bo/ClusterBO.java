@@ -12,8 +12,8 @@ import java.util.List;
  */
 @Data
 public class ClusterBO {
-    private double clusterId;
-    private double leader;
+    private String clusterId;
+    private String leaderId;
     private long revision;
     private long raftTerm;
     private List<MemberBO> members = List.of();

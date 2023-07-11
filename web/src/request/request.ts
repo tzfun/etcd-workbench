@@ -74,7 +74,6 @@ const handleResponseCode = (res: ResultData, notifyError: boolean | undefined = 
             break
     }
     if (_nonEmpty(msg as string) && notifyError) {
-        console.log("message : ",res)
         ElMessage({
             showClose: true,
             message: msg as string,
@@ -85,7 +84,7 @@ const handleResponseCode = (res: ResultData, notifyError: boolean | undefined = 
 }
 
 const handleAxiosError = (e: AxiosError, notifyError: boolean | undefined = true) => {
-    if (notifyError) {
+    if (_nonEmpty(e.message) && notifyError) {
         ElMessage({
             showClose: true,
             message: e.message,

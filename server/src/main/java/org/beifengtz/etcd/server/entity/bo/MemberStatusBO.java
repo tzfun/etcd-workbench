@@ -16,22 +16,13 @@ import org.beifengtz.jvmm.common.JsonParsable;
 public class MemberStatusBO implements JsonParsable {
     private String version;
     private long dbSize;
-    private double leader;
+    private String leader;
     private long raftIndex;
     private long raftTerm;
 
     public static MemberStatusBO parseFrom(StatusResponse statusResponse) {
         MemberStatusBO status = new MemberStatusBO();
-        String statusString = statusResponse.toString();
-        String[] split = statusString.split("\n");
-        // id会越界，这里特殊方法去取
-        for (String s : split) {
-            if (s.startsWith("leader")) {
-                status.setLeader(Double.parseDouble(s.substring(s.indexOf(": ") + 2)));
-                break;
-            }
-        }
-
+        status.setLeader(Long.toUnsignedString(statusResponse.getLeader()));
         status.setVersion(statusResponse.getVersion());
         status.setDbSize(statusResponse.getDbSize());
         status.setRaftIndex(statusResponse.getRaftIndex());
