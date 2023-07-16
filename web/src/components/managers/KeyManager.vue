@@ -246,7 +246,7 @@ const putKey = () => {
     return
   }
 
-  putKV(props.sessionKey, key, Base64.encode(value)).then(() => {
+  putKV(props.sessionKey, key, value).then(() => {
     loadAllKeys()
     editing.value = false
   }).catch(e => {
@@ -267,11 +267,11 @@ const putKey = () => {
             stripe
             @selection-change="handleSelectionChange"
             class="mb-5">
-    <el-table-column type="selection" width="55" />
+    <el-table-column type="selection" width="55"/>
     <el-table-column prop="key" label="Key" sortable/>
-    <el-table-column prop="version" label="Version"  sortable/>
-    <el-table-column prop="createRevision" label="Create Revision"  sortable/>
-    <el-table-column prop="modRevision" label="Modify Revision"  sortable/>
+    <el-table-column prop="version" label="Version" sortable/>
+    <el-table-column prop="createRevision" label="Create Revision" sortable/>
+    <el-table-column prop="modRevision" label="Modify Revision" sortable/>
     <el-table-column prop="lease" label="Lease"/>
     <el-table-column fixed="right" label="Operations" width="300">
       <template #header>

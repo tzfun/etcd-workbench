@@ -15,6 +15,7 @@ import org.beifengtz.etcd.server.config.Configuration;
 import org.beifengtz.etcd.server.config.ResultCode;
 import org.beifengtz.etcd.server.entity.bo.KeyValueBO;
 import org.beifengtz.etcd.server.entity.bo.UserBO;
+import org.beifengtz.etcd.server.entity.dto.KeyValueDTO;
 import org.beifengtz.etcd.server.entity.dto.MemberDTO;
 import org.beifengtz.etcd.server.entity.dto.NewSessionDTO;
 import org.beifengtz.etcd.server.entity.dto.PermissionDTO;
@@ -41,7 +42,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -122,10 +122,9 @@ public class EtcdController {
         return ResultCode.OK.result(EtcdConnectorFactory.get(sessionId).kvDelBatch(keys));
     }
 
-    @HttpRequest("/session/etcd/kv/put")
-    public ResultVO putKV(@RequestParam String sessionId, @RequestParam String key, @RequestParam String value) {
-        String valueStr = new String(Base64.getDecoder().decode(value), StandardCharsets.UTF_8);
-        EtcdConnectorFactory.get(sessionId).kvPut(key, valueStr);
+    @HttpRequest(value = "/session/etcd/kv/put", method = Method.POST)
+    public ResultVO putKV(@RequestBody KeyValueDTO data) {
+        EtcdConnectorFactory.get(data.getSessionId()).kvPut(data.getKey(), data.getValue());
         return ResultCode.OK.result();
     }
 

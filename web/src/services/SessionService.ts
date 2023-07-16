@@ -52,7 +52,7 @@ export function deleteKey(sessionId: string, keys: string[]): Promise<any> {
 }
 
 export function putKV(sessionId: string, key: string, value: string): Promise<any> {
-    return request.get(host + "/session/etcd/kv/put", {
+    return request.post(host + "/session/etcd/kv/put", {
         sessionId: sessionId,
         key: key,
         value: value
