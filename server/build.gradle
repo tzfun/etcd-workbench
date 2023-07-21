@@ -4,6 +4,8 @@ plugins {
 
 group 'org.beifengtz.etcd'
 version '1.0-SNAPSHOT'
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
 
 repositories {
     mavenLocal()
@@ -13,13 +15,13 @@ repositories {
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
-    implementation('io.etcd:jetcd-core:0.6.1') {
+    compile('io.etcd:jetcd-core:0.6.1') {
         exclude group: 'io.netty'
         exclude group: 'com.google.code.gson'
         exclude group: 'org.slf4j'
     }
-    implementation 'io.github.tzfun.jvmm:jvmm-convey:2.1.5'
-    implementation 'io.github.tzfun.jvmm:jvmm-logger:2.1.5'
+    compile 'io.github.tzfun.jvmm:jvmm-convey:2.1.5'
+    compile 'io.github.tzfun.jvmm:jvmm-logger:2.1.5'
     compileOnly "org.projectlombok:lombok:1.18.12"
     annotationProcessor "org.projectlombok:lombok:1.18.12"
 }
@@ -30,4 +32,21 @@ test {
 
 compileJava {
     options.compilerArgs << "-parameters" << "-Xlint:unchecked" << "-Xlint:deprecation"
+}
+
+jar {
+    manifestContentCharset 'utf-8'
+    metadataCharset 'utf-8'
+    archiveName("etcd-workbench.jar")
+
+    manifest {
+        attributes (
+                "Manifest-Version": 1.0,
+                'Main-Class': 'org.beifengtz.etcd.server.EtcdServer'
+        )
+    }
+
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
 }

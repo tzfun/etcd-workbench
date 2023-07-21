@@ -20,6 +20,13 @@ import java.nio.file.Files;
  */
 public class EtcdServer {
 
+    private static void loadBanner() throws Exception {
+        InputStream is = EtcdServer.class.getResourceAsStream("/banner.txt");
+        if (is != null) {
+            System.out.println(IOUtil.toString(is));
+        }
+    }
+
     private static void loadConfiguration() throws Exception {
         String config = null;
         File file = new File(SystemPropertyUtil.get("user.dir"), "app.conf");
@@ -81,6 +88,7 @@ public class EtcdServer {
     }
 
     public static void main(String[] args) throws Exception {
+        loadBanner();
         loadConfiguration();
         bootstrap();
     }
