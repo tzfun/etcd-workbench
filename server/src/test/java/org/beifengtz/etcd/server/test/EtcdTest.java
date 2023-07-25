@@ -9,6 +9,8 @@ import io.netty.handler.ssl.ApplicationProtocolConfig;
 import io.netty.handler.ssl.ApplicationProtocolNames;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import org.beifengtz.etcd.server.etcd.EtcdConnector;
+import org.beifengtz.etcd.server.etcd.EtcdConnectorFactory;
 import org.beifengtz.etcd.server.util.CommonUtil;
 import org.junit.jupiter.api.Test;
 
@@ -50,5 +52,22 @@ public class EtcdTest {
             System.out.println(kv.getKey().toString(StandardCharsets.UTF_8) + " = " + kv.getValue().toString(StandardCharsets.UTF_8) + ", lease = " +
                     kv.getLease() + ", CreateRevision = " + kv.getCreateRevision() + ", ModRevision = " + kv.getModRevision() + ", version = " + kv.getVersion());
         });
+    }
+
+    @Test
+    public void testConnector() throws Exception {
+        Client client = Client.builder()
+                .target("ip:///127.0.0.1:2379")
+                .namespace(ByteSequence.EMPTY)
+                .authority("127.0.0.1")
+                .build();
+        String sessionId = EtcdConnectorFactory.newConnector(client);
+        EtcdConnector connector = EtcdConnectorFactory.get(sessionId);
+        GetOption option = GetOption.newBuilder()
+                .withKeysOnly(true)
+                .isPrefix(true)
+                .withRange(ByteSequence.EMPTY)
+                .build();
+        System.out.println(connector.kvGet("/", option));
     }
 }
