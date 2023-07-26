@@ -11,10 +11,7 @@ import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import lombok.extern.slf4j.Slf4j;
-import org.beifengtz.etcd.server.config.Configuration;
 import org.beifengtz.etcd.server.config.ResultCode;
-import org.beifengtz.etcd.server.entity.bo.KeyValueBO;
-import org.beifengtz.etcd.server.entity.bo.UserBO;
 import org.beifengtz.etcd.server.entity.dto.KeyValueDTO;
 import org.beifengtz.etcd.server.entity.dto.MemberDTO;
 import org.beifengtz.etcd.server.entity.dto.NewSessionDTO;
@@ -32,6 +29,7 @@ import org.beifengtz.jvmm.convey.annotation.HttpController;
 import org.beifengtz.jvmm.convey.annotation.HttpRequest;
 import org.beifengtz.jvmm.convey.annotation.RequestBody;
 import org.beifengtz.jvmm.convey.annotation.RequestParam;
+import org.beifengtz.jvmm.convey.entity.ResponseFuture;
 import org.beifengtz.jvmm.convey.enums.Method;
 
 import java.io.File;
@@ -42,10 +40,8 @@ import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 /**
  * description: TODO
@@ -58,12 +54,11 @@ import java.util.concurrent.TimeUnit;
 public class EtcdController {
 
     @HttpRequest(value = "/session/test", method = Method.POST)
-    public ResultVO connect(@RequestBody NewSessionDTO data) throws Exception {
+    public void connect(@RequestBody NewSessionDTO data, ResponseFuture future) throws Exception {
         try (Client client = constructClientBuilder(data).build()) {
             client.getKVClient()
                     .get(CommonUtil.toByteSequence(" "))
-                    .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
-            return ResultCode.OK.result(true);
+                    .whenComplete((getResponse, throwable) -> handleComplete(future, true, throwable));
         }
     }
 
@@ -99,145 +94,182 @@ public class EtcdController {
     }
 
     @HttpRequest("/session/etcd/kv/get_all_keys")
-    public ResultVO getAllKeys(@RequestParam String sessionId) {
+    public void getAllKeys(@RequestParam String sessionId, ResponseFuture future) {
         EtcdConnector connector = EtcdConnectorFactory.get(sessionId);
-        return ResultCode.OK.result(connector.kvGetAllKeys());
+        connector.kvGetAllKeys().whenComplete(((keyValue, throwable) -> handleComplete(future, keyValue, throwable)));
     }
 
     @HttpRequest("/session/etcd/kv/get")
-    public ResultVO getKV(@RequestParam String sessionId, @RequestParam String key, @RequestParam Long version) {
+    public void getKV(@RequestParam String sessionId,
+                      @RequestParam String key,
+                      @RequestParam Long version,
+                      ResponseFuture future) {
         EtcdConnector connector = EtcdConnectorFactory.get(sessionId);
         if (version == null) {
-            return ResultCode.OK.result(connector.kvGet(key));
+            connector.kvGet(key).whenComplete((keyValue, throwable) -> handleComplete(future, keyValue, throwable));
         } else {
-            List<KeyValueBO> kvs = connector.kvGet(key, GetOption.newBuilder()
-                    .withRevision(version)
-                    .build());
-            return ResultCode.OK.result(kvs.size() > 0 ? kvs.get(0) : null);
+            connector.kvGet(key, GetOption.newBuilder().withRevision(version).build())
+                    .thenApply(kvs -> kvs.size() > 0 ? kvs.get(0) : null)
+                    .whenComplete(((keyValue, throwable) -> handleComplete(future, keyValue, throwable)));
         }
     }
 
     @HttpRequest("/session/etcd/kv/delete")
-    public ResultVO deleteKey(@RequestParam String sessionId, @RequestParam String[] keys) {
-        return ResultCode.OK.result(EtcdConnectorFactory.get(sessionId).kvDelBatch(keys));
+    public void deleteKey(@RequestParam String sessionId,
+                          @RequestParam String[] keys,
+                          ResponseFuture future) {
+        EtcdConnectorFactory.get(sessionId).kvDelBatch(keys).whenComplete((integer, throwable) -> handleComplete(future, integer, throwable));
     }
 
     @HttpRequest(value = "/session/etcd/kv/put", method = Method.POST)
-    public ResultVO putKV(@RequestBody KeyValueDTO data) {
-        EtcdConnectorFactory.get(data.getSessionId()).kvPut(data.getKey(), data.getValue());
-        return ResultCode.OK.result();
+    public void putKV(@RequestBody KeyValueDTO data, ResponseFuture future) {
+        EtcdConnectorFactory.get(data.getSessionId())
+                .kvPut(data.getKey(), data.getValue())
+                .whenComplete((putResponse, throwable) -> handleComplete(future, null, throwable));
     }
 
     @HttpRequest("/session/etcd/kv/get_history")
-    public ResultVO getKVHistory(@RequestParam String sessionId,
-                                 @RequestParam String key,
-                                 @RequestParam long startVersion,
-                                 @RequestParam long endVersion) {
-        Collection<Long> versions = EtcdConnectorFactory.get(sessionId)
-                .kvGetHistoryVersion(key, startVersion, endVersion);
-        return ResultCode.OK.result(versions);
+    public void getKVHistory(@RequestParam String sessionId,
+                             @RequestParam String key,
+                             @RequestParam long startVersion,
+                             @RequestParam long endVersion,
+                             ResponseFuture future) {
+        EtcdConnectorFactory.get(sessionId)
+                .kvGetHistoryVersion(key, startVersion, endVersion)
+                .whenComplete((versions, throwable) -> handleComplete(future, versions, throwable));
     }
 
     @HttpRequest("/session/etcd/user/list")
-    public ResultVO listUser(@RequestParam String sessionId) {
-        List<UserBO> users = EtcdConnectorFactory.get(sessionId).userFullList();
-        return ResultCode.OK.result(users);
+    public void listUser(@RequestParam String sessionId, ResponseFuture future) {
+        EtcdConnectorFactory.get(sessionId)
+                .userFullList()
+                .whenComplete(((users, throwable) -> handleComplete(future, users, throwable)));
     }
 
     @HttpRequest("/session/etcd/user/get_roles")
-    public ResultVO getUserRoles(@RequestParam String sessionId,
-                                 @RequestParam String user) {
-        List<String> roles = EtcdConnectorFactory.get(sessionId).userGetRoles(user);
-        return ResultCode.OK.result(roles);
+    public void getUserRoles(@RequestParam String sessionId,
+                             @RequestParam String user,
+                             ResponseFuture future) {
+        EtcdConnectorFactory.get(sessionId)
+                .userGetRoles(user)
+                .whenComplete((roles, throwable) -> handleComplete(future, roles, throwable));
     }
 
     @HttpRequest("/session/etcd/user/delete")
-    public ResultVO deleteUser(@RequestParam String sessionId,
-                               @RequestParam String user) {
-        EtcdConnectorFactory.get(sessionId).userDel(user);
-        return ResultCode.OK.result();
+    public void deleteUser(@RequestParam String sessionId,
+                           @RequestParam String user,
+                           ResponseFuture future) {
+        EtcdConnectorFactory.get(sessionId)
+                .userDel(user)
+                .whenComplete(((response, throwable) -> handleComplete(future, null, throwable)));
     }
 
     @HttpRequest("/session/etcd/user/add")
-    public ResultVO addUser(@RequestParam String sessionId,
-                            @RequestParam String user,
-                            @RequestParam String password) {
-        EtcdConnectorFactory.get(sessionId).userAdd(user, password);
-        return ResultCode.OK.result();
+    public void addUser(@RequestParam String sessionId,
+                        @RequestParam String user,
+                        @RequestParam String password,
+                        ResponseFuture future) {
+        EtcdConnectorFactory.get(sessionId)
+                .userAdd(user, password)
+                .whenComplete(((response, throwable) -> handleComplete(future, null, throwable)));
     }
 
     @HttpRequest("/session/etcd/user/change_password")
-    public ResultVO userChangePassword(@RequestParam String sessionId,
-                                       @RequestParam String user,
-                                       @RequestParam String password) {
-        EtcdConnectorFactory.get(sessionId).userChangePassword(user, password);
-        return ResultCode.OK.result();
+    public void userChangePassword(@RequestParam String sessionId,
+                                   @RequestParam String user,
+                                   @RequestParam String password,
+                                   ResponseFuture future) {
+        EtcdConnectorFactory.get(sessionId)
+                .userChangePassword(user, password)
+                .whenComplete(((response, throwable) -> handleComplete(future, null, throwable)));
     }
 
     @HttpRequest("/session/etcd/user/grant_role")
-    public ResultVO userGrantRole(@RequestParam String sessionId,
-                                  @RequestParam String user,
-                                  @RequestParam String role) {
-        EtcdConnectorFactory.get(sessionId).userGrantRole(user, role);
-        return ResultCode.OK.result();
+    public void userGrantRole(@RequestParam String sessionId,
+                              @RequestParam String user,
+                              @RequestParam String role,
+                              ResponseFuture future) {
+        EtcdConnectorFactory.get(sessionId)
+                .userGrantRole(user, role)
+                .whenComplete(((response, throwable) -> handleComplete(future, null, throwable)));
     }
 
     @HttpRequest("/session/etcd/user/revoke_role")
-    public ResultVO userRevokeRole(@RequestParam String sessionId,
-                                   @RequestParam String user,
-                                   @RequestParam String role) {
-        EtcdConnectorFactory.get(sessionId).userRevokeRole(user, role);
-        return ResultCode.OK.result();
+    public void userRevokeRole(@RequestParam String sessionId,
+                               @RequestParam String user,
+                               @RequestParam String role,
+                               ResponseFuture future) {
+        EtcdConnectorFactory.get(sessionId)
+                .userRevokeRole(user, role)
+                .whenComplete(((response, throwable) -> handleComplete(future, null, throwable)));
     }
 
     @HttpRequest("/session/etcd/role/list")
-    public ResultVO listRoles(@RequestParam String sessionId) {
-        return ResultCode.OK.result(EtcdConnectorFactory.get(sessionId).roleList());
+    public void listRoles(@RequestParam String sessionId, ResponseFuture future) {
+        EtcdConnectorFactory.get(sessionId)
+                .roleList()
+                .whenComplete(((roles, throwable) -> handleComplete(future, roles, throwable)));
     }
 
     @HttpRequest("/session/etcd/role/add")
-    public ResultVO addRole(@RequestParam String sessionId,
-                            @RequestParam String role) {
-        EtcdConnectorFactory.get(sessionId).roleAdd(role);
-        return ResultCode.OK.result();
+    public void addRole(@RequestParam String sessionId,
+                        @RequestParam String role,
+                        ResponseFuture future) {
+        EtcdConnectorFactory.get(sessionId)
+                .roleAdd(role)
+                .whenComplete(((response, throwable) -> handleComplete(future, null, throwable)));
     }
 
     @HttpRequest("/session/etcd/role/delete")
-    public ResultVO deleteRole(@RequestParam String sessionId,
-                               @RequestParam String role) {
-        EtcdConnectorFactory.get(sessionId).roleDel(role);
-        return ResultCode.OK.result();
+    public void deleteRole(@RequestParam String sessionId,
+                           @RequestParam String role,
+                           ResponseFuture future) {
+        EtcdConnectorFactory.get(sessionId)
+                .roleDel(role)
+                .whenComplete(((response, throwable) -> handleComplete(future, null, throwable)));
     }
 
     @HttpRequest("/session/etcd/role/get_permissions")
-    public ResultVO getRolePermissions(@RequestParam String sessionId, @RequestParam String role) {
-        return ResultCode.OK.result(EtcdConnectorFactory.get(sessionId).roleGet(role));
+    public void getRolePermissions(@RequestParam String sessionId,
+                                   @RequestParam String role,
+                                   ResponseFuture future) {
+        EtcdConnectorFactory.get(sessionId)
+                .roleGet(role)
+                .whenComplete(((permissions, throwable) -> handleComplete(future, permissions, throwable)));
     }
 
     @HttpRequest(value = "/session/etcd/role/grant_permission", method = Method.POST)
-    public ResultVO roleGrantPermission(@RequestBody PermissionDTO data) {
-        EtcdConnectorFactory.get(data.getSessionId()).roleGrantPermission(data.getRole(), data.getKey(), data.parseRangeEnd(), data.getType());
-        return ResultCode.OK.result();
+    public void roleGrantPermission(@RequestBody PermissionDTO data, ResponseFuture future) {
+        EtcdConnectorFactory.get(data.getSessionId())
+                .roleGrantPermission(data.getRole(), data.getKey(), data.parseRangeEnd(), data.getType())
+                .whenComplete(((response, throwable) -> handleComplete(future, null, throwable)));
     }
 
     @HttpRequest(value = "/session/etcd/role/revoke_permission", method = Method.POST)
-    public ResultVO roleRevokePermission(@RequestBody PermissionDTO data) {
-        EtcdConnectorFactory.get(data.getSessionId()).roleRevokePermission(data.getRole(), data.getKey(), data.parseRangeEnd());
-        return ResultCode.OK.result();
+    public void roleRevokePermission(@RequestBody PermissionDTO data, ResponseFuture future) {
+        EtcdConnectorFactory.get(data.getSessionId())
+                .roleRevokePermission(data.getRole(), data.getKey(), data.parseRangeEnd())
+                .whenComplete(((response, throwable) -> handleComplete(future, null, throwable)));
     }
 
     @HttpRequest("/session/etcd/cluster/get")
-    public ResultVO getCluster(@RequestParam String sessionId) {
-        return ResultCode.OK.result(EtcdConnectorFactory.get(sessionId).clusterInfo());
+    public void getCluster(@RequestParam String sessionId, ResponseFuture future) {
+        EtcdConnectorFactory.get(sessionId)
+                .clusterInfo()
+                .whenComplete(((clusters, throwable) -> handleComplete(future, clusters, throwable)));
     }
 
     @HttpRequest("/session/etcd/cluster/remove_member")
-    public ResultVO listClusterMember(@RequestParam String sessionId, @RequestParam String memberId) {
-        return ResultCode.OK.result(EtcdConnectorFactory.get(sessionId).clusterRemove(memberId));
+    public void listClusterMember(@RequestParam String sessionId,
+                                  @RequestParam String memberId,
+                                  ResponseFuture future) {
+        EtcdConnectorFactory.get(sessionId)
+                .clusterRemove(memberId)
+                .whenComplete(((members, throwable) -> handleComplete(future, members, throwable)));
     }
 
     @HttpRequest(value = "/session/etcd/cluster/add_member", method = Method.POST)
-    public ResultVO addClusterMember(@RequestBody MemberDTO member) {
+    public void addClusterMember(@RequestBody MemberDTO member, ResponseFuture future) {
         List<String> urlList = member.getUrlList();
         if (urlList == null || urlList.size() == 0) {
             throw new IllegalArgumentException("Missing required param 'urlList'");
@@ -248,14 +280,16 @@ public class EtcdController {
                 uris.add(new URI(s));
             }
         } catch (URISyntaxException e) {
-            return ResultCode.PARAM_FORMAT_ERROR.result(e.getMessage(), null);
+            future.apply(ResultCode.PARAM_FORMAT_ERROR.result(e.getMessage(), null));
+            return;
         }
-
-        return ResultCode.OK.result(EtcdConnectorFactory.get(member.getSessionId()).clusterAdd(uris));
+        EtcdConnectorFactory.get(member.getSessionId())
+                .clusterAdd(uris)
+                .whenComplete(((memberBO, throwable) -> handleComplete(future, memberBO, throwable)));
     }
 
     @HttpRequest(value = "/session/etcd/cluster/update_member", method = Method.POST)
-    public ResultVO updateClusterMember(@RequestBody MemberDTO member) {
+    public void updateClusterMember(@RequestBody MemberDTO member, ResponseFuture future) {
         List<String> urlList = member.getUrlList();
         if (urlList == null || urlList.size() == 0) {
             throw new IllegalArgumentException("Missing required param 'urlList'");
@@ -269,10 +303,12 @@ public class EtcdController {
                 uris.add(new URI(s));
             }
         } catch (URISyntaxException e) {
-            return ResultCode.PARAM_FORMAT_ERROR.result(e.getMessage(), null);
+            future.apply(ResultCode.PARAM_FORMAT_ERROR.result(e.getMessage(), null));
+            return;
         }
-
-        return ResultCode.OK.result(EtcdConnectorFactory.get(member.getSessionId()).clusterUpdate(member.getMemberId(), uris));
+        EtcdConnectorFactory.get(member.getSessionId())
+                .clusterUpdate(member.getMemberId(), uris)
+                .whenComplete(((members, throwable) -> handleComplete(future, members, throwable)));
     }
 
     private ClientBuilder constructClientBuilder(NewSessionDTO data) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
@@ -336,6 +372,15 @@ public class EtcdController {
             builder.sslContext(ssl);
         }
         return builder;
+    }
+
+    private void handleComplete(ResponseFuture future, Object result, Throwable throwable) {
+        if (throwable == null) {
+            future.apply(ResultCode.OK.result(result));
+        } else {
+            log.error(throwable.getMessage(), throwable);
+            future.apply(ResultCode.ETCD_ERROR.result(throwable.getMessage(), null));
+        }
     }
 
 }
