@@ -158,7 +158,7 @@ const add = () => {
 </script>
 
 <template>
-  <div>
+  <div class="page">
     <div class="mb-5">
       <el-button @click="loadAllUser" :icon="Refresh">Refresh Table</el-button>
       <el-button type="primary" :icon="UserFilled" @click="openAddDialog">Add User</el-button>
@@ -251,6 +251,6 @@ const add = () => {
 
 </template>
 
-<style scoped>
-
+<style lang="scss" scoped>
+@import '../../styles/index.scss';
 </style>

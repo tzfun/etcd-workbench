@@ -351,7 +351,7 @@ const putKeyValue = ({key, value, callback}) => {
     </div>
 
     <key-tree-viewer ref="treeViewerRef"
-                     v-if="viewer === 'tree'"
+                     v-show="viewer === 'tree'"
                      :data="treeData"
                      class="tree-viewer"
                      @on-select="getKVDetail"
@@ -360,7 +360,7 @@ const putKeyValue = ({key, value, callback}) => {
                      @on-delete="del"/>
     <key-table-viewer ref="tableViewerRef"
                       :data="tableData"
-                      v-if="viewer === 'table'"
+                      v-show="viewer === 'table'"
                       @on-edit="edit"
                       @on-diff="diff"
                       @on-delete="del"/>
@@ -459,13 +459,11 @@ const putKeyValue = ({key, value, callback}) => {
 }
 
 .page {
-  height: 100%;
-
   $--button-list-height: 30px;
   $--button-list-margin-bottom: 15px;
 
   .tree-viewer {
-    height: calc(100% - $--button-list-height - $--button-list-margin-bottom);
+    height: calc(100% - $--button-list-height - $--button-list-margin-bottom - 2px);
   }
 
   .button-list {

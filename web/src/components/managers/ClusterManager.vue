@@ -23,7 +23,7 @@ const add = () => {
 </script>
 
 <template>
-  <div>
+  <div class="page">
     <div class="mb-5">
       <el-button @click="loadCluster" :icon="Refresh">Refresh Table</el-button>
       <el-button type="primary" :icon="MostlyCloudy" @click="add">Add Member</el-button>
@@ -32,5 +32,5 @@ const add = () => {
 </template>
 
 <style lang="scss" scoped>
-
+@import '../../styles/index.scss';
 </style>

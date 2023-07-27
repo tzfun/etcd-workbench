@@ -128,17 +128,21 @@ defineExpose({
 <template>
   <div class="tree-container">
     <div class="tree-aside" ref="asideRef">
-      <el-input v-model="keySearch" placeholder="Type to search" :prefix-icon="Search"/>
-      <el-tree
-          ref="treeRef"
-          :data="data"
-          highlight-current
-          show-checkbox
-          node-key="path"
-          :props="treeDefaultProps"
-          :filter-node-method="filterTreeNode"
-          @node-click="clickTreeNode"
-      />
+      <el-input v-model="keySearch" placeholder="Type to search" :prefix-icon="Search" class="search-input"/>
+      <div class="tree">
+        <el-tree
+            ref="treeRef"
+            :data="data"
+            highlight-current
+            check-strictly
+            show-checkbox
+            node-key="path"
+            :props="treeDefaultProps"
+            :filter-node-method="filterTreeNode"
+            @node-click="clickTreeNode"
+        />
+      </div>
+
     </div>
     <div class="tree-editor">
       <editor ref="editorRef"
@@ -148,9 +152,11 @@ defineExpose({
               @change="editorChange">
         <template #headerAppender>
           <div v-if="currentNode">
-            <el-button type="primary" :icon="Tickets" plain size="small" @click="saveKV">Save{{ changed ? " *" : "" }}</el-button>
+            <el-button type="primary" :icon="Tickets" plain size="small" @click="saveKV">Save{{changed ? " *" : "" }}
+            </el-button>
             <el-button type="info" :icon="DocumentCopy" plain size="small" @click="diff">Version Diff</el-button>
             <el-button type="danger" :icon="Delete" size="small" @click="del">Delete</el-button>
+            <span class="item"><strong>Key</strong>: {{ currentNode.path }}</span>
           </div>
         </template>
         <template #footerAppender>
@@ -158,6 +164,7 @@ defineExpose({
             <span class="item"><strong>Version</strong>: {{ currentNode.data.version }}</span>
             <span class="item"><strong>Create Revision</strong>: {{ currentNode.data.createRevision }}</span>
             <span class="item"><strong>Modify Revision</strong>: {{ currentNode.data.modRevision }}</span>
+            <span class="item"><strong>Lease</strong>: {{ currentNode.data.lease }}</span>
           </div>
         </template>
       </editor>
@@ -178,19 +185,27 @@ defineExpose({
   .tree-aside {
     width: $--tree-aside-width;
     border-right: solid 1px var(--ep-menu-border-color);
-    padding-right: $--tree-aside-padding-right;;
+    padding-right: $--tree-aside-padding-right;
+    position: relative;
+
+    .search-input {
+      height: 30px;
+    }
+
+    .tree {
+      height: calc(100% - 30px);
+      overflow-y: auto;
+    }
   }
 
   .tree-editor {
     width: calc(100% - $--tree-aside-width - $--tree-aside-padding-right);
     height: 100%;
 
-    .editor-footer {
-      .item {
-        margin-left: 2em;
-        display: inline-block;
-        font-feature-settings: 'tnum';
-      }
+    .item {
+      margin-left: 2em;
+      display: inline-block;
+      font-feature-settings: 'tnum';
     }
   }
 }

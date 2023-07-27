@@ -165,7 +165,7 @@ const grantPermission = () => {
 </script>
 
 <template>
-  <div>
+  <div class="page">
     <div class="mb-5">
       <el-button @click="loadAllRole" :icon="Refresh">Refresh Table</el-button>
       <el-button type="primary" :icon="User" @click="add">Add Role</el-button>
@@ -265,6 +265,6 @@ const grantPermission = () => {
   </div>
 </template>
 
-<style scoped>
-
+<style lang="scss" scoped>
+@import '../../styles/index.scss';
 </style>
