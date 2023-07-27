@@ -266,7 +266,7 @@ const putKey = () => {
             border
             stripe
             @selection-change="handleSelectionChange"
-            class="mb-5">
+            class="mb-10">
     <el-table-column type="selection" width="55"/>
     <el-table-column prop="key" label="Key" sortable/>
     <el-table-column prop="version" label="Version" sortable/>

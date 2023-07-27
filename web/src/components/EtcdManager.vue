@@ -90,10 +90,12 @@ const handleSelect = (key: string, keyPath: string[]) => {
   }
 }
 
+$--body-padding: 15px;
+
 .body {
-  width: calc(100% - $--ep-custom-aside-width);
-  height: 100%;
-  padding: 15px;
+  width: calc(100% - $--ep-custom-aside-width - $--body-padding * 2);
+  padding: $--body-padding;
+  overflow: auto;
 }
 
 .aside-menu {

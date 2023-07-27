@@ -42,6 +42,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 /**
  * description: TODO
@@ -55,10 +56,16 @@ public class EtcdController {
 
     @HttpRequest(value = "/session/test", method = Method.POST)
     public void connect(@RequestBody NewSessionDTO data, ResponseFuture future) throws Exception {
-        try (Client client = constructClientBuilder(data).build()) {
+        Client client = constructClientBuilder(data).build();
+        try {
             client.getKVClient()
                     .get(CommonUtil.toByteSequence(" "))
-                    .whenComplete((getResponse, throwable) -> handleComplete(future, true, throwable));
+                    .whenComplete((getResponse, throwable) -> {
+                        client.close();
+                        handleComplete(future, true, throwable);
+                    });
+        } catch (Throwable e) {
+            client.close();
         }
     }
 
@@ -378,6 +385,9 @@ public class EtcdController {
         if (throwable == null) {
             future.apply(ResultCode.OK.result(result));
         } else {
+            if (throwable instanceof ExecutionException) {
+                throwable = throwable.getCause();
+            }
             log.error(throwable.getMessage(), throwable);
             future.apply(ResultCode.ETCD_ERROR.result(throwable.getMessage(), null));
         }

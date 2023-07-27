@@ -67,7 +67,7 @@ const checkSessionName = (name: string): boolean => {
 <template>
   <div>
     <div class="header">
-      Etcd Web Client
+      Etcd Workbench
     </div>
     <button
         class="border-none bg-transparent cursor-pointer light-switch"
@@ -116,6 +116,9 @@ const checkSessionName = (name: string): boolean => {
 .tabs {
   .tab-pane {
     width: 100%;
+    position: fixed;
+    height: calc(100% - var(--ep-tabs-header-height) - $--header-height);
+    overflow: auto;
   }
 }
 
@@ -138,6 +141,7 @@ const checkSessionName = (name: string): boolean => {
   .ep-tabs__header {
     margin: 0;
   }
+
   .ep-tabs__content {
     height: calc(100% - var(--ep-tabs-header-height) - $--header-height - 16px);
   }

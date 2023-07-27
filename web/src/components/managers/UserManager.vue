@@ -29,7 +29,6 @@ const keySearch = ref()
 const loadAllUser = () => {
   listUser(props.sessionKey).then(data => {
     tableData.value = data
-    console.log(data)
   }).catch(e => {
     console.error(e)
   })
