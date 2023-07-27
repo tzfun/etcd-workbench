@@ -5,13 +5,19 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.EventLoopGroup;
-import io.netty.util.concurrent.EventExecutorGroup;
 import org.beifengtz.etcd.server.handler.HttpHandler;
+import org.beifengtz.jvmm.common.util.IPUtil;
 import org.beifengtz.jvmm.convey.channel.ChannelInitializers;
 import org.beifengtz.jvmm.convey.channel.HttpServerChannelInitializer;
 import org.beifengtz.jvmm.convey.handler.HandlerProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.awt.*;
+import java.awt.Desktop.Action;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 /**
  * description: TODO
@@ -54,6 +60,20 @@ public class HttpService {
                 .syncUninterruptibly();
 
         logger.info("Http server service started on {}, use {} ms", port, System.currentTimeMillis() - st);
+        openBrowser(port);
         channel = future.channel();
+    }
+
+    private void openBrowser(int port) {
+        Desktop desktop = Desktop.getDesktop();
+        if (Desktop.isDesktopSupported() && desktop.isSupported(Action.BROWSE)) {
+            try {
+                String url = "http://" + IPUtil.getLocalIP() + ":" + port;
+                desktop.browse(new URI(url));
+                logger.info("Opened etcd workbench in browser: {}", url);
+            } catch (IOException | URISyntaxException e) {
+                logger.warn("Can not open browser", e);
+            }
+        }
     }
 }

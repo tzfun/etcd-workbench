@@ -126,7 +126,7 @@ const checkSessionName = (name: string): boolean => {
   position: fixed;
   width: 50px;
   height: 50px;
-  right: 15px;
+  left: 15px;
   bottom: 15px;
   z-index: 10000;
   font-size: 25px;

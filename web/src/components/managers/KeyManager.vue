@@ -1,15 +1,18 @@
 <script setup lang="ts">
 import {deleteKey, getAllKeys, getKV, getKVHistory, putKV} from "~/services/SessionService";
-import {Delete, DocumentAdd, DocumentCopy, Edit, Refresh, Search} from "@element-plus/icons-vue";
-import {EditorConfig, KeyDTO, KeyValueDTO} from "~/entitys/TransformTypes";
+import {Delete, DocumentAdd, Refresh, Switch} from "@element-plus/icons-vue";
+import {EditorConfig, KeyDTO, KeyValueDTO, TreeNode} from "~/entitys/TransformTypes";
 import Editor from "~/components/editor/Editor.vue";
 import {isDark} from "~/composables";
 import {reactive} from "vue";
 import {_isEmpty} from "~/util/Util";
 import {CodeDiff} from "v-code-diff";
-import {Base64} from 'js-base64';
+import KeyTableViewer from "~/components/viewer/KeyTableViewer.vue";
+import KeyTreeViewer from "~/components/viewer/KeyTreeViewer.vue";
 
-const editorRef = ref(null)
+const editorRef = ref()
+const treeViewerRef = ref<InstanceType<typeof KeyTreeViewer>>()
+const tableViewerRef = ref<InstanceType<typeof KeyTableViewer>>()
 const props = defineProps({
   sessionKey: {
     type: String,
@@ -21,29 +24,13 @@ onMounted(() => {
   loadAllKeys()
 })
 
+const viewer = ref<'tree' | 'table'>('tree')
 const tableData = ref<Array<KeyDTO>>([])
-const filterTableData = computed(() =>
-    tableData.value.filter(
-        (data) =>
-            !keySearch.value ||
-            data.key.toLowerCase().includes(keySearch.value.toLowerCase())
-    )
-)
-const selectedKey = ref<string[]>([])
-const keySearch = ref()
+const treeData = ref<Array<TreeNode>>([])
+
 const editing = ref<Boolean>(false)
 const isNew = ref<Boolean>(false)
 const editingKV = ref<KeyValueDTO>()
-
-const editorConfig = reactive<EditorConfig>({
-  disabled: false,
-  indentWithTab: true,
-  tabSize: 2,
-  autofocus: true,
-  height: "50vh",
-  language: 'json',
-  theme: isDark ? 'oneDark' : 'default'
-})
 
 const showDiff = ref<Boolean>(false)
 const versionDiffInfo = reactive({
@@ -58,19 +45,90 @@ const versionDiffInfo = reactive({
   versionBContent: ''
 })
 
-const handleSelectionChange = (rows: KeyValueDTO[]) => {
-  let selected = []
-  for (let row of rows) {
-    selected.push(row.key)
-  }
-  selectedKey.value = selected
-}
-
 const loadAllKeys = () => {
   getAllKeys(props.sessionKey as string).then(data => {
     tableData.value = data
+    constructTree(data)
   })
 }
+const KEY_SPLITTER = "/"
+
+const switchViewer = () => {
+  if (viewer.value === 'table') {
+    viewer.value = 'tree'
+  } else {
+    viewer.value = 'table'
+  }
+}
+
+const constructTree = (data: KeyValueDTO[]) => {
+  data.sort((o1, o2) => {
+    if (o1.key > o2.key) {
+      return 1
+    } else if (o1.key < o2.key) {
+      return -1
+    } else {
+      return 0
+    }
+  })
+
+  let treeRoot = {
+    path: "",
+    type: 'dir',
+    label: "root",
+    children: []
+  }
+  for (let kv of data) {
+    let k = kv.key
+    let splits = k.split(KEY_SPLITTER)
+    let node = treeRoot
+    const path = [""]
+    //  只遍历路径
+    for (let i = 1; i < splits.length - 1; i++) {
+      const floorName = splits[i]
+      let floorNode
+      path.push(floorName)
+      let found = false
+      for (let treeNode of node.children) {
+        if (treeNode.type === 'dir' && treeNode.label === floorName) {
+          found = true
+          floorNode = treeNode
+          break
+        }
+      }
+      if (!found) {
+        floorNode = {
+          path: "@" + path.join("/"),
+          type: 'dir',
+          label: floorName,
+          children: []
+        }
+        node.children.push(floorNode)
+      }
+      node = floorNode
+    }
+    let fileName = splits[splits.length - 1]
+    let fileNode = {
+      path: k,
+      type: 'file',
+      label: fileName,
+      data: kv
+    }
+    node.children.push(fileNode)
+  }
+  treeData.value = treeRoot.children
+}
+
+const editorConfig = reactive<EditorConfig>({
+  disabled: false,
+  indentWithTab: true,
+  tabSize: 2,
+  autofocus: true,
+  height: "50vh",
+  fontSize: "1.2rem",
+  language: 'json',
+  theme: isDark ? 'oneDark' : 'default'
+})
 
 const add = () => {
   editingKV.value = {
@@ -82,8 +140,8 @@ const add = () => {
   editing.value = true
 }
 
-const edit = (index, row: KeyDTO) => {
-  getKV(props.sessionKey, row.key).then(data => {
+const edit = (info: KeyDTO) => {
+  getKV(props.sessionKey, info.key).then(data => {
     editingKV.value = data
     const content = data.value
     if (content.startsWith('<')) {
@@ -101,7 +159,13 @@ const edit = (index, row: KeyDTO) => {
   })
 }
 
-const diff = (index, row: KeyDTO) => {
+const getKVDetail = ({key, callback}) => {
+  getKV(props.sessionKey, key).then(data => {
+    callback(data)
+  })
+}
+
+const diff = (row: KeyDTO) => {
   if (row.version <= 1) {
     ElMessage({
       type: 'info',
@@ -162,9 +226,9 @@ const loadDiff = (forA: Boolean) => {
   })
 }
 
-const del = (index, row: KeyDTO) => {
+const del = ({key, callback}) => {
   ElMessageBox.confirm(
-      `Are you sure to delete this key? <br><strong>${row.key}</strong>`,
+      `Are you sure to delete this key? <br><strong>${key}</strong>`,
       'Confirm',
       {
         confirmButtonText: 'OK',
@@ -173,12 +237,15 @@ const del = (index, row: KeyDTO) => {
         type: 'warning',
       }
   ).then(() => {
-    deleteKey(props.sessionKey, [row.key]).then(() => {
+    deleteKey(props.sessionKey, [key]).then(() => {
       ElMessage({
         type: 'success',
         message: 'Deleted successfully',
       })
-      tableData.value.splice(index, 1)
+
+      if (callback) {
+        callback(key)
+      }
     }).catch(e => {
       console.error(e)
     })
@@ -187,7 +254,14 @@ const del = (index, row: KeyDTO) => {
 }
 
 const delBatch = () => {
-  if (selectedKey.value.length == 0) {
+  let deleteKeys
+  if (viewer.value === 'tree') {
+    deleteKeys = treeViewerRef.value!.getSelectedKeys()
+  } else {
+    deleteKeys = tableViewerRef.value!.getSelectedKeys()
+  }
+
+  if (deleteKeys.length == 0) {
     ElMessage({
       type: 'info',
       message: 'No selected keys',
@@ -204,12 +278,16 @@ const delBatch = () => {
         type: 'warning',
       }
   ).then(() => {
-    deleteKey(props.sessionKey, selectedKey.value).then(() => {
+    deleteKey(props.sessionKey, deleteKeys).then(() => {
       ElMessage({
         type: 'success',
         message: 'Deleted successfully',
       })
-      selectedKey.value = []
+      if (viewer.value === 'tree') {
+        treeViewerRef.value!.clearSelectedKeys()
+      } else {
+        tableViewerRef.value!.clearSelectedKeys()
+      }
       loadAllKeys()
     }).catch(e => {
       console.error(e)
@@ -218,8 +296,9 @@ const delBatch = () => {
   })
 }
 
-const putKey = () => {
-  const key = editingKV.value.key
+const tablePutKey = () => {
+  const kv: KeyValueDTO = editingKV.value as KeyValueDTO
+  const key = kv.key
   if (_isEmpty(key)) {
     ElMessage({
       type: 'warning',
@@ -228,7 +307,7 @@ const putKey = () => {
     return
   }
 
-  const value = editorRef.value.code
+  const value = editorRef.value.readDataString()
 
   if (_isEmpty(value)) {
     ElMessage({
@@ -238,15 +317,21 @@ const putKey = () => {
     return
   }
 
-  if (value == editingKV.value.value) {
+  if (value == kv.value) {
     ElMessage({
       type: 'warning',
       message: 'Content not change',
     })
     return
   }
+  putKeyValue({key, value})
+}
 
+const putKeyValue = ({key, value, callback}) => {
   putKV(props.sessionKey, key, value).then(() => {
+    if (callback) {
+      callback()
+    }
     loadAllKeys()
     editing.value = false
   }).catch(e => {
@@ -256,95 +341,64 @@ const putKey = () => {
 </script>
 
 <template>
-  <div class="mb-5">
-    <el-button :icon="Refresh" @click="loadAllKeys">Refresh Table</el-button>
-    <el-button type="primary" :icon="DocumentAdd" @click="add">Add Key / Value</el-button>
-    <el-button type="danger" :icon="Delete" @click="delBatch">Delete Keys</el-button>
-  </div>
+  <div class="page">
+    <div class="button-list">
+      <el-button :icon="Refresh" @click="loadAllKeys">Refresh</el-button>
+      <el-button type="primary" :icon="DocumentAdd" @click="add">Add Key / Value</el-button>
+      <el-button type="danger" :icon="Delete" @click="delBatch">Delete Keys</el-button>
+      <el-button type="info" :icon="Switch" @click="switchViewer">{{ viewer === 'tree' ? 'Table' : 'Tree' }} View
+      </el-button>
+    </div>
 
-  <el-table :data="filterTableData"
-            border
-            stripe
-            @selection-change="handleSelectionChange"
-            class="mb-10">
-    <el-table-column type="selection" width="55"/>
-    <el-table-column prop="key" label="Key" sortable/>
-    <el-table-column prop="version" label="Version" sortable/>
-    <el-table-column prop="createRevision" label="Create Revision" sortable/>
-    <el-table-column prop="modRevision" label="Modify Revision" sortable/>
-    <el-table-column prop="lease" label="Lease"/>
-    <el-table-column fixed="right" label="Operations" width="300">
-      <template #header>
-        <el-input v-model="keySearch" placeholder="Type to search" :prefix-icon="Search"/>
-      </template>
-      <template #default="scope">
-        <el-button type="primary" :icon="Edit" plain size="small" @click="edit(scope.$index,scope.row)">Edit</el-button>
-        <el-button type="info" :icon="DocumentCopy" plain size="small" @click="diff(scope.$index,scope.row)">Version
-          Diff
-        </el-button>
-        <el-button type="danger" :icon="Delete" size="small" @click="del(scope.$index,scope.row)">Delete</el-button>
-      </template>
-    </el-table-column>
-  </el-table>
+    <key-tree-viewer ref="treeViewerRef"
+                     v-if="viewer === 'tree'"
+                     :data="treeData"
+                     class="tree-viewer"
+                     @on-select="getKVDetail"
+                     @on-save="putKeyValue"
+                     @on-diff="diff"
+                     @on-delete="del"/>
+    <key-table-viewer ref="tableViewerRef"
+                      :data="tableData"
+                      v-if="viewer === 'table'"
+                      @on-edit="edit"
+                      @on-diff="diff"
+                      @on-delete="del"/>
 
-  <el-dialog v-model="editing"
-             title="Key Editor"
-             :close-on-click-modal="false"
-             align-center>
-    <el-row :gutter="20" class="mt-2 mb-2">
-      <span style="width: 60px;text-align: center;line-height: 30px;">Key:</span>
-      <el-input v-model="editingKV.key"
-                class="inline-flex"
-                style="width: calc(100% - 60px)"
-                :disabled="!isNew"></el-input>
-    </el-row>
-    <editor ref="editorRef"
-            :key="editingKV"
-            :code="editingKV.value"
-            :config="editorConfig"/>
-    <template #footer>
+    <el-dialog v-model="editing"
+               title="Key Editor"
+               :close-on-click-modal="false"
+               align-center>
+      <el-row :gutter="20" class="mt-2 mb-2">
+        <span style="width: 60px;text-align: center;line-height: 30px;">Key:</span>
+        <el-input v-model="(editingKV as KeyValueDTO).key"
+                  class="inline-flex"
+                  style="width: calc(100% - 60px)"
+                  :disabled="!isNew"></el-input>
+      </el-row>
+      <editor ref="editorRef"
+              :key="editingKV"
+              :code="(editingKV as KeyValueDTO).value"
+              :config="editorConfig"/>
+      <template #footer>
       <span class="dialog-footer">
         <el-button @click="editing = false">Cancel</el-button>
-        <el-button type="primary" @click="putKey">
+        <el-button type="primary" @click="tablePutKey">
           Confirm
         </el-button>
       </span>
-    </template>
-  </el-dialog>
-
-  <el-dialog v-model="showDiff"
-             :title="`Version Diff: ${versionDiffInfo.key}`"
-             :close-on-click-modal="false"
-             align-center>
-    Version A:
-    <el-select v-model="versionDiffInfo.versionA"
-               fit-input-width
-               class="inline-flex"
-               placeholder="Select language"
-               @change="loadDiff(true)">
-      <el-option
-          v-for="item in versionDiffInfo.versionHistory"
-          :key="item"
-          :label="item"
-          :value="item"
-      >
-        <span style="float: left">{{ item }}</span>
-        <span v-if="item == versionDiffInfo.modRevision" class="version-option-tag">
-          latest
-        </span>
-        <span v-else-if="item == versionDiffInfo.createRevision" class="version-option-tag">
-          create
-        </span>
-      </el-option>
-    </el-select>
-
-    <div style="float: right">
-      Version B:
-      <el-select v-model="versionDiffInfo.versionB"
+      </template>
+    </el-dialog>
+    <el-dialog v-model="showDiff"
+               :title="`Version Diff: ${versionDiffInfo.key}`"
+               :close-on-click-modal="false"
+               align-center>
+      Version A:
+      <el-select v-model="versionDiffInfo.versionA"
                  fit-input-width
                  class="inline-flex"
                  placeholder="Select language"
-                 @change="loadDiff(false)">
+                 @change="loadDiff(true)">
         <el-option
             v-for="item in versionDiffInfo.versionHistory"
             :key="item"
@@ -353,29 +407,71 @@ const putKey = () => {
         >
           <span style="float: left">{{ item }}</span>
           <span v-if="item == versionDiffInfo.modRevision" class="version-option-tag">
-            latest
-          </span>
+          latest
+        </span>
           <span v-else-if="item == versionDiffInfo.createRevision" class="version-option-tag">
-            create
-          </span>
+          create
+        </span>
         </el-option>
       </el-select>
-    </div>
 
-    <code-diff
-        style="max-height: 70vh;min-height:50vh;"
-        :old-string="versionDiffInfo.versionAContent"
-        :new-string="versionDiffInfo.versionBContent"
-        :file-name="versionDiffInfo.key"
-        output-format="side-by-side"/>
-  </el-dialog>
+      <div style="float: right">
+        Version B:
+        <el-select v-model="versionDiffInfo.versionB"
+                   fit-input-width
+                   class="inline-flex"
+                   placeholder="Select language"
+                   @change="loadDiff(false)">
+          <el-option
+              v-for="item in versionDiffInfo.versionHistory"
+              :key="item"
+              :label="item"
+              :value="item"
+          >
+            <span style="float: left">{{ item }}</span>
+            <span v-if="item == versionDiffInfo.modRevision" class="version-option-tag">
+            latest
+          </span>
+            <span v-else-if="item == versionDiffInfo.createRevision" class="version-option-tag">
+            create
+          </span>
+          </el-option>
+        </el-select>
+      </div>
+
+      <code-diff
+          style="max-height: 70vh;min-height:50vh;"
+          :old-string="versionDiffInfo.versionAContent"
+          :new-string="versionDiffInfo.versionBContent"
+          :file-name="versionDiffInfo.key"
+          output-format="side-by-side"/>
+    </el-dialog>
+  </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
+@import '../../styles/index.scss';
 
 .version-option-tag {
   float: right;
   color: #909399FF;
   font-size: 13px;
 }
+
+.page {
+  height: 100%;
+
+  $--button-list-height: 30px;
+  $--button-list-margin-bottom: 15px;
+
+  .tree-viewer {
+    height: calc(100% - $--button-list-height - $--button-list-margin-bottom);
+  }
+
+  .button-list {
+    height: $--button-list-height;
+    margin-bottom: $--button-list-margin-bottom;
+  }
+}
+
 </style>

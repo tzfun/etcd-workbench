@@ -17,5 +17,14 @@ export type EditorConfig = {
     autofocus: boolean
     height: string | 'auto'
     language: string
-    theme: string
+    theme: string,
+    fontSize: string,
+}
+
+export type TreeNode = {
+    path: string,
+    type: 'dir' | 'file',
+    label: string,
+    children?: TreeNode[],
+    data?: KeyValueDTO
 }

@@ -8,7 +8,7 @@ import {Codemirror} from "vue-codemirror";
 import jsonLanguage from "./lang/json";
 import xmlLanguage from "./lang/xml";
 import yamlLanguage from "./lang/yaml";
-import {_byteFormat, _sizeof} from "~/util/Util";
+import {_byteFormat, _bytesToStr, _hexToStr, _sizeof, _strToBytes, _strToHex} from "~/util/Util";
 
 const props = defineProps({
   config: {
@@ -21,14 +21,45 @@ const props = defineProps({
   }
 })
 
+const emits = defineEmits(["change"])
+
 const allLanguages = reactive([
-    'text',
-    'json',
-    'yaml',
-    'xml'
+  'text',
+  'hex',
+  'blob',
+  'json',
+  'yaml',
+  'xml'
 ])
-const allTabSize = reactive([2,4,8])
-const code = shallowRef(props.code)
+
+/**
+ * 格式化数据
+ * @param content 数据内容
+ * @param newLang 新的格式语言
+ * @param curLang 当前的数据格式语言
+ */
+const formatData = (content, newLang, curLang) => {
+  if (newLang === curLang) {
+    return content
+  }
+  let contentStr = content
+  if (curLang == "hex") {
+    contentStr = _hexToStr(contentStr.replace(/\\x/g, ""))
+  } else if (curLang == "blob") {
+    contentStr = _bytesToStr(contentStr.split(" "))
+  }
+
+  if (newLang === "hex") {
+    contentStr = _strToHex(contentStr)
+  } else if (newLang === "blob") {
+    contentStr = _strToBytes(contentStr).join(" ")
+  }
+
+  return contentStr
+}
+
+const allTabSize = reactive([2, 4, 8])
+const code = shallowRef(formatData(props.code, props.config.language, 'text'))
 const extensions = computed(() => {
   const result = []
   switch (props.config.language) {
@@ -50,6 +81,9 @@ const extensions = computed(() => {
 const cmView = shallowRef<EditorView>()
 const handleReady = ({view}: any) => {
   cmView.value = view
+}
+const onChanged = (data) => {
+  emits('change', data)
 }
 
 // https://github.com/codemirror/commands/blob/main/test/test-history.ts
@@ -75,7 +109,7 @@ const state = reactive({
 })
 
 const size = computed(() => {
-  return _byteFormat(_sizeof(code.value))
+  return _byteFormat(_sizeof(props.value))
 })
 
 const handleStateUpdate = (viewUpdate: ViewUpdate) => {
@@ -90,18 +124,37 @@ onMounted(() => {
   watch(
       () => props.code,
       (_code) => {
-        code.value = _code
+        code.value = formatData(_code, props.config.language, 'text')
+      }
+  )
+
+  watch(
+      () => props.config.language,
+      (lang, preLang) => {
+        code.value = formatData(code.value, lang, preLang)
       }
   )
 })
 
+const upperFirst = (s: string): string => {
+  return s.substring(0, 1).toUpperCase() + s.substring(1)
+}
+
+/**
+ * 将当前内容读出为字符串，会根据选择的格式化语言进行转换
+ */
+const readDataString = (): string => {
+  return formatData(code.value, "text", props.config.language)
+}
+
 defineExpose({
-  code: code
+  readDataString
 })
 </script>
 <template>
-  <div>
+  <div style="height: 100%">
     <div class="header">
+      <slot name="headerAppender"></slot>
       <div class="item">
         Format:
         <el-select v-model="config.language"
@@ -112,7 +165,7 @@ defineExpose({
           <el-option
               v-for="item in allLanguages"
               :key="item"
-              :label="item"
+              :label="upperFirst(item)"
               :value="item"
           />
         </el-select>
@@ -134,27 +187,28 @@ defineExpose({
       </div>
     </div>
     <div class="editor">
-      <div class="main">
-        <codemirror
-            v-model="code"
-            :style="{
+      <codemirror
+          v-model="code"
+          :style="{
           width: '100%',
           height: config.height,
+          'font-size': config.fontSize,
           backgroundColor: '#fff',
           color: '#333'
         }"
-            placeholder="Please enter the content."
-            :extensions="extensions"
-            :autofocus="config.autofocus"
-            :disabled="config.disabled"
-            :indent-with-tab="config.indentWithTab"
-            :tab-size="config.tabSize"
-            @update="handleStateUpdate"
-            @ready="handleReady"
-        />
-      </div>
+          placeholder="Please enter the content."
+          :extensions="extensions"
+          :autofocus="config.autofocus"
+          :disabled="config.disabled"
+          :indent-with-tab="config.indentWithTab"
+          :tab-size="config.tabSize"
+          @update="handleStateUpdate"
+          @ready="handleReady"
+          @change="onChanged"
+      />
       <div class="divider"></div>
       <div class="footer">
+        <slot name="footerAppender"></slot>
         <div class="infos">
           <span class="item">Size: {{ size }}</span>
           <span class="item">Spaces: {{ config.tabSize }}</span>
@@ -170,13 +224,19 @@ defineExpose({
 </template>
 
 <style lang="scss" scoped>
+
+$--editor-header-height: 3rem;
+$--editor-footer-height: 3rem;
+$--editor-padding: 0 1rem;
+
 .header {
-  height: 3rem;
-  padding: 0 1em;
+  height: $--editor-header-height;
+  padding: $--editor-padding;
   display: flex;
   justify-content: right;
   align-items: center;
   font-size: 90%;
+
   .item {
     margin-left: 2em;
     display: inline-block;
@@ -185,29 +245,26 @@ defineExpose({
 }
 
 .editor {
+  height: calc(100% - $--editor-header-height - $--editor-footer-height);
+
   .divider {
     height: 1px;
     background-color: var(--theme-border);
   }
 
-  .main {
-    display: flex;
-    width: 100%;
-
-    .code {
-      width: 30%;
-      height: 100px;
-      margin: 0;
-      padding: 0.4em;
-      overflow: scroll;
-      border-left: 1px solid var(--theme-border);
-      font-family: monospace;
-    }
+  .code {
+    width: 30%;
+    height: 100px;
+    margin: 0;
+    padding: 0.4em;
+    overflow: scroll;
+    border-left: 1px solid var(--theme-border);
+    font-family: monospace;
   }
 
   .footer {
-    height: 3rem;
-    padding: 0 1em;
+    height: $--editor-footer-height;
+    padding: $--editor-padding;
     display: flex;
     justify-content: right;
     align-items: center;

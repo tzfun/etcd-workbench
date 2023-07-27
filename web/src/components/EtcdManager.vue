@@ -59,7 +59,7 @@ const handleSelect = (key: string, keyPath: string[]) => {
       <div v-show="activePage === 'cluster'">
         <ClusterManager :session-key="sessionKey"></ClusterManager>
       </div>
-      <div v-show="activePage === 'keys'">
+      <div v-show="activePage === 'keys'" style="height: 100%">
         <KeyManager :session-key="sessionKey" v-if="visitedPage['keys']"></KeyManager>
       </div>
       <div v-show="activePage === 'users'">
