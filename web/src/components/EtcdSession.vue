@@ -5,6 +5,7 @@ import {heartBeat} from "~/services/SessionService";
 import {ElMessage} from "element-plus";
 import {_nonEmpty} from "~/util/Util";
 import {SessionStoreConfig} from "~/entitys/TransformTypes";
+import {CirclePlus, Close, Connection} from "@element-plus/icons-vue";
 
 const emits = defineEmits(['change'])
 defineProps({
@@ -14,6 +15,24 @@ const connectorRef = ref()
 const state = ref('new')
 const sessionKey = ref<string | undefined>()
 const heartBeatId = ref()
+const sessions = ref({})
+
+const activeMenu = ref('default')
+
+onMounted(() => {
+  let localSessions = window.localStorage.getItem("workbench:session")
+  if (localSessions) {
+    sessions.value = JSON.parse(localSessions)
+  }
+})
+
+watch(
+    sessions,
+    (s) => {
+      window.localStorage.setItem("workbench:session", JSON.stringify(s))
+    },
+    {deep: true}
+)
 
 const onNewSession = ({key, name}) => {
   sessionKey.value = key
@@ -43,7 +62,11 @@ const onNewSession = ({key, name}) => {
 }
 
 const onSaveSession = (config: SessionStoreConfig) => {
-  console.log(config)
+  sessions.value[config.name] = config
+}
+
+const removeSessionConf = (key: string) => {
+  delete sessions.value[key]
 }
 
 const onSessionClosed = () => {
@@ -60,12 +83,43 @@ onUnmounted(() => {
   }
 })
 
+const handleSelectMenu = (key: string) => {
+  console.log(key)
+  if (key === 'default') {
+    connectorRef.value.resetSessionConfig()
+  } else {
+    let config = sessions.value[key]
+    if (config) {
+      connectorRef.value.loadSessionConfig(config)
+    }
+  }
+}
+
 </script>
 
 <template>
-  <div v-if="state === 'new'">
+  <div v-if="state === 'new'" class="connector-container">
     <div class="aside">
+      <el-menu
+          :default-active="activeMenu"
+          class="aside-menu"
+          @select="handleSelectMenu">
+        <el-menu-item index="default">
+          <el-icon>
+            <CirclePlus/>
+          </el-icon>
+          <span>New Session</span>
+        </el-menu-item>
 
+        <el-menu-item-group title="Session Storage">
+          <el-menu-item v-for="(v,k) in sessions" :index="k">
+            <el-icon><Connection/></el-icon>
+            <span>{{ k }}</span>
+            <el-icon class="aside-menu-close" @click="removeSessionConf(k)"><Close /></el-icon>
+          </el-menu-item>
+        </el-menu-item-group>
+
+      </el-menu>
     </div>
     <div class="connector">
       <EtcdConnector ref="connectorRef"
@@ -83,9 +137,40 @@ onUnmounted(() => {
 </template>
 
 <style lang="scss" scoped>
-.connector {
+@import '../styles/index.scss';
+
+.connector-container {
+  width: 100%;
+  height: 100%;
   display: flex;
-  justify-content: center;
+
+  .aside {
+    width: $--ep-custom-aside-width;
+
+    .aside-menu {
+      width: $--ep-custom-aside-width;
+      height: 100%;
+      position: fixed;
+      left: 0;
+      overflow-y: auto;
+      padding-bottom: 100px;
+
+      .aside-menu-close {
+        position: absolute;
+        right: 0;
+        display: inline-block;
+        color: #9bcbcb;
+      }
+    }
+  }
+
+  .connector {
+    width: calc(100% - $--ep-custom-aside-width);
+    height: 100%;
+    padding: 50px 0 100px 0;
+    display: flex;
+    justify-content: center;
+  }
 }
 
 .editor {

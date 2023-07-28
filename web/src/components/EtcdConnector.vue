@@ -232,7 +232,8 @@ const fileRemove = (file: UploadFile, ref: Ref<UploadFile | undefined>) => {
 }
 
 defineExpose({
-  loadSessionConfig
+  loadSessionConfig,
+  resetSessionConfig: _resetForm
 })
 
 </script>

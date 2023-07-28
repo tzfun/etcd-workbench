@@ -60,6 +60,9 @@ const onSessionChange = (args: { state: number, name: number, key: string | unde
 }
 
 const checkSessionName = (name: string): boolean => {
+  if (name === 'default') {
+    return false
+  }
   return tabs.value.filter(o => o.title === name).length === 0
 }
 </script>
