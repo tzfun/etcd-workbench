@@ -42,6 +42,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -130,9 +131,17 @@ public class EtcdController {
 
     @HttpRequest(value = "/session/etcd/kv/put", method = Method.POST)
     public void putKV(@RequestBody KeyValueDTO data, ResponseFuture future) {
-        EtcdConnectorFactory.get(data.getSessionId())
-                .kvPut(data.getKey(), data.getValue())
-                .whenComplete((putResponse, throwable) -> handleComplete(future, null, throwable));
+        EtcdConnector connector = EtcdConnectorFactory.get(data.getSessionId());
+        connector.kvPut(data.getKey(), data.getValue())
+                .whenComplete((putResponse, throwable) -> {
+                    if (throwable == null) {
+                        connector.kvGet(data.getKey(), GetOption.newBuilder().withKeysOnly(true).build())
+                                .thenApply(kvs -> kvs.size() > 0 ? kvs.get(0) : null)
+                                .whenComplete(((keyValue, t) -> handleComplete(future, keyValue, t)));
+                    } else {
+                        handleComplete(future, null, throwable);
+                    }
+                });
     }
 
     @HttpRequest("/session/etcd/kv/get_history")
@@ -386,6 +395,9 @@ public class EtcdController {
             future.apply(ResultCode.OK.result(result));
         } else {
             if (throwable instanceof ExecutionException) {
+                throwable = throwable.getCause();
+            }
+            if (throwable instanceof CompletionException) {
                 throwable = throwable.getCause();
             }
             log.error(throwable.getMessage(), throwable);

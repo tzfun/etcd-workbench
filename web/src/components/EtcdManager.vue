@@ -79,27 +79,26 @@ const handleSelect = (key: string, keyPath: string[]) => {
   width: 100%;
   height: 100%;
   display: flex;
-}
 
-.aside {
-  width: $--ep-custom-aside-width;
-
-  .aside-menu {
+  .aside {
     width: $--ep-custom-aside-width;
-    height: 100%;
+
+    .aside-menu {
+      width: $--ep-custom-aside-width;
+      height: 100%;
+      position: fixed;
+      left: 0;
+    }
+  }
+
+  $--body-padding: 15px;
+
+  .body {
+    width: calc(100% - $--ep-custom-aside-width - $--body-padding * 2);
+    padding: $--body-padding;
+    overflow: auto;
   }
 }
 
-$--body-padding: 15px;
 
-.body {
-  width: calc(100% - $--ep-custom-aside-width - $--body-padding * 2);
-  padding: $--body-padding;
-  overflow: auto;
-}
-
-.aside-menu {
-  position: fixed;
-  left: 0;
-}
 </style>

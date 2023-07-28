@@ -2,13 +2,11 @@ package org.beifengtz.etcd.server.test;
 
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
-import io.etcd.jetcd.ClientBuilder;
+import io.etcd.jetcd.KV;
 import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.options.GetOption;
 import io.netty.handler.ssl.ApplicationProtocolConfig;
 import io.netty.handler.ssl.ApplicationProtocolNames;
-import io.netty.handler.ssl.SslContextBuilder;
-import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import org.beifengtz.etcd.server.etcd.EtcdConnector;
 import org.beifengtz.etcd.server.etcd.EtcdConnectorFactory;
 import org.beifengtz.etcd.server.util.CommonUtil;
@@ -69,5 +67,22 @@ public class EtcdTest {
                 .withRange(ByteSequence.EMPTY)
                 .build();
         System.out.println(connector.kvGet("/", option));
+    }
+
+    @Test
+    public void testEtcd() throws Exception {
+        int loop = 100;
+
+        for (int i = 0; i < loop; i++) {
+            Client client = Client.builder()
+                    .target("ip:///127.0.0.1:2379")
+                    .namespace(ByteSequence.EMPTY)
+                    .build();
+            KV kvClient = client.getKVClient();
+
+            long count = kvClient.get(CommonUtil.toByteSequence(" ")).get(3, TimeUnit.SECONDS).getCount();
+            System.out.println(count);
+            Thread.sleep(1000);
+        }
     }
 }

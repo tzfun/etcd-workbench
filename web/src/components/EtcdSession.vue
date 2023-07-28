@@ -4,11 +4,13 @@ import {ref} from "vue";
 import {heartBeat} from "~/services/SessionService";
 import {ElMessage} from "element-plus";
 import {_nonEmpty} from "~/util/Util";
+import {SessionStoreConfig} from "~/entitys/TransformTypes";
 
 const emits = defineEmits(['change'])
 defineProps({
   checkSessionName: Function
 })
+const connectorRef = ref()
 const state = ref('new')
 const sessionKey = ref<string | undefined>()
 const heartBeatId = ref()
@@ -40,6 +42,10 @@ const onNewSession = ({key, name}) => {
   }, 15000)
 }
 
+const onSaveSession = (config: SessionStoreConfig) => {
+  console.log(config)
+}
+
 const onSessionClosed = () => {
   clearInterval(heartBeatId.value)
   console.debug("Session closed", sessionKey.value)
@@ -57,18 +63,26 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div v-if="state === 'new'" class="connector">
-    <EtcdConnector @connected="onNewSession" :check-session-name="checkSessionName"></EtcdConnector>
+  <div v-if="state === 'new'">
+    <div class="aside">
+
+    </div>
+    <div class="connector">
+      <EtcdConnector ref="connectorRef"
+                     :check-session-name="checkSessionName"
+                     @connected="onNewSession"
+                     @save="onSaveSession"/>
+    </div>
   </div>
   <div v-else-if="state === 'connected'" class="editor">
-    <EtcdManager :session-key="sessionKey"></EtcdManager>
+    <EtcdManager :session-key="sessionKey"/>
   </div>
   <div v-else>
     {{ state }}
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .connector {
   display: flex;
   justify-content: center;

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import {Delete, DocumentCopy, Edit, Search, Tickets} from "@element-plus/icons-vue";
-import {EditorConfig, KeyDTO, KeyValueDTO, TreeNode} from "~/entitys/TransformTypes";
+import {Delete, DocumentCopy, Search, Tickets} from "@element-plus/icons-vue";
+import {EditorConfig, KeyValueDTO, TreeNode} from "~/entitys/TransformTypes";
 import {reactive} from "vue";
 import {isDark} from "~/composables";
 
@@ -20,7 +20,11 @@ const treeDefaultProps = {
 }
 const editingKV = ref<KeyValueDTO>({
   key: '',
-  value: ''
+  value: '',
+  version: 0,
+  createRevision: 0,
+  modRevision: 0,
+  lease: 0
 })
 
 const editorConfig = reactive<EditorConfig>({
@@ -73,6 +77,15 @@ const clickTreeNode = (node: TreeNode) => {
         }
       })
     }
+  } else {
+    let tmp = node
+    while (tmp.children && tmp.children.length == 1) {
+      tmp = tmp.children[0]
+    }
+    treeRef.value.setCurrentKey(tmp.path)
+    if (tmp.type === 'file') {
+      clickTreeNode(tmp)
+    }
   }
 }
 
@@ -118,9 +131,10 @@ const clearSelectedKeys = () => {
   treeRef.value!.setCheckedKeys([], false)
 }
 
+
 defineExpose({
   getSelectedKeys,
-  clearSelectedKeys
+  clearSelectedKeys,
 })
 
 </script>
@@ -134,7 +148,6 @@ defineExpose({
             ref="treeRef"
             :data="data"
             highlight-current
-            check-strictly
             show-checkbox
             node-key="path"
             :props="treeDefaultProps"
@@ -152,7 +165,7 @@ defineExpose({
               @change="editorChange">
         <template #headerAppender>
           <div v-if="currentNode">
-            <el-button type="primary" :icon="Tickets" plain size="small" @click="saveKV">Save{{changed ? " *" : "" }}
+            <el-button type="primary" :icon="Tickets" plain size="small" @click="saveKV">Save{{ changed ? " *" : "" }}
             </el-button>
             <el-button type="info" :icon="DocumentCopy" plain size="small" @click="diff">Version Diff</el-button>
             <el-button type="danger" :icon="Delete" size="small" @click="del">Delete</el-button>
@@ -161,10 +174,10 @@ defineExpose({
         </template>
         <template #footerAppender>
           <div v-if="currentNode" class="editor-footer">
-            <span class="item"><strong>Version</strong>: {{ currentNode.data.version }}</span>
-            <span class="item"><strong>Create Revision</strong>: {{ currentNode.data.createRevision }}</span>
-            <span class="item"><strong>Modify Revision</strong>: {{ currentNode.data.modRevision }}</span>
-            <span class="item"><strong>Lease</strong>: {{ currentNode.data.lease }}</span>
+            <span class="item"><strong>Version</strong>: {{ editingKV.version }}</span>
+            <span class="item"><strong>Create Revision</strong>: {{ editingKV.createRevision }}</span>
+            <span class="item"><strong>Modify Revision</strong>: {{ editingKV.modRevision }}</span>
+            <span class="item"><strong>Lease</strong>: {{ editingKV.lease }}</span>
           </div>
         </template>
       </editor>

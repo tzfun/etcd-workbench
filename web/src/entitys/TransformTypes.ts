@@ -28,3 +28,22 @@ export type TreeNode = {
     children?: TreeNode[],
     data?: KeyValueDTO
 }
+
+export interface SessionConfig {
+    namespace: string | ''
+    user?: string
+    password?: string
+    authority?: string
+    caType: string
+    caCert?: string | null
+    clientCertMode?: string | 'none'
+    clientCert?: string | null
+    clientCertPassword?: string | null
+    clientCertKey?: string | null
+}
+
+export interface SessionStoreConfig extends SessionConfig {
+    name: string
+    host: string
+    port: number
+}

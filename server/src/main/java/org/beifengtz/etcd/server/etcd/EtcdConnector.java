@@ -103,8 +103,8 @@ public class EtcdConnector {
     }
 
     boolean checkRelease() {
-        //  3分钟无响应，释放连接
-        if (System.currentTimeMillis() - activeTime > TimeUnit.MINUTES.toMillis(3)) {
+        //  35秒无响应，释放连接
+        if (System.currentTimeMillis() - activeTime > TimeUnit.SECONDS.toMillis(35)) {
             client.close();
             logger.debug("Connector closed by factory monitor. {}", connKey);
             return true;

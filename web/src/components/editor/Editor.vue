@@ -8,7 +8,7 @@ import {Codemirror} from "vue-codemirror";
 import jsonLanguage from "./lang/json";
 import xmlLanguage from "./lang/xml";
 import yamlLanguage from "./lang/yaml";
-import {_byteFormat, _bytesToStr, _hexToStr, _sizeof, _strToBytes, _strToHex} from "~/util/Util";
+import {_byteFormat, _bytesToStr, _hexToStr, _strToBytes, _strToHex} from "~/util/Util";
 
 const props = defineProps({
   config: {
@@ -109,7 +109,7 @@ const state = reactive({
 })
 
 const size = computed(() => {
-  return _byteFormat(_sizeof(props.value))
+  return _byteFormat(formatData(code.value, 'blob', props.config.language).length)
 })
 
 const handleStateUpdate = (viewUpdate: ViewUpdate) => {

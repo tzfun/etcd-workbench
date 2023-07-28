@@ -72,51 +72,55 @@ const constructTree = (data: KeyValueDTO[]) => {
     }
   })
 
-  let treeRoot = {
+  let treeRoot: TreeNode = {
     path: "",
     type: 'dir',
     label: "root",
-    children: []
+    children: <TreeNode>[]
   }
   for (let kv of data) {
-    let k = kv.key
-    let splits = k.split(KEY_SPLITTER)
-    let node = treeRoot
-    const path = [""]
-    //  只遍历路径
-    for (let i = 1; i < splits.length - 1; i++) {
-      const floorName = splits[i]
-      let floorNode
-      path.push(floorName)
-      let found = false
-      for (let treeNode of node.children) {
-        if (treeNode.type === 'dir' && treeNode.label === floorName) {
-          found = true
-          floorNode = treeNode
-          break
-        }
-      }
-      if (!found) {
-        floorNode = {
-          path: "@" + path.join("/"),
-          type: 'dir',
-          label: floorName,
-          children: []
-        }
-        node.children.push(floorNode)
-      }
-      node = floorNode
-    }
-    let fileName = splits[splits.length - 1]
-    let fileNode = {
-      path: k,
-      type: 'file',
-      label: fileName,
-      data: kv
-    }
-    node.children.push(fileNode)
+    addKVToTree(kv, treeRoot)
   }
   treeData.value = treeRoot.children
+}
+
+const addKVToTree = (kv: KeyValueDTO, treeRoot: TreeNode) => {
+  let k = kv.key
+  let splits = k.split(KEY_SPLITTER)
+  let node: TreeNode = treeRoot
+  const path = [""]
+  //  只遍历路径
+  for (let i = 1; i < splits.length - 1; i++) {
+    const floorName = splits[i]
+    let floorNode: TreeNode
+    path.push(floorName)
+    let found = false
+    for (let treeNode of node.children) {
+      if (treeNode.type === 'dir' && treeNode.label === floorName) {
+        found = true
+        floorNode = treeNode
+        break
+      }
+    }
+    if (!found) {
+      floorNode = {
+        path: "@" + path.join("/"),
+        type: 'dir',
+        label: floorName,
+        children: <TreeNode>[]
+      }
+      node.children?.push(floorNode)
+    }
+    node = floorNode
+  }
+  let fileName = splits[splits.length - 1]
+  let fileNode: TreeNode = {
+    path: k,
+    type: 'file',
+    label: fileName,
+    data: kv
+  }
+  node.children?.push(fileNode)
 }
 
 const editorConfig = reactive<EditorConfig>({
@@ -246,6 +250,7 @@ const del = ({key, callback}) => {
       if (callback) {
         callback(key)
       }
+      deleteKeysFromTree([key])
     }).catch(e => {
       console.error(e)
     })
@@ -285,15 +290,49 @@ const delBatch = () => {
       })
       if (viewer.value === 'tree') {
         treeViewerRef.value!.clearSelectedKeys()
+        deleteKeysFromTree(deleteKeys)
       } else {
         tableViewerRef.value!.clearSelectedKeys()
+        loadAllKeys()
       }
-      loadAllKeys()
     }).catch(e => {
       console.error(e)
     })
   }).catch(() => {
   })
+}
+
+const deleteKeysFromTree = (keys: string[]) => {
+  for (let key of keys) {
+    let keyArr = key.split("/")
+    let i = 1;
+    let stack = []
+    let nodeArr = treeData.value
+    while (nodeArr && nodeArr.length > 0 && i < keyArr.length) {
+      let label = keyArr[i]
+      for (let node of nodeArr) {
+        if (node.label === label) {
+          stack.push(node)
+          nodeArr = node.children
+          i++
+          break
+        }
+      }
+    }
+
+    let node
+    do {
+      node = stack.pop()
+    } while (stack.length > 0 && node && (!node.children || node.children.length == 1))
+
+    let parent
+    if (stack.length > 0) {
+      parent = stack.pop().children
+    } else {
+      parent = treeData.value
+    }
+    parent.splice(parent.indexOf(node), 1)
+  }
 }
 
 const tablePutKey = () => {
@@ -328,11 +367,25 @@ const tablePutKey = () => {
 }
 
 const putKeyValue = ({key, value, callback}) => {
-  putKV(props.sessionKey, key, value).then(() => {
+  putKV(props.sessionKey, key, value).then((data: KeyValueDTO) => {
     if (callback) {
       callback()
     }
-    loadAllKeys()
+    //  新建
+    if (data.version === 1) {
+      tableData.value.push(data)
+      let root = {
+        children: treeData.value
+      }
+      addKVToTree(data, root)
+    } else {
+      for (let i = 0; i < tableData.value.length; i++) {
+        if (tableData.value[i].key === data.key) {
+          tableData.value[i] = data
+          break
+        }
+      }
+    }
     editing.value = false
   }).catch(e => {
     console.error(e)

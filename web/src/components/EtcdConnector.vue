@@ -5,8 +5,9 @@ import {newSession, testSession} from "~/services/SessionService";
 import {_isEmpty} from "~/util/Util";
 import {ElMessage, UploadFile} from "element-plus";
 import {NewSessionReq} from "~/entitys/RequestTypes";
+import {SessionStoreConfig} from "~/entitys/TransformTypes";
 
-const emits = defineEmits(["connected"])
+const emits = defineEmits(["connected","save"])
 
 const props = defineProps({
   checkSessionName: Function
@@ -14,9 +15,7 @@ const props = defineProps({
 const caFile = ref<UploadFile>()
 const certFile = ref<UploadFile>()
 const certKeyFile = ref<UploadFile>()
-
-const etcdLogo = ref(etcd)
-const form = ref({
+const defaultForm = {
   name: 'localhost',
   host: '127.0.0.1',
   port: 2379,
@@ -30,12 +29,16 @@ const form = ref({
     certMode: 'none',
     password: <string | null>null,
     authority: <string | null>null
-  }
-})
+  },
+  caCert: null,
+  clientCert: null,
+  clientCertKey: null
+}
+
+const etcdLogo = ref(etcd)
+const form = ref(JSON.parse(JSON.stringify(defaultForm)))
 
 const _packFormData = async (): Promise<NewSessionReq> => {
-  let msg: string
-
   const data: NewSessionReq = {
     caType: "",
     target: ""
@@ -44,11 +47,11 @@ const _packFormData = async (): Promise<NewSessionReq> => {
   data.namespace = _isEmpty(form.value.namespace) ? null : form.value.namespace
 
   if (!props.checkSessionName(form.value.name)) {
-    msg = "Session name exists: " + form.value.name
+    return Promise.reject("Session name exists: " + form.value.name)
   } else if (_isEmpty(form.value.host)) {
-    msg = 'Warning, host can not be empty!'
+    return Promise.reject('Warning, host can not be empty!')
   } else if (form.value.port <= 0) {
-    msg = 'Warning, invalid port!'
+    return Promise.reject('Warning, invalid port!')
   } else {
     data.target = `ip:///${form.value.host}:${form.value.port}`
     data.user = form.value.auth.username
@@ -57,45 +60,65 @@ const _packFormData = async (): Promise<NewSessionReq> => {
     data.caType = form.value.cert.caType
 
     if (form.value.cert.caType === 'custom') {
-      if (!caFile.value) {
-        msg = "Warning, please select CA file!"
-      } else {
-        let keyFileMaxSize = 24 * 1024;
-        if (caFile.value?.size > keyFileMaxSize) {
-          msg = "Warning, CA file is too large!"
-        } else {
-          data.caCert = await (caFile.value?.raw as File).text()
-          if (certFile.value?.size > keyFileMaxSize) {
-            msg = "Warning, Cert file is too large!"
+
+      const keyFileMaxSize = 24 * 1024;
+
+      //  读取 CA File
+      if (caFile.value || form.value.caCert) {
+        //  从文件读caFile
+        if (caFile.value) {
+          if (caFile.value?.size >= keyFileMaxSize) {
+            return Promise.reject("Warning, CA file is too large!")
           } else {
-            if (!certFile.value) {
-              msg = "Warning, please select client cert file!"
-            } else {
-              data.clientCert = await (certFile.value?.raw as File).text()
-              if (form.value.cert.certMode === 'password') {
-                data.clientCertPassword = form.value.cert.password
-              } else if (form.value.cert.certMode === 'key') {
-                if (!certKeyFile.value) {
-                  msg = "Warning, please select client cert key file!"
-                } else {
-                  if (certKeyFile.value?.size > keyFileMaxSize) {
-                    msg = "Warning, Cert key file is too large!"
-                  } else {
-                    data.clientCertKey = await (certKeyFile.value?.raw as File).text()
-                  }
-                }
-              }
-            }
+            data.caCert = await (caFile.value?.raw as File).text()
           }
+        } else {
+          data.caCert = form.value.caCert
+        }
+      } else {
+        return Promise.reject("Warning, please select CA file!")
+      }
+
+      //  读取 Client Cert File
+      if (certFile.value || form.value.clientCert) {
+        if (certFile.value) {
+          if (certFile.value?.size >= keyFileMaxSize) {
+            return Promise.reject("Warning, Cert file is too large!")
+          } else {
+            data.clientCert = await (certFile.value?.raw as File).text()
+          }
+        } else {
+          data.clientCert = form.value.clientCert
+        }
+      } else {
+        return Promise.reject("Warning, please select client cert file!")
+      }
+
+      //  读取Client Cert Auth
+      if (form.value.cert.certMode === 'password') {
+        data.clientCertPassword = form.value.cert.password
+      } else if (form.value.cert.certMode === 'key') {
+        if (certKeyFile.value || form.value.clientCertKey) {
+          if (certKeyFile.value) {
+            if (certKeyFile.value?.size >= keyFileMaxSize) {
+              return Promise.reject("Warning, Cert key file is too large!")
+            } else {
+              data.clientCertKey = await (certKeyFile.value?.raw as File).text()
+            }
+          } else {
+            data.clientCertKey = form.value.clientCertKey
+          }
+        } else {
+          return Promise.reject("Warning, please select client cert key file!")
         }
       }
     }
   }
-  if (msg) {
-    return Promise.reject(msg)
-  } else {
-    return Promise.resolve(data)
-  }
+  return Promise.resolve(data)
+}
+
+const _resetForm = () => {
+  form.value = JSON.parse(JSON.stringify(defaultForm))
 }
 
 const _testConnect = () => {
@@ -131,6 +154,51 @@ const _connect = () => {
   })
 }
 
+const _saveSessionConfig = () => {
+  _packFormData().then((data: NewSessionReq) => {
+    const sessionConfig: SessionStoreConfig = {
+      name: form.value.name,
+      host: form.value.host,
+      port: form.value.port,
+      namespace: data.namespace,
+      user: data.user,
+      password: data.password,
+      authority: data.authority,
+      caType: data.caType,
+      caCert: data.caCert,
+      clientCert: data.clientCert,
+      clientCertMode: data.clientCertMode,
+      clientCertPassword: data.clientCertPassword,
+      clientCertKey: data.clientCertKey
+    }
+
+    emits('save', sessionConfig)
+  }).catch(e => {
+    ElMessage({
+      showClose: true,
+      message: e,
+      type: 'warning',
+    })
+  })
+}
+
+const loadSessionConfig = (config: SessionStoreConfig) => {
+  _resetForm()
+  form.value.name = config.name
+  form.value.host = config.host
+  form.value.port = config.port
+  form.value.namespace = config.namespace
+  form.value.auth.username = config.user
+  form.value.auth.password = config.password
+  form.value.cert.caType = config.caType
+  form.value.cert.authority = config.authority
+  form.value.cert.certMode = config.clientCertMode
+  form.value.cert.password = config.clientCertPassword
+  form.value.caCert = config.caCert
+  form.value.clientCert = config.clientCert
+  form.value.clientCertKey = config.clientCertKey
+}
+
 const caFileChange = (file: UploadFile) => {
   fileChange(file, caFile)
 }
@@ -163,6 +231,9 @@ const fileRemove = (file: UploadFile, ref: Ref<UploadFile | undefined>) => {
   ref.value = undefined
 }
 
+defineExpose({
+  loadSessionConfig
+})
 
 </script>
 <template>
@@ -292,8 +363,9 @@ const fileRemove = (file: UploadFile, ref: Ref<UploadFile | undefined>) => {
         </div>
 
         <div style="margin: 35px 0;text-align: center">
-          <el-button type="info" link @click="_testConnect">Test Connect</el-button>
+          <el-button type="primary" link @click="_testConnect">Test Connect</el-button>
           <el-button type="success" @click="_connect">Connect</el-button>
+          <el-button plain @click="_saveSessionConfig">Save</el-button>
         </div>
 
       </el-form>
