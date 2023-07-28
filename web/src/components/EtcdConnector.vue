@@ -378,7 +378,6 @@ defineExpose({
 <style scoped>
 .container {
   max-width: 500px;
-  margin: 30px;
 }
 
 .header {

@@ -68,7 +68,7 @@ const checkSessionName = (name: string): boolean => {
 </script>
 
 <template>
-  <div>
+  <div style="height: 100%; width: 100%;">
     <div class="header">
       Etcd Workbench
     </div>
@@ -77,22 +77,24 @@ const checkSessionName = (name: string): boolean => {
         @click="toggleDark()">
       <i inline-flex i="dark:ep-moon ep-sunny"/>
     </button>
-    <el-tabs
-        v-model="curTab"
-        type="card"
-        editable
-        class="tabs"
-        @tab-add="tabAdd"
-        @tab-remove="tabRemove">
-      <el-tab-pane
-          v-for="(item,idx) in tabs"
-          :key="item.name"
-          :label="item.title"
-          :name="item.name"
-          class="tab-pane">
-        <EtcdSession @change="onSessionChange($event, idx)" :check-session-name="checkSessionName"/>
-      </el-tab-pane>
-    </el-tabs>
+    <div class="main">
+      <el-tabs
+          v-model="curTab"
+          type="card"
+          editable
+          class="tabs"
+          @tab-add="tabAdd"
+          @tab-remove="tabRemove">
+        <el-tab-pane
+            v-for="(item,idx) in tabs"
+            :key="item.name"
+            :label="item.title"
+            :name="item.name"
+            class="tab-pane">
+          <EtcdSession @change="onSessionChange($event, idx)" :check-session-name="checkSessionName"/>
+        </el-tab-pane>
+      </el-tabs>
+    </div>
   </div>
 </template>
 
@@ -116,12 +118,15 @@ const checkSessionName = (name: string): boolean => {
   background: $--header-color;
 }
 
-.tabs {
-  .tab-pane {
-    width: 100%;
-    position: fixed;
-    height: calc(100% - var(--ep-tabs-header-height) - $--header-height);
-    overflow: auto;
+.main {
+  height: calc(100% - $--header-height - $--footer-height);
+  .tabs {
+    .tab-pane {
+      width: 100%;
+      position: fixed;
+      height: calc(100% - var(--ep-tabs-header-height) - $--header-height);
+      overflow: auto;
+    }
   }
 }
 
@@ -146,7 +151,7 @@ const checkSessionName = (name: string): boolean => {
   }
 
   .ep-tabs__content {
-    height: calc(100% - var(--ep-tabs-header-height) - $--header-height - 16px);
+    //height: calc(100% - var(--ep-tabs-header-height) - $--header-height - 16px);
   }
 }
 </style>

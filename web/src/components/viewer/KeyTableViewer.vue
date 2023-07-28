@@ -59,7 +59,7 @@ defineExpose({
 </script>
 
 <template>
-  <div>
+  <div style="padding-bottom: 15px;">
     <el-table :data="filterTableData"
               border
               stripe

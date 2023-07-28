@@ -121,11 +121,13 @@ const handleSelectMenu = (key: string) => {
 
       </el-menu>
     </div>
-    <div class="connector">
-      <EtcdConnector ref="connectorRef"
-                     :check-session-name="checkSessionName"
-                     @connected="onNewSession"
-                     @save="onSaveSession"/>
+    <div class="connector-body">
+      <div class="connector">
+        <EtcdConnector ref="connectorRef"
+                       :check-session-name="checkSessionName"
+                       @connected="onNewSession"
+                       @save="onSaveSession"/>
+      </div>
     </div>
   </div>
   <div v-else-if="state === 'connected'" class="editor">
@@ -143,6 +145,7 @@ const handleSelectMenu = (key: string) => {
   width: 100%;
   height: 100%;
   display: flex;
+  overflow: hidden;
 
   .aside {
     width: $--ep-custom-aside-width;
@@ -164,12 +167,15 @@ const handleSelectMenu = (key: string) => {
     }
   }
 
-  .connector {
+  .connector-body {
     width: calc(100% - $--ep-custom-aside-width);
-    height: 100%;
-    padding: 50px 0 100px 0;
-    display: flex;
-    justify-content: center;
+    overflow: auto;
+    padding: 50px;
+
+    .connector {
+      display: flex;
+      justify-content: center;
+    }
   }
 }
 
