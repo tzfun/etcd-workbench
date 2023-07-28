@@ -71,7 +71,7 @@ public class EtcdTest {
 
     @Test
     public void testEtcd() throws Exception {
-        int loop = 100;
+        int loop = 10;
 
         for (int i = 0; i < loop; i++) {
             Client client = Client.builder()
@@ -82,7 +82,7 @@ public class EtcdTest {
 
             long count = kvClient.get(CommonUtil.toByteSequence(" ")).get(3, TimeUnit.SECONDS).getCount();
             System.out.println(count);
-            Thread.sleep(1000);
         }
+        Thread.sleep(100000);
     }
 }

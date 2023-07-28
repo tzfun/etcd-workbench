@@ -104,7 +104,7 @@ const addKVToTree = (kv: KeyValueDTO, treeRoot: TreeNode) => {
     }
     if (!found) {
       floorNode = {
-        path: "@" + path.join("/"),
+        path: "@" + path.join(KEY_SPLITTER),
         type: 'dir',
         label: floorName,
         children: <TreeNode>[]
@@ -304,13 +304,17 @@ const delBatch = () => {
 
 const deleteKeysFromTree = (keys: string[]) => {
   for (let key of keys) {
-    let keyArr = key.split("/")
+    let keyArr = key.split(KEY_SPLITTER)
     let i = 1;
     let stack = []
     let nodeArr = treeData.value
     while (nodeArr && nodeArr.length > 0 && i < keyArr.length) {
       let label = keyArr[i]
+      let isFinal = i === keyArr.length - 1
       for (let node of nodeArr) {
+        if (!isFinal && node.type == 'file') {
+          continue
+        }
         if (node.label === label) {
           stack.push(node)
           nodeArr = node.children
@@ -321,17 +325,24 @@ const deleteKeysFromTree = (keys: string[]) => {
     }
 
     let node
-    do {
-      node = stack.pop()
-    } while (stack.length > 0 && node && (!node.children || node.children.length == 1))
-
     let parent
-    if (stack.length > 0) {
-      parent = stack.pop().children
-    } else {
+    do {
+      let newNode = stack.pop()
+      if (!newNode.children || newNode.children.length == 1) {
+        node = newNode
+      } else {
+        parent = newNode.children
+        break
+      }
+    } while (stack.length > 0 && node)
+
+    if (!parent) {
       parent = treeData.value
     }
-    parent.splice(parent.indexOf(node), 1)
+    let idx = parent.indexOf(node)
+    if (idx >= 0){
+      parent.splice(idx, 1)
+    }
   }
 }
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {Delete, DocumentCopy, Search, Tickets} from "@element-plus/icons-vue";
+import {Delete, Document, DocumentCopy, Folder, Search, Tickets} from "@element-plus/icons-vue";
 import {EditorConfig, KeyValueDTO, TreeNode} from "~/entitys/TransformTypes";
 import {reactive} from "vue";
 import {isDark} from "~/composables";
@@ -153,7 +153,15 @@ defineExpose({
             :props="treeDefaultProps"
             :filter-node-method="filterTreeNode"
             @node-click="clickTreeNode"
-        />
+        >
+          <template #default="{ node, data }">
+            <span class="tree-node-icon">
+              <el-icon v-if="data.type === 'dir'"><Folder /></el-icon>
+              <el-icon v-else><Document /></el-icon>
+            </span>
+            <span :class="data.type === 'file' ? 'tree-node-file' : 'tree-node-dir'">{{ node.label }}</span>
+          </template>
+        </el-tree>
       </div>
 
     </div>
@@ -173,7 +181,7 @@ defineExpose({
           </div>
         </template>
         <template #footerAppender>
-          <div v-if="currentNode" class="editor-footer">
+          <div v-if="editingKV" class="editor-footer">
             <span class="item"><strong>Version</strong>: {{ editingKV.version }}</span>
             <span class="item"><strong>Create Revision</strong>: {{ editingKV.createRevision }}</span>
             <span class="item"><strong>Modify Revision</strong>: {{ editingKV.modRevision }}</span>
@@ -208,6 +216,11 @@ defineExpose({
     .tree {
       height: calc(100% - 30px);
       overflow-y: auto;
+
+      .tree-node-icon {
+        margin: 0 5px;
+        line-height: 0;
+      }
     }
   }
 
@@ -221,5 +234,9 @@ defineExpose({
       font-feature-settings: 'tnum';
     }
   }
+}
+
+.tree-node-file {
+  color: #4380ad;
 }
 </style>
