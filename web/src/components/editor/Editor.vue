@@ -211,11 +211,11 @@ defineExpose({
         <slot name="footerAppender"></slot>
         <div class="infos">
           <span class="item">Size: {{ size }}</span>
-          <span class="item">Spaces: {{ config.tabSize }}</span>
+<!--          <span class="item">Spaces: {{ config.tabSize }}</span>-->
           <span class="item">Length: {{ state.length }}</span>
           <span class="item">Lines: {{ state.lines }}</span>
-          <span class="item">Cursor: {{ state.cursor }}</span>
-          <span class="item">Selected: {{ state.selected }}</span>
+<!--          <span class="item">Cursor: {{ state.cursor }}</span>-->
+<!--          <span class="item">Selected: {{ state.selected }}</span>-->
         </div>
       </div>
     </div>

@@ -83,9 +83,6 @@ const clickTreeNode = (node: TreeNode) => {
       tmp = tmp.children[0]
     }
     treeRef.value.setCurrentKey(tmp.path)
-    if (tmp.type === 'file') {
-      clickTreeNode(tmp)
-    }
   }
 }
 
@@ -200,7 +197,7 @@ defineExpose({
   width: 100%;
   display: flex;
 
-  $--tree-aside-width: 400px;
+  $--tree-aside-width: 300px;
   $--tree-aside-padding-right: 15px;
 
   .tree-aside {

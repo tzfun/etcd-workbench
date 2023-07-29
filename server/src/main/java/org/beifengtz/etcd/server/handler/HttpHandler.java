@@ -11,7 +11,6 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.AsciiString;
 import org.beifengtz.etcd.server.config.ResultCode;
-import org.beifengtz.etcd.server.exception.EtcdExecuteException;
 import org.beifengtz.jvmm.common.util.IOUtil;
 import org.beifengtz.jvmm.convey.handler.HttpChannelHandler;
 import org.slf4j.Logger;
@@ -112,13 +111,6 @@ public class HttpHandler extends HttpChannelHandler {
         if (e instanceof InvalidKeySpecException || e instanceof NoSuchAlgorithmException) {
             logger().error(e.getMessage(), e);
             response(ctx, HttpResponseStatus.OK, ResultCode.INVALID_KEY.result("Invalid key spec: " + (e.getMessage() == null ? "" : e.getMessage()), false).toString());
-        } else if (e instanceof EtcdExecuteException) {
-            logger().error(e.getMessage(), e);
-            String msg = null;
-            if (e.getMessage() != null) {
-                msg = "Etcd server error: " + e.getMessage();
-            }
-            response(ctx, HttpResponseStatus.OK, ResultCode.ETCD_ERROR.result(msg, null).toString());
         } else if (e instanceof TimeoutException) {
             logger().debug(e.getMessage(), e);
             response(ctx, HttpResponseStatus.OK, ResultCode.CONNECT_ERROR.result("Connect timeout " + e.getMessage(), null).toString());

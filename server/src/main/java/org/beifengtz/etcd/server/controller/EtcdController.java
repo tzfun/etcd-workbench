@@ -3,6 +3,7 @@ package org.beifengtz.etcd.server.controller;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.ClientBuilder;
+import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.options.GetOption;
 import io.netty.handler.ssl.ApplicationProtocolConfig;
 import io.netty.handler.ssl.ApplicationProtocolNames;
@@ -19,7 +20,6 @@ import org.beifengtz.etcd.server.entity.dto.PermissionDTO;
 import org.beifengtz.etcd.server.entity.vo.ResultVO;
 import org.beifengtz.etcd.server.etcd.EtcdConnector;
 import org.beifengtz.etcd.server.etcd.EtcdConnectorFactory;
-import org.beifengtz.etcd.server.exception.EtcdExecuteException;
 import org.beifengtz.etcd.server.util.CommonUtil;
 import org.beifengtz.etcd.server.util.RSAKey;
 import org.beifengtz.jvmm.common.factory.ExecutorFactory;
@@ -42,8 +42,11 @@ import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * description: TODO
@@ -59,27 +62,21 @@ public class EtcdController {
     public void connect(@RequestBody NewSessionDTO data, ResponseFuture future) throws Exception {
         Client client = constructClientBuilder(data).build();
         try {
-            client.getKVClient()
-                    .get(CommonUtil.toByteSequence(" "))
-                    .whenComplete((getResponse, throwable) -> {
-                        client.close();
-                        handleComplete(future, true, throwable);
-                    });
+            CompletableFuture<GetResponse> respFuture = client.getKVClient().get(CommonUtil.toByteSequence(" "));
+            respFuture.whenComplete((getResponse, throwable) -> {
+                client.close();
+                handleComplete(future, true, throwable);
+            });
+            respFuture.orTimeout(5, TimeUnit.SECONDS);
         } catch (Throwable e) {
             client.close();
         }
     }
 
     @HttpRequest(value = "/session/new", method = Method.POST)
-    public ResultVO newSession(@RequestBody NewSessionDTO data) throws Exception {
-        try {
-            String sessionId = EtcdConnectorFactory.newConnector(constructClientBuilder(data).build());
-            return ResultCode.OK.result(sessionId);
-        } catch (EtcdExecuteException e) {
-            log.debug(e.getMessage(), e);
-            log.info("Connect etcd failed. {}", e.getMessage());
-            return ResultCode.CONNECT_ERROR.result(e.getMessage(), null);
-        }
+    public void newSession(@RequestBody NewSessionDTO data, ResponseFuture future) throws Exception {
+        EtcdConnectorFactory.newConnectorAsync(constructClientBuilder(data).build())
+                .whenComplete((sessionId, throwable) -> handleComplete(future, sessionId, throwable));
     }
 
     @HttpRequest("/session/close")
@@ -117,7 +114,7 @@ public class EtcdController {
             connector.kvGet(key).whenComplete((keyValue, throwable) -> handleComplete(future, keyValue, throwable));
         } else {
             connector.kvGet(key, GetOption.newBuilder().withRevision(version).build())
-                    .thenApply(kvs -> kvs.size() > 0 ? kvs.get(0) : null)
+                    .thenApply(kvs -> kvs.isEmpty() ? null : kvs.get(0))
                     .whenComplete(((keyValue, throwable) -> handleComplete(future, keyValue, throwable)));
         }
     }
@@ -400,8 +397,12 @@ public class EtcdController {
             if (throwable instanceof CompletionException) {
                 throwable = throwable.getCause();
             }
-            log.error(throwable.getMessage(), throwable);
-            future.apply(ResultCode.ETCD_ERROR.result(throwable.getMessage(), null));
+            if (throwable instanceof TimeoutException) {
+                future.apply(ResultCode.CONNECT_ERROR.result("Connect timeout", null));
+            } else {
+                log.error(throwable.getMessage(), throwable);
+                future.apply(ResultCode.ETCD_ERROR.result(throwable.getMessage(), null));
+            }
         }
     }
 

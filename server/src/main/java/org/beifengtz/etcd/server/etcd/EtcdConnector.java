@@ -6,11 +6,20 @@ import io.etcd.jetcd.Client;
 import io.etcd.jetcd.KV;
 import io.etcd.jetcd.KeyValue;
 import io.etcd.jetcd.Response.Header;
-import io.etcd.jetcd.auth.*;
+import io.etcd.jetcd.auth.AuthRoleAddResponse;
+import io.etcd.jetcd.auth.AuthRoleDeleteResponse;
+import io.etcd.jetcd.auth.AuthRoleGrantPermissionResponse;
+import io.etcd.jetcd.auth.AuthRoleListResponse;
+import io.etcd.jetcd.auth.AuthRoleRevokePermissionResponse;
+import io.etcd.jetcd.auth.AuthUserAddResponse;
+import io.etcd.jetcd.auth.AuthUserChangePasswordResponse;
+import io.etcd.jetcd.auth.AuthUserDeleteResponse;
+import io.etcd.jetcd.auth.AuthUserGetResponse;
+import io.etcd.jetcd.auth.AuthUserGrantRoleResponse;
+import io.etcd.jetcd.auth.AuthUserRevokeRoleResponse;
+import io.etcd.jetcd.auth.Permission;
 import io.etcd.jetcd.cluster.Member;
 import io.etcd.jetcd.cluster.MemberUpdateResponse;
-import io.etcd.jetcd.common.exception.ClosedClientException;
-import io.etcd.jetcd.common.exception.EtcdException;
 import io.etcd.jetcd.kv.DeleteResponse;
 import io.etcd.jetcd.kv.PutResponse;
 import io.etcd.jetcd.maintenance.AlarmMember;
@@ -21,16 +30,13 @@ import io.etcd.jetcd.maintenance.SnapshotResponse;
 import io.etcd.jetcd.maintenance.StatusResponse;
 import io.etcd.jetcd.options.DeleteOption;
 import io.etcd.jetcd.options.GetOption;
-import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
-import org.beifengtz.etcd.server.config.Configuration;
 import org.beifengtz.etcd.server.entity.bo.ClusterBO;
 import org.beifengtz.etcd.server.entity.bo.KeyValueBO;
 import org.beifengtz.etcd.server.entity.bo.MemberBO;
 import org.beifengtz.etcd.server.entity.bo.PermissionBO;
 import org.beifengtz.etcd.server.entity.bo.PermissionBO.PermissionBOBuilder;
 import org.beifengtz.etcd.server.entity.bo.UserBO;
-import org.beifengtz.etcd.server.exception.EtcdExecuteException;
 import org.beifengtz.etcd.server.util.CommonUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,9 +53,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -72,26 +76,6 @@ public class EtcdConnector {
         this.client = client;
         this.connKey = UUID.randomUUID().toString().replaceAll("-", "").toLowerCase(Locale.ROOT);
         this.activeTime = System.currentTimeMillis();
-        try {
-            client.getKVClient()
-                    .get(CommonUtil.toByteSequence(" "))
-                    .get(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
-        } catch (ExecutionException e) {
-            Throwable cause = e.getCause();
-            if (cause instanceof ExecutionException) {
-                cause = cause.getCause();
-            }
-
-            if (cause instanceof StatusRuntimeException) {
-                throw new EtcdExecuteException(((StatusRuntimeException) cause).getStatus().getCode().name(), cause);
-            } else {
-                throw new EtcdExecuteException("Connect failed." + (e.getMessage() == null ? "" : (" " + e.getMessage())), e);
-            }
-        } catch (TimeoutException e) {
-            throw new EtcdExecuteException("Connect timeout", e);
-        } catch (InterruptedException e) {
-            throw new EtcdExecuteException("Connect failed." + (e.getMessage() == null ? "" : (" " + e.getMessage())), e);
-        }
     }
 
     public String getConnKey() {
@@ -118,21 +102,6 @@ public class EtcdConnector {
         logger.debug("Connector closed by invoke. {}", connKey);
     }
 
-    private void onExecuteError(Throwable e) throws EtcdExecuteException {
-        logger.error("Etcd client execute failed. " + e.getClass().getName() + ": " + e.getMessage(), e);
-        if (e instanceof ClosedClientException) {
-            close();
-        }
-
-        if (e.getCause() instanceof EtcdException) {
-            Throwable cause = e.getCause();
-            while (cause.getCause() != null) {
-                cause = cause.getCause();
-            }
-            throw new EtcdExecuteException(cause.getMessage(), cause);
-        }
-        throw new EtcdExecuteException(e);
-    }
 
     /**
      * 自定义获取键值对参数
@@ -585,7 +554,7 @@ public class EtcdConnector {
                 .removeMember(new BigInteger(memberId).longValue())
                 .thenApply(memberRemove -> {
                     List<Member> members = memberRemove.getMembers();
-                    if (members == null || members.size() == 0) {
+                    if (members == null || members.isEmpty()) {
                         return List.of();
                     }
                     return members.stream().map(MemberBO::parseFrom).collect(Collectors.toList());
@@ -672,10 +641,6 @@ public class EtcdConnector {
      */
     public void maintenanceSnapshot(StreamObserver<SnapshotResponse> observer) {
         onActive();
-        try {
-            client.getMaintenanceClient().snapshot(observer);
-        } catch (Throwable e) {
-            onExecuteError(e);
-        }
+        client.getMaintenanceClient().snapshot(observer);
     }
 }
