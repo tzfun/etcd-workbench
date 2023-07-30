@@ -31,6 +31,7 @@ import io.etcd.jetcd.maintenance.StatusResponse;
 import io.etcd.jetcd.options.DeleteOption;
 import io.etcd.jetcd.options.GetOption;
 import io.grpc.stub.StreamObserver;
+import org.beifengtz.etcd.server.config.Configuration;
 import org.beifengtz.etcd.server.entity.bo.ClusterBO;
 import org.beifengtz.etcd.server.entity.bo.KeyValueBO;
 import org.beifengtz.etcd.server.entity.bo.MemberBO;
@@ -121,7 +122,8 @@ public class EtcdConnector {
                         res.add(KeyValueBO.parseFrom(kv));
                     }
                     return res;
-                });
+                })
+                .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -131,7 +133,8 @@ public class EtcdConnector {
      * @return 值
      */
     public CompletableFuture<KeyValueBO> kvGet(String key) {
-        return kvGet(key, false).thenApply(kvs -> kvs.size() > 0 ? kvs.get(0) : null);
+        return kvGet(key, false)
+                .thenApply(kvs -> !kvs.isEmpty() ? kvs.get(0) : null);
     }
 
     /**
@@ -144,7 +147,8 @@ public class EtcdConnector {
     public CompletableFuture<List<KeyValueBO>> kvGet(String key, boolean isPrefix) {
         return kvGet(key, isPrefix
                 ? GetOption.newBuilder().isPrefix(true).build()
-                : GetOption.DEFAULT);
+                : GetOption.DEFAULT)
+                .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -210,7 +214,8 @@ public class EtcdConnector {
                 .isPrefix(true)
                 .withRange(CommonUtil.toByteSequence("\0"))
                 .withKeysOnly(true)
-                .build());
+                .build())
+                .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -222,7 +227,8 @@ public class EtcdConnector {
     public CompletableFuture<PutResponse> kvPut(String key, String value) {
         onActive();
         return client.getKVClient()
-                .put(CommonUtil.toByteSequence(key), CommonUtil.toByteSequence(value));
+                .put(CommonUtil.toByteSequence(key), CommonUtil.toByteSequence(value))
+                .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -279,7 +285,8 @@ public class EtcdConnector {
         onActive();
         return client.getKVClient()
                 .delete(CommonUtil.toByteSequence(key), DeleteOption.newBuilder().isPrefix(isPrefix).build())
-                .thenApply(DeleteResponse::getDeleted);
+                .thenApply(DeleteResponse::getDeleted)
+                .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
     }
 
     public CompletableFuture<Collection<UserBO>> userFullList() {
@@ -333,7 +340,8 @@ public class EtcdConnector {
         onActive();
         return client.getAuthClient()
                 .userGet(CommonUtil.toByteSequence(user))
-                .thenApply(AuthUserGetResponse::getRoles);
+                .thenApply(AuthUserGetResponse::getRoles)
+                .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -345,7 +353,8 @@ public class EtcdConnector {
     public CompletableFuture<AuthUserAddResponse> userAdd(String user, String password) {
         onActive();
         return client.getAuthClient()
-                .userAdd(CommonUtil.toByteSequence(user), CommonUtil.toByteSequence(password));
+                .userAdd(CommonUtil.toByteSequence(user), CommonUtil.toByteSequence(password))
+                .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -355,9 +364,9 @@ public class EtcdConnector {
      */
     public CompletableFuture<AuthUserDeleteResponse> userDel(String user) {
         onActive();
-
         return client.getAuthClient()
-                .userDelete(CommonUtil.toByteSequence(user));
+                .userDelete(CommonUtil.toByteSequence(user))
+                .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -369,7 +378,8 @@ public class EtcdConnector {
     public CompletableFuture<AuthUserChangePasswordResponse> userChangePassword(String user, String newPassword) {
         onActive();
         return client.getAuthClient()
-                .userChangePassword(CommonUtil.toByteSequence(user), CommonUtil.toByteSequence(newPassword));
+                .userChangePassword(CommonUtil.toByteSequence(user), CommonUtil.toByteSequence(newPassword))
+                .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -381,7 +391,8 @@ public class EtcdConnector {
     public CompletableFuture<AuthUserGrantRoleResponse> userGrantRole(String user, String role) {
         onActive();
         return client.getAuthClient()
-                .userGrantRole(CommonUtil.toByteSequence(user), CommonUtil.toByteSequence(role));
+                .userGrantRole(CommonUtil.toByteSequence(user), CommonUtil.toByteSequence(role))
+                .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -393,7 +404,8 @@ public class EtcdConnector {
     public CompletableFuture<AuthUserRevokeRoleResponse> userRevokeRole(String user, String role) {
         onActive();
         return client.getAuthClient()
-                .userRevokeRole(CommonUtil.toByteSequence(user), CommonUtil.toByteSequence(role));
+                .userRevokeRole(CommonUtil.toByteSequence(user), CommonUtil.toByteSequence(role))
+                .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -468,7 +480,8 @@ public class EtcdConnector {
         onActive();
         return client.getAuthClient()
                 .roleList()
-                .thenApply(AuthRoleListResponse::getRoles);
+                .thenApply(AuthRoleListResponse::getRoles)
+                .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -479,7 +492,8 @@ public class EtcdConnector {
     public CompletableFuture<AuthRoleAddResponse> roleAdd(String role) {
         onActive();
         return client.getAuthClient()
-                .roleAdd(CommonUtil.toByteSequence(role));
+                .roleAdd(CommonUtil.toByteSequence(role))
+                .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -489,7 +503,9 @@ public class EtcdConnector {
      */
     public CompletableFuture<AuthRoleDeleteResponse> roleDel(String role) {
         onActive();
-        return client.getAuthClient().roleDelete(CommonUtil.toByteSequence(role));
+        return client.getAuthClient()
+                .roleDelete(CommonUtil.toByteSequence(role))
+                .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -503,7 +519,8 @@ public class EtcdConnector {
     public CompletableFuture<AuthRoleGrantPermissionResponse> roleGrantPermission(String role, String key, ByteSequence rangeEnd, Permission.Type permission) {
         onActive();
         return client.getAuthClient()
-                .roleGrantPermission(CommonUtil.toByteSequence(role), CommonUtil.toByteSequence(key), rangeEnd, permission);
+                .roleGrantPermission(CommonUtil.toByteSequence(role), CommonUtil.toByteSequence(key), rangeEnd, permission)
+                .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -516,7 +533,8 @@ public class EtcdConnector {
     public CompletableFuture<AuthRoleRevokePermissionResponse> roleRevokePermission(String role, String key, ByteSequence rangeEnd) {
         onActive();
         return client.getAuthClient()
-                .roleRevokePermission(CommonUtil.toByteSequence(role), CommonUtil.toByteSequence(key), rangeEnd);
+                .roleRevokePermission(CommonUtil.toByteSequence(role), CommonUtil.toByteSequence(key), rangeEnd)
+                .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -535,11 +553,11 @@ public class EtcdConnector {
             cluster.setRevision(header.getRevision());
             cluster.setRaftTerm(header.getRaftTerm());
             List<Member> memberList = memberListResponse.getMembers();
-            if (memberList.size() > 0) {
+            if (!memberList.isEmpty()) {
                 cluster.setMembers(memberList.stream().map(MemberBO::parseFrom).collect(Collectors.toList()));
             }
             return cluster;
-        });
+        }).orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -570,7 +588,8 @@ public class EtcdConnector {
     public CompletableFuture<MemberBO> clusterAdd(List<URI> urls) {
         onActive();
         return client.getClusterClient()
-                .addMember(urls).thenApply(memberAdd -> MemberBO.parseFrom(memberAdd.getMember()));
+                .addMember(urls).thenApply(memberAdd -> MemberBO.parseFrom(memberAdd.getMember()))
+                .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -584,7 +603,8 @@ public class EtcdConnector {
         onActive();
         return client.getClusterClient()
                 .updateMember(new BigInteger(memberId).longValue(), urls)
-                .thenApply(MemberUpdateResponse::getMembers);
+                .thenApply(MemberUpdateResponse::getMembers)
+                .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -596,7 +616,8 @@ public class EtcdConnector {
         onActive();
         return client.getMaintenanceClient()
                 .listAlarms()
-                .thenApply(AlarmResponse::getAlarms);
+                .thenApply(AlarmResponse::getAlarms)
+                .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -610,7 +631,8 @@ public class EtcdConnector {
         onActive();
         return client.getMaintenanceClient()
                 .alarmDisarm(new AlarmMember(memberId, type))
-                .thenApply(AlarmResponse::getAlarms);
+                .thenApply(AlarmResponse::getAlarms)
+                .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -621,7 +643,9 @@ public class EtcdConnector {
      */
     public CompletableFuture<StatusResponse> maintenanceMemberStatus(String target) {
         onActive();
-        return client.getMaintenanceClient().statusMember(target);
+        return client.getMaintenanceClient()
+                .statusMember(target)
+                .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -631,7 +655,9 @@ public class EtcdConnector {
      */
     public CompletableFuture<DefragmentResponse> maintenanceGc(String target) {
         onActive();
-        return client.getMaintenanceClient().defragmentMember(target);
+        return client.getMaintenanceClient()
+                .defragmentMember(target)
+                .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
     }
 
     /**
