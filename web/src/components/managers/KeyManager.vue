@@ -325,6 +325,18 @@ const deleteKeysFromTree = (keys: string[]) => {
       }
     }
 
+    if (stack.length === 0) {
+      let j = 0
+      for (; j < treeData.value.length; j++) {
+        let node = treeData.value[j]
+        if (node.type == 'file' && node.path === key) {
+          break
+        }
+      }
+      treeData.value.splice(j, 1)
+      continue
+    }
+
     let node
     let parent
     do {
@@ -545,6 +557,7 @@ const putKeyValue = ({kv, callback}) => {
   }
 
   $--editor-label-width: 60px;
+
   .editor-label {
     width: $--editor-label-width;
     text-align: center;
