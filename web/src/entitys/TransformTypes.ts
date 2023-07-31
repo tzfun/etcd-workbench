@@ -4,6 +4,7 @@ export interface KeyDTO {
     createRevision: number | 0;
     modRevision: number | 0;
     lease?: number | 0;
+    ttl?: number;
 }
 
 export interface KeyValueDTO extends KeyDTO {

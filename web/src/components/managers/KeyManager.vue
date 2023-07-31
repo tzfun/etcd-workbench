@@ -137,7 +137,8 @@ const editorConfig = reactive<EditorConfig>({
 const add = () => {
   editingKV.value = {
     key: '',
-    value: ''
+    value: '',
+    ttl: null
   }
   editorConfig.language = 'text'
   isNew.value = true
@@ -340,7 +341,7 @@ const deleteKeysFromTree = (keys: string[]) => {
       parent = treeData.value
     }
     let idx = parent.indexOf(node)
-    if (idx >= 0){
+    if (idx >= 0) {
       parent.splice(idx, 1)
     }
   }
@@ -374,11 +375,11 @@ const tablePutKey = () => {
     })
     return
   }
-  putKeyValue({key, value})
+  putKeyValue({kv})
 }
 
-const putKeyValue = ({key, value, callback}) => {
-  putKV(props.sessionKey, key, value).then((data: KeyValueDTO) => {
+const putKeyValue = ({kv, callback}) => {
+  putKV(props.sessionKey, kv.key, kv.value, kv.ttl).then((data: KeyValueDTO) => {
     if (callback) {
       callback()
     }
@@ -434,11 +435,19 @@ const putKeyValue = ({key, value, callback}) => {
                :close-on-click-modal="false"
                align-center>
       <el-row :gutter="20" class="mt-2 mb-2">
-        <span style="width: 60px;text-align: center;line-height: 30px;">Key:</span>
+        <span class="editor-label">Key:</span>
         <el-input v-model="(editingKV as KeyValueDTO).key"
-                  class="inline-flex"
-                  style="width: calc(100% - 60px)"
+                  class="inline-flex editor-input"
+                  placeholder="Input key"
                   :disabled="!isNew"></el-input>
+      </el-row>
+      <el-row :gutter="20" class="mt-2 mb-2">
+        <span class="editor-label">TTL(s):</span>
+        <el-input-number v-model="(editingKV as KeyValueDTO).ttl"
+                         class="inline-flex"
+                         style="width: 300px"
+                         placeholder="Key expiration time, in seconds"
+                         v-if="isNew"></el-input-number>
       </el-row>
       <editor ref="editorRef"
               :key="editingKV"
@@ -533,6 +542,17 @@ const putKeyValue = ({key, value, callback}) => {
   .button-list {
     height: $--button-list-height;
     margin-bottom: $--button-list-margin-bottom;
+  }
+
+  $--editor-label-width: 60px;
+  .editor-label {
+    width: $--editor-label-width;
+    text-align: center;
+    line-height: 30px;
+  }
+
+  .editor-input {
+    width: calc(100% - $--editor-label-width);
   }
 }
 

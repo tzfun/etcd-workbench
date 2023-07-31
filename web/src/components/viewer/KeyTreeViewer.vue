@@ -91,8 +91,10 @@ const saveKV = () => {
   const value = editorRef.value.readDataString()
 
   emits('on-save', {
-    key: key,
-    value: value,
+    kv: {
+      key: key,
+      value: value
+    },
     callback: () => {
       changed.value = false
     }
@@ -153,8 +155,8 @@ defineExpose({
         >
           <template #default="{ node, data }">
             <span class="tree-node-icon">
-              <el-icon v-if="data.type === 'dir'"><Folder /></el-icon>
-              <el-icon v-else><Document /></el-icon>
+              <el-icon v-if="data.type === 'dir'"><Folder/></el-icon>
+              <el-icon v-else><Document/></el-icon>
             </span>
             <span :class="data.type === 'file' ? 'tree-node-file' : 'tree-node-dir'">{{ node.label }}</span>
           </template>

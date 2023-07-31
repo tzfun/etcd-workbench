@@ -51,11 +51,12 @@ export function deleteKey(sessionId: string, keys: string[]): Promise<any> {
     })
 }
 
-export function putKV(sessionId: string, key: string, value: string): Promise<any> {
+export function putKV(sessionId: string, key: string, value: string, ttl: number | null): Promise<any> {
     return request.post(host + "/session/etcd/kv/put", {
         sessionId: sessionId,
         key: key,
-        value: value
+        value: value,
+        ttl: ttl
     })
 }
 
