@@ -6,22 +6,10 @@ import io.etcd.jetcd.Client;
 import io.etcd.jetcd.KV;
 import io.etcd.jetcd.KeyValue;
 import io.etcd.jetcd.Response.Header;
-import io.etcd.jetcd.auth.AuthRoleAddResponse;
-import io.etcd.jetcd.auth.AuthRoleDeleteResponse;
-import io.etcd.jetcd.auth.AuthRoleGrantPermissionResponse;
-import io.etcd.jetcd.auth.AuthRoleListResponse;
-import io.etcd.jetcd.auth.AuthRoleRevokePermissionResponse;
-import io.etcd.jetcd.auth.AuthUserAddResponse;
-import io.etcd.jetcd.auth.AuthUserChangePasswordResponse;
-import io.etcd.jetcd.auth.AuthUserDeleteResponse;
-import io.etcd.jetcd.auth.AuthUserGetResponse;
-import io.etcd.jetcd.auth.AuthUserGrantRoleResponse;
-import io.etcd.jetcd.auth.AuthUserRevokeRoleResponse;
-import io.etcd.jetcd.auth.Permission;
+import io.etcd.jetcd.auth.*;
 import io.etcd.jetcd.cluster.Member;
 import io.etcd.jetcd.cluster.MemberUpdateResponse;
 import io.etcd.jetcd.kv.DeleteResponse;
-import io.etcd.jetcd.kv.PutResponse;
 import io.etcd.jetcd.maintenance.AlarmMember;
 import io.etcd.jetcd.maintenance.AlarmResponse;
 import io.etcd.jetcd.maintenance.AlarmType;
@@ -30,6 +18,7 @@ import io.etcd.jetcd.maintenance.SnapshotResponse;
 import io.etcd.jetcd.maintenance.StatusResponse;
 import io.etcd.jetcd.options.DeleteOption;
 import io.etcd.jetcd.options.GetOption;
+import io.etcd.jetcd.options.PutOption;
 import io.grpc.stub.StreamObserver;
 import org.beifengtz.etcd.server.config.Configuration;
 import org.beifengtz.etcd.server.entity.bo.ClusterBO;
@@ -224,11 +213,34 @@ public class EtcdConnector {
      * @param key   键
      * @param value 值
      */
-    public CompletableFuture<PutResponse> kvPut(String key, String value) {
+    public CompletableFuture<?> kvPut(String key, String value) {
+        return kvPut(key, value, null);
+    }
+
+    /**
+     * 设置键值对
+     *
+     * @param key   键
+     * @param value 值
+     * @param ttl   失效时间，如果为null则表示永不失效，单位秒
+     * @return {@link CompletableFuture}
+     */
+    public CompletableFuture<?> kvPut(String key, String value, Long ttl) {
         onActive();
-        return client.getKVClient()
-                .put(CommonUtil.toByteSequence(key), CommonUtil.toByteSequence(value))
-                .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
+        if (ttl == null) {
+            return client.getKVClient()
+                    .put(CommonUtil.toByteSequence(key), CommonUtil.toByteSequence(value))
+                    .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
+        } else {
+            return client.getLeaseClient().grant(ttl).thenCompose(r -> {
+                long leaseId = r.getID();
+                PutOption putOption = PutOption.newBuilder().withLeaseId(leaseId).build();
+                return client.getKVClient()
+                        .put(CommonUtil.toByteSequence(key), CommonUtil.toByteSequence(value), putOption)
+                        .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
+            });
+
+        }
     }
 
     /**

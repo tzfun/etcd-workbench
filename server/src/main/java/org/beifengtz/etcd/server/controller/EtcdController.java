@@ -3,6 +3,7 @@ package org.beifengtz.etcd.server.controller;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.ClientBuilder;
+import io.etcd.jetcd.common.exception.EtcdException;
 import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.options.GetOption;
 import io.netty.handler.ssl.ApplicationProtocolConfig;
@@ -123,13 +124,14 @@ public class EtcdController {
     public void deleteKey(@RequestParam String sessionId,
                           @RequestParam String[] keys,
                           ResponseFuture future) {
-        EtcdConnectorFactory.get(sessionId).kvDelBatch(keys).whenComplete((integer, throwable) -> handleComplete(future, integer, throwable));
+        EtcdConnectorFactory.get(sessionId).kvDelBatch(keys)
+                .whenComplete((integer, throwable) -> handleComplete(future, integer, throwable));
     }
 
     @HttpRequest(value = "/session/etcd/kv/put", method = Method.POST)
     public void putKV(@RequestBody KeyValueDTO data, ResponseFuture future) {
         EtcdConnector connector = EtcdConnectorFactory.get(data.getSessionId());
-        connector.kvPut(data.getKey(), data.getValue())
+        connector.kvPut(data.getKey(), data.getValue(), data.getTtl())
                 .whenComplete((putResponse, throwable) -> {
                     if (throwable == null) {
                         connector.kvGet(data.getKey(), GetOption.newBuilder().withKeysOnly(true).build())
@@ -400,7 +402,9 @@ public class EtcdController {
             if (throwable instanceof TimeoutException) {
                 future.apply(ResultCode.CONNECT_ERROR.result("Connect timeout", null));
             } else {
-                log.error(throwable.getMessage(), throwable);
+                if (!(throwable instanceof EtcdException)) {
+                    log.error(throwable.getMessage(), throwable);
+                }
                 future.apply(ResultCode.ETCD_ERROR.result(throwable.getMessage(), null));
             }
         }

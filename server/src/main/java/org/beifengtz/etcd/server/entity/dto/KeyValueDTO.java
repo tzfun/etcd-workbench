@@ -13,4 +13,8 @@ public class KeyValueDTO {
     private String sessionId;
     private String key;
     private String value;
+    /**
+     * 过期时间，单位秒
+     */
+    private Long ttl;
 }
