@@ -387,7 +387,12 @@ const tablePutKey = () => {
     })
     return
   }
-  putKeyValue({kv})
+  putKeyValue({
+    kv: {
+      ...kv,
+      value: value
+    } as KeyValueDTO
+  })
 }
 
 const putKeyValue = ({kv, callback}) => {

@@ -1,4 +1,4 @@
-import path from 'path'
+import { resolve } from 'path'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import Icons from 'unplugin-icons/vite'
@@ -17,7 +17,7 @@ import {
   transformerVariantGroup,
 } from 'unocss'
 
-const pathSrc = path.resolve(__dirname, 'src')
+const pathSrc = resolve(__dirname, 'src')
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -89,4 +89,7 @@ export default defineConfig({
     }),
     Inspect(),
   ],
+  build:{
+    chunkSizeWarningLimit:1500
+  }
 })

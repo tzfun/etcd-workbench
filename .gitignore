@@ -3,3 +3,4 @@
 /server/*/build/
 /server/build/
 /server/.gradle/
+/server/src/main/resources/static/
