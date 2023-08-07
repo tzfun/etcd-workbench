@@ -327,7 +327,7 @@ public class EtcdController {
     }
 
     private ClientBuilder constructClientBuilder(NewSessionDTO data) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
-        ClientBuilder builder = Client.builder();
+        ClientBuilder builder = Client.builder().keepaliveWithoutCalls(false);
         builder.executorService(ExecutorFactory.getThreadPool())
                 .target(data.getTarget())
                 .namespace(data.getNamespace() == null ? ByteSequence.EMPTY : CommonUtil.toByteSequence(data.getNamespace()));
