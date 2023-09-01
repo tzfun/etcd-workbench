@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {deleteKey, getAllKeys, getKV, getKVHistory, putKV} from "~/services/SessionService";
+import {copyAndSave, deleteKey, getAllKeys, getKV, getKVHistory, putKV} from "~/services/SessionService";
 import {Delete, DocumentAdd, Refresh, Switch} from "@element-plus/icons-vue";
 import {EditorConfig, KeyDTO, KeyValueDTO, TreeNode} from "~/entitys/TransformTypes";
 import Editor from "~/components/editor/Editor.vue";
@@ -43,6 +43,13 @@ const versionDiffInfo = reactive({
   versionAContent: '',
   versionB: 0,
   versionBContent: ''
+})
+
+const showCopyAndSave = ref<Boolean>(false)
+const copyAndSaveForm = reactive({
+  src: <string | null>null,
+  dest: <string | null>null,
+  ttl: 0
 })
 
 const loadAllKeys = () => {
@@ -303,6 +310,13 @@ const delBatch = () => {
   })
 }
 
+const onCopyAndSave = (key: string) => {
+  copyAndSaveForm.src = key
+  copyAndSaveForm.dest = null
+
+  showCopyAndSave.value = true
+}
+
 const deleteKeysFromTree = (keys: string[]) => {
   for (let key of keys) {
     let keyArr = key.split(KEY_SPLITTER)
@@ -406,7 +420,7 @@ const putKeyValue = ({kv, callback}) => {
       let root = {
         children: treeData.value
       }
-      addKVToTree(data, root)
+      addKVToTree(data, root as TreeNode)
     } else {
       for (let i = 0; i < tableData.value.length; i++) {
         if (tableData.value[i].key === data.key) {
@@ -416,6 +430,52 @@ const putKeyValue = ({kv, callback}) => {
       }
     }
     editing.value = false
+  }).catch(e => {
+    console.error(e)
+  })
+}
+
+const confirmCopyAndSave = () => {
+  if (copyAndSaveForm.ttl < 0) {
+    ElMessage({
+      type: 'warning',
+      message: 'Invalid TTL',
+    })
+    return
+  }
+
+  if (_isEmpty(copyAndSaveForm.dest)) {
+    ElMessage({
+      type: 'warning',
+      message: 'Target key cannot be empty',
+    })
+    return
+  }
+
+  if (copyAndSaveForm.src == copyAndSaveForm.dest) {
+    ElMessage({
+      type: 'warning',
+      message: 'From key and To key cannot be the same',
+    })
+    return
+  }
+
+  console.debug("copy", copyAndSaveForm.src, "to", copyAndSaveForm.dest, "in ttl", copyAndSaveForm.ttl)
+  copyAndSave(
+      props.sessionKey,
+      copyAndSaveForm.src as string,
+      copyAndSaveForm.dest as string,
+      copyAndSaveForm.ttl
+  ).then((data:KeyValueDTO) => {
+    //  新建
+    if (data.version === 1) {
+      tableData.value.push(data)
+      let root = {
+        children: treeData.value
+      }
+      addKVToTree(data, root as TreeNode)
+    }
+    showCopyAndSave.value = false
   }).catch(e => {
     console.error(e)
   })
@@ -439,14 +499,16 @@ const putKeyValue = ({kv, callback}) => {
                      @on-select="getKVDetail"
                      @on-save="putKeyValue"
                      @on-diff="diff"
-                     @on-delete="del"/>
+                     @on-delete="del"
+                     @copy-and-save="onCopyAndSave"/>
     <key-table-viewer ref="tableViewerRef"
                       :data="tableData"
                       v-show="viewer === 'table'"
                       @on-edit="edit"
                       @on-diff="diff"
-                      @on-delete="del"/>
-
+                      @on-delete="del"
+                      @copy-and-save="onCopyAndSave"/>
+    <!-- 编辑弹窗 -->
     <el-dialog v-model="editing"
                title="Key Editor"
                :close-on-click-modal="false"
@@ -458,27 +520,28 @@ const putKeyValue = ({kv, callback}) => {
                   placeholder="Input key"
                   :disabled="!isNew"></el-input>
       </el-row>
-      <el-row :gutter="20" class="mt-2 mb-2">
+      <el-row :gutter="20" class="mt-2 mb-2" v-if="isNew">
         <span class="editor-label">TTL(s):</span>
         <el-input-number v-model="(editingKV as KeyValueDTO).ttl"
                          class="inline-flex"
                          style="width: 300px"
-                         placeholder="Key expiration time, in seconds"
-                         v-if="isNew"></el-input-number>
+                         placeholder="Key expiration time, in seconds"/>
       </el-row>
       <editor ref="editorRef"
               :key="editingKV"
               :code="(editingKV as KeyValueDTO).value"
               :config="editorConfig"/>
       <template #footer>
-      <span class="dialog-footer">
-        <el-button @click="editing = false">Cancel</el-button>
-        <el-button type="primary" @click="tablePutKey">
-          Confirm
-        </el-button>
-      </span>
+        <span class="dialog-footer">
+          <el-button @click="editing = false">Cancel</el-button>
+          <el-button type="primary" @click="tablePutKey">
+            Confirm
+          </el-button>
+        </span>
       </template>
     </el-dialog>
+
+    <!-- Diff 弹窗 -->
     <el-dialog v-model="showDiff"
                :title="`Version Diff: ${versionDiffInfo.key}`"
                :close-on-click-modal="false"
@@ -535,6 +598,40 @@ const putKeyValue = ({kv, callback}) => {
           :new-string="versionDiffInfo.versionBContent"
           :file-name="versionDiffInfo.key"
           output-format="side-by-side"/>
+    </el-dialog>
+
+    <!-- 复制保存弹窗 -->
+    <el-dialog v-model="showCopyAndSave"
+               title="Copy And Save"
+               :close-on-click-modal="false"
+               align-center>
+      <el-row :gutter="20" class="mt-2 mb-2">
+        <span class="editor-label">From:</span>
+        <el-input v-model="copyAndSaveForm.src"
+                  class="inline-flex editor-input"
+                  readonly/>
+      </el-row>
+      <el-row :gutter="20" class="mt-2 mb-2">
+        <span class="editor-label">To:</span>
+        <el-input v-model="copyAndSaveForm.dest"
+                  class="inline-flex editor-input"
+                  placeholder="Copy value to target key"/>
+      </el-row>
+      <el-row :gutter="20" class="mt-2 mb-2">
+        <span class="editor-label">TTL(s):</span>
+        <el-input-number v-model="copyAndSaveForm.ttl"
+                         class="inline-flex"
+                         style="width: 300px"
+                         placeholder="Key expiration time, in seconds"/>
+      </el-row>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="showCopyAndSave = false">Cancel</el-button>
+          <el-button type="primary" @click="confirmCopyAndSave">
+            Confirm
+          </el-button>
+        </span>
+      </template>
     </el-dialog>
   </div>
 </template>

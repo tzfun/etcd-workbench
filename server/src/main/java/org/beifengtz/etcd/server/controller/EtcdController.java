@@ -42,6 +42,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -60,7 +61,7 @@ import java.util.concurrent.TimeoutException;
 public class EtcdController {
 
     @HttpRequest(value = "/session/test", method = Method.POST)
-    public void connect(@RequestBody NewSessionDTO data, ResponseFuture future) throws Exception {
+    public void testConnect(@RequestBody NewSessionDTO data, ResponseFuture future) throws Exception {
         Client client = constructClientBuilder(data).build();
         try {
             CompletableFuture<GetResponse> respFuture = client.getKVClient().get(CommonUtil.toByteSequence(" "));
@@ -135,7 +136,7 @@ public class EtcdController {
                 .whenComplete((putResponse, throwable) -> {
                     if (throwable == null) {
                         connector.kvGet(data.getKey(), GetOption.newBuilder().withKeysOnly(true).build())
-                                .thenApply(kvs -> kvs.size() > 0 ? kvs.get(0) : null)
+                                .thenApply(kvs -> !kvs.isEmpty() ? kvs.get(0) : null)
                                 .whenComplete(((keyValue, t) -> handleComplete(future, keyValue, t)));
                     } else {
                         handleComplete(future, null, throwable);
@@ -152,6 +153,34 @@ public class EtcdController {
         EtcdConnectorFactory.get(sessionId)
                 .kvGetHistoryVersion(key, startVersion, endVersion)
                 .whenComplete((versions, throwable) -> handleComplete(future, versions, throwable));
+    }
+
+    @HttpRequest("/session/etcd/kv/copy_and_save")
+    public void copyAndSave(@RequestParam String sessionId,
+                            @RequestParam String srcKey,
+                            @RequestParam String destKey,
+                            @RequestParam Long ttl,
+                            ResponseFuture future) {
+        if (Objects.equals(srcKey, destKey)) {
+            handleComplete(future, null, new IllegalArgumentException("From key and To key cannot be the same"));
+            return;
+        }
+        EtcdConnector connector = EtcdConnectorFactory.get(sessionId);
+        connector.kvGet(srcKey).whenComplete(((keyValueBO, t1) -> {
+            if (t1 == null) {
+                connector.kvPut(destKey, keyValueBO.getValue(), ttl).whenComplete(((o, t2) -> {
+                    if (t2 == null) {
+                        connector.kvGet(destKey, GetOption.newBuilder().withKeysOnly(true).build())
+                                .thenApply(kvs -> !kvs.isEmpty() ? kvs.get(0) : null)
+                                .whenComplete(((keyValue, t3) -> handleComplete(future, keyValue, t3)));
+                    } else {
+                        handleComplete(future, null, t2);
+                    }
+                }));
+            } else {
+                handleComplete(future, null, t1);
+            }
+        }));
     }
 
     @HttpRequest("/session/etcd/user/list")
@@ -401,6 +430,8 @@ public class EtcdController {
             }
             if (throwable instanceof TimeoutException) {
                 future.apply(ResultCode.CONNECT_ERROR.result("Connect timeout", null));
+            } else if (throwable instanceof IllegalArgumentException) {
+                future.apply(ResultCode.PARAM_FORMAT_ERROR.result(throwable.getMessage(), null));
             } else {
                 if (!(throwable instanceof EtcdException)) {
                     log.error(throwable.getMessage(), throwable);

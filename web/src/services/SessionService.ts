@@ -44,6 +44,20 @@ export function getKVHistory(
     })
 }
 
+export function copyAndSave(
+    sessionId: string,
+    srcKey: string,
+    destKey: string,
+    ttl: number
+):Promise<any> {
+    return request.get(host + "/session/etcd/kv/copy_and_save", {
+        sessionId: sessionId,
+        srcKey: srcKey,
+        destKey: destKey,
+        ttl: ttl > 0 ? ttl : null
+    })
+}
+
 export function deleteKey(sessionId: string, keys: string[]): Promise<any> {
     return request.get(host + "/session/etcd/kv/delete", {
         sessionId: sessionId,

@@ -8,7 +8,7 @@ export function _loading(msg?: string | undefined) {
     })
 }
 
-export function _isEmpty(value: string | undefined | object): boolean {
+export function _isEmpty(value: string | undefined | object | null): boolean {
     return (
         value === undefined ||
         value === null ||
@@ -17,7 +17,7 @@ export function _isEmpty(value: string | undefined | object): boolean {
     );
 }
 
-export function _nonEmpty(value: string | undefined | object): boolean {
+export function _nonEmpty(value: string | undefined | object | null): boolean {
     return !_isEmpty(value)
 }
 

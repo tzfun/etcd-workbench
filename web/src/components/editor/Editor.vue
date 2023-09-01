@@ -21,7 +21,7 @@ const props = defineProps({
   }
 })
 
-const emits = defineEmits(["change"])
+const emits = defineEmits(["change","save"])
 
 const allLanguages = reactive([
   'text',
@@ -84,6 +84,13 @@ const handleReady = ({view}: any) => {
 }
 const onChanged = (data) => {
   emits('change', data)
+}
+
+const onKeyDown = (event: KeyboardEvent) => {
+  if (event.key == 's' && (event.ctrlKey || event.metaKey)) {
+    event.preventDefault()
+    emits('save')
+  }
 }
 
 // https://github.com/codemirror/commands/blob/main/test/test-history.ts
@@ -205,6 +212,7 @@ defineExpose({
           @update="handleStateUpdate"
           @ready="handleReady"
           @change="onChanged"
+          @keydown="onKeyDown"
       />
       <div class="divider"></div>
       <div class="footer">
@@ -231,14 +239,13 @@ $--editor-padding: 0 1rem;
 
 .header {
   height: $--editor-header-height;
-  padding: $--editor-padding;
   display: flex;
   justify-content: right;
   align-items: center;
   font-size: 90%;
 
   .item {
-    margin-left: 2em;
+    margin-left: 1em;
     display: inline-block;
     font-feature-settings: 'tnum';
   }
@@ -272,7 +279,7 @@ $--editor-padding: 0 1rem;
 
     .infos {
       .item {
-        margin-left: 2em;
+        margin-left: 1em;
         display: inline-block;
         font-feature-settings: 'tnum';
       }

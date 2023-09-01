@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {Delete, Document, DocumentCopy, Folder, Search, Tickets} from "@element-plus/icons-vue";
+import {Delete, Document, DocumentCopy, Finished, Folder, InfoFilled, Search, Tickets} from "@element-plus/icons-vue";
 import {EditorConfig, KeyValueDTO, TreeNode} from "~/entitys/TransformTypes";
 import {reactive} from "vue";
 import {isDark} from "~/composables";
@@ -7,7 +7,7 @@ import {isDark} from "~/composables";
 const props = defineProps({
   data: Array<TreeNode>,
 })
-const emits = defineEmits(['on-select', 'on-save', 'on-delete', 'on-diff'])
+const emits = defineEmits(['on-select', 'on-save', 'on-delete', 'on-diff', 'copy-and-save'])
 
 const keySearch = ref()
 const treeRef = ref()
@@ -52,6 +52,12 @@ const filterTreeNode = (value: string, data: TreeNode) => {
 const editorChange = () => {
   if (currentNode.value) {
     changed.value = true
+  }
+}
+
+const editorSave = () => {
+  if (changed.value) {
+    saveKV()
   }
 }
 
@@ -103,6 +109,10 @@ const saveKV = () => {
 
 const diff = () => {
   emits('on-diff', currentNode.value?.data)
+}
+
+const copyAndSave = () => {
+  emits('copy-and-save', currentNode.value?.path)
 }
 
 const del = () => {
@@ -169,18 +179,32 @@ defineExpose({
               :key="editingKV"
               :code="(editingKV as KeyValueDTO).value"
               :config="editorConfig"
-              @change="editorChange">
+              @change="editorChange"
+              @save="editorSave">
         <template #headerAppender>
           <div v-if="currentNode">
-            <el-button type="primary" :icon="Tickets" plain size="small" @click="saveKV">Save{{ changed ? " *" : "" }}
+            <el-button type="primary" :icon="Tickets" size="small" @click="saveKV">Save{{ changed ? " *" : "" }}
             </el-button>
-            <el-button type="info" :icon="DocumentCopy" plain size="small" @click="diff">Version Diff</el-button>
+            <el-button type="info" :icon="DocumentCopy" size="small" @click="diff">Version Diff</el-button>
+            <el-button type="warning" :icon="Finished" size="small" @click="copyAndSave">Copy And Save</el-button>
             <el-button type="danger" :icon="Delete" size="small" @click="del">Delete</el-button>
-            <span class="item"><strong>Key</strong>: {{ currentNode.path }}</span>
           </div>
         </template>
         <template #footerAppender>
           <div v-if="editingKV" class="editor-footer">
+            <span class="item" v-if="currentNode">
+              <strong>Key</strong>
+              <el-popover
+                  placement="top"
+                  :width="200"
+                  trigger="hover"
+                  :content="editingKV.key"
+              >
+              <template #reference>
+                <el-icon style="font-size: 16px"><InfoFilled/></el-icon>
+              </template>
+            </el-popover>
+            </span>
             <span class="item"><strong>Version</strong>: {{ editingKV.version }}</span>
             <span class="item"><strong>Create Revision</strong>: {{ editingKV.createRevision }}</span>
             <span class="item"><strong>Modify Revision</strong>: {{ editingKV.modRevision }}</span>
@@ -228,9 +252,14 @@ defineExpose({
     height: 100%;
 
     .item {
-      margin-left: 2em;
+      margin-left: 1em;
       display: inline-block;
       font-feature-settings: 'tnum';
+    }
+
+    .node-key {
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
   }
 }
