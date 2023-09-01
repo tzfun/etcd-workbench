@@ -155,6 +155,7 @@ defineExpose({
       <div class="tree">
         <el-tree
             ref="treeRef"
+            class="flow-tree"
             :data="data"
             highlight-current
             show-checkbox
@@ -193,7 +194,6 @@ defineExpose({
         <template #footerAppender>
           <div v-if="editingKV" class="editor-footer">
             <span class="item" v-if="currentNode">
-              <strong>Key</strong>
               <el-popover
                   placement="top"
                   :width="200"
@@ -201,7 +201,7 @@ defineExpose({
                   :content="editingKV.key"
               >
               <template #reference>
-                <el-icon style="font-size: 16px"><InfoFilled/></el-icon>
+                <el-button style="padding: 15px;font-weight: 600;" text :icon="InfoFilled">Key</el-button>
               </template>
             </el-popover>
             </span>
@@ -266,5 +266,10 @@ defineExpose({
 
 .tree-node-file {
   color: #4380ad;
+}
+
+.flow-tree {
+  min-width: 100%;
+  display: inline-block;
 }
 </style>
