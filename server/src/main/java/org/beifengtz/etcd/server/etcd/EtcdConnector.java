@@ -6,7 +6,18 @@ import io.etcd.jetcd.Client;
 import io.etcd.jetcd.KV;
 import io.etcd.jetcd.KeyValue;
 import io.etcd.jetcd.Response.Header;
-import io.etcd.jetcd.auth.*;
+import io.etcd.jetcd.auth.AuthRoleAddResponse;
+import io.etcd.jetcd.auth.AuthRoleDeleteResponse;
+import io.etcd.jetcd.auth.AuthRoleGrantPermissionResponse;
+import io.etcd.jetcd.auth.AuthRoleListResponse;
+import io.etcd.jetcd.auth.AuthRoleRevokePermissionResponse;
+import io.etcd.jetcd.auth.AuthUserAddResponse;
+import io.etcd.jetcd.auth.AuthUserChangePasswordResponse;
+import io.etcd.jetcd.auth.AuthUserDeleteResponse;
+import io.etcd.jetcd.auth.AuthUserGetResponse;
+import io.etcd.jetcd.auth.AuthUserGrantRoleResponse;
+import io.etcd.jetcd.auth.AuthUserRevokeRoleResponse;
+import io.etcd.jetcd.auth.Permission;
 import io.etcd.jetcd.cluster.Member;
 import io.etcd.jetcd.cluster.MemberUpdateResponse;
 import io.etcd.jetcd.kv.DeleteResponse;
@@ -418,6 +429,46 @@ public class EtcdConnector {
         return client.getAuthClient()
                 .userRevokeRole(CommonUtil.toByteSequence(user), CommonUtil.toByteSequence(role))
                 .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * 判断此用户是否拥有root权限
+     *
+     * @param user ETCD用户
+     * @return boolean future
+     */
+    @SuppressWarnings("unchecked")
+    public CompletableFuture<Boolean> userIsRoot(String user) {
+        if (user == null || "root".equals(user)) {
+            return CompletableFuture.completedFuture(true);
+        }
+
+        return userGetRoles(user).thenCompose((roles) -> {
+            if (roles.contains("root")) {
+                return CompletableFuture.completedFuture(true);
+            } else {
+                CompletableFuture<Boolean>[] futures = new CompletableFuture[roles.size()];
+                for (int i = 0; i < roles.size(); i++) {
+                    futures[i] = roleGet(roles.get(i)).thenApply(permissions -> {
+                        for (PermissionBO permission : permissions) {
+                            if ("root".equals(permission.getKey())) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    });
+                }
+
+                return CompletableFuture.allOf(futures).thenApply(v -> {
+                    for (CompletableFuture<Boolean> future : futures) {
+                        if (future.getNow(false)) {
+                            return true;
+                        }
+                    }
+                    return false;
+                });
+            }
+        });
     }
 
     /**

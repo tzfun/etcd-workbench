@@ -6,7 +6,8 @@ import UserManager from "~/components/managers/UserManager.vue";
 import RoleManager from "~/components/managers/RoleManager.vue";
 
 defineProps({
-  sessionKey: String
+  sessionKey: String,
+  root: Boolean
 })
 
 const visitedPage = ref({
@@ -41,13 +42,13 @@ const handleSelect = (key: string, keyPath: string[]) => {
           </el-icon>
           <span>Keys</span>
         </el-menu-item>
-        <el-menu-item index="users">
+        <el-menu-item index="users" :disabled="!root">
           <el-icon>
             <User/>
           </el-icon>
           <span>Manage Users</span>
         </el-menu-item>
-        <el-menu-item index="roles">
+        <el-menu-item index="roles" :disabled="!root">
           <el-icon>
             <Lock/>
           </el-icon>
@@ -62,7 +63,7 @@ const handleSelect = (key: string, keyPath: string[]) => {
       <div v-show="activePage === 'keys'" style="height: 100%">
         <KeyManager :session-key="sessionKey" v-if="visitedPage['keys']"></KeyManager>
       </div>
-      <div v-show="activePage === 'users'">
+      <div v-show="activePage === 'users'" >
         <UserManager :session-key="sessionKey" v-if="visitedPage['users']"></UserManager>
       </div>
       <div v-show="activePage === 'roles'">

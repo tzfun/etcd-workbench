@@ -142,7 +142,7 @@ const _testConnect = () => {
 const _connect = () => {
   _packFormData().then(formData => {
     newSession(formData).then(res => {
-      emits('connected', {key: res, name: form.value.name})
+      emits('connected', {sessionInfo: res, name: form.value.name})
     })
   }).catch(e => {
     ElMessage({

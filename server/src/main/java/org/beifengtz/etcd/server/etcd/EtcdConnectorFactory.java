@@ -6,6 +6,7 @@ import io.etcd.jetcd.resolver.HttpResolverProvider;
 import io.etcd.jetcd.resolver.HttpsResolverProvider;
 import io.etcd.jetcd.resolver.IPResolverProvider;
 import io.grpc.NameResolverRegistry;
+import org.beifengtz.etcd.server.entity.bo.SessionBO;
 import org.beifengtz.etcd.server.util.CommonUtil;
 import org.beifengtz.jvmm.common.factory.ExecutorFactory;
 import org.slf4j.Logger;
@@ -51,18 +52,23 @@ public class EtcdConnectorFactory {
         return CONNECTORS.get(sessionId);
     }
 
-    public static CompletableFuture<String> newConnectorAsync(Client client) {
+    public static CompletableFuture<SessionBO> newConnectorAsync(String user, Client client) {
         CompletableFuture<GetResponse> future = client.getKVClient().get(CommonUtil.toByteSequence(" "));
-        return future.thenApply(r -> {
+        return future.thenCompose(r -> {
             EtcdConnector connector = new EtcdConnector(client);
             CONNECTORS.put(connector.getConnKey(), connector);
             logger.debug("Create a new etcd connector {}", connector.getConnKey());
-            return connector.getConnKey();
+            return connector.userIsRoot(user).thenApply(b -> {
+                SessionBO sessionBO = new SessionBO();
+                sessionBO.setSessionId(connector.getConnKey());
+                sessionBO.setRoot(b);
+                return sessionBO;
+            });
         });
     }
 
-    public static String newConnector(Client client) throws ExecutionException, InterruptedException, TimeoutException {
-        return newConnectorAsync(client).get(5, TimeUnit.SECONDS);
+    public static SessionBO newConnector(String user, Client client) throws ExecutionException, InterruptedException, TimeoutException {
+        return newConnectorAsync(user, client).get(5, TimeUnit.SECONDS);
     }
 
     public static void onClose(String sessionId) {

@@ -52,7 +52,7 @@ const tabRemove = (targetName: TabPaneName) => {
   }
 }
 
-const onSessionChange = (args: { state: number, name: number, key: string | undefined }, idx: number) => {
+const onSessionChange = (args: { state: number, name: number, key: string | undefined}, idx: number) => {
   const item = tabs.value[idx]
   item.title = args.name
   item.state = args.state

@@ -22,6 +22,11 @@ export type EditorConfig = {
     fontSize: string,
 }
 
+export type SessionDTO = {
+    sessionId: string
+    root: boolean
+}
+
 export type TreeNode = {
     path: string,
     type: 'dir' | 'file',

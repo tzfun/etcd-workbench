@@ -77,7 +77,7 @@ public class EtcdController {
 
     @HttpRequest(value = "/session/new", method = Method.POST)
     public void newSession(@RequestBody NewSessionDTO data, ResponseFuture future) throws Exception {
-        EtcdConnectorFactory.newConnectorAsync(constructClientBuilder(data).build())
+        EtcdConnectorFactory.newConnectorAsync(data.getUser(), constructClientBuilder(data).build())
                 .whenComplete((sessionId, throwable) -> handleComplete(future, sessionId, throwable));
     }
 
@@ -315,7 +315,7 @@ public class EtcdController {
     @HttpRequest(value = "/session/etcd/cluster/add_member", method = Method.POST)
     public void addClusterMember(@RequestBody MemberDTO member, ResponseFuture future) {
         List<String> urlList = member.getUrlList();
-        if (urlList == null || urlList.size() == 0) {
+        if (urlList == null || urlList.isEmpty()) {
             throw new IllegalArgumentException("Missing required param 'urlList'");
         }
         List<URI> uris = new ArrayList<>(urlList.size());

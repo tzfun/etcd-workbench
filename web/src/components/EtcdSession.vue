@@ -4,7 +4,7 @@ import {ref} from "vue";
 import {heartBeat} from "~/services/SessionService";
 import {ElMessage} from "element-plus";
 import {_nonEmpty} from "~/util/Util";
-import {SessionStoreConfig} from "~/entitys/TransformTypes";
+import {SessionDTO, SessionStoreConfig} from "~/entitys/TransformTypes";
 import {CirclePlus, Close, Connection} from "@element-plus/icons-vue";
 
 const emits = defineEmits(['change'])
@@ -14,6 +14,7 @@ defineProps({
 const connectorRef = ref()
 const state = ref('new')
 const sessionKey = ref<string | undefined>()
+const isRoot = ref<boolean>(false)
 const heartBeatId = ref()
 const sessions = ref({})
 
@@ -34,7 +35,10 @@ watch(
     {deep: true}
 )
 
-const onNewSession = ({key, name}) => {
+const onNewSession = ({sessionInfo, name}) => {
+  const key = (sessionInfo as SessionDTO).sessionId
+
+  isRoot.value = (sessionInfo as SessionDTO).root
   sessionKey.value = key
   state.value = 'connected'
   emits('change', {
@@ -84,7 +88,6 @@ onUnmounted(() => {
 })
 
 const handleSelectMenu = (key: string) => {
-  console.log(key)
   if (key === 'default') {
     connectorRef.value.resetSessionConfig()
   } else {
@@ -131,7 +134,7 @@ const handleSelectMenu = (key: string) => {
     </div>
   </div>
   <div v-else-if="state === 'connected'" class="editor">
-    <EtcdManager :session-key="sessionKey"/>
+    <EtcdManager :session-key="sessionKey" :root="isRoot"/>
   </div>
   <div v-else>
     {{ state }}

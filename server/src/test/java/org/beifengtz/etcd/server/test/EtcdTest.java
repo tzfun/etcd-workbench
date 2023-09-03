@@ -7,6 +7,7 @@ import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.options.GetOption;
 import io.netty.handler.ssl.ApplicationProtocolConfig;
 import io.netty.handler.ssl.ApplicationProtocolNames;
+import org.beifengtz.etcd.server.entity.bo.SessionBO;
 import org.beifengtz.etcd.server.etcd.EtcdConnector;
 import org.beifengtz.etcd.server.etcd.EtcdConnectorFactory;
 import org.beifengtz.etcd.server.util.CommonUtil;
@@ -59,8 +60,8 @@ public class EtcdTest {
                 .namespace(ByteSequence.EMPTY)
                 .authority("127.0.0.1")
                 .build();
-        String sessionId = EtcdConnectorFactory.newConnector(client);
-        EtcdConnector connector = EtcdConnectorFactory.get(sessionId);
+        SessionBO session = EtcdConnectorFactory.newConnector(null, client);
+        EtcdConnector connector = EtcdConnectorFactory.get(session.getSessionId());
         GetOption option = GetOption.newBuilder()
                 .withKeysOnly(true)
                 .isPrefix(true)
