@@ -20,8 +20,8 @@ dependencies {
         exclude group: 'com.google.code.gson'
         exclude group: 'org.slf4j'
     }
-    compile 'io.github.tzfun.jvmm:jvmm-convey:2.1.5'
-    compile 'io.github.tzfun.jvmm:jvmm-logger:2.1.5'
+    compile 'io.github.tzfun.jvmm:jvmm-convey:2.1.6'
+    compile 'io.github.tzfun.jvmm:jvmm-logger:2.1.6'
     compileOnly "org.projectlombok:lombok:1.18.12"
     annotationProcessor "org.projectlombok:lombok:1.18.12"
 }

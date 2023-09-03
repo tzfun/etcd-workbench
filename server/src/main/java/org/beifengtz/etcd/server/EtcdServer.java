@@ -79,7 +79,7 @@ public class EtcdServer {
                 }
             }
         }
-        System.setProperty("jvmm.scanPack", "org.beifengtz.etcd.server");
+        System.setProperty(SystemPropertyUtil.PROPERTY_JVMM_SCAN_PACKAGE, "org.beifengtz.etcd.server");
         LoggerFactory.getLogger(EtcdServer.class).info("Load configuration successfully");
     }
 
