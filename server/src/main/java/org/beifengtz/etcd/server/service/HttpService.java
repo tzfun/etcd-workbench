@@ -65,15 +65,19 @@ public class HttpService {
     }
 
     private void openBrowser(int port) {
-        Desktop desktop = Desktop.getDesktop();
-        if (Desktop.isDesktopSupported() && desktop.isSupported(Action.BROWSE)) {
-            try {
-                String url = "http://" + IPUtil.getLocalIP() + ":" + port;
-                desktop.browse(new URI(url));
-                logger.info("Opened etcd workbench in browser: {}", url);
-            } catch (IOException | URISyntaxException e) {
-                logger.warn("Can not open browser", e);
+        try {
+            Desktop desktop = Desktop.getDesktop();
+            if (Desktop.isDesktopSupported() && desktop.isSupported(Action.BROWSE)) {
+                try {
+                    String url = "http://" + IPUtil.getLocalIP() + ":" + port;
+                    desktop.browse(new URI(url));
+                    logger.info("Opened etcd workbench in browser: {}", url);
+                } catch (IOException | URISyntaxException e) {
+                    logger.warn("Can not open browser", e);
+                }
             }
+        } catch (UnsupportedOperationException e) {
+            logger.warn("Can not open browser: {}", e.getMessage());
         }
     }
 }
