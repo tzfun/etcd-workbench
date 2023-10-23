@@ -1,5 +1,6 @@
 package org.beifengtz.etcd.server.controller;
 
+import com.jcraft.jsch.Session;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.ClientBuilder;
@@ -62,23 +63,36 @@ public class EtcdController {
 
     @HttpRequest(value = "/session/test", method = Method.POST)
     public void testConnect(@RequestBody NewSessionDTO data, ResponseFuture future) throws Exception {
-        Client client = constructClientBuilder(data).build();
+        Session session = EtcdConnectorFactory.connectSshTunnel(data);
+        Client client = EtcdConnectorFactory.constructClientBuilder(data).build();
         try {
             CompletableFuture<GetResponse> respFuture = client.getKVClient().get(CommonUtil.toByteSequence(" "));
             respFuture.whenComplete((getResponse, throwable) -> {
                 client.close();
+                if (session != null) {
+                    session.disconnect();
+                }
                 handleComplete(future, true, throwable);
             });
             respFuture.orTimeout(5, TimeUnit.SECONDS);
         } catch (Throwable e) {
             client.close();
+            if (session != null) {
+                session.disconnect();
+            }
         }
     }
 
     @HttpRequest(value = "/session/new", method = Method.POST)
     public void newSession(@RequestBody NewSessionDTO data, ResponseFuture future) throws Exception {
-        EtcdConnectorFactory.newConnectorAsync(data.getUser(), constructClientBuilder(data).build())
-                .whenComplete((sessionId, throwable) -> handleComplete(future, sessionId, throwable));
+        Session session = EtcdConnectorFactory.connectSshTunnel(data);
+        EtcdConnectorFactory.newConnectorAsync(data.getUser(), EtcdConnectorFactory.constructClientBuilder(data).build(), session)
+                .whenComplete((sessionId, throwable) -> {
+                    handleComplete(future, sessionId, throwable);
+                    if (throwable != null && session != null) {
+                        session.disconnect();
+                    }
+                });
     }
 
     @HttpRequest("/session/close")
@@ -353,69 +367,6 @@ public class EtcdController {
         EtcdConnectorFactory.get(member.getSessionId())
                 .clusterUpdate(member.getMemberId(), uris)
                 .whenComplete(((members, throwable) -> handleComplete(future, members, throwable)));
-    }
-
-    private ClientBuilder constructClientBuilder(NewSessionDTO data) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
-        ClientBuilder builder = Client.builder().keepaliveWithoutCalls(false);
-        builder.executorService(ExecutorFactory.getThreadPool())
-                .target(data.getTarget())
-                .namespace(data.getNamespace() == null ? ByteSequence.EMPTY : CommonUtil.toByteSequence(data.getNamespace()));
-        if (StringUtil.nonEmpty(data.getUser())) {
-            builder.user(CommonUtil.toByteSequence(data.getUser()));
-        }
-        if (StringUtil.nonEmpty(data.getPassword())) {
-            builder.password(CommonUtil.toByteSequence(data.getPassword()));
-        }
-        SslContext ssl = null;
-        ApplicationProtocolConfig alpn = new ApplicationProtocolConfig(ApplicationProtocolConfig.Protocol.ALPN,
-                ApplicationProtocolConfig.SelectorFailureBehavior.NO_ADVERTISE,
-                ApplicationProtocolConfig.SelectedListenerFailureBehavior.ACCEPT,
-                ApplicationProtocolNames.HTTP_2);
-        switch (data.getCaType().toLowerCase()) {
-            case "custom": {
-                File caFile = new File("temp", UUID.randomUUID().toString());
-                File certFile = new File("temp", UUID.randomUUID().toString());
-                File certKeyFile = new File("temp", UUID.randomUUID().toString());
-
-                FileUtil.writeByteArrayToFile(caFile, data.getCaCert().getBytes(StandardCharsets.UTF_8));
-                try {
-                    SslContextBuilder sslBuilder = SslContextBuilder
-                            .forClient()
-                            .applicationProtocolConfig(alpn)
-                            .sslProvider(SslProvider.OPENSSL)
-                            .trustManager(caFile);
-                    switch (data.getClientCertMode().toLowerCase()) {
-                        case "password": {
-                            sslBuilder.keyManager(RSAKey.fromPem(data.getClientCert()).toPrivateKey(), data.getClientCertPassword());
-                            break;
-                        }
-                        case "key": {
-                            FileUtil.writeByteArrayToFile(certFile, data.getClientCert().getBytes(StandardCharsets.UTF_8));
-                            FileUtil.writeByteArrayToFile(certKeyFile, data.getClientCertKey().getBytes(StandardCharsets.UTF_8));
-                            sslBuilder.keyManager(certFile, certKeyFile);
-                            break;
-                        }
-                    }
-                } finally {
-                    FileUtil.delFile(caFile);
-                    FileUtil.delFile(certFile);
-                    FileUtil.delFile(certKeyFile);
-                }
-                break;
-            }
-            case "public": {
-                ssl = SslContextBuilder
-                        .forClient()
-                        .applicationProtocolConfig(alpn)
-                        .trustManager(InsecureTrustManagerFactory.INSTANCE)
-                        .build();
-                break;
-            }
-        }
-        if (ssl != null) {
-            builder.sslContext(ssl);
-        }
-        return builder;
     }
 
     private void handleComplete(ResponseFuture future, Object result, Throwable throwable) {

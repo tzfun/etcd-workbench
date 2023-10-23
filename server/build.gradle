@@ -15,15 +15,16 @@ repositories {
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
-    compile('io.etcd:jetcd-core:0.6.1') {
+    implementation('io.etcd:jetcd-core:0.6.1') {
         exclude group: 'io.netty'
         exclude group: 'com.google.code.gson'
         exclude group: 'org.slf4j'
     }
-    compile 'io.github.tzfun.jvmm:jvmm-convey:2.2.0'
-    compile 'io.github.tzfun.jvmm:jvmm-logger:2.2.0'
+    implementation 'io.github.tzfun.jvmm:jvmm-convey:2.2.0'
+    implementation 'io.github.tzfun.jvmm:jvmm-logger:2.2.0'
     compileOnly "org.projectlombok:lombok:1.18.12"
     annotationProcessor "org.projectlombok:lombok:1.18.12"
+    implementation 'com.jcraft:jsch:0.1.55'
 }
 
 test {

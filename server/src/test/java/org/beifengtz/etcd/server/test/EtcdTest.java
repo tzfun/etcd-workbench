@@ -1,5 +1,6 @@
 package org.beifengtz.etcd.server.test;
 
+import com.jcraft.jsch.Session;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.KV;
@@ -8,6 +9,8 @@ import io.etcd.jetcd.options.GetOption;
 import io.netty.handler.ssl.ApplicationProtocolConfig;
 import io.netty.handler.ssl.ApplicationProtocolNames;
 import org.beifengtz.etcd.server.entity.bo.SessionBO;
+import org.beifengtz.etcd.server.entity.dto.NewSessionDTO;
+import org.beifengtz.etcd.server.entity.dto.SshDTO;
 import org.beifengtz.etcd.server.etcd.EtcdConnector;
 import org.beifengtz.etcd.server.etcd.EtcdConnectorFactory;
 import org.beifengtz.etcd.server.util.CommonUtil;
@@ -60,7 +63,7 @@ public class EtcdTest {
                 .namespace(ByteSequence.EMPTY)
                 .authority("127.0.0.1")
                 .build();
-        SessionBO session = EtcdConnectorFactory.newConnector(null, client);
+        SessionBO session = EtcdConnectorFactory.newConnector(null, client, null);
         EtcdConnector connector = EtcdConnectorFactory.get(session.getSessionId());
         GetOption option = GetOption.newBuilder()
                 .withKeysOnly(true)
@@ -85,5 +88,38 @@ public class EtcdTest {
             System.out.println(count);
         }
         Thread.sleep(100000);
+    }
+
+    @Test
+    public void testSshTunnelConnect() throws Exception {
+        NewSessionDTO config = new NewSessionDTO();
+        config.setProtocol("http");
+        config.setHost("127.0.0.1");
+        config.setPort(2379);
+        config.setNamespace("xxxx");
+        config.setUser("xxxx");
+        config.setPassword("xxx");
+
+
+        SshDTO ssh = new SshDTO();
+        ssh.setHost("xxx");
+        ssh.setUser("xxx");
+        ssh.setPrivateKey("xxx");
+        ssh.setPassphrase("xxx");
+        ssh.setPort(22);
+
+        config.setSsh(ssh);
+
+        Session sshSession = EtcdConnectorFactory.connectSshTunnel(config);
+        Client client = EtcdConnectorFactory.constructClientBuilder(config).build();
+
+        SessionBO session = EtcdConnectorFactory.newConnector(null, client, sshSession);
+        EtcdConnector connector = EtcdConnectorFactory.get(session.getSessionId());
+        GetOption option = GetOption.newBuilder()
+                .withKeysOnly(true)
+                .isPrefix(true)
+                .withRange(ByteSequence.EMPTY)
+                .build();
+        System.out.println(connector.kvGet("/", option).get());
     }
 }

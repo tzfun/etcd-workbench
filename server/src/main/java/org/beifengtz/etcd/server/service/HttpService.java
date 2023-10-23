@@ -7,7 +7,7 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.EventLoopGroup;
 import org.beifengtz.etcd.server.handler.HttpHandler;
 import org.beifengtz.jvmm.common.util.IPUtil;
-import org.beifengtz.jvmm.convey.channel.ChannelInitializers;
+import org.beifengtz.jvmm.convey.channel.ChannelUtil;
 import org.beifengtz.jvmm.convey.channel.HttpServerChannelInitializer;
 import org.beifengtz.jvmm.convey.handler.HandlerProvider;
 import org.slf4j.Logger;
@@ -35,11 +35,11 @@ public class HttpService {
 
     public void start(int port) {
         long st = System.currentTimeMillis();
-        EventLoopGroup boosGroup = ChannelInitializers.newEventLoopGroup(1);
-        EventLoopGroup workGroup = ChannelInitializers.newEventLoopGroup(2 * Runtime.getRuntime().availableProcessors() + 1);
+        EventLoopGroup boosGroup = ChannelUtil.newEventLoopGroup(1);
+        EventLoopGroup workGroup = ChannelUtil.newEventLoopGroup(2 * Runtime.getRuntime().availableProcessors() + 1);
         ChannelFuture future = new ServerBootstrap()
                 .group(boosGroup, workGroup)
-                .channel(ChannelInitializers.serverChannelClass(workGroup))
+                .channel(ChannelUtil.serverChannelClass(workGroup))
                 .childHandler(new HttpServerChannelInitializer(new HandlerProvider() {
                     @Override
                     public ChannelHandler getHandler() {

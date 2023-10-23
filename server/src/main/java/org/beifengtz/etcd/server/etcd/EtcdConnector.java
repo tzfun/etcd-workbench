@@ -1,23 +1,13 @@
 package org.beifengtz.etcd.server.etcd;
 
+import com.jcraft.jsch.Session;
 import io.etcd.jetcd.Auth;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.KV;
 import io.etcd.jetcd.KeyValue;
 import io.etcd.jetcd.Response.Header;
-import io.etcd.jetcd.auth.AuthRoleAddResponse;
-import io.etcd.jetcd.auth.AuthRoleDeleteResponse;
-import io.etcd.jetcd.auth.AuthRoleGrantPermissionResponse;
-import io.etcd.jetcd.auth.AuthRoleListResponse;
-import io.etcd.jetcd.auth.AuthRoleRevokePermissionResponse;
-import io.etcd.jetcd.auth.AuthUserAddResponse;
-import io.etcd.jetcd.auth.AuthUserChangePasswordResponse;
-import io.etcd.jetcd.auth.AuthUserDeleteResponse;
-import io.etcd.jetcd.auth.AuthUserGetResponse;
-import io.etcd.jetcd.auth.AuthUserGrantRoleResponse;
-import io.etcd.jetcd.auth.AuthUserRevokeRoleResponse;
-import io.etcd.jetcd.auth.Permission;
+import io.etcd.jetcd.auth.*;
 import io.etcd.jetcd.cluster.Member;
 import io.etcd.jetcd.cluster.MemberUpdateResponse;
 import io.etcd.jetcd.kv.DeleteResponse;
@@ -72,11 +62,13 @@ public class EtcdConnector {
     private final String connKey;
     private final Client client;
     private long activeTime;
+    private final Session sshSession;
 
-    public EtcdConnector(Client client) {
+    public EtcdConnector(Client client, Session sshSession) {
         this.client = client;
         this.connKey = UUID.randomUUID().toString().replaceAll("-", "").toLowerCase(Locale.ROOT);
         this.activeTime = System.currentTimeMillis();
+        this.sshSession = sshSession;
     }
 
     public String getConnKey() {
@@ -99,6 +91,9 @@ public class EtcdConnector {
 
     public void close() {
         client.close();
+        if (sshSession != null) {
+            sshSession.disconnect();
+        }
         EtcdConnectorFactory.onClose(connKey);
         logger.debug("Connector closed by invoke. {}", connKey);
     }
@@ -112,7 +107,6 @@ public class EtcdConnector {
      */
     public CompletableFuture<List<KeyValueBO>> kvGet(String key, GetOption option) {
         onActive();
-
         return client.getKVClient()
                 .get(CommonUtil.toByteSequence(key), option)
                 .thenApply(resp -> {

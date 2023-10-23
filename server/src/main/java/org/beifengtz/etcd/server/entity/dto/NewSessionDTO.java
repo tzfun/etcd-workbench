@@ -11,7 +11,9 @@ import lombok.Data;
 @Data
 public class NewSessionDTO {
     private String namespace;
-    private String target;
+    private String protocol;
+    private String host;
+    private int port;
     private String user;
     private String password;
     private String authority;
@@ -41,4 +43,5 @@ public class NewSessionDTO {
      * 客户端验证的cert证书密钥，clientCertMode为key生效
      */
     private String clientCertKey;
+    private SshDTO ssh;
 }

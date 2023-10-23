@@ -1,18 +1,41 @@
 package org.beifengtz.etcd.server.etcd;
 
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
+import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
+import io.etcd.jetcd.ClientBuilder;
 import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.resolver.HttpResolverProvider;
 import io.etcd.jetcd.resolver.HttpsResolverProvider;
 import io.etcd.jetcd.resolver.IPResolverProvider;
 import io.grpc.NameResolverRegistry;
+import io.netty.handler.ssl.ApplicationProtocolConfig;
+import io.netty.handler.ssl.ApplicationProtocolNames;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.SslProvider;
+import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import org.beifengtz.etcd.server.entity.bo.SessionBO;
+import org.beifengtz.etcd.server.entity.dto.NewSessionDTO;
+import org.beifengtz.etcd.server.entity.dto.SshDTO;
 import org.beifengtz.etcd.server.util.CommonUtil;
+import org.beifengtz.etcd.server.util.RSAKey;
 import org.beifengtz.jvmm.common.factory.ExecutorFactory;
+import org.beifengtz.jvmm.common.util.FileUtil;
+import org.beifengtz.jvmm.common.util.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -52,10 +75,109 @@ public class EtcdConnectorFactory {
         return CONNECTORS.get(sessionId);
     }
 
-    public static CompletableFuture<SessionBO> newConnectorAsync(String user, Client client) {
+    public static ClientBuilder constructClientBuilder(NewSessionDTO data) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
+        ClientBuilder builder = Client.builder().keepaliveWithoutCalls(false);
+        builder.executorService(ExecutorFactory.getThreadPool())
+                .target(data.getProtocol() + "://" + data.getHost() + ":" + data.getPort())
+                .namespace(data.getNamespace() == null ? ByteSequence.EMPTY : CommonUtil.toByteSequence(data.getNamespace()));
+        if (StringUtil.nonEmpty(data.getUser())) {
+            builder.user(CommonUtil.toByteSequence(data.getUser()));
+        }
+        if (StringUtil.nonEmpty(data.getPassword())) {
+            builder.password(CommonUtil.toByteSequence(data.getPassword()));
+        }
+        SslContext ssl = null;
+        ApplicationProtocolConfig alpn = new ApplicationProtocolConfig(ApplicationProtocolConfig.Protocol.ALPN,
+                ApplicationProtocolConfig.SelectorFailureBehavior.NO_ADVERTISE,
+                ApplicationProtocolConfig.SelectedListenerFailureBehavior.ACCEPT,
+                ApplicationProtocolNames.HTTP_2);
+        switch (data.getCaType().toLowerCase()) {
+            case "custom": {
+                File caFile = new File("temp", UUID.randomUUID().toString());
+                File certFile = new File("temp", UUID.randomUUID().toString());
+                File certKeyFile = new File("temp", UUID.randomUUID().toString());
+
+                FileUtil.writeByteArrayToFile(caFile, data.getCaCert().getBytes(StandardCharsets.UTF_8));
+                try {
+                    SslContextBuilder sslBuilder = SslContextBuilder
+                            .forClient()
+                            .applicationProtocolConfig(alpn)
+                            .sslProvider(SslProvider.OPENSSL)
+                            .trustManager(caFile);
+                    switch (data.getClientCertMode().toLowerCase()) {
+                        case "password": {
+                            sslBuilder.keyManager(RSAKey.fromPem(data.getClientCert()).toPrivateKey(), data.getClientCertPassword());
+                            break;
+                        }
+                        case "key": {
+                            FileUtil.writeByteArrayToFile(certFile, data.getClientCert().getBytes(StandardCharsets.UTF_8));
+                            FileUtil.writeByteArrayToFile(certKeyFile, data.getClientCertKey().getBytes(StandardCharsets.UTF_8));
+                            sslBuilder.keyManager(certFile, certKeyFile);
+                            break;
+                        }
+                    }
+                } finally {
+                    FileUtil.delFile(caFile);
+                    FileUtil.delFile(certFile);
+                    FileUtil.delFile(certKeyFile);
+                }
+                break;
+            }
+            case "public": {
+                ssl = SslContextBuilder
+                        .forClient()
+                        .applicationProtocolConfig(alpn)
+                        .trustManager(InsecureTrustManagerFactory.INSTANCE)
+                        .build();
+                break;
+            }
+        }
+        if (ssl != null) {
+            builder.sslContext(ssl);
+        }
+        return builder;
+    }
+
+    /**
+     * 建立ssh隧道，如果有隧道需要建立，会修改传入{@link NewSessionDTO}相关的配置
+     *
+     * @param data 连接数据
+     * @return ssh {@link Session}
+     * @throws JSchException 建立ssh失败时报错
+     * @throws IOException   绑定本地端口时报错
+     */
+    public static Session connectSshTunnel(NewSessionDTO data) throws JSchException, IOException {
+        SshDTO ssh = data.getSsh();
+        if (ssh != null) {
+            JSch jsch = new JSch();
+            String privateKey = ssh.getPrivateKey();
+            if (privateKey != null) {
+                jsch.addIdentity(privateKey, ssh.getPassphrase());
+            }
+            Session session = jsch.getSession(ssh.getUser(), ssh.getHost(), ssh.getPort());
+            session.setConfig("StrictHostKeyChecking", "no");
+            String password = ssh.getPassword();
+            if (password != null) {
+                session.setPassword(password);
+            }
+            session.setTimeout(ssh.getTimeout());
+            session.connect();
+            int localPort;
+            try (ServerSocket serverSocket = new ServerSocket(0)) {
+                localPort = serverSocket.getLocalPort();
+            }
+            session.setPortForwardingL(localPort, ssh.getHost(), data.getPort());
+            data.setPort(localPort);
+            data.setHost("127.0.0.1");
+            return session;
+        }
+        return null;
+    }
+
+    public static CompletableFuture<SessionBO> newConnectorAsync(String user, Client client, Session sshSession) {
         CompletableFuture<GetResponse> future = client.getKVClient().get(CommonUtil.toByteSequence(" "));
         return future.thenCompose(r -> {
-            EtcdConnector connector = new EtcdConnector(client);
+            EtcdConnector connector = new EtcdConnector(client, sshSession);
             CONNECTORS.put(connector.getConnKey(), connector);
             logger.debug("Create a new etcd connector {}", connector.getConnKey());
             return connector.userIsRoot(user).thenApply(b -> {
@@ -67,8 +189,8 @@ public class EtcdConnectorFactory {
         });
     }
 
-    public static SessionBO newConnector(String user, Client client) throws ExecutionException, InterruptedException, TimeoutException {
-        return newConnectorAsync(user, client).get(5, TimeUnit.SECONDS);
+    public static SessionBO newConnector(String user, Client client, Session sshSession) throws ExecutionException, InterruptedException, TimeoutException {
+        return newConnectorAsync(user, client, sshSession).get(5, TimeUnit.SECONDS);
     }
 
     public static void onClose(String sessionId) {
