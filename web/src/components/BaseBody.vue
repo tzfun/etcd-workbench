@@ -6,6 +6,24 @@ import {closeSession} from "~/services/SessionService";
 
 let tabIndex = 1
 const curTab = ref('1')
+const showHeader = ref(true)
+
+onMounted(() => {
+  let params = window.location.search.split("?")[1]
+  if (params) {
+    let vars = params.split("&")
+    for (let v of vars) {
+      let kv = v.split("=")
+      if (kv[0] == 'header') {
+        if (kv[1] === 'hide') {
+          showHeader.value = false
+        }
+        break
+      }
+    }
+  }
+})
+
 const tabs = ref([
   {
     title: 'New Session(1)',
@@ -69,7 +87,7 @@ const checkSessionName = (name: string): boolean => {
 
 <template>
   <div style="height: 100%; width: 100%;">
-    <div class="header">
+    <div class="header" v-if="showHeader">
       Etcd Workbench
     </div>
     <button
