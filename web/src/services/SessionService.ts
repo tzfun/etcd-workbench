@@ -1,8 +1,8 @@
 import request from '~/request'
-import {NewSessionReq} from "~/entitys/RequestTypes";
 import {host} from "~/Config";
+import {SessionConfig} from "~/entitys/TransformTypes";
 
-export function newSession(data: NewSessionReq) {
+export function newSession(data: SessionConfig) {
     return request.post(host + "/session/new", data)
 }
 
@@ -10,7 +10,7 @@ export function closeSession(sessionId: string) {
     return request.get(host + "/session/close", {sessionId: sessionId})
 }
 
-export function testSession(data: NewSessionReq): Promise<any> {
+export function testSession(data: SessionConfig): Promise<any> {
     return request.post(host + "/session/test", data)
 }
 

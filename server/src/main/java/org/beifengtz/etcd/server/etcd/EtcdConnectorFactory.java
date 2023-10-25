@@ -7,8 +7,10 @@ import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.ClientBuilder;
 import io.etcd.jetcd.kv.GetResponse;
+import io.etcd.jetcd.resolver.DnsSrvResolverProvider;
 import io.etcd.jetcd.resolver.HttpResolverProvider;
 import io.etcd.jetcd.resolver.HttpsResolverProvider;
+import io.etcd.jetcd.resolver.IPNameResolver;
 import io.etcd.jetcd.resolver.IPResolverProvider;
 import io.grpc.NameResolverRegistry;
 import io.netty.handler.ssl.ApplicationProtocolConfig;
@@ -57,6 +59,7 @@ public class EtcdConnectorFactory {
     static {
         NameResolverRegistry nameResolverRegistry = NameResolverRegistry.getDefaultRegistry();
         nameResolverRegistry.register(new IPResolverProvider());
+        nameResolverRegistry.register(new DnsSrvResolverProvider());
         nameResolverRegistry.register(new HttpResolverProvider());
         nameResolverRegistry.register(new HttpsResolverProvider());
 
@@ -77,8 +80,16 @@ public class EtcdConnectorFactory {
 
     public static ClientBuilder constructClientBuilder(NewSessionDTO data) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
         ClientBuilder builder = Client.builder().keepaliveWithoutCalls(false);
+
+        String target;
+        if (IPNameResolver.SCHEME.equals(data.getProtocol())) {
+            target = data.getProtocol() + ":///" + data.getHost() + ":" + data.getPort();
+        } else {
+            target = data.getProtocol() + "://" + data.getHost() + ":" + data.getPort();
+        }
+
         builder.executorService(ExecutorFactory.getThreadPool())
-                .target(data.getProtocol() + "://" + data.getHost() + ":" + data.getPort())
+                .target(target)
                 .namespace(data.getNamespace() == null ? ByteSequence.EMPTY : CommonUtil.toByteSequence(data.getNamespace()));
         if (StringUtil.nonEmpty(data.getUser())) {
             builder.user(CommonUtil.toByteSequence(data.getUser()));
@@ -149,27 +160,38 @@ public class EtcdConnectorFactory {
     public static Session connectSshTunnel(NewSessionDTO data) throws JSchException, IOException {
         SshDTO ssh = data.getSsh();
         if (ssh != null) {
-            JSch jsch = new JSch();
-            String privateKey = ssh.getPrivateKey();
-            if (privateKey != null) {
-                jsch.addIdentity(privateKey, ssh.getPassphrase());
+            File sshKeyFile = null;
+            try {
+                JSch jsch = new JSch();
+                String privateKey = ssh.getPrivateKey();
+                if (privateKey != null) {
+                    sshKeyFile = new File("temp", UUID.randomUUID().toString());
+                    FileUtil.writeByteArrayToFile(sshKeyFile, privateKey.getBytes(StandardCharsets.UTF_8));
+                    jsch.addIdentity(sshKeyFile.getAbsolutePath(), ssh.getPassphrase());
+                }
+                Session session = jsch.getSession(ssh.getUser(), ssh.getHost(), ssh.getPort());
+                session.setConfig("StrictHostKeyChecking", "no");
+                String password = ssh.getPassword();
+                if (password != null) {
+                    session.setPassword(password);
+                }
+                session.setTimeout(ssh.getTimeout());
+                session.connect();
+                int localPort;
+                try (ServerSocket serverSocket = new ServerSocket(0)) {
+                    localPort = serverSocket.getLocalPort();
+                }
+                int port = session.setPortForwardingL(localPort, data.getHost(), data.getPort());
+                logger.info("Opened ssh tunnel {}@{}:{} 127.0.0.1:{}=>{}:{}", ssh.getUser(), ssh.getHost(), ssh.getPort(),
+                        port, data.getHost(), data.getPort());
+                data.setPort(port);
+                data.setHost("127.0.0.1");
+                return session;
+            } finally {
+                if (sshKeyFile != null) {
+                    FileUtil.delFile(sshKeyFile);
+                }
             }
-            Session session = jsch.getSession(ssh.getUser(), ssh.getHost(), ssh.getPort());
-            session.setConfig("StrictHostKeyChecking", "no");
-            String password = ssh.getPassword();
-            if (password != null) {
-                session.setPassword(password);
-            }
-            session.setTimeout(ssh.getTimeout());
-            session.connect();
-            int localPort;
-            try (ServerSocket serverSocket = new ServerSocket(0)) {
-                localPort = serverSocket.getLocalPort();
-            }
-            session.setPortForwardingL(localPort, ssh.getHost(), data.getPort());
-            data.setPort(localPort);
-            data.setHost("127.0.0.1");
-            return session;
         }
         return null;
     }

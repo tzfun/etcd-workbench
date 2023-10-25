@@ -34,6 +34,7 @@ public class HttpService {
     private static final Logger logger = LoggerFactory.getLogger(HttpService.class);
 
     public void start(int port) {
+        HttpHandler.init();
         long st = System.currentTimeMillis();
         EventLoopGroup boosGroup = ChannelUtil.newEventLoopGroup(1);
         EventLoopGroup workGroup = ChannelUtil.newEventLoopGroup(2 * Runtime.getRuntime().availableProcessors() + 1);

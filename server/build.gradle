@@ -9,6 +9,9 @@ targetCompatibility = JavaVersion.VERSION_11
 
 repositories {
     mavenLocal()
+    maven {
+        url "https://maven.aliyun.com/repository/public"
+    }
     mavenCentral()
 }
 

@@ -35,8 +35,21 @@ export type TreeNode = {
     data?: KeyValueDTO
 }
 
-export interface SessionConfig {
+export interface SSHConfig {
+    host: string
+    port: number
+    user: string
+    password?: string | null
+    privateKey?: string | null
+    passphrase?: string | null
+    timeout?: number
+}
+
+export interface SessionConfig extends Record<string, any> {
     namespace: string | ''
+    protocol: string
+    host: string
+    port: number
     user?: string
     password?: string
     authority?: string
@@ -46,10 +59,14 @@ export interface SessionConfig {
     clientCert?: string | null
     clientCertPassword?: string | null
     clientCertKey?: string | null
+    ssh?: SSHConfig | null
 }
 
 export interface SessionStoreConfig extends SessionConfig {
-    name: string
-    host: string
-    port: number
+    name: string,
+    enableFunc: {
+        auth: false,
+        ssl: false,
+        ssh: false
+    }
 }
