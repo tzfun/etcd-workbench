@@ -193,3 +193,10 @@ export function updateClusterMember(sessionId: string, memberId: number, urlList
         urlList: urlList
     })
 }
+
+export function getMemberStatus(sessionId: string, target: string): Promise<any> {
+    return request.get(host + "/session/etcd/cluster/get_status", {
+        sessionId: sessionId,
+        target: target
+    })
+}

@@ -1,12 +1,10 @@
 package org.beifengtz.etcd.server.controller;
 
-import com.jcraft.jsch.Session;
-import io.etcd.jetcd.Client;
 import io.etcd.jetcd.common.exception.EtcdException;
-import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.options.GetOption;
 import lombok.extern.slf4j.Slf4j;
 import org.beifengtz.etcd.server.config.ResultCode;
+import org.beifengtz.etcd.server.entity.bo.KeyValueBO;
 import org.beifengtz.etcd.server.entity.dto.KeyValueDTO;
 import org.beifengtz.etcd.server.entity.dto.MemberDTO;
 import org.beifengtz.etcd.server.entity.dto.NewSessionDTO;
@@ -14,7 +12,6 @@ import org.beifengtz.etcd.server.entity.dto.PermissionDTO;
 import org.beifengtz.etcd.server.entity.vo.ResultVO;
 import org.beifengtz.etcd.server.etcd.EtcdConnector;
 import org.beifengtz.etcd.server.etcd.EtcdConnectorFactory;
-import org.beifengtz.etcd.server.util.CommonUtil;
 import org.beifengtz.jvmm.common.util.StringUtil;
 import org.beifengtz.jvmm.convey.annotation.HttpController;
 import org.beifengtz.jvmm.convey.annotation.HttpRequest;
@@ -45,37 +42,24 @@ import java.util.concurrent.TimeoutException;
 public class EtcdController {
 
     @HttpRequest(value = "/session/test", method = Method.POST)
-    public void testConnect(@RequestBody NewSessionDTO data, ResponseFuture future) throws Exception {
-        Session session = EtcdConnectorFactory.connectSshTunnel(data);
-        Client client = EtcdConnectorFactory.constructClientBuilder(data).build();
+    public void testConnect(@RequestBody NewSessionDTO data, ResponseFuture future) {
         try {
-            CompletableFuture<GetResponse> respFuture = client.getKVClient().get(CommonUtil.toByteSequence(" "));
-            respFuture.whenComplete((getResponse, throwable) -> {
-                client.close();
-                if (session != null) {
-                    session.disconnect();
-                }
+            EtcdConnector connector = EtcdConnectorFactory.newConnector(data);
+            CompletableFuture<KeyValueBO> respFuture = connector.kvGet(" ");
+            respFuture.whenComplete((kv, throwable) -> {
+                connector.close();
                 handleComplete(future, true, throwable);
             });
             respFuture.orTimeout(5, TimeUnit.SECONDS);
         } catch (Throwable e) {
-            client.close();
-            if (session != null) {
-                session.disconnect();
-            }
+            handleComplete(future, false, e);
         }
     }
 
     @HttpRequest(value = "/session/new", method = Method.POST)
-    public void newSession(@RequestBody NewSessionDTO data, ResponseFuture future) throws Exception {
-        Session session = EtcdConnectorFactory.connectSshTunnel(data);
-        EtcdConnectorFactory.newConnectorAsync(data.getUser(), EtcdConnectorFactory.constructClientBuilder(data).build(), session)
-                .whenComplete((sessionId, throwable) -> {
-                    handleComplete(future, sessionId, throwable);
-                    if (throwable != null && session != null) {
-                        session.disconnect();
-                    }
-                });
+    public void newSession(@RequestBody NewSessionDTO data, ResponseFuture future) {
+        EtcdConnectorFactory.registerConnectorAsync(data)
+                .whenComplete((sessionId, throwable) -> handleComplete(future, sessionId, throwable));
     }
 
     @HttpRequest("/session/close")
@@ -332,7 +316,7 @@ public class EtcdController {
     @HttpRequest(value = "/session/etcd/cluster/update_member", method = Method.POST)
     public void updateClusterMember(@RequestBody MemberDTO member, ResponseFuture future) {
         List<String> urlList = member.getUrlList();
-        if (urlList == null || urlList.size() == 0) {
+        if (urlList == null || urlList.isEmpty()) {
             throw new IllegalArgumentException("Missing required param 'urlList'");
         }
         if (StringUtil.isEmpty(member.getMemberId())) {
@@ -350,6 +334,15 @@ public class EtcdController {
         EtcdConnectorFactory.get(member.getSessionId())
                 .clusterUpdate(member.getMemberId(), uris)
                 .whenComplete(((members, throwable) -> handleComplete(future, members, throwable)));
+    }
+
+    @HttpRequest("/session/etcd/cluster/get_status")
+    public void getMemberStatus(@RequestParam String sessionId,
+                                @RequestParam String target,
+                                ResponseFuture future) {
+        EtcdConnectorFactory.get(sessionId)
+                .maintenanceMemberStatus(target)
+                .whenComplete((memberStatusBO, throwable) -> handleComplete(future, memberStatusBO, throwable));
     }
 
     private void handleComplete(ResponseFuture future, Object result, Throwable throwable) {

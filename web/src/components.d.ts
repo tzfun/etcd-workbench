@@ -12,6 +12,8 @@ declare module '@vue/runtime-core' {
     BaseBody: typeof import('./components/BaseBody.vue')['default']
     ClusterManager: typeof import('./components/managers/ClusterManager.vue')['default']
     Editor: typeof import('./components/editor/Editor.vue')['default']
+    ElBreadcrumb: typeof import('element-plus/es')['ElBreadcrumb']
+    ElBreadcrumbItem: typeof import('element-plus/es')['ElBreadcrumbItem']
     ElButton: typeof import('element-plus/es')['ElButton']
     ElButtonGroup: typeof import('element-plus/es')['ElButtonGroup']
     ElCard: typeof import('element-plus/es')['ElCard']

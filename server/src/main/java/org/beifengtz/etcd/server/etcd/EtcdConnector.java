@@ -1,13 +1,23 @@
 package org.beifengtz.etcd.server.etcd;
 
-import com.jcraft.jsch.Session;
 import io.etcd.jetcd.Auth;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.KV;
 import io.etcd.jetcd.KeyValue;
 import io.etcd.jetcd.Response.Header;
-import io.etcd.jetcd.auth.*;
+import io.etcd.jetcd.auth.AuthRoleAddResponse;
+import io.etcd.jetcd.auth.AuthRoleDeleteResponse;
+import io.etcd.jetcd.auth.AuthRoleGrantPermissionResponse;
+import io.etcd.jetcd.auth.AuthRoleListResponse;
+import io.etcd.jetcd.auth.AuthRoleRevokePermissionResponse;
+import io.etcd.jetcd.auth.AuthUserAddResponse;
+import io.etcd.jetcd.auth.AuthUserChangePasswordResponse;
+import io.etcd.jetcd.auth.AuthUserDeleteResponse;
+import io.etcd.jetcd.auth.AuthUserGetResponse;
+import io.etcd.jetcd.auth.AuthUserGrantRoleResponse;
+import io.etcd.jetcd.auth.AuthUserRevokeRoleResponse;
+import io.etcd.jetcd.auth.Permission;
 import io.etcd.jetcd.cluster.Member;
 import io.etcd.jetcd.cluster.MemberUpdateResponse;
 import io.etcd.jetcd.kv.DeleteResponse;
@@ -16,15 +26,16 @@ import io.etcd.jetcd.maintenance.AlarmResponse;
 import io.etcd.jetcd.maintenance.AlarmType;
 import io.etcd.jetcd.maintenance.DefragmentResponse;
 import io.etcd.jetcd.maintenance.SnapshotResponse;
-import io.etcd.jetcd.maintenance.StatusResponse;
 import io.etcd.jetcd.options.DeleteOption;
 import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.options.PutOption;
 import io.grpc.stub.StreamObserver;
 import org.beifengtz.etcd.server.config.Configuration;
+import org.beifengtz.etcd.server.entity.SshContext;
 import org.beifengtz.etcd.server.entity.bo.ClusterBO;
 import org.beifengtz.etcd.server.entity.bo.KeyValueBO;
 import org.beifengtz.etcd.server.entity.bo.MemberBO;
+import org.beifengtz.etcd.server.entity.bo.MemberStatusBO;
 import org.beifengtz.etcd.server.entity.bo.PermissionBO;
 import org.beifengtz.etcd.server.entity.bo.PermissionBO.PermissionBOBuilder;
 import org.beifengtz.etcd.server.entity.bo.UserBO;
@@ -34,11 +45,13 @@ import org.slf4j.LoggerFactory;
 
 import java.math.BigInteger;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -62,13 +75,13 @@ public class EtcdConnector {
     private final String connKey;
     private final Client client;
     private long activeTime;
-    private final Session sshSession;
+    private final SshContext sshContext;
 
-    public EtcdConnector(Client client, Session sshSession) {
+    public EtcdConnector(Client client, SshContext sshContext) {
         this.client = client;
         this.connKey = UUID.randomUUID().toString().replaceAll("-", "").toLowerCase(Locale.ROOT);
         this.activeTime = System.currentTimeMillis();
-        this.sshSession = sshSession;
+        this.sshContext = sshContext;
     }
 
     public String getConnKey() {
@@ -91,13 +104,37 @@ public class EtcdConnector {
 
     public void close() {
         client.close();
-        if (sshSession != null) {
-            sshSession.disconnect();
+        if (sshContext != null) {
+            sshContext.getSession().disconnect();
         }
         EtcdConnectorFactory.onClose(connKey);
         logger.debug("Connector closed by invoke. {}", connKey);
     }
 
+    private String transferTarget(String target) {
+        if (sshContext != null) {
+            try {
+                URI uri = new URI(target);
+                String parsedTarget = uri.getScheme() + "://";
+                if (Objects.equals(uri.getHost(), sshContext.getSrcHost())) {
+                    parsedTarget += sshContext.getProxyLocalHost();
+                } else {
+                    parsedTarget += uri.getHost();
+                }
+                parsedTarget += ":";
+                if (uri.getPort() == sshContext.getSrcPort()) {
+                    parsedTarget += sshContext.getProxyLocalPort();
+                } else {
+                    parsedTarget += uri.getPort();
+                }
+                return parsedTarget;
+            } catch (URISyntaxException e) {
+                logger.warn("Parse target failed: " + e.getMessage(), e);
+                return target;
+            }
+        }
+        return target;
+    }
 
     /**
      * 自定义获取键值对参数
@@ -695,25 +732,26 @@ public class EtcdConnector {
     /**
      * 获取节点的状态信息
      *
-     * @param target 目标端口 endpoints，也可以是Peer URL
-     * @return {@link StatusResponse}
+     * @param target 目标 endpoints，也可以是 URL
+     * @return {@link MemberStatusBO}
      */
-    public CompletableFuture<StatusResponse> maintenanceMemberStatus(String target) {
+    public CompletableFuture<MemberStatusBO> maintenanceMemberStatus(String target) {
         onActive();
         return client.getMaintenanceClient()
-                .statusMember(target)
+                .statusMember(transferTarget(target))
+                .thenApply(MemberStatusBO::parseFrom)
                 .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
     }
 
     /**
      * 对节点进行碎片清理。这是一个比较消耗资源的操作，谨慎调用。
      *
-     * @param target 目标端口endpoints，也可以是Peer URL
+     * @param target 目标 endpoints，也可以是 URL
      */
     public CompletableFuture<DefragmentResponse> maintenanceGc(String target) {
         onActive();
         return client.getMaintenanceClient()
-                .defragmentMember(target)
+                .defragmentMember(transferTarget(target))
                 .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
     }
 

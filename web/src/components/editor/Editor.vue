@@ -177,21 +177,21 @@ defineExpose({
           />
         </el-select>
       </div>
-      <div class="item">
-        Tab Size:
-        <el-select v-model="config.tabSize"
-                   fit-input-width
-                   style="width: 80px"
-                   class="m-2"
-                   placeholder="Select tab size">
-          <el-option
-              v-for="item in allTabSize"
-              :key="item"
-              :label="item"
-              :value="item"
-          />
-        </el-select>
-      </div>
+<!--      <div class="item">-->
+<!--        Tab Size:-->
+<!--        <el-select v-model="config.tabSize"-->
+<!--                   fit-input-width-->
+<!--                   style="width: 80px"-->
+<!--                   class="m-2"-->
+<!--                   placeholder="Select tab size">-->
+<!--          <el-option-->
+<!--              v-for="item in allTabSize"-->
+<!--              :key="item"-->
+<!--              :label="item"-->
+<!--              :value="item"-->
+<!--          />-->
+<!--        </el-select>-->
+<!--      </div>-->
     </div>
     <div class="editor">
       <codemirror
@@ -220,8 +220,8 @@ defineExpose({
         <div class="infos">
           <span class="item">Size: {{ size }}</span>
 <!--          <span class="item">Spaces: {{ config.tabSize }}</span>-->
-          <span class="item">Length: {{ state.length }}</span>
-          <span class="item">Lines: {{ state.lines }}</span>
+<!--          <span class="item">Length: {{ state.length }}</span>-->
+<!--          <span class="item">Lines: {{ state.lines }}</span>-->
 <!--          <span class="item">Cursor: {{ state.cursor }}</span>-->
 <!--          <span class="item">Selected: {{ state.selected }}</span>-->
         </div>

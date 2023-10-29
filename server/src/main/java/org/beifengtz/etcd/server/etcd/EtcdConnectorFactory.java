@@ -19,6 +19,8 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+import org.beifengtz.etcd.server.entity.SshContext;
+import org.beifengtz.etcd.server.entity.bo.KeyValueBO;
 import org.beifengtz.etcd.server.entity.bo.SessionBO;
 import org.beifengtz.etcd.server.entity.dto.NewSessionDTO;
 import org.beifengtz.etcd.server.entity.dto.SshDTO;
@@ -78,7 +80,12 @@ public class EtcdConnectorFactory {
         return CONNECTORS.get(sessionId);
     }
 
-    public static ClientBuilder constructClientBuilder(NewSessionDTO data) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException {
+    public static EtcdConnector newConnector(NewSessionDTO data) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException, JSchException {
+        SshContext sshContext = connectSshTunnel(data.getSsh(), data.getPort(), data.getHost());
+        if (sshContext != null) {
+            data.setPort(sshContext.getProxyLocalPort());
+            data.setHost(sshContext.getProxyLocalHost());
+        }
         ClientBuilder builder = Client.builder().keepaliveWithoutCalls(false);
 
         String target;
@@ -146,19 +153,20 @@ public class EtcdConnectorFactory {
         if (ssl != null) {
             builder.sslContext(ssl);
         }
-        return builder;
+        return new EtcdConnector(builder.build(), sshContext);
     }
 
     /**
      * 建立ssh隧道，如果有隧道需要建立，会修改传入{@link NewSessionDTO}相关的配置
      *
-     * @param data 连接数据
-     * @return ssh {@link Session}
+     * @param ssh {@link SshDTO}
+     * @param proxyHost 代理 host
+     * @param proxyPort 代理 port
+     * @return ssh {@link SshContext}
      * @throws JSchException 建立ssh失败时报错
      * @throws IOException   绑定本地端口时报错
      */
-    public static Session connectSshTunnel(NewSessionDTO data) throws JSchException, IOException {
-        SshDTO ssh = data.getSsh();
+    public static SshContext connectSshTunnel(SshDTO ssh, int proxyPort, String proxyHost) throws JSchException, IOException {
         if (ssh != null) {
             File sshKeyFile = null;
             try {
@@ -181,12 +189,16 @@ public class EtcdConnectorFactory {
                 try (ServerSocket serverSocket = new ServerSocket(0)) {
                     localPort = serverSocket.getLocalPort();
                 }
-                int port = session.setPortForwardingL(localPort, data.getHost(), data.getPort());
+                int port = session.setPortForwardingL(localPort, proxyHost, proxyPort);
                 logger.info("Opened ssh tunnel {}@{}:{} 127.0.0.1:{}=>{}:{}", ssh.getUser(), ssh.getHost(), ssh.getPort(),
-                        port, data.getHost(), data.getPort());
-                data.setPort(port);
-                data.setHost("127.0.0.1");
-                return session;
+                        port, proxyHost, proxyPort);
+                SshContext context = new SshContext();
+                context.setSrcPort(proxyPort);
+                context.setSrcHost(proxyHost);
+                context.setProxyLocalPort(port);
+                context.setProxyLocalHost("127.0.0.1");
+                context.setSession(session);
+                return context;
             } finally {
                 if (sshKeyFile != null) {
                     FileUtil.delFile(sshKeyFile);
@@ -196,23 +208,22 @@ public class EtcdConnectorFactory {
         return null;
     }
 
-    public static CompletableFuture<SessionBO> newConnectorAsync(String user, Client client, Session sshSession) {
-        CompletableFuture<GetResponse> future = client.getKVClient().get(CommonUtil.toByteSequence(" "));
-        return future.thenCompose(r -> {
-            EtcdConnector connector = new EtcdConnector(client, sshSession);
-            CONNECTORS.put(connector.getConnKey(), connector);
-            logger.debug("Create a new etcd connector {}", connector.getConnKey());
-            return connector.userIsRoot(user).thenApply(b -> {
-                SessionBO sessionBO = new SessionBO();
-                sessionBO.setSessionId(connector.getConnKey());
-                sessionBO.setRoot(b);
-                return sessionBO;
+    public static CompletableFuture<SessionBO> registerConnectorAsync(NewSessionDTO data) {
+        try {
+            EtcdConnector connector = newConnector(data);
+            return connector.kvGet(" ").thenCompose(kv -> {
+                CONNECTORS.put(connector.getConnKey(), connector);
+                logger.debug("Create a new etcd connector {}", connector.getConnKey());
+                return connector.userIsRoot(data.getUser()).thenApply(b -> {
+                    SessionBO sessionBO = new SessionBO();
+                    sessionBO.setSessionId(connector.getConnKey());
+                    sessionBO.setRoot(b);
+                    return sessionBO;
+                });
             });
-        });
-    }
-
-    public static SessionBO newConnector(String user, Client client, Session sshSession) throws ExecutionException, InterruptedException, TimeoutException {
-        return newConnectorAsync(user, client, sshSession).get(5, TimeUnit.SECONDS);
+        } catch (Throwable e) {
+            return CompletableFuture.failedFuture(e);
+        }
     }
 
     public static void onClose(String sessionId) {

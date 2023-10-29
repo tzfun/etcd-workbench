@@ -70,3 +70,11 @@ export interface SessionStoreConfig extends SessionConfig {
         ssh: false
     }
 }
+
+export interface MemberStatus {
+    version: string
+    dbSize: number
+    leader: string
+    raftIndex: number
+    raftTerm: number
+}

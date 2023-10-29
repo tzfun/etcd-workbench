@@ -58,13 +58,12 @@ public class EtcdTest {
 
     @Test
     public void testConnector() throws Exception {
-        Client client = Client.builder()
-                .target("ip:///127.0.0.1:2379")
-                .namespace(ByteSequence.EMPTY)
-                .authority("127.0.0.1")
-                .build();
-        SessionBO session = EtcdConnectorFactory.newConnector(null, client, null);
-        EtcdConnector connector = EtcdConnectorFactory.get(session.getSessionId());
+        NewSessionDTO config = new NewSessionDTO();
+        config.setHost("127.0.0.1");
+        config.setPort(2379);
+        config.setProtocol("ip");
+
+        EtcdConnector connector = EtcdConnectorFactory.newConnector(config);
         GetOption option = GetOption.newBuilder()
                 .withKeysOnly(true)
                 .isPrefix(true)
@@ -110,11 +109,7 @@ public class EtcdTest {
 
         config.setSsh(ssh);
 
-        Session sshSession = EtcdConnectorFactory.connectSshTunnel(config);
-        Client client = EtcdConnectorFactory.constructClientBuilder(config).build();
-
-        SessionBO session = EtcdConnectorFactory.newConnector(null, client, sshSession);
-        EtcdConnector connector = EtcdConnectorFactory.get(session.getSessionId());
+        EtcdConnector connector = EtcdConnectorFactory.newConnector(config);
         GetOption option = GetOption.newBuilder()
                 .withKeysOnly(true)
                 .isPrefix(true)
