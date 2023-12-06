@@ -6,6 +6,8 @@ import io.etcd.jetcd.Client;
 import io.etcd.jetcd.KV;
 import io.etcd.jetcd.KeyValue;
 import io.etcd.jetcd.Response.Header;
+import io.etcd.jetcd.auth.AuthDisableResponse;
+import io.etcd.jetcd.auth.AuthEnableResponse;
 import io.etcd.jetcd.auth.AuthRoleAddResponse;
 import io.etcd.jetcd.auth.AuthRoleDeleteResponse;
 import io.etcd.jetcd.auth.AuthRoleGrantPermissionResponse;
@@ -763,5 +765,24 @@ public class EtcdConnector {
     public void maintenanceSnapshot(StreamObserver<SnapshotResponse> observer) {
         onActive();
         client.getMaintenanceClient().snapshot(observer);
+    }
+
+    /**
+     * 开启认证
+     */
+    public CompletableFuture<AuthEnableResponse> authEnable() {
+        onActive();
+        return client.getAuthClient()
+                .authEnable()
+                .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * 关闭认证
+     */
+    public CompletableFuture<AuthDisableResponse> authDisable() {
+        return client.getAuthClient()
+                .authDisable()
+                .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
     }
 }

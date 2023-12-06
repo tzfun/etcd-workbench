@@ -200,3 +200,15 @@ export function getMemberStatus(sessionId: string, target: string): Promise<any>
         target: target
     })
 }
+
+export function authEnable(sessionId: string): Promise<any> {
+    return request.get(host + "/session/etcd/auth/enable", {
+        sessionId: sessionId
+    })
+}
+
+export function authDisable(sessionId: string): Promise<any> {
+    return request.get(host + "/session/etcd/auth/disable", {
+        sessionId: sessionId
+    })
+}

@@ -1,7 +1,16 @@
 <script setup lang="ts">
-import {addUser, deleteUser, listRoles, listUser, userGrantRole, userRevokeRole} from "~/services/SessionService";
-import {Delete, Plus, Refresh, Search, UserFilled} from "@element-plus/icons-vue";
+import {
+  addUser, authDisable,
+  authEnable,
+  deleteUser,
+  listRoles,
+  listUser,
+  userGrantRole,
+  userRevokeRole
+} from "~/services/SessionService";
+import {Delete, Lock, Plus, Refresh, Search, Unlock, UserFilled} from "@element-plus/icons-vue";
 import {_isEmpty} from "~/util/Util";
+import {ElMessage} from "element-plus";
 
 const props = defineProps({
   sessionKey: String
@@ -148,11 +157,45 @@ const add = () => {
     return
   }
 
-  addUser(props.sessionKey, addForm.user, addForm.password).then(() => {
+  addUser(props.sessionKey!, addForm.user, addForm.password).then(() => {
     showAddDialog.value = false
     loadAllUser()
   }).catch(e => {
     console.error(e)
+  })
+}
+
+const doAuthEnable = () => {
+  authEnable(props.sessionKey!).then(() => {
+    ElMessage({
+      type: 'success',
+      message: 'Enabled authentication',
+    })
+  }).catch(e => {
+    console.error(e)
+    ElMessage({
+      showClose: true,
+      message: e,
+      type: 'warning',
+      duration: 5000,
+    })
+  })
+}
+
+const doAuthDisable = () => {
+  authDisable(props.sessionKey!).then(() => {
+    ElMessage({
+      type: 'success',
+      message: 'Disabled authentication',
+    })
+  }).catch(e => {
+    console.error(e)
+    ElMessage({
+      showClose: true,
+      message: e,
+      type: 'warning',
+      duration: 5000,
+    })
   })
 }
 </script>
@@ -162,6 +205,8 @@ const add = () => {
     <div class="mb-5">
       <el-button @click="loadAllUser" :icon="Refresh">Refresh Table</el-button>
       <el-button type="primary" :icon="UserFilled" @click="openAddDialog">Add User</el-button>
+      <el-button type="success" :icon="Lock" @click="doAuthEnable">Auth Enable</el-button>
+      <el-button type="danger" :icon="Unlock" @click="doAuthDisable">Auth Disable</el-button>
     </div>
     <el-table :data="filterTableData"
               border

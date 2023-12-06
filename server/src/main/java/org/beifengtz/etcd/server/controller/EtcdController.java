@@ -333,7 +333,7 @@ public class EtcdController {
         }
         EtcdConnectorFactory.get(member.getSessionId())
                 .clusterUpdate(member.getMemberId(), uris)
-                .whenComplete(((members, throwable) -> handleComplete(future, members, throwable)));
+                .whenComplete((members, throwable) -> handleComplete(future, members, throwable));
     }
 
     @HttpRequest("/session/etcd/cluster/get_status")
@@ -343,6 +343,22 @@ public class EtcdController {
         EtcdConnectorFactory.get(sessionId)
                 .maintenanceMemberStatus(target)
                 .whenComplete((memberStatusBO, throwable) -> handleComplete(future, memberStatusBO, throwable));
+    }
+
+    @HttpRequest("/session/etcd/auth/enable")
+    public void authEnable(@RequestParam String sessionId,
+                           ResponseFuture future) {
+        EtcdConnectorFactory.get(sessionId)
+                .authEnable()
+                .whenComplete((resp, throwable) -> handleComplete(future, resp, throwable));
+    }
+
+    @HttpRequest("/session/etcd/auth/disable")
+    public void authDisable(@RequestParam String sessionId,
+                           ResponseFuture future) {
+        EtcdConnectorFactory.get(sessionId)
+                .authDisable()
+                .whenComplete((resp, throwable) -> handleComplete(future, resp, throwable));
     }
 
     private void handleComplete(ResponseFuture future, Object result, Throwable throwable) {
