@@ -173,12 +173,6 @@ const doAuthEnable = () => {
     })
   }).catch(e => {
     console.error(e)
-    ElMessage({
-      showClose: true,
-      message: e,
-      type: 'warning',
-      duration: 5000,
-    })
   })
 }
 
@@ -190,12 +184,6 @@ const doAuthDisable = () => {
     })
   }).catch(e => {
     console.error(e)
-    ElMessage({
-      showClose: true,
-      message: e,
-      type: 'warning',
-      duration: 5000,
-    })
   })
 }
 </script>
