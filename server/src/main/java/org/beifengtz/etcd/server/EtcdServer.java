@@ -59,6 +59,7 @@ public class EtcdServer {
                         continue;
                     }
 
+                    //  读取 server 配置
                     if ("server".equalsIgnoreCase(part)) {
                         if ("port".equalsIgnoreCase(key)) {
                             int port = Integer.parseInt(value);
@@ -66,14 +67,25 @@ public class EtcdServer {
                                 throw new ConfigurationException("Parameter configuration error, illegal port " + port);
                             }
                             Configuration.INSTANCE.setPort(port);
-                        } else if ("username".equalsIgnoreCase(key)) {
-                            Configuration.INSTANCE.setUsername(value);
-                        } else if ("password".equalsIgnoreCase(key)) {
-                            Configuration.INSTANCE.setPassword(value);
                         } else if ("etcdExecuteTimeoutMillis".equals(key)) {
                             Configuration.INSTANCE.setEtcdExecuteTimeoutMillis(Integer.parseInt(value));
+                        } else if ("dataDir".equalsIgnoreCase(key)) {
+                            Configuration.INSTANCE.setDataDir(value);
+                        } else if ("configEncryptKey".equalsIgnoreCase(key)){
+                            Configuration.INSTANCE.setConfigEncryptKey(value);
                         }
-                    } else if ("log".equalsIgnoreCase(part)) {
+                    }
+                    //  读取 auth 配置
+                    else if ("auth".equalsIgnoreCase(part)) {
+                        if ("enable".equalsIgnoreCase(key)) {
+                            Configuration.INSTANCE.setEnableAuth(Boolean.parseBoolean(value));
+                        } else if ("user".equalsIgnoreCase(key)) {
+                            String[] split = value.split(":");
+                            Configuration.INSTANCE.addUser(split[0], split[1]);
+                        }
+                    }
+                    //  读取 log 配置
+                    else if ("log".equalsIgnoreCase(part)) {
                         System.setProperty("jvmm.log." + key, value);
                     }
                 }

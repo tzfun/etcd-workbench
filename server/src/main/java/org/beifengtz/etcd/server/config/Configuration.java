@@ -1,5 +1,8 @@
 package org.beifengtz.etcd.server.config;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * description: TODO
  * date: 15:41 2023/5/23
@@ -11,9 +14,11 @@ public class Configuration {
     public static final Configuration INSTANCE = new Configuration();
 
     private int port = 8080;
-    private String username;
-    private String password;
     private int etcdExecuteTimeoutMillis = 3000;
+    private String dataDir = "data";
+    private String configEncryptKey = "etcdWorkbench@*?";
+    private boolean enableAuth;
+    private final Map<String, String> users = new HashMap<>();
 
     private Configuration() {
     }
@@ -27,28 +32,6 @@ public class Configuration {
         return this;
     }
 
-    public String getUsername() {
-        return username;
-    }
-
-    public Configuration setUsername(String username) {
-        this.username = username;
-        return this;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public Configuration setPassword(String password) {
-        this.password = password;
-        return this;
-    }
-
-    public boolean isEnableAuth() {
-        return username != null;
-    }
-
     public int getEtcdExecuteTimeoutMillis() {
         return etcdExecuteTimeoutMillis;
     }
@@ -56,5 +39,43 @@ public class Configuration {
     public Configuration setEtcdExecuteTimeoutMillis(int etcdExecuteTimeoutMillis) {
         this.etcdExecuteTimeoutMillis = etcdExecuteTimeoutMillis;
         return this;
+    }
+
+    public String getDataDir() {
+        return dataDir;
+    }
+
+    public Configuration setDataDir(String dataDir) {
+        this.dataDir = dataDir;
+        return this;
+    }
+
+    public String getConfigEncryptKey() {
+        return configEncryptKey;
+    }
+
+    public Configuration setConfigEncryptKey(String configEncryptKey) {
+        this.configEncryptKey = configEncryptKey;
+        return this;
+    }
+
+    public boolean isEnableAuth() {
+        return enableAuth;
+    }
+
+    public Configuration setEnableAuth(boolean enableAuth) {
+        this.enableAuth = enableAuth;
+        return this;
+    }
+
+    public Map<String, String> getUsers() {
+        return users;
+    }
+
+    public void addUser(String user, String password) {
+        String previous = users.put(user, password);
+        if (previous != null) {
+            System.err.println("Warning: exist multi user in [auth] configuration: " + user);
+        }
     }
 }

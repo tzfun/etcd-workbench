@@ -1,4 +1,5 @@
 import {ElLoading} from "element-plus";
+import JSEncrypt from 'jsencrypt'
 
 export function _loading(msg?: string | undefined) {
     return ElLoading.service({
@@ -39,6 +40,15 @@ export function _byteFormat(bytes: number): string {
     }
 }
 
+function _parseByte(byte: number): number {
+    if (byte > 127) {
+        byte -= 256;
+    } else if (byte < -128) {
+        byte += 256;
+    }
+    return byte
+}
+
 /**
  * string转byte数组，UTF-8格式
  *
@@ -46,7 +56,7 @@ export function _byteFormat(bytes: number): string {
  * @returns {any[]}
  * @private
  */
-export function _strToBytes(str: string) {
+export function _strToBytes(str: string): number[] {
     let bytes = [];
     for (let i = 0; i < str.length; i++) {
         let c = str.charCodeAt(i);
@@ -59,10 +69,8 @@ export function _strToBytes(str: string) {
             af += s;
             let n1 = parseInt("110" + af.substring(0, 5), 2);
             let n2 = parseInt("110" + af.substring(5), 2);
-            if (n1 > 127) n1 -= 256;
-            if (n2 > 127) n2 -= 256;
-            bytes.push(n1);
-            bytes.push(n2);
+            bytes.push(_parseByte(n1));
+            bytes.push(_parseByte(n2));
         } else if (c >= parseInt("000800", 16) && c <= parseInt("00FFFF", 16)) {
             let af = "";
             for (let j = 0; j < (16 - s.length); j++) {
@@ -72,12 +80,9 @@ export function _strToBytes(str: string) {
             let n1 = parseInt("1110" + af.substring(0, 4), 2);
             let n2 = parseInt("10" + af.substring(4, 10), 2);
             let n3 = parseInt("10" + af.substring(10), 2);
-            if (n1 > 127) n1 -= 256;
-            if (n2 > 127) n2 -= 256;
-            if (n3 > 127) n3 -= 256;
-            bytes.push(n1);
-            bytes.push(n2);
-            bytes.push(n3);
+            bytes.push(_parseByte(n1));
+            bytes.push(_parseByte(n2));
+            bytes.push(_parseByte(n3));
         } else if (c >= parseInt("010000", 16) && c <= parseInt("10FFFF", 16)) {
             let af = "";
             for (let j = 0; j < (21 - s.length); j++) {
@@ -88,16 +93,12 @@ export function _strToBytes(str: string) {
             let n2 = parseInt("10" + af.substring(3, 9), 2);
             let n3 = parseInt("10" + af.substring(9, 15), 2);
             let n4 = parseInt("10" + af.substring(15), 2);
-            if (n1 > 127) n1 -= 256;
-            if (n2 > 127) n2 -= 256;
-            if (n3 > 127) n3 -= 256;
-            if (n4 > 127) n4 -= 256;
-            bytes.push(n1);
-            bytes.push(n2);
-            bytes.push(n3);
-            bytes.push(n4);
+            bytes.push(_parseByte(n1));
+            bytes.push(_parseByte(n2));
+            bytes.push(_parseByte(n3));
+            bytes.push(_parseByte(n4));
         } else {
-            bytes.push(c & 0xff);
+            bytes.push(_parseByte(c & 0xff));
         }
     }
     return bytes;
@@ -110,7 +111,7 @@ export function _strToBytes(str: string) {
  * @returns {string}
  * @private
  */
-export function _bytesToStr(utf8Bytes: number[] | string[]) {
+export function _bytesToStr(utf8Bytes: number[] | string[]): string {
     let unicodeStr = "";
 
     function readPos(pos: number): number {
@@ -202,12 +203,45 @@ export function _hexToStr(str: string) {
     return _bytesToStr(_hexToBytes(str))
 }
 
-function _parseByte(byte: number) {
-    let ret = parseInt(byte.toString())
-    if (ret > 127) {
-        ret -= 256;
-    } else if (ret < -128) {
-        ret += 256;
+/**
+ * RSA加密
+ *
+ * @param str       明文
+ * @param pubKey    公钥
+ * @returns {string | false}
+ */
+export function _rsaEncrypt(str: string, pubKey: string): string | false {
+    let encryptStr = new JSEncrypt({
+        log: true
+    });
+    encryptStr.setPublicKey(pubKey);
+    return encryptStr.encrypt(str);
+}
+
+/**
+ * rsa加密有长度限制，如果加密文本长度超出长度限制则进行分段加密
+ *
+ * @param str       明文
+ * @param pubKey    公钥
+ * @param splitter  密文分割字符
+ * @returns {string|false}
+ */
+export function _rsaEncryptPartly(str: string, pubKey: string, splitter: string): string | false {
+    const maxLen = 117  //  最大字节数
+    let bytes = _strToBytes(str)
+    const strLen = bytes.length
+
+    if (strLen <= maxLen) {
+        return _rsaEncrypt(str, pubKey)
+    } else {
+        let idx = 0
+        let rsaArr = []
+        while (idx < strLen) {
+            let part = bytes.slice(idx, Math.min(strLen, idx + maxLen))
+            console.log(_bytesToStr(part))
+            rsaArr.push(_rsaEncrypt(_bytesToStr(part), pubKey))
+            idx += Math.min(maxLen, strLen - idx)
+        }
+        return rsaArr.join(splitter)
     }
-    return ret
 }

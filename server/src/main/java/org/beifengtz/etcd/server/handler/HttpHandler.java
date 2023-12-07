@@ -10,18 +10,25 @@ import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.AsciiString;
+import io.netty.util.AttributeKey;
+import org.beifengtz.etcd.server.config.Configuration;
+import org.beifengtz.etcd.server.config.Mapping;
 import org.beifengtz.etcd.server.config.ResultCode;
 import org.beifengtz.jvmm.common.util.IOUtil;
+import org.beifengtz.jvmm.common.util.StringUtil;
 import org.beifengtz.jvmm.convey.handler.HttpChannelHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -43,23 +50,27 @@ public class HttpHandler extends HttpChannelHandler {
 
     @Override
     protected boolean handleBefore(ChannelHandlerContext ctx, String uri, FullHttpRequest msg) {
-//        if (Configuration.INSTANCE.isEnableAuth()) {
-//            String authStr = msg.headers().get("Authorization");
-//            if (StringUtil.isEmpty(authStr) || !authStr.startsWith("Basic")) {
-//                response401(ctx);
-//                return false;
-//            }
-//            try {
-//                String[] up = new String(Base64.getDecoder().decode(authStr.split("\\s")[1]), StandardCharsets.UTF_8).split(":");
-//                if (!Objects.equals(Configuration.INSTANCE.getUsername(), up[0]) || !Objects.equals(Configuration.INSTANCE.getPassword(), up[1])) {
-//                    response401(ctx);
-//                    return false;
-//                }
-//            } catch (Exception e) {
-//                response401(ctx);
-//                return false;
-//            }
-//        }
+        if (uri != null && uri.startsWith(Mapping.PRIVATE_API_PREFIX) && Configuration.INSTANCE.isEnableAuth()) {
+            String authStr = msg.headers().get("Authorization");
+            if (StringUtil.isEmpty(authStr) || !authStr.startsWith("Basic")) {
+                response401(ctx);
+                return false;
+            }
+            try {
+                String[] up = new String(Base64.getDecoder().decode(authStr.split("\\s")[1]), StandardCharsets.UTF_8).split(":");
+                String username = up[0];
+                String password = up[1];
+                String userPassword = Configuration.INSTANCE.getUsers().get(username);
+                if (!Objects.equals(userPassword, password)) {
+                    response401(ctx);
+                    return false;
+                }
+                ctx.channel().attr(AttributeKey.valueOf("user")).set(username);
+            } catch (Exception e) {
+                response401(ctx);
+                return false;
+            }
+        }
         return true;
     }
 
@@ -114,6 +125,8 @@ public class HttpHandler extends HttpChannelHandler {
         } else if (e instanceof TimeoutException) {
             logger().debug(e.getMessage(), e);
             response(ctx, HttpResponseStatus.OK, ResultCode.CONNECT_ERROR.result("Connect timeout " + e.getMessage(), null).toString());
+        } else if (e instanceof IllegalArgumentException) {
+            response(ctx, HttpResponseStatus.BAD_REQUEST);
         } else {
             super.handleException(ctx, req, e);
         }
