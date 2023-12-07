@@ -63,6 +63,7 @@ export interface SessionConfig extends Record<string, any> {
 }
 
 export interface SessionStoreConfig extends SessionConfig {
+    key?: string,
     name: string,
     enableFunc: {
         auth: false,

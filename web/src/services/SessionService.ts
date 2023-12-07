@@ -1,6 +1,6 @@
 import request from '~/request'
 import {host} from "~/Config";
-import {SessionConfig} from "~/entitys/TransformTypes";
+import {SessionConfig, SessionStoreConfig} from "~/entitys/TransformTypes";
 import {ResultData} from "~/request/type";
 import {_rsaEncryptPartly} from "~/util/Util";
 
@@ -272,5 +272,55 @@ export function authEnable(sessionId: string): Promise<any> {
 export function authDisable(sessionId: string): Promise<any> {
     return request.get(host + PRIVATE_API_PREFIX + "/session/etcd/auth/disable", {
         sessionId: sessionId
+    })
+}
+
+export function listConfig(): Promise<SessionStoreConfig[]> {
+    return new Promise<SessionStoreConfig[]>((resolve, reject) => {
+        request.get(host + PRIVATE_API_PREFIX + "/config/list").then(data => {
+            let result: SessionStoreConfig[] = []
+            let list = data.data!
+            for (let key in list) {
+                let config: SessionStoreConfig = JSON.parse(atob(list[key]))
+                config.key = key
+                result.push(config)
+            }
+            resolve(result)
+        }).catch(e => {
+            reject(e)
+        })
+    })
+}
+
+export function saveConfig(config: SessionStoreConfig): Promise<ResultData> {
+    return new Promise<ResultData>((resolve, reject) => {
+        try {
+            let c = code()
+            ping(c).then(resultData => {
+                let content = _rsaEncryptPartly(JSON.stringify(config), resultData.data!, "|")
+                if (content) {
+                    request.post(host + PRIVATE_API_PREFIX + "/config/save", {
+                        code: c,
+                        data: content
+                    }).then(rd => {
+                        resolve(rd)
+                    }).catch(e => {
+                        resolve(e)
+                    })
+                } else {
+                    reject("Signature error")
+                }
+            }).catch(e => {
+                reject(e)
+            })
+        } catch (e) {
+            reject(e)
+        }
+    })
+}
+
+export function deleteConfig(key: string): Promise<ResultData> {
+    return request.get(host + PRIVATE_API_PREFIX + "/config/delete", {
+        key: key
     })
 }

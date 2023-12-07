@@ -50,25 +50,29 @@ public class HttpHandler extends HttpChannelHandler {
 
     @Override
     protected boolean handleBefore(ChannelHandlerContext ctx, String uri, FullHttpRequest msg) {
-        if (uri != null && uri.startsWith(Mapping.PRIVATE_API_PREFIX) && Configuration.INSTANCE.isEnableAuth()) {
-            String authStr = msg.headers().get("Authorization");
-            if (StringUtil.isEmpty(authStr) || !authStr.startsWith("Basic")) {
-                response401(ctx);
-                return false;
-            }
-            try {
-                String[] up = new String(Base64.getDecoder().decode(authStr.split("\\s")[1]), StandardCharsets.UTF_8).split(":");
-                String username = up[0];
-                String password = up[1];
-                String userPassword = Configuration.INSTANCE.getUsers().get(username);
-                if (!Objects.equals(userPassword, password)) {
+        if (uri != null && uri.startsWith(Mapping.PRIVATE_API_PREFIX)) {
+            if (Configuration.INSTANCE.isEnableAuth()) {
+                String authStr = msg.headers().get("Authorization");
+                if (StringUtil.isEmpty(authStr) || !authStr.startsWith("Basic")) {
                     response401(ctx);
                     return false;
                 }
-                ctx.channel().attr(AttributeKey.valueOf("user")).set(username);
-            } catch (Exception e) {
-                response401(ctx);
-                return false;
+                try {
+                    String[] up = new String(Base64.getDecoder().decode(authStr.split("\\s")[1]), StandardCharsets.UTF_8).split(":");
+                    String username = up[0];
+                    String password = up[1];
+                    String userPassword = Configuration.INSTANCE.getUsers().get(username);
+                    if (!Objects.equals(userPassword, password)) {
+                        response401(ctx);
+                        return false;
+                    }
+                    ctx.channel().attr(AttributeKey.valueOf("user")).set(username);
+                } catch (Exception e) {
+                    response401(ctx);
+                    return false;
+                }
+            } else {
+                ctx.channel().attr(AttributeKey.valueOf("user")).set(Configuration.DEFAULT_SYSTEM_USER);
             }
         }
         return true;

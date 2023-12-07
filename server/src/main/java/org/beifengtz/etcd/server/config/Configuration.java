@@ -12,6 +12,7 @@ import java.util.Map;
 public class Configuration {
 
     public static final Configuration INSTANCE = new Configuration();
+    public static final String DEFAULT_SYSTEM_USER = "system";
 
     private int port = 8080;
     private int etcdExecuteTimeoutMillis = 3000;
