@@ -1,12 +1,19 @@
 <script lang="ts" setup>
 
-import {computed, ref} from "vue";
+import {ref} from "vue";
 import {heartBeat} from "~/service";
 import {ElMessage} from "element-plus";
 import {_nonEmpty} from "~/util/Util";
 import {SessionDTO, SessionStoreConfig, SessionStoreConfigDict} from "~/entitys/TransformTypes";
 import {CirclePlus, Close, Connection} from "@element-plus/icons-vue";
-import {deleteConf, getAllConf, registerConfigListener, saveConf, unregisterConfigListener} from "~/Config";
+import {
+  deleteConf,
+  getAllConf,
+  loadConfAsync,
+  registerConfigListener,
+  saveConf,
+  unregisterConfigListener
+} from "~/Config";
 
 const emits = defineEmits(['change'])
 defineProps({
@@ -22,11 +29,15 @@ const configListener = ref<Function>()
 
 const activeMenu = ref('default')
 
-onMounted(async () => {
+onMounted(() => {
   try {
-    configDict.value = await getAllConf(true)
-    configListener.value = async () => {
-      configDict.value = await getAllConf(false)
+    loadConfAsync().then((data:SessionStoreConfigDict) => {
+      configDict.value = data
+    })
+
+    configListener.value = () => {
+      configDict.value = getAllConf()
+      console.debug("reload config dict", configDict.value)
     }
     registerConfigListener(configListener.value)
   } catch (e) {
@@ -38,14 +49,6 @@ onUnmounted(() => {
     clearInterval(heartBeatId.value)
   }
   unregisterConfigListener(configListener.value)
-})
-
-const configList = computed((): SessionStoreConfig[] => {
-  let list = []
-  for (let key in configDict.value) {
-    list.push(configDict.value[key])
-  }
-  return list
 })
 
 const onNewSession = ({sessionInfo, name}) => {
@@ -98,7 +101,7 @@ const handleSelectMenu = (key: string) => {
   if (key === 'default') {
     connectorRef.value.resetSessionConfig()
   } else {
-    let config = sessions.value[key]
+    let config = configDict.value[key]
     if (config) {
       connectorRef.value.loadSessionConfig(config)
     }
@@ -122,12 +125,12 @@ const handleSelectMenu = (key: string) => {
         </el-menu-item>
 
         <el-menu-item-group title="Session Storage">
-          <el-menu-item v-for="item in configList" :index="item.key">
+          <el-menu-item v-for="(v,k) in configDict" :key="k" :index="k as string">
             <el-icon>
               <Connection/>
             </el-icon>
-            <span>{{ item.name }}</span>
-            <el-icon class="aside-menu-close" @click="removeSessionConf(item.key!)">
+            <span>{{ v.name }}</span>
+            <el-icon class="aside-menu-close" @click="removeSessionConf(k as string)">
               <Close/>
             </el-icon>
           </el-menu-item>

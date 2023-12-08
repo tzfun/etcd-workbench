@@ -66,25 +66,23 @@ public class ManageController {
     @HttpRequest(value = Mapping.PRIVATE_API_PREFIX + "/config/save", method = Method.POST)
     public ResultVO saveConfig(@RequestBody CodedDTO codedData, @RequestAttr String user) throws Exception {
         String content = decode(codedData, String.class);
-        File file = Configuration.INSTANCE.getUserConfigFile(user);
         String configName = SignatureUtil.MD5(JsonParser.parseString(content).getAsJsonObject().get("name").toString());
+        File file = new File(Configuration.INSTANCE.getUserConfigDir(user), configName);
         FileUtil.writeByteArrayToFile(file, SignatureUtil.AESEncrypt(content.getBytes(StandardCharsets.UTF_8), Configuration.INSTANCE.getConfigEncryptKey()));
-        log.debug("Saved config file {}", file);
+        log.debug("Saved config file {}", file.getAbsoluteFile());
         return ResultCode.OK.result(configName);
     }
 
     @HttpRequest(value = Mapping.PRIVATE_API_PREFIX + "/config/delete", method = Method.GET)
     public ResultVO deleteConfig(@RequestParam String key, @RequestAttr String user) {
-        String dataDir = Configuration.INSTANCE.getDataDir();
-        File file = new File(dataDir + "/" + user + "/" + key);
-        log.debug("Deleted config file {}", file);
-        FileUtil.delFile(file);
-        return ResultCode.OK.result();
+        File file = new File(Configuration.INSTANCE.getUserConfigDir(user), key);
+        log.debug("Deleted config file {}", file.getAbsoluteFile());
+        return ResultCode.OK.result(FileUtil.delFile(file));
     }
 
     @HttpRequest(value = Mapping.PRIVATE_API_PREFIX + "/config/list", method = Method.GET)
     public ResultVO listConfig(@RequestAttr String user) throws Exception {
-        File configDir = Configuration.INSTANCE.getUserConfigFile(user);
+        File configDir = Configuration.INSTANCE.getUserConfigDir(user);
         File[] files = configDir.listFiles();
         Map<String, String> result = new HashMap<>();
         if (files != null) {

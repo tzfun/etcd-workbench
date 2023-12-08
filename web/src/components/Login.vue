@@ -3,7 +3,7 @@ import {reactive, ref} from "vue";
 import {_isEmpty} from "~/util/Util";
 import {login} from "~/service";
 import {pushEvent} from "~/util/Event";
-import {setToken, setUser} from "~/components/store";
+import {setToken, setUser} from "~/store";
 import {ElMessage} from "element-plus";
 
 const form = reactive({

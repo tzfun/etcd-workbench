@@ -4,8 +4,8 @@ import {SessionConfig, SessionStoreConfig} from "~/entitys/TransformTypes";
 import {ResultData} from "~/request/type";
 import {_md5, _rsaEncryptPartly} from "~/util/Util";
 
-const PRIVATE_API_PREFIX = "/beifengtz/pri"
-const PUBLIC_API_PREFIX = "/beifengtz/pub"
+export const PRIVATE_API_PREFIX = "/beifengtz/pri"
+export const PUBLIC_API_PREFIX = "/beifengtz/pub"
 
 function code(): string {
     let v = parseInt('beifengtz', 36)
@@ -13,18 +13,12 @@ function code(): string {
     return v.toString(r) + (r < 10 ? '0' + r : r)
 }
 
-function ping(code: string) {
-    return request.get(host + PRIVATE_API_PREFIX + "/auth/ping", {
-        code: code
-    })
-}
-
 export function newSession(data: SessionConfig) {
     return new Promise<ResultData>((resolve, reject) => {
         try {
             let c = code()
             ping(c).then(resultData => {
-                let content = _rsaEncryptPartly(JSON.stringify(data), resultData.data!, "|")
+                let content = _rsaEncryptPartly(JSON.stringify(data), resultData, "|")
                 if (content) {
                     request.post(host + PRIVATE_API_PREFIX + "/session/new", {
                         code: c,
@@ -46,7 +40,13 @@ export function newSession(data: SessionConfig) {
     })
 }
 
-export function closeSession(sessionId: string) {
+function ping(code: string): Promise<any> {
+    return request.get(host + PRIVATE_API_PREFIX + "/auth/ping", {
+        code: code
+    })
+}
+
+export function closeSession(sessionId: string): Promise<any> {
     return request.get(host + PRIVATE_API_PREFIX + "/session/close", {sessionId: sessionId})
 }
 
@@ -55,7 +55,7 @@ export function testSession(data: SessionConfig): Promise<any> {
         try {
             let c = code()
             ping(c).then(resultData => {
-                let content = _rsaEncryptPartly(JSON.stringify(data), resultData.data!, "|")
+                let content = _rsaEncryptPartly(JSON.stringify(data), resultData, "|")
                 if (content) {
                     request.post(host + PRIVATE_API_PREFIX + "/session/test", {
                         code: c,
@@ -278,11 +278,10 @@ export function authDisable(sessionId: string): Promise<any> {
 
 export function listConfig(): Promise<SessionStoreConfig[]> {
     return new Promise<SessionStoreConfig[]>((resolve, reject) => {
-        request.get(host + PRIVATE_API_PREFIX + "/config/list").then(data => {
+        request.get(host + PRIVATE_API_PREFIX + "/config/list").then((data: Record<string, any>) => {
             let result: SessionStoreConfig[] = []
-            let list = data.data!
-            for (let key in list) {
-                let config: SessionStoreConfig = JSON.parse(atob(list[key]))
+            for (let key in data) {
+                let config: SessionStoreConfig = JSON.parse(atob(data[key]))
                 config.key = key
                 result.push(config)
             }
@@ -293,18 +292,18 @@ export function listConfig(): Promise<SessionStoreConfig[]> {
     })
 }
 
-export function saveConfig(config: SessionStoreConfig): Promise<ResultData> {
+export function saveConfig(config: SessionStoreConfig): Promise<any> {
     return new Promise<ResultData>((resolve, reject) => {
         try {
             let c = code()
             ping(c).then(resultData => {
-                let content = _rsaEncryptPartly(JSON.stringify(config), resultData.data!, "|")
+                let content = _rsaEncryptPartly(JSON.stringify(config), resultData, "|")
                 if (content) {
                     request.post(host + PRIVATE_API_PREFIX + "/config/save", {
                         code: c,
                         data: content
-                    }).then(rd => {
-                        resolve(rd)
+                    }).then(key => {
+                        resolve(key)
                     }).catch(e => {
                         resolve(e)
                     })
@@ -320,13 +319,13 @@ export function saveConfig(config: SessionStoreConfig): Promise<ResultData> {
     })
 }
 
-export function deleteConfig(key: string): Promise<ResultData> {
+export function deleteConfig(key: string): Promise<any> {
     return request.get(host + PRIVATE_API_PREFIX + "/config/delete", {
         key: key
     })
 }
 
-export function login(user: string, password: string): Promise<ResultData> {
+export function login(user: string, password: string): Promise<any> {
     let code = _md5(user + ',' + password)
     return request.get(host + PUBLIC_API_PREFIX + "/auth/login", {
         user: user,

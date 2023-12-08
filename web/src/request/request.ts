@@ -4,7 +4,8 @@ import {Request, ResultData} from "~/request/type";
 import {ElMessage} from "element-plus";
 import {_loading, _nonEmpty} from "~/util/Util";
 import {pushEvent} from "~/util/Event";
-import {getToken} from "~/components/store";
+import {getToken} from "~/store";
+import {PRIVATE_API_PREFIX} from "~/service";
 
 /**
  * 封装的 element-plus 的消息提示框
@@ -118,10 +119,11 @@ class EnclosureHttp {
     private httpInterceptorsRequest(): void {
         EnclosureHttp.axiosInstance.interceptors.request.use(
             (config: InternalAxiosRequestConfig<any>) => {
-                console.debug("--> request " + config.url)
-                const token = getToken()
-                if (token) {
-                    config.headers['Authorization'] = `Token ${token}`
+                if (config.url && config.url.includes(PRIVATE_API_PREFIX)) {
+                    const token = getToken()
+                    if (token) {
+                        config.headers['Authorization'] = `Token ${token}`
+                    }
                 }
                 return config;
             },

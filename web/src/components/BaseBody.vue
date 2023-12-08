@@ -5,7 +5,7 @@ import type {TabPaneName} from 'element-plus'
 import {closeSession} from "~/service";
 import {EventListener, registerEventListener} from "~/util/Event";
 import {unregisterConfigListener} from "~/Config";
-import {clearLoginStatus} from "~/components/store";
+import {clearLoginStatus} from "~/store";
 
 let tabIndex = 1
 const curTab = ref('1')

@@ -47,11 +47,11 @@ public class Configuration {
         return dataDir;
     }
 
-    public File getUserFile(String user) {
+    public File getUserDir(String user) {
         return new File(dataDir, user);
     }
 
-    public File getUserConfigFile(String user) {
+    public File getUserConfigDir(String user) {
         return new File(dataDir + "/" + user + "/config");
     }
 

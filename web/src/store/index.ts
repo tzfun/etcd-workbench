@@ -1,3 +1,5 @@
+import {clearAllConf} from "~/Config";
+
 let data = {
     user: <string | null>null,
     token: <string | null>null
@@ -35,6 +37,7 @@ export function setUser(user: string | null) {
 export function clearLoginStatus() {
     data.user = null
     data.token = null
+    clearAllConf()
     onDirty()
 }
 

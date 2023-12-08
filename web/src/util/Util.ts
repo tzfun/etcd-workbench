@@ -239,8 +239,11 @@ export function _rsaEncryptPartly(str: string, pubKey: string, splitter: string)
         let rsaArr = []
         while (idx < strLen) {
             let part = bytes.slice(idx, Math.min(strLen, idx + maxLen))
-            console.log(_bytesToStr(part))
-            rsaArr.push(_rsaEncrypt(_bytesToStr(part), pubKey))
+            const partResult = _rsaEncrypt(_bytesToStr(part), pubKey)
+            if (!partResult) {
+                return false
+            }
+            rsaArr.push(partResult)
             idx += Math.min(maxLen, strLen - idx)
         }
         return rsaArr.join(splitter)

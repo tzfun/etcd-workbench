@@ -8,10 +8,10 @@ let configDictListener: Function[] = []
 
 export function clearAllConf() {
     configDict = {}
-    notifyConfigChange()
+    onDirty()
 }
 
-function notifyConfigChange() {
+function onDirty() {
     for (let listener of configDictListener) {
         listener()
     }
@@ -30,16 +30,23 @@ export function unregisterConfigListener(listener: Function | undefined) {
     }
 }
 
-export async function getAllConf(refresh: boolean): Promise<SessionStoreConfigDict> {
-    if (refresh) {
-        let list: SessionStoreConfig[] = await listConfig()
-        let dict: SessionStoreConfigDict = {}
-        for (let config of list) {
-            dict[config.key!] = config
-        }
-        configDict = dict
-        notifyConfigChange()
-    }
+export function loadConfAsync(): Promise<SessionStoreConfigDict> {
+    return new Promise((resolve, reject) => {
+        listConfig().then(list => {
+            let dict: SessionStoreConfigDict = {}
+            for (let config of list) {
+                dict[config.key!] = config
+            }
+            configDict = dict
+            onDirty()
+            resolve(dict)
+        }).catch(e => {
+            reject(e)
+        })
+    })
+}
+
+export function getAllConf(): SessionStoreConfigDict {
     return configDict
 }
 
@@ -48,13 +55,14 @@ export function deleteConf(key: string) {
         'Are you sure you want to delete this record?',
         'Confirm',
         {
-            confirmButtonText: 'OK',
+            confirmButtonText: 'Yes',
             cancelButtonText: 'Cancel',
             type: 'info',
         }
     ).then(() => {
         deleteConfig(key).then(() => {
             delete configDict[key]
+            onDirty()
         }).catch(e => {
             console.error(e)
         })
@@ -63,10 +71,10 @@ export function deleteConf(key: string) {
 }
 
 export function saveConf(config: SessionStoreConfig) {
-    saveConfig(config).then(data => {
-        let key = data.data!
+    saveConfig(config).then(key => {
         config.key = key
         configDict[key] = config
+        onDirty()
     }).catch(e => {
         console.error(e)
     })
