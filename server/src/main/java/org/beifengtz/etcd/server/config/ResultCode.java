@@ -13,7 +13,10 @@ public enum ResultCode {
     INVALID_KEY(10001, "Invalid key spec"),
     CONNECT_ERROR(10002, "Connect error"),
     ETCD_ERROR(10003, "Etcd server error"),
-    PARAM_FORMAT_ERROR(10004, "Param error");
+    PARAM_FORMAT_ERROR(10004, "Param error"),
+    NOT_SUPPORTED(100005, "Not supported operation"),
+    LOGIN_FAILED(100006, "Login failed"),
+    ;
     private final int code;
     private final String msg;
 

@@ -60,15 +60,14 @@ public class ManageController {
         checkCode(code);
         PairKey<String, String> pairKey = SignatureUtil.genRSAKeyPair();
         KEY_MAP.put(code, pairKey.getRight());
-        return ResultCode.PARAM_FORMAT_ERROR.result(pairKey.getLeft());
+        return ResultCode.OK.result(pairKey.getLeft());
     }
 
     @HttpRequest(value = Mapping.PRIVATE_API_PREFIX + "/config/save", method = Method.POST)
     public ResultVO saveConfig(@RequestBody CodedDTO codedData, @RequestAttr String user) throws Exception {
         String content = decode(codedData, String.class);
-        String dataDir = Configuration.INSTANCE.getDataDir();
+        File file = Configuration.INSTANCE.getUserConfigFile(user);
         String configName = SignatureUtil.MD5(JsonParser.parseString(content).getAsJsonObject().get("name").toString());
-        File file = new File(dataDir + "/" + user + "/" + configName);
         FileUtil.writeByteArrayToFile(file, SignatureUtil.AESEncrypt(content.getBytes(StandardCharsets.UTF_8), Configuration.INSTANCE.getConfigEncryptKey()));
         log.debug("Saved config file {}", file);
         return ResultCode.OK.result(configName);
@@ -85,9 +84,8 @@ public class ManageController {
 
     @HttpRequest(value = Mapping.PRIVATE_API_PREFIX + "/config/list", method = Method.GET)
     public ResultVO listConfig(@RequestAttr String user) throws Exception {
-        String dataDir = Configuration.INSTANCE.getDataDir();
-        File userDir = new File(dataDir, user);
-        File[] files = userDir.listFiles();
+        File configDir = Configuration.INSTANCE.getUserConfigFile(user);
+        File[] files = configDir.listFiles();
         Map<String, String> result = new HashMap<>();
         if (files != null) {
             for (File file : files) {
@@ -111,7 +109,7 @@ public class ManageController {
         String parsedCode;
         try {
             int radix = Integer.parseInt(code.substring(code.length() - 2));
-            parsedCode = Long.toString(Long.parseLong(code.substring(2), radix), 36);
+            parsedCode = Long.toString(Long.parseLong(code.substring(0, code.length() - 2), radix), 36);
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException();
         }

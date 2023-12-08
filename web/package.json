@@ -20,6 +20,7 @@
     "codemirror": "^6.x",
     "element-plus": "^2.3.5",
     "jsencrypt": "^3.3.2",
+    "js-md5": "^0.8.3",
     "v-code-diff": "^1.5.1",
     "vue": "^3.3.4",
     "vue-codemirror": "^6.1.1"

@@ -1,5 +1,5 @@
 import {SessionStoreConfig, SessionStoreConfigDict} from "~/entitys/TransformTypes";
-import {deleteConfig, listConfig, saveConfig} from "~/services/SessionService";
+import {deleteConfig, listConfig, saveConfig} from "~/service";
 
 export const host = import.meta.env.MODE === "test" ? "http://127.0.0.1:8002" : ""
 
@@ -21,10 +21,12 @@ export function registerConfigListener(listener: Function) {
     configDictListener.push(listener)
 }
 
-export function unregisterConfigListener(listener: Function) {
-    let idx = configDictListener.indexOf(listener)
-    if (idx >= 0) {
-        configDictListener.splice(idx, 1)
+export function unregisterConfigListener(listener: Function | undefined) {
+    if (listener) {
+        let idx = configDictListener.indexOf(listener)
+        if (idx >= 0) {
+            configDictListener.splice(idx, 1)
+        }
     }
 }
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {getCluster, getMemberStatus} from "~/services/SessionService";
+import {getCluster, getMemberStatus} from "~/service";
 import {Connection, Link, More, Refresh} from "@element-plus/icons-vue";
 import {MemberStatus} from "~/entitys/TransformTypes";
 

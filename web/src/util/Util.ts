@@ -1,5 +1,6 @@
 import {ElLoading} from "element-plus";
 import JSEncrypt from 'jsencrypt'
+import md5 from 'js-md5'
 
 export function _loading(msg?: string | undefined) {
     return ElLoading.service({
@@ -244,4 +245,10 @@ export function _rsaEncryptPartly(str: string, pubKey: string, splitter: string)
         }
         return rsaArr.join(splitter)
     }
+}
+
+export function _md5(obj: string): string {
+    let hash = md5.create()
+    hash.update(obj)
+    return hash.hex()
 }

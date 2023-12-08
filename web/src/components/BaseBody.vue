@@ -2,11 +2,16 @@
 import {toggleDark} from "~/composables";
 import {ref} from 'vue'
 import type {TabPaneName} from 'element-plus'
-import {closeSession} from "~/services/SessionService";
+import {closeSession} from "~/service";
+import {EventListener, registerEventListener} from "~/util/Event";
+import {unregisterConfigListener} from "~/Config";
+import {clearLoginStatus} from "~/components/store";
 
 let tabIndex = 1
 const curTab = ref('1')
 const showHeader = ref(true)
+const status = ref<'login' | 'main'>('main')
+const eventListener = ref<EventListener>()
 
 onMounted(() => {
   let params = window.location.search.split("?")[1]
@@ -22,6 +27,19 @@ onMounted(() => {
       }
     }
   }
+  eventListener.value = (key: string, event: any): any => {
+    if (key === 'login' || key === 'logout') {
+      clearLoginStatus()
+      status.value = 'login'
+    } else if (key === 'loginSuccess') {
+      status.value = 'main'
+    }
+  }
+  registerEventListener(eventListener.value)
+})
+
+onUnmounted(() => {
+  unregisterConfigListener(eventListener.value)
 })
 
 const tabs = ref([
@@ -70,7 +88,7 @@ const tabRemove = (targetName: TabPaneName) => {
   }
 }
 
-const onSessionChange = (args: { state: number, name: number, key: string | undefined}, idx: number) => {
+const onSessionChange = (args: { state: number, name: number, key: string | undefined }, idx: number) => {
   const item = tabs.value[idx]
   item.title = args.name
   item.state = args.state
@@ -95,7 +113,9 @@ const checkSessionName = (name: string): boolean => {
         @click="toggleDark()">
       <i inline-flex i="dark:ep-moon ep-sunny"/>
     </button>
-    <div class="main">
+
+    <Login v-if="status == 'login'"/>
+    <div v-if="status == 'main'" class="main">
       <el-tabs
           v-model="curTab"
           type="card"
@@ -113,6 +133,7 @@ const checkSessionName = (name: string): boolean => {
         </el-tab-pane>
       </el-tabs>
     </div>
+
   </div>
 </template>
 
@@ -138,6 +159,7 @@ const checkSessionName = (name: string): boolean => {
 
 .main {
   height: calc(100% - $--header-height - $--footer-height);
+
   .tabs {
     .tab-pane {
       width: 100%;

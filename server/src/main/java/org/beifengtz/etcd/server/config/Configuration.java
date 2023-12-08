@@ -1,5 +1,6 @@
 package org.beifengtz.etcd.server.config;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,6 +45,18 @@ public class Configuration {
 
     public String getDataDir() {
         return dataDir;
+    }
+
+    public File getUserFile(String user) {
+        return new File(dataDir, user);
+    }
+
+    public File getUserConfigFile(String user) {
+        return new File(dataDir + "/" + user + "/config");
+    }
+
+    public File getUserTokenFile(String user) {
+        return new File(dataDir + "/" + user + "/token");
     }
 
     public Configuration setDataDir(String dataDir) {

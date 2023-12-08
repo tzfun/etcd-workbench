@@ -14,6 +14,7 @@ import io.netty.util.AttributeKey;
 import org.beifengtz.etcd.server.config.Configuration;
 import org.beifengtz.etcd.server.config.Mapping;
 import org.beifengtz.etcd.server.config.ResultCode;
+import org.beifengtz.etcd.server.controller.AuthController;
 import org.beifengtz.jvmm.common.util.IOUtil;
 import org.beifengtz.jvmm.common.util.StringUtil;
 import org.beifengtz.jvmm.convey.handler.HttpChannelHandler;
@@ -39,7 +40,11 @@ import java.util.concurrent.TimeoutException;
  */
 public class HttpHandler extends HttpChannelHandler {
 
+    public static final AttributeKey<String> ATTR_USER = AttributeKey.valueOf("user");
+
     static {
+        globalHeaders.remove(HttpHeaderNames.ACCESS_CONTROL_ALLOW_HEADERS);
+        globalHeaders.put(HttpHeaderNames.ACCESS_CONTROL_ALLOW_HEADERS, "content-type,authorization");
         globalHeaders.put(HttpHeaderNames.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
     }
 
@@ -53,26 +58,42 @@ public class HttpHandler extends HttpChannelHandler {
         if (uri != null && uri.startsWith(Mapping.PRIVATE_API_PREFIX)) {
             if (Configuration.INSTANCE.isEnableAuth()) {
                 String authStr = msg.headers().get("Authorization");
-                if (StringUtil.isEmpty(authStr) || !authStr.startsWith("Basic")) {
+                if (StringUtil.isEmpty(authStr)) {
                     response401(ctx);
                     return false;
                 }
-                try {
-                    String[] up = new String(Base64.getDecoder().decode(authStr.split("\\s")[1]), StandardCharsets.UTF_8).split(":");
-                    String username = up[0];
-                    String password = up[1];
-                    String userPassword = Configuration.INSTANCE.getUsers().get(username);
-                    if (!Objects.equals(userPassword, password)) {
+                String[] split = authStr.split("\\s");
+                String authType = split[0];
+                String authContent = split[1];
+                if (authType.equals("Basic")) {
+                    try {
+                        String[] up = new String(Base64.getDecoder().decode(authContent), StandardCharsets.UTF_8).split(":");
+                        String user = up[0];
+                        String password = up[1];
+                        String userPassword = Configuration.INSTANCE.getUsers().get(user);
+                        if (!Objects.equals(userPassword, password)) {
+                            response401(ctx);
+                            return false;
+                        }
+                        ctx.channel().attr(ATTR_USER).set(user);
+                    } catch (Exception e) {
                         response401(ctx);
                         return false;
                     }
-                    ctx.channel().attr(AttributeKey.valueOf("user")).set(username);
-                } catch (Exception e) {
+                } else if (authType.equals("Token")) {
+                    try {
+                        String user = AuthController.verifyToken(authContent);
+                        ctx.channel().attr(ATTR_USER).set(user);
+                    } catch (Exception e) {
+                        response401(ctx);
+                        return false;
+                    }
+                } else {
                     response401(ctx);
                     return false;
                 }
             } else {
-                ctx.channel().attr(AttributeKey.valueOf("user")).set(Configuration.DEFAULT_SYSTEM_USER);
+                ctx.channel().attr(ATTR_USER).set(Configuration.DEFAULT_SYSTEM_USER);
             }
         }
         return true;
@@ -130,6 +151,7 @@ public class HttpHandler extends HttpChannelHandler {
             logger().debug(e.getMessage(), e);
             response(ctx, HttpResponseStatus.OK, ResultCode.CONNECT_ERROR.result("Connect timeout " + e.getMessage(), null).toString());
         } else if (e instanceof IllegalArgumentException) {
+            logger().debug(e.getMessage(), e);
             response(ctx, HttpResponseStatus.BAD_REQUEST);
         } else {
             super.handleException(ctx, req, e);

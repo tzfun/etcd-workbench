@@ -7,7 +7,7 @@ import {
   listUser,
   userGrantRole,
   userRevokeRole
-} from "~/services/SessionService";
+} from "~/service";
 import {Delete, Lock, Plus, Refresh, Search, Unlock, UserFilled} from "@element-plus/icons-vue";
 import {_isEmpty} from "~/util/Util";
 import {ElMessage} from "element-plus";

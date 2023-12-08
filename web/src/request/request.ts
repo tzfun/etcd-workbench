@@ -3,6 +3,8 @@ import {Request, ResultData} from "~/request/type";
 
 import {ElMessage} from "element-plus";
 import {_loading, _nonEmpty} from "~/util/Util";
+import {pushEvent} from "~/util/Event";
+import {getToken} from "~/components/store";
 
 /**
  * 封装的 element-plus 的消息提示框
@@ -116,10 +118,11 @@ class EnclosureHttp {
     private httpInterceptorsRequest(): void {
         EnclosureHttp.axiosInstance.interceptors.request.use(
             (config: InternalAxiosRequestConfig<any>) => {
-                /*
-                 * 在请求发出去之前作出一下处理
-                 * */
-                // console.log("config=>:", config);
+                console.debug("--> request " + config.url)
+                const token = getToken()
+                if (token) {
+                    config.headers['Authorization'] = `Token ${token}`
+                }
                 return config;
             },
             (err) => {
@@ -143,8 +146,7 @@ class EnclosureHttp {
                 if (status < 200 || status >= 300) {
                     // 处理http错误，抛到业务代码
                     if (typeof response.data === "string") {
-                        msg = "打盹了！！！";
-                        response.data = {msg};
+                        response.data = {msg: response.data};
                     } else {
                         response.data.msg = msg;
                     }
@@ -152,7 +154,6 @@ class EnclosureHttp {
                 return response;
             },
             (error: AxiosError) => {
-                //请求出错的验证
                 const {response} = error;
                 if (response) {
                     this.errorHandle(response.status, response.statusText);
@@ -174,17 +175,21 @@ class EnclosureHttp {
      * @param other
      */
     private errorHandle = (status: number, other: string) => {
-        // 状态码判断
+        //  HTTP 状态码判断
         switch (status) {
-            case -1: // -1: 未登录状态，跳转登录页
-                message("未登录状态");
+            case -1:
+                message(`Unknown error: ${other}`);
                 break;
-            case 403: // 403 token过期
-                message("登录过期，请重新登录");
+            case 403:
+                message("403 Forbidden");
                 break;
-            case 404: // 404请求不存在
-                message("请求错误！！！");
+            case 404:
+                message("404 Error");
                 break;
+            case 401:
+                message("Please sign in");
+                pushEvent('login')
+                break
             default:
                 message(other);
         }

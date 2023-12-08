@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {copyAndSave, deleteKey, getAllKeys, getKV, getKVHistory, putKV} from "~/services/SessionService";
+import {copyAndSave, deleteKey, getAllKeys, getKV, getKVHistory, putKV} from "~/service";
 import {Delete, DocumentAdd, Refresh, Switch} from "@element-plus/icons-vue";
 import {EditorConfig, KeyDTO, KeyValueDTO, TreeNode} from "~/entitys/TransformTypes";
 import Editor from "~/components/editor/Editor.vue";

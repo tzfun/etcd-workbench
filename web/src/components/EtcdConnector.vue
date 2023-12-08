@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import etcd from "~/assets/etcd.png"
 import {Ref, ref} from "vue";
-import {newSession, testSession} from "~/services/SessionService";
+import {newSession, testSession} from "~/service";
 import {_isEmpty} from "~/util/Util";
 import {ElMessage, UploadFile} from "element-plus";
 import {SessionConfig, SessionStoreConfig, SSHConfig} from "~/entitys/TransformTypes";

@@ -2,9 +2,10 @@ import request from '~/request'
 import {host} from "~/Config";
 import {SessionConfig, SessionStoreConfig} from "~/entitys/TransformTypes";
 import {ResultData} from "~/request/type";
-import {_rsaEncryptPartly} from "~/util/Util";
+import {_md5, _rsaEncryptPartly} from "~/util/Util";
 
 const PRIVATE_API_PREFIX = "/beifengtz/pri"
+const PUBLIC_API_PREFIX = "/beifengtz/pub"
 
 function code(): string {
     let v = parseInt('beifengtz', 36)
@@ -322,5 +323,13 @@ export function saveConfig(config: SessionStoreConfig): Promise<ResultData> {
 export function deleteConfig(key: string): Promise<ResultData> {
     return request.get(host + PRIVATE_API_PREFIX + "/config/delete", {
         key: key
+    })
+}
+
+export function login(user: string, password: string): Promise<ResultData> {
+    let code = _md5(user + ',' + password)
+    return request.get(host + PUBLIC_API_PREFIX + "/auth/login", {
+        user: user,
+        code: code
     })
 }

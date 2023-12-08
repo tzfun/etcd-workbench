@@ -1,12 +1,12 @@
 <script lang="ts" setup>
 
 import {computed, ref} from "vue";
-import {heartBeat} from "~/services/SessionService";
+import {heartBeat} from "~/service";
 import {ElMessage} from "element-plus";
 import {_nonEmpty} from "~/util/Util";
 import {SessionDTO, SessionStoreConfig, SessionStoreConfigDict} from "~/entitys/TransformTypes";
 import {CirclePlus, Close, Connection} from "@element-plus/icons-vue";
-import {deleteConf, getAllConf, registerConfigListener, saveConf} from "~/Config";
+import {deleteConf, getAllConf, registerConfigListener, saveConf, unregisterConfigListener} from "~/Config";
 
 const emits = defineEmits(['change'])
 defineProps({
@@ -18,14 +18,26 @@ const sessionKey = ref<string | undefined>()
 const isRoot = ref<boolean>(false)
 const heartBeatId = ref()
 const configDict = ref<SessionStoreConfigDict>()
+const configListener = ref<Function>()
 
 const activeMenu = ref('default')
 
 onMounted(async () => {
-  configDict.value = await getAllConf(true)
-  registerConfigListener(async () => {
-    configDict.value = await getAllConf(false)
-  })
+  try {
+    configDict.value = await getAllConf(true)
+    configListener.value = async () => {
+      configDict.value = await getAllConf(false)
+    }
+    registerConfigListener(configListener.value)
+  } catch (e) {
+  }
+})
+
+onUnmounted(() => {
+  if (heartBeatId.value) {
+    clearInterval(heartBeatId.value)
+  }
+  unregisterConfigListener(configListener.value)
 })
 
 const configList = computed((): SessionStoreConfig[] => {
@@ -81,12 +93,6 @@ const onSessionClosed = () => {
   emits('change', {state: state.value, name: "New Session"})
   sessionKey.value = undefined
 }
-
-onUnmounted(() => {
-  if (heartBeatId.value) {
-    clearInterval(heartBeatId.value)
-  }
-})
 
 const handleSelectMenu = (key: string) => {
   if (key === 'default') {

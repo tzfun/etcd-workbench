@@ -7,7 +7,7 @@ import {
   listRoles,
   roleGrantPermission,
   roleRevokePermission
-} from "~/services/SessionService";
+} from "~/service";
 import {_isEmpty} from "~/util/Util";
 import {FormInstance} from "element-plus";
 

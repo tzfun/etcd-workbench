@@ -23,7 +23,7 @@ public class CodeTest {
         System.out.println(radix + " => " + Long.toString(l, radix));
 
         for (int i = 2; i <= 36; i++) {
-            System.out.println(radix + " => " + Long.toString(l, i));
+            System.out.println(i + " => " + Long.toString(l, i));
         }
     }
 }
