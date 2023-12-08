@@ -1,11 +1,12 @@
 <script lang="ts" setup>
 
-import {ref} from "vue";
+import {computed, ref} from "vue";
 import {heartBeat} from "~/services/SessionService";
 import {ElMessage} from "element-plus";
 import {_nonEmpty} from "~/util/Util";
-import {SessionDTO, SessionStoreConfig} from "~/entitys/TransformTypes";
+import {SessionDTO, SessionStoreConfig, SessionStoreConfigDict} from "~/entitys/TransformTypes";
 import {CirclePlus, Close, Connection} from "@element-plus/icons-vue";
+import {deleteConf, getAllConf, registerConfigListener, saveConf} from "~/Config";
 
 const emits = defineEmits(['change'])
 defineProps({
@@ -16,24 +17,24 @@ const state = ref('new')
 const sessionKey = ref<string | undefined>()
 const isRoot = ref<boolean>(false)
 const heartBeatId = ref()
-const sessions = ref({})
+const configDict = ref<SessionStoreConfigDict>()
 
 const activeMenu = ref('default')
 
-onMounted(() => {
-  let localSessions = window.localStorage.getItem("workbench:session")
-  if (localSessions) {
-    sessions.value = JSON.parse(localSessions)
-  }
+onMounted(async () => {
+  configDict.value = await getAllConf(true)
+  registerConfigListener(async () => {
+    configDict.value = await getAllConf(false)
+  })
 })
 
-watch(
-    sessions,
-    (s) => {
-      window.localStorage.setItem("workbench:session", JSON.stringify(s))
-    },
-    {deep: true}
-)
+const configList = computed((): SessionStoreConfig[] => {
+  let list = []
+  for (let key in configDict.value) {
+    list.push(configDict.value[key])
+  }
+  return list
+})
 
 const onNewSession = ({sessionInfo, name}) => {
   const key = (sessionInfo as SessionDTO).sessionId
@@ -66,11 +67,11 @@ const onNewSession = ({sessionInfo, name}) => {
 }
 
 const onSaveSession = (config: SessionStoreConfig) => {
-  sessions.value[config.name] = config
+  saveConf(config)
 }
 
 const removeSessionConf = (key: string) => {
-  delete sessions.value[key]
+  deleteConf(key)
 }
 
 const onSessionClosed = () => {
@@ -115,10 +116,14 @@ const handleSelectMenu = (key: string) => {
         </el-menu-item>
 
         <el-menu-item-group title="Session Storage">
-          <el-menu-item v-for="(v,k) in sessions" :index="k">
-            <el-icon><Connection/></el-icon>
-            <span>{{ k }}</span>
-            <el-icon class="aside-menu-close" @click="removeSessionConf(k)"><Close /></el-icon>
+          <el-menu-item v-for="item in configList" :index="item.key">
+            <el-icon>
+              <Connection/>
+            </el-icon>
+            <span>{{ item.name }}</span>
+            <el-icon class="aside-menu-close" @click="removeSessionConf(item.key!)">
+              <Close/>
+            </el-icon>
           </el-menu-item>
         </el-menu-item-group>
 

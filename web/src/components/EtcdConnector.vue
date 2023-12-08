@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import etcd from "~/assets/etcd.png"
 import {Ref, ref} from "vue";
-import {newSession, saveConfig, testSession} from "~/services/SessionService";
+import {newSession, testSession} from "~/services/SessionService";
 import {_isEmpty} from "~/util/Util";
 import {ElMessage, UploadFile} from "element-plus";
 import {SessionConfig, SessionStoreConfig, SSHConfig} from "~/entitys/TransformTypes";
@@ -233,9 +233,7 @@ const _saveSessionConfig = () => {
       clientCertKey: data.clientCertKey,
       ssh: data.ssh
     }
-    saveConfig(sessionConfig)
-
-    // emits('save', sessionConfig)
+    emits('save', sessionConfig)
   }).catch(e => {
     ElMessage({
       showClose: true,
@@ -270,9 +268,7 @@ const loadSessionConfig = (config: SessionStoreConfig) => {
   form.value.clientCertKey = config.clientCertKey
   form.value.ssh = config.ssh
       ? config.ssh
-      : <SSHConfig>{
-
-      }
+      : <SSHConfig>{}
 }
 
 const caFileChange = (file: UploadFile) => {

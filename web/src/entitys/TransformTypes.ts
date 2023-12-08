@@ -72,6 +72,10 @@ export interface SessionStoreConfig extends SessionConfig {
     }
 }
 
+export interface SessionStoreConfigDict extends Record<string, SessionStoreConfig> {
+    [key: string]: SessionStoreConfig
+}
+
 export interface MemberStatus {
     version: string
     dbSize: number
