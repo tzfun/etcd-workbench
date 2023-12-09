@@ -31,15 +31,11 @@ const activeMenu = ref('default')
 
 onMounted(() => {
   try {
-    loadConfAsync().then((data:SessionStoreConfigDict) => {
-      configDict.value = data
-    })
-
     configListener.value = () => {
-      configDict.value = getAllConf()
-      console.debug("reload config dict", configDict.value)
+      configDict.value = {...getAllConf()}
     }
     registerConfigListener(configListener.value)
+    loadConfAsync()
   } catch (e) {
   }
 })
