@@ -63,7 +63,7 @@ export function testSession(data: SessionConfig): Promise<any> {
                     }).then(rd => {
                         resolve(rd)
                     }).catch(e => {
-                        resolve(e)
+                        reject(e)
                     })
                 } else {
                     reject("Signature error")

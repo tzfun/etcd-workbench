@@ -120,13 +120,13 @@ const handleSelectMenu = (key: string) => {
           <span>New Session</span>
         </el-menu-item>
 
-        <el-menu-item-group title="Session Storage">
+        <el-menu-item-group title="Favorites List">
           <el-menu-item v-for="(v,idx) in configList" :key="v.key" :index="idx.toString()">
             <el-icon>
               <Connection/>
             </el-icon>
-            <span>{{ v.name }}</span>
-            <el-icon class="aside-menu-close" @click="removeSessionConf(v.key!)">
+            <span class="collect-title" :title="v.name">{{ v.name }}</span>
+            <el-icon class="aside-menu-close" @click="removeSessionConf(v.key!)" title="remove">
               <Close/>
             </el-icon>
           </el-menu-item>
@@ -170,6 +170,12 @@ const handleSelectMenu = (key: string) => {
       left: 0;
       overflow-y: auto;
       padding-bottom: 100px;
+
+      .collect-title {
+        text-overflow: ellipsis;
+        max-width: 210px;
+        overflow: hidden;
+      }
 
       .aside-menu-close {
         position: absolute;

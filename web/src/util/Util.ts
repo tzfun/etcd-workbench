@@ -2,12 +2,27 @@ import {ElLoading} from "element-plus";
 import JSEncrypt from 'jsencrypt'
 import md5 from 'js-md5'
 
-export function _loading(msg?: string | undefined) {
-    return ElLoading.service({
-        lock: true,
-        text: msg ? msg : 'Loading',
-        background: 'rgba(0, 0, 0, 0.7)',
-    })
+let loading: any = null
+let loadingCounter: number = 0
+
+export function _startLoading(msg?: string | undefined) {
+    if (loadingCounter == 0) {
+        loading = ElLoading.service({
+            lock: true,
+            text: msg ? msg : 'Loading',
+            background: 'rgba(0, 0, 0, 0.7)',
+        })
+    }
+    loadingCounter++
+}
+
+export function _endLoading() {
+    if (loadingCounter > 0) {
+        loadingCounter--
+    }
+    if (loadingCounter == 0 && loading) {
+        loading.close()
+    }
 }
 
 export function _isEmpty(value: string | undefined | object | null): boolean {

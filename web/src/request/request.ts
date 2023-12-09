@@ -2,7 +2,7 @@ import Axios, {AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse, Int
 import {Request, ResultData} from "~/request/type";
 
 import {ElMessage} from "element-plus";
-import {_loading, _nonEmpty} from "~/util/Util";
+import {_endLoading, _nonEmpty, _startLoading} from "~/util/Util";
 import {pushEvent} from "~/util/Event";
 import {getToken} from "~/store";
 import {PRIVATE_API_PREFIX} from "~/service";
@@ -213,7 +213,9 @@ class EnclosureHttp {
         withLoading: boolean = true
     ) => {
         return new Promise<any>((resolve, reject) => {
-            let loading = withLoading ? _loading() : null
+            if (withLoading) {
+                _startLoading()
+            }
             EnclosureHttp.axiosInstance.get(url, {params, ...config}).then(res => {
                 let resData: ResultData = res.data
                 if (resData.code === 0) {
@@ -226,9 +228,7 @@ class EnclosureHttp {
                 handleAxiosError(e, notifyError)
                 reject(e.message)
             }).finally(() => {
-                if (loading) {
-                    loading.close()
-                }
+                _endLoading()
             })
         });
     };
@@ -249,7 +249,9 @@ class EnclosureHttp {
         withLoading: boolean = true
     ) => {
         return new Promise<any>((resolve, reject) => {
-            let loading = withLoading ? _loading() : null
+            if (withLoading) {
+                _startLoading()
+            }
             EnclosureHttp.axiosInstance.post(url, data, config).then(res => {
                 let resData: ResultData = res.data
                 if (resData.code === 0) {
@@ -262,9 +264,7 @@ class EnclosureHttp {
                 handleAxiosError(e, notifyError)
                 reject(e.message)
             }).finally(() => {
-                if (loading) {
-                    loading.close()
-                }
+                _endLoading()
             })
         });
     };
