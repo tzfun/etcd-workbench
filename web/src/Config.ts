@@ -30,24 +30,25 @@ export function unregisterConfigListener(listener: Function | undefined) {
     }
 }
 
-export function loadConfAsync(): Promise<SessionStoreConfigDict> {
-    return new Promise((resolve, reject) => {
-        listConfig().then(list => {
-            let dict: SessionStoreConfigDict = {}
-            for (let config of list) {
-                dict[config.key!] = config
-            }
-            configDict = dict
-            onDirty()
-            resolve(dict)
-        }).catch(e => {
-            reject(e)
-        })
+export function loadConfAsync() {
+    listConfig().then(list => {
+        let dict: SessionStoreConfigDict = {}
+        for (let config of list) {
+            dict[config.key!] = config
+        }
+        configDict = dict
+        onDirty()
+    }).catch(e => {
     })
 }
 
-export function getAllConf(): SessionStoreConfigDict {
-    return configDict
+export function getAllConf(): SessionStoreConfig[] {
+    let list = []
+    for (const key in configDict) {
+        list.push(configDict[key])
+    }
+    list.sort((a, b) => a.name.localeCompare(b.name))
+    return list
 }
 
 export function deleteConf(key: string) {

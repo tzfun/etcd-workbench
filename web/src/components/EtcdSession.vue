@@ -4,7 +4,7 @@ import {ref} from "vue";
 import {heartBeat} from "~/service";
 import {ElMessage} from "element-plus";
 import {_nonEmpty} from "~/util/Util";
-import {SessionDTO, SessionStoreConfig, SessionStoreConfigDict} from "~/entitys/TransformTypes";
+import {SessionDTO, SessionStoreConfig} from "~/entitys/TransformTypes";
 import {CirclePlus, Close, Connection} from "@element-plus/icons-vue";
 import {
   deleteConf,
@@ -24,7 +24,7 @@ const state = ref('new')
 const sessionKey = ref<string | undefined>()
 const isRoot = ref<boolean>(false)
 const heartBeatId = ref()
-const configDict = ref<SessionStoreConfigDict>()
+const configList = ref<SessionStoreConfig[]>([])
 const configListener = ref<Function>()
 
 const activeMenu = ref('default')
@@ -32,7 +32,7 @@ const activeMenu = ref('default')
 onMounted(() => {
   try {
     configListener.value = () => {
-      configDict.value = {...getAllConf()}
+      configList.value = getAllConf()
     }
     registerConfigListener(configListener.value)
     loadConfAsync()
@@ -97,7 +97,7 @@ const handleSelectMenu = (key: string) => {
   if (key === 'default') {
     connectorRef.value.resetSessionConfig()
   } else {
-    let config = configDict.value[key]
+    let config = configList.value[parseInt(key)]
     if (config) {
       connectorRef.value.loadSessionConfig(config)
     }
@@ -121,12 +121,12 @@ const handleSelectMenu = (key: string) => {
         </el-menu-item>
 
         <el-menu-item-group title="Session Storage">
-          <el-menu-item v-for="(v,k) in configDict" :key="k" :index="k as string">
+          <el-menu-item v-for="(v,idx) in configList" :key="v.key" :index="idx.toString()">
             <el-icon>
               <Connection/>
             </el-icon>
             <span>{{ v.name }}</span>
-            <el-icon class="aside-menu-close" @click="removeSessionConf(k as string)">
+            <el-icon class="aside-menu-close" @click="removeSessionConf(v.key!)">
               <Close/>
             </el-icon>
           </el-menu-item>
