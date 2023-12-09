@@ -272,9 +272,25 @@ public class EtcdConnector {
     public CompletableFuture<?> kvPut(String key, String value, Long ttl) {
         onActive();
         if (ttl == null) {
+            ByteSequence byteKey = CommonUtil.toByteSequence(key);
             return client.getKVClient()
-                    .put(CommonUtil.toByteSequence(key), CommonUtil.toByteSequence(value))
-                    .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
+                    .get(byteKey, GetOption.newBuilder().withKeysOnly(true).build())
+                    .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS)
+                    .thenCompose(resp -> {
+                        long lease = 0;
+                        if (resp.getCount() == 0) {
+                            lease = resp.getKvs().get(0).getLease();
+                        }
+                        if (lease != 0) {
+                            return client.getKVClient()
+                                    .put(byteKey, CommonUtil.toByteSequence(value), PutOption.newBuilder().withLeaseId(lease).build())
+                                    .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
+                        } else {
+                            return client.getKVClient()
+                                    .put(byteKey, CommonUtil.toByteSequence(value))
+                                    .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
+                        }
+                    });
         } else {
             return client.getLeaseClient().grant(ttl).thenCompose(r -> {
                 long leaseId = r.getID();

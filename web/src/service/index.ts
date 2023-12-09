@@ -128,7 +128,7 @@ export function deleteKey(sessionId: string, keys: string[]): Promise<any> {
     })
 }
 
-export function putKV(sessionId: string, key: string, value: string, ttl: number | null): Promise<any> {
+export function putKV(sessionId: string, key: string, value: string, ttl?: number): Promise<any> {
     return request.post(host + PRIVATE_API_PREFIX + "/session/etcd/kv/put", {
         sessionId: sessionId,
         key: key,

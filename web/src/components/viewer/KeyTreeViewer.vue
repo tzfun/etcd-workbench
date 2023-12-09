@@ -93,7 +93,7 @@ const clickTreeNode = (node: TreeNode) => {
 }
 
 const saveKV = () => {
-  const key = currentNode.value?.path
+  const key = currentNode.value!.path
   const value = editorRef.value.readDataString()
 
   emits('on-save', {
@@ -120,7 +120,7 @@ const del = () => {
   emits('on-delete', {
     key: key,
     callback: () => {
-      currentNode.value = null
+      currentNode.value = undefined
       changed.value = false
     }
   })
@@ -183,7 +183,10 @@ defineExpose({
               @save="editorSave">
         <template #headerAppender>
           <div v-if="currentNode">
-            <el-button type="primary" :icon="Tickets" size="small" @click="saveKV">Save{{ changed ? " *" : "" }}</el-button>
+            <el-button type="primary" :icon="Tickets" size="small" @click="saveKV">Save{{
+                changed ? " *" : ""
+              }}
+            </el-button>
             <el-button type="info" :icon="DocumentCopy" size="small" @click="diff">Version Diff</el-button>
             <el-button type="warning" :icon="Finished" size="small" @click="copyAndSave">Copy And Save</el-button>
             <el-button type="danger" :icon="Delete" size="small" @click="del">Delete</el-button>
@@ -191,7 +194,7 @@ defineExpose({
         </template>
         <template #footerAppender>
           <div v-if="currentNode">
-            <span class="item">{{currentNode.path}}</span>
+            <span class="item">{{ currentNode.path }}</span>
             <span class="item"><strong>Version</strong>: {{ editingKV.version }}</span>
             <span class="item"><strong>Create Revision</strong>: {{ editingKV.createRevision }}</span>
             <span class="item"><strong>Modify Revision</strong>: {{ editingKV.modRevision }}</span>

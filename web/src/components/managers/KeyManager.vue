@@ -405,7 +405,8 @@ const tablePutKey = () => {
     kv: {
       ...kv,
       value: value
-    } as KeyValueDTO
+    },
+    callback: null
   })
 }
 
@@ -466,7 +467,7 @@ const confirmCopyAndSave = () => {
       copyAndSaveForm.src as string,
       copyAndSaveForm.dest as string,
       copyAndSaveForm.ttl
-  ).then((data:KeyValueDTO) => {
+  ).then((data: KeyValueDTO) => {
     //  新建
     if (data.version === 1) {
       tableData.value.push(data)
