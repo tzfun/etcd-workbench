@@ -1,17 +1,20 @@
 <script lang="ts" setup>
-import {toggleDark} from "~/composables";
+import githubLogo from "~/assets/github.png"
+import {isDark, toggleDark} from "~/composables";
 import {ref} from 'vue'
 import type {TabPaneName} from 'element-plus'
 import {closeSession} from "~/service";
-import {EventListener, registerEventListener} from "~/util/Event";
+import {EventListener, pushEvent, registerEventListener} from "~/util/Event";
 import {unregisterConfigListener} from "~/Config";
-import {clearLoginStatus} from "~/store";
+import {clearLoginStatus, getUser} from "~/store";
+import {_nonEmpty} from "~/util/Util";
 
 let tabIndex = 1
 const curTab = ref('1')
 const showHeader = ref(true)
 const status = ref<'login' | 'main'>('main')
 const eventListener = ref<EventListener>()
+const github = ref(githubLogo)
 
 onMounted(() => {
   let params = window.location.search.split("?")[1]
@@ -101,18 +104,60 @@ const checkSessionName = (name: string): boolean => {
   }
   return tabs.value.filter(o => o.title === name).length === 0
 }
+
+const handleSelectHeader = (key: string) => {
+  if (key == 'logout') {
+    pushEvent("logout")
+  } else if (key == 'login') {
+    pushEvent("login")
+  }
+}
+
+const goGithub = () => {
+  window.open('https://www.github.com/tzfun/etcd-workbench', '_blank')
+}
 </script>
 
 <template>
   <div style="height: 100%; width: 100%;">
     <div class="header" v-if="showHeader">
-      Etcd Workbench
+      <el-menu
+          menu-trigger="click"
+          class="header-menu"
+          mode="horizontal"
+          :ellipsis="false"
+          @select="handleSelectHeader"
+      >
+        <span class="header-title">Etcd Workbench</span>
+        <div class="flex-grow" />
+        <button @click="goGithub()" class="border-none bg-transparent cursor-pointer header-icon">
+          <svg t="1702187888545"
+               class="icon"
+               viewBox="0 0 1024 1024"
+               version="1.1"
+               xmlns="http://www.w3.org/2000/svg"
+               p-id="8271"
+               width="25"
+               height="25">
+            <path d="M511.6 76.3C264.3 76.2 64 276.4 64 523.5 64 718.9 189.3 885 363.8 946c23.5 5.9 19.9-10.8 19.9-22.2v-77.5c-135.7 15.9-141.2-73.9-150.3-88.9C215 726 171.5 718 184.5 703c30.9-15.9 62.4 4 98.9 57.9 26.4 39.1 77.9 32.5 104 26 5.7-23.5 17.9-44.5 34.7-60.8-140.6-25.2-199.2-111-199.2-213 0-49.5 16.3-95 48.3-131.7-20.4-60.5 1.9-112.3 4.9-120 58.1-5.2 118.5 41.6 123.2 45.3 33-8.9 70.7-13.6 112.9-13.6 42.4 0 80.2 4.9 113.5 13.9 11.3-8.6 67.3-48.8 121.3-43.9 2.9 7.7 24.7 58.3 5.5 118 32.4 36.8 48.9 82.7 48.9 132.3 0 102.2-59 188.1-200 212.9 23.5 23.2 38.1 55.4 38.1 91v112.5c0.8 9 0 17.9 15 17.9 177.1-59.7 304.6-227 304.6-424.1 0-247.2-200.4-447.3-447.5-447.3z"
+                  p-id="8272"
+                  :fill="isDark ? 'white' : 'black'"/>
+          </svg>
+        </button>
+        <button class="border-none bg-transparent cursor-pointer header-icon"
+            @click="toggleDark()">
+          <i inline-flex i="dark:ep-moon ep-sunny"/>
+        </button>
+        <el-sub-menu index="user" v-if="_nonEmpty(getUser())">
+          <template #title>{{ getUser() }}</template>
+          <el-menu-item index="logout">Sign out</el-menu-item>
+        </el-sub-menu>
+        <el-menu-item index="login" v-else>
+          Sign in
+        </el-menu-item>
+      </el-menu>
+
     </div>
-    <button
-        class="border-none bg-transparent cursor-pointer light-switch"
-        @click="toggleDark()">
-      <i inline-flex i="dark:ep-moon ep-sunny"/>
-    </button>
 
     <Login v-if="status == 'login'"/>
     <div v-if="status == 'main'" class="main">
@@ -142,6 +187,7 @@ const checkSessionName = (name: string): boolean => {
 
 .dark {
   .header {
+    color: white;
     background: $--header-color-dark;
   }
 }
@@ -149,12 +195,25 @@ const checkSessionName = (name: string): boolean => {
 .header {
   height: $--header-height;
   width: 100%;
-  color: white;
-  text-align: center;
+  color: black;
   line-height: $--header-height;
   font-size: 21px;
   font-weight: 800;
   background: $--header-color;
+
+  .header-menu {
+    height: $--header-height;
+  }
+
+  .header-title {
+    padding: 0 15px;
+    font-family: system-ui;
+    user-select: none;
+  }
+
+  .header-icon {
+    font-size: 20px;
+  }
 }
 
 .main {
@@ -168,16 +227,6 @@ const checkSessionName = (name: string): boolean => {
       overflow: auto;
     }
   }
-}
-
-.light-switch {
-  position: fixed;
-  width: 50px;
-  height: 50px;
-  left: 15px;
-  bottom: 15px;
-  z-index: 10000;
-  font-size: 25px;
 }
 </style>
 
