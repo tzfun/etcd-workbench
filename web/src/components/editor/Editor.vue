@@ -166,7 +166,6 @@ defineExpose({
         Format:
         <el-select v-model="config.language"
                    fit-input-width
-                   size="small"
                    style="width: 100px"
                    class="m-2"
                    placeholder="Select language">

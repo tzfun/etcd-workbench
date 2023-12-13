@@ -96,7 +96,7 @@ const handleSelect = (key: string, keyPath: string[]) => {
 
   .body {
     width: calc(100% - $--ep-custom-aside-width - $--body-padding * 2);
-    padding: $--body-padding;
+    padding: $--body-padding $--body-padding 0 $--body-padding;
     overflow: auto;
   }
 }

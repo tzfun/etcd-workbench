@@ -57,6 +57,10 @@ const tabs = ref([
   },
 ])
 
+const user = computed(() => {
+  return getUser()
+})
+
 const tabAdd = () => {
   let newTabName = ++tabIndex;
 
@@ -162,13 +166,15 @@ const handleSelectHeader = (key: string) => {
 <!--            @click="toggleDark()">-->
 <!--          <i inline-flex i="dark:ep-moon ep-sunny"/>-->
 <!--        </button>-->
-        <el-sub-menu index="user" v-if="_nonEmpty(getUser())">
-          <template #title>{{ getUser() }}</template>
-          <el-menu-item index="logout">Sign out</el-menu-item>
-        </el-sub-menu>
-        <el-menu-item index="login" v-else>
-          Sign in
-        </el-menu-item>
+        <div :key="status">
+          <el-sub-menu index="user" v-if="_nonEmpty(user)">
+            <template #title>{{ user }}</template>
+            <el-menu-item index="logout">Sign out</el-menu-item>
+          </el-sub-menu>
+          <el-menu-item index="login" v-else>
+            Sign in
+          </el-menu-item>
+        </div>
       </el-menu>
 
     </div>
@@ -216,6 +222,7 @@ const handleSelectHeader = (key: string) => {
   background-image: radial-gradient(transparent 1px,$--header-color 1px);
 
   .header-menu {
+    --ep-menu-item-height: $--header-height;
     height: $--header-height;
   }
 
