@@ -37,12 +37,13 @@ const tryLogin = () => {
     <el-card class="login-box">
       <el-form reg="connectionForm" v-model="form" :label-width="100" label-suffix=":" label-position="right">
         <el-form-item label="Username">
-          <el-input v-model="form.name" placeholder="Please input username"/>
+          <el-input v-model="form.name" placeholder="Please input username" @keyup.enter="tryLogin"/>
         </el-form-item>
         <el-form-item label="Password">
           <el-input v-model="form.password"
                     type="password"
                     show-password
+                    @keyup.enter="tryLogin"
                     placeholder="Please input password"/>
         </el-form-item>
         <div>

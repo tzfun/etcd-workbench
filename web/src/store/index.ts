@@ -1,4 +1,5 @@
 import {clearAllConf} from "~/Config";
+import {pushEvent} from "~/util/Event";
 
 let data = {
     user: <string | null>null,
@@ -14,6 +15,7 @@ export function loadStore() {
 
 function onDirty() {
     window.localStorage.setItem("etcd-workbench", JSON.stringify(data))
+    pushEvent("storeChange")
 }
 
 export function getToken() {

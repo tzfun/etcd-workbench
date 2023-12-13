@@ -14,12 +14,14 @@ const curTab = ref('1')
 const showHeader = ref(true)
 const status = ref<'login' | 'main'>('main')
 const eventListener = ref<EventListener>()
+const user = ref()
 
 onBeforeMount(() => {
   status.value = (isLogin() ? 'main' : 'login')
 })
 
 onMounted(() => {
+  user.value = getUser()
   let params = window.location.search.split("?")[1]
   if (params) {
     let vars = params.split("&")
@@ -39,6 +41,8 @@ onMounted(() => {
       status.value = 'login'
     } else if (key === 'loginSuccess') {
       status.value = 'main'
+    } else if(key == 'storeChange') {
+      user.value = getUser()
     }
   }
   registerEventListener(eventListener.value)
@@ -56,10 +60,6 @@ const tabs = ref([
     sessionKey: undefined
   },
 ])
-
-const user = computed(() => {
-  return getUser()
-})
 
 const tabAdd = () => {
   let newTabName = ++tabIndex;
@@ -166,15 +166,13 @@ const handleSelectHeader = (key: string) => {
 <!--            @click="toggleDark()">-->
 <!--          <i inline-flex i="dark:ep-moon ep-sunny"/>-->
 <!--        </button>-->
-        <div :key="status">
-          <el-sub-menu index="user" v-if="_nonEmpty(user)">
-            <template #title>{{ user }}</template>
-            <el-menu-item index="logout">Sign out</el-menu-item>
-          </el-sub-menu>
-          <el-menu-item index="login" v-else>
-            Sign in
-          </el-menu-item>
-        </div>
+        <el-sub-menu index="user" v-if="_nonEmpty(user)">
+          <template #title>{{ user }}</template>
+          <el-menu-item index="logout">Sign out</el-menu-item>
+        </el-sub-menu>
+        <el-menu-item index="login" v-else>
+          Sign in
+        </el-menu-item>
       </el-menu>
 
     </div>
