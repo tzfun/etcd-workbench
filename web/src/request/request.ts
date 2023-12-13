@@ -75,6 +75,12 @@ const handleResponseCode = (res: ResultData, notifyError: boolean | undefined = 
         case 10004:
             msg = res.msg ? res.msg : "Format error!"
             break
+        case 10005:
+            msg = res.msg ? res.msg : "Not supported operation!"
+            break
+        case 10006:
+            msg = res.msg ? res.msg : "Please login!"
+            break
     }
     if (_nonEmpty(msg as string) && notifyError) {
         ElMessage({
@@ -189,7 +195,6 @@ class EnclosureHttp {
                 message("404 Error");
                 break;
             case 401:
-                message("Please sign in");
                 pushEvent('login')
                 break
             default:

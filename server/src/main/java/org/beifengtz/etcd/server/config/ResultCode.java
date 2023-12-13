@@ -14,8 +14,8 @@ public enum ResultCode {
     CONNECT_ERROR(10002, "Connect error"),
     ETCD_ERROR(10003, "Etcd server error"),
     PARAM_FORMAT_ERROR(10004, "Param error"),
-    NOT_SUPPORTED(100005, "Not supported operation"),
-    LOGIN_FAILED(100006, "Login failed"),
+    NOT_SUPPORTED(10005, "Not supported operation"),
+    LOGIN_FAILED(10006, "Please login"),
     ;
     private final int code;
     private final String msg;

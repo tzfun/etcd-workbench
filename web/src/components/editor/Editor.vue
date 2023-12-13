@@ -166,6 +166,7 @@ defineExpose({
         Format:
         <el-select v-model="config.language"
                    fit-input-width
+                   size="small"
                    style="width: 100px"
                    class="m-2"
                    placeholder="Select language">
@@ -233,8 +234,8 @@ defineExpose({
 
 <style lang="scss" scoped>
 
-$--editor-header-height: 3rem;
-$--editor-footer-height: 3rem;
+$--editor-header-height: 2rem;
+$--editor-footer-height: 2rem;
 $--editor-padding: 0 1rem;
 
 .header {

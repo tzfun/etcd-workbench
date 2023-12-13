@@ -34,6 +34,10 @@ export function setUser(user: string | null) {
     onDirty()
 }
 
+export function isLogin() {
+    return data.user && data.token
+}
+
 export function clearLoginStatus() {
     data.user = null
     data.token = null

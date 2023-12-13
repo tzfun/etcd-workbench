@@ -5,7 +5,7 @@ import type {TabPaneName} from 'element-plus'
 import {closeSession} from "~/service";
 import {EventListener, pushEvent, registerEventListener} from "~/util/Event";
 import {unregisterConfigListener} from "~/Config";
-import {clearLoginStatus, getUser} from "~/store";
+import {clearLoginStatus, getUser, isLogin} from "~/store";
 import {_nonEmpty} from "~/util/Util";
 import {Moon, Sunny} from "@element-plus/icons-vue";
 
@@ -14,6 +14,10 @@ const curTab = ref('1')
 const showHeader = ref(true)
 const status = ref<'login' | 'main'>('main')
 const eventListener = ref<EventListener>()
+
+onBeforeMount(() => {
+  status.value = (isLogin() ? 'main' : 'login')
+})
 
 onMounted(() => {
   let params = window.location.search.split("?")[1]
@@ -130,7 +134,7 @@ const handleSelectHeader = (key: string) => {
         <div class="flex-grow" />
 
         <div class="header-item">
-          <a href="https://www.github.com/tzfun/etcd-workbench" target="_blank">
+          <a href="https://www.github.com/tzfun/etcd-workbench" target="_blank" title="Fork from GitHub">
             <svg t="1702187888545"
                  class="icon"
                  viewBox="0 0 1024 1024"
@@ -147,6 +151,8 @@ const handleSelectHeader = (key: string) => {
         </div>
         <div class="header-item">
           <el-switch
+              title="Theme Switch"
+              size="large"
               v-model="isDark"
               :active-action-icon="Moon"
               :inactive-action-icon="Sunny"
@@ -207,7 +213,7 @@ const handleSelectHeader = (key: string) => {
   line-height: $--header-height;
   font-size: 21px;
   font-weight: 800;
-  background: $--header-color;
+  background-image: radial-gradient(transparent 1px,$--header-color 1px);
 
   .header-menu {
     height: $--header-height;
@@ -273,11 +279,25 @@ const handleSelectHeader = (key: string) => {
 </style>
 
 <style lang="css">
-.base-body .header {
-  --el-switch-on-color: white;
+.base-body .header .ep-switch {
+  --ep-switch-on-color: #f2f2f2;
+  --ep-switch-off-color: #f2f2f2;
+  --ep-switch-border-color: #dcdfe6;
 }
 
-.dark .base-body .header {
-  --el-switch-on-color: black;
+.base-body .header .ep-switch__core .ep-switch__action {
+  background-color: rgba(0,0,0,0);
+  color: black;
+}
+
+.dark .base-body .header .ep-switch {
+  --ep-switch-on-color: #2c2c2c;
+  --ep-switch-off-color: #2c2c2c;
+  --ep-switch-border-color: #4c4d4f;
+}
+
+.dark .base-body .header .ep-switch__core .ep-switch__action {
+  background-color: rgba(0,0,0,0);
+  color: white;
 }
 </style>
