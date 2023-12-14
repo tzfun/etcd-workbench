@@ -213,13 +213,14 @@ const handleSelectHeader = (key: string) => {
 .header {
   height: $--header-height;
   width: 100%;
-  color: black;
+  color: #494646;
   line-height: $--header-height;
   font-size: 21px;
   font-weight: 800;
-  background-image: radial-gradient(transparent 1px,$--header-color 1px);
+  background-color: $--header-color;
 
   .header-menu {
+    --ep-menu-bg-color: $--header-color;
     --ep-menu-item-height: $--header-height;
     height: $--header-height;
   }

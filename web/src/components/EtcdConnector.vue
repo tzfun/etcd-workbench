@@ -498,8 +498,8 @@ defineExpose({
 
         <div style="margin: 35px 0;text-align: center">
           <el-button type="primary" link @click="_testConnect">Test Connect</el-button>
-          <el-button type="success" @click="_connect">Connect</el-button>
           <el-button plain @click="_saveSessionConfig">Save to Favorites</el-button>
+          <el-button type="success" @click="_connect">Connect</el-button>
         </div>
 
       </el-form>
