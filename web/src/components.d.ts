@@ -52,8 +52,6 @@ declare module '@vue/runtime-core' {
     KeyTreeViewer: typeof import('./components/viewer/KeyTreeViewer.vue')['default']
     Login: typeof import('./components/Login.vue')['default']
     RoleManager: typeof import('./components/managers/RoleManager.vue')['default']
-    RouterLink: typeof import('vue-router')['RouterLink']
-    RouterView: typeof import('vue-router')['RouterView']
     UserManager: typeof import('./components/managers/UserManager.vue')['default']
   }
   export interface ComponentCustomProperties {
