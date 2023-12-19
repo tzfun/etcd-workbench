@@ -8,6 +8,7 @@ import {unregisterConfigListener} from "~/Config";
 import {clearLoginStatus, getUser, isLogin} from "~/store";
 import {_nonEmpty} from "~/util/Util";
 import {Moon, Sunny} from "@element-plus/icons-vue";
+import etcd from "~/assets/etcd.png";
 
 let tabIndex = 1
 const curTab = ref('1')
@@ -15,6 +16,7 @@ const showHeader = ref(true)
 const status = ref<'login' | 'main'>('main')
 const eventListener = ref<EventListener>()
 const user = ref()
+const etcdLogo = ref(etcd)
 
 onBeforeMount(() => {
   status.value = (isLogin() ? 'main' : 'login')
@@ -121,7 +123,6 @@ const handleSelectHeader = (key: string) => {
     window.open('https://www.github.com/tzfun/etcd-workbench', '_blank')
   }
 }
-
 </script>
 
 <template>
@@ -134,6 +135,9 @@ const handleSelectHeader = (key: string) => {
           :ellipsis="false"
           @select="handleSelectHeader"
       >
+        <div class="header-item" style="margin-left: 1em">
+          <el-image style="width: 30px; height: 30px" :src="etcdLogo" fit="cover"/>
+        </div>
         <span class="header-title">Etcd Workbench</span>
         <div class="flex-grow" />
 
@@ -226,7 +230,6 @@ const handleSelectHeader = (key: string) => {
   }
 
   .header-title {
-    padding: 0 15px;
     font-family: system-ui;
     user-select: none;
   }
@@ -242,7 +245,7 @@ const handleSelectHeader = (key: string) => {
     align-items: center;
     height: 100%;
     margin: 0;
-    padding: 0 20px;
+    padding: 0 10px;
     border-bottom: 2px solid transparent;
     line-height: var(--ep-menu-item-height);
     font-size: var(--ep-menu-item-font-size);

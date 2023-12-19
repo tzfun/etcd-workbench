@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {reactive, ref} from "vue";
+import {reactive} from "vue";
 import {_isEmpty} from "~/util/Util";
 import {login} from "~/service";
 import {pushEvent} from "~/util/Event";
@@ -34,6 +34,7 @@ const tryLogin = () => {
 
 <template>
   <div class="login-container">
+    <h1 class="login-title">Login Workbench</h1>
     <el-card class="login-box">
       <el-form reg="connectionForm" v-model="form" :label-width="100" label-suffix=":" label-position="right">
         <el-form-item label="Username">
@@ -56,14 +57,23 @@ const tryLogin = () => {
 </template>
 
 <style scoped lang="scss">
+
+$--login-container-width: 500px;
+
 .login-container {
-  width: 100%;
-  display: flex;
-  justify-content: center;
+  width: $--login-container-width;
+  position: relative;
+  left: 50%;
+  margin-left: -($--login-container-width / 2);
+  margin-top: 120px;
+
+  .login-title {
+    text-align: center;
+  }
 
   .login-box {
-    max-width: 500px;
-    margin-top: 10%;
+    padding: 30px 0 15px 0;
   }
 }
+
 </style>
