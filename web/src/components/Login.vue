@@ -64,7 +64,7 @@ $--login-container-width: 500px;
   width: $--login-container-width;
   position: relative;
   left: 50%;
-  margin-left: -($--login-container-width / 2);
+  margin-left: calc($--login-container-width / -2);
   margin-top: 120px;
 
   .login-title {
