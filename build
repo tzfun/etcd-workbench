@@ -33,5 +33,3 @@ if [ ! -d "bin" ]; then
 fi
 
 cp ./server/build/libs/etcd-workbench.jar ./bin/
-
-echo Build successful

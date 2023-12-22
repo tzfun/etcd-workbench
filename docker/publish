@@ -8,7 +8,8 @@ echo "eg.: $0 0.0.1"
 exit 1;
 fi
 
-../build 
+cd ../
+./build
 wait
 if [ $? -ne 0 ]; then
     exit $?
@@ -16,10 +17,11 @@ fi
 
 cd ./docker
 
+cp ../bin/*.jar ./
+
 IMAGE_NAME="tzfun/etcd-workbench:$1"
 
 echo Building dockerfile...
-echo $IMAGE_NAME
 docker build -f Dockerfile -t $IMAGE_NAME . 
 wait
 if [ $? -ne 0 ]; then
@@ -29,3 +31,8 @@ fi
 echo Pushing image $IMAGE_NAME
 docker push $IMAGE_NAME
 wait
+if [ $? -ne 0 ]; then
+    exit $?
+fi
+
+rm *.jar
