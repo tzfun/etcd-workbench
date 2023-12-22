@@ -2,6 +2,14 @@
 
 set -e
 
+SKIP_MERGE=0
+
+if [ $# == 1 ] ; then
+    if [ "$1" == "skipMerge" ] ; then
+        SKIP_MERGE=1
+    fi
+fi
+
 cd ./web
 
 echo Building web source...
@@ -19,8 +27,19 @@ cp -R dist/* ../server/src/main/resources/static/
 
 cd ../server
 
-echo Building server source...
-./gradlew jar
+./gradlew clean
+wait
+if [ $? -ne 0 ]; then
+    exit $?
+fi
+
+BUILD_SERVER_CMD="./gradlew jar"
+if [ $SKIP_MERGE -eq 1 ]; then
+    BUILD_SERVER_CMD="./gradlew jar -PskipMerge=1"
+fi
+
+echo Building server source: $BUILD_SERVER_CMD
+$BUILD_SERVER_CMD
 wait
 if [ $? -ne 0 ]; then
     exit $?
@@ -30,6 +49,12 @@ cd ../
 
 if [ ! -d "bin" ]; then
     mkdir bin
+else
+    rm -rf bin/*
 fi
 
-cp ./server/build/libs/etcd-workbench.jar ./bin/
+if [ $SKIP_MERGE -eq 1 ]; then
+    cp -R ./server/build/libs/* ./bin/
+else
+    cp ./server/build/libs/etcd-workbench.jar ./bin/
+fi

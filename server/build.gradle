@@ -38,6 +38,12 @@ compileJava {
     options.compilerArgs << "-parameters" << "-Xlint:unchecked" << "-Xlint:deprecation"
 }
 
+task copyJar(type: Copy) {
+    delete "$buildDir/libs/*"
+    from configurations.compileClasspath
+    into "$buildDir/libs"
+}
+
 jar {
     manifestContentCharset 'utf-8'
     metadataCharset 'utf-8'
@@ -50,7 +56,13 @@ jar {
         )
     }
 
-    from {
-        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    if (project.hasProperty("skipMerge")) {
+        dependsOn copyJar
+    } else {
+        from {
+            configurations.compile.collect {
+                it.isDirectory() ? it : zipTree(it)
+            }
+        }
     }
 }

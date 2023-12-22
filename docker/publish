@@ -2,10 +2,9 @@
 
 set -e
 
-if [ $# != 1 ] ; then
-echo "ERROR: Missing required param 'version'."
-echo "eg.: $0 0.0.1"
-exit 1;
+VERSION=latest
+if [ $# == 1 ] ; then
+VERSION=$1
 fi
 
 cd ../
@@ -19,9 +18,9 @@ cd ./docker
 
 cp ../bin/*.jar ./
 
-IMAGE_NAME="tzfun/etcd-workbench:$1"
+IMAGE_NAME="tzfun/etcd-workbench:$VERSION"
 
-echo Building dockerfile...
+echo Building dockerfile $IMAGE_NAME
 docker build -f Dockerfile -t $IMAGE_NAME . 
 wait
 if [ $? -ne 0 ]; then

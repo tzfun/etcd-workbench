@@ -60,25 +60,29 @@ public class HttpService {
                 .bind(port)
                 .syncUninterruptibly();
 
-        logger.info("Http server service started on {}, use {} ms", port, System.currentTimeMillis() - st);
         openBrowser(port);
+        logger.info("Http server service started on {} in {} ms", port, System.currentTimeMillis() - st);
         channel = future.channel();
     }
 
     private void openBrowser(int port) {
         try {
-            Desktop desktop = Desktop.getDesktop();
-            if (Desktop.isDesktopSupported() && desktop.isSupported(Action.BROWSE)) {
-                try {
-                    String url = "http://" + IPUtil.getLocalIP() + ":" + port;
-                    desktop.browse(new URI(url));
-                    logger.info("Opened etcd workbench in browser: {}", url);
-                } catch (IOException | URISyntaxException e) {
-                    logger.warn("Can not open browser", e);
+            if (Desktop.isDesktopSupported()) {
+                Desktop desktop = Desktop.getDesktop();
+                if (desktop.isSupported(Action.BROWSE)) {
+                    try {
+                        String url = "http://" + IPUtil.getLocalIP() + ":" + port;
+                        desktop.browse(new URI(url));
+                        logger.info("Opened etcd workbench in browser: {}", url);
+                        return;
+                    } catch (IOException | URISyntaxException e) {
+                        logger.warn("Can not open browser", e);
+                    }
                 }
             }
         } catch (UnsupportedOperationException e) {
             logger.warn("Can not open browser: {}", e.getMessage());
         }
+        logger.info("Please access http://{}:{}", IPUtil.getLocalIP(), port);
     }
 }

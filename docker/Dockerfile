@@ -8,8 +8,10 @@ ENV JVM_ARGS=""
 
 WORKDIR "/usr/tzfun/etcd-workbench"
 
+EXPOSE 8002
+
 COPY etcd-workbench.conf .
-COPY etcd-workbench.jar .
+COPY *.jar ./bin/
 
 CMD java \
     -server \
@@ -18,4 +20,5 @@ CMD java \
     -Xms$JVM_X_MX \
     -XX:MaxGCPauseMillis=200 \
     $JVM_ARGS \
-    -jar etcd-workbench.jar
+    -classpath "./bin/*" \
+    org.beifengtz.etcd.server.EtcdServer
