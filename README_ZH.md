@@ -1,7 +1,7 @@
 中文版 | [English](./README.md)
 
 <div align=center>
-<img src=web/design/logo.png/>
+<img src=web/src/design/logo.png/>
 </div>
 
 # Etcd Workbench
