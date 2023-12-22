@@ -5,8 +5,11 @@ set -e
 cd ./web
 
 echo Building web source...
-pnpm run build &
+pnpm run build
 wait
+if [ $? -ne 0 ]; then
+    exit $?
+fi
 
 echo Deleting server static file...
 rm -rf ../server/src/main/resources/static/*
@@ -17,10 +20,18 @@ cp -R dist/* ../server/src/main/resources/static/
 cd ../server
 
 echo Building server source...
-./gradlew jar &
+./gradlew jar
 wait
+if [ $? -ne 0 ]; then
+    exit $?
+fi
 
 cd ../
-mkdir bin
 
-cp ./server/build/libs/etcd-workbench.jar .bin/
+if [ ! -d "bin" ]; then
+    mkdir bin
+fi
+
+cp ./server/build/libs/etcd-workbench.jar ./bin/
+
+echo Build successful

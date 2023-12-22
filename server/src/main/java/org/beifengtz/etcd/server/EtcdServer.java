@@ -20,11 +20,15 @@ import java.nio.file.Files;
  */
 public class EtcdServer {
 
+    private static final String JVMM_VERSION = "2.2.0";
+
     private static void loadBanner() throws Exception {
         InputStream is = EtcdServer.class.getResourceAsStream("/banner.txt");
         if (is != null) {
-            System.out.println(IOUtil.toString(is));
+            System.out.print(IOUtil.toString(is));
         }
+        System.out.print("Powered by \u001b[0m\u001b[92mJVMM\u001b[0m\u001b[96m(https://github.com/tzfun/jvmm)\u001b[0m\n");
+        System.out.printf("Framework version: \u001b[0m\u001b[93m%s\u001b[0m\n\n", JVMM_VERSION);
     }
 
     private static void loadConfiguration() throws Exception {
@@ -71,7 +75,7 @@ public class EtcdServer {
                             Configuration.INSTANCE.setEtcdExecuteTimeoutMillis(Integer.parseInt(value));
                         } else if ("dataDir".equalsIgnoreCase(key)) {
                             Configuration.INSTANCE.setDataDir(value);
-                        } else if ("configEncryptKey".equalsIgnoreCase(key)){
+                        } else if ("configEncryptKey".equalsIgnoreCase(key)) {
                             Configuration.INSTANCE.setConfigEncryptKey(value);
                         }
                     }
