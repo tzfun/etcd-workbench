@@ -8,25 +8,10 @@ echo "eg.: $0 0.0.1"
 exit 1;
 fi
 
-cd ../web
-
-echo Building web source...
-pnpm run build &
+../build &
 wait
 
-echo Deleting server static file...
-rm -rf ../server/src/main/resources/static/*
-
-echo Copying web static file to server resources directory...
-cp -R dist/* ../server/src/main/resources/static/
-
-cd ../server
-
-echo Building server source...
-./gradlew jar &
-wait
-
-cd ../docker
+cd ./docker
 
 IMAGE_NAME="tzfun/etcd-workbench:$1"
 

@@ -1,0 +1,26 @@
+#!/bin/bash
+
+set -e
+
+cd ./web
+
+echo Building web source...
+pnpm run build &
+wait
+
+echo Deleting server static file...
+rm -rf ../server/src/main/resources/static/*
+
+echo Copying web static file to server resources directory...
+cp -R dist/* ../server/src/main/resources/static/
+
+cd ../server
+
+echo Building server source...
+./gradlew jar &
+wait
+
+cd ../
+mkdir bin
+
+cp ./server/build/libs/etcd-workbench.jar .bin/

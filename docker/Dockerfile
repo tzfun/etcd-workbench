@@ -9,6 +9,7 @@ ENV JVM_ARGS=""
 WORKDIR "/usr/tzfun/etcd-workbench"
 
 COPY app.conf .
+COPY ../bin/etcd-workbench.jar .
 
 CMD java \
     -server \

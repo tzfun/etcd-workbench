@@ -5,3 +5,4 @@
 /server/.gradle/
 /server/src/main/resources/static/
 /server/data/
+/bin/
