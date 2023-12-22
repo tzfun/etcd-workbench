@@ -8,7 +8,7 @@ VERSION=$1
 fi
 
 cd ../
-./build
+./build skipMerge
 wait
 if [ $? -ne 0 ]; then
     exit $?

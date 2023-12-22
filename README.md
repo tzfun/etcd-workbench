@@ -99,12 +99,13 @@ docker run \
     --name my-etcd-workbench \
     -p 8002:8002 \
     -v ./etcd-workbench.conf:/usr/tzfun/etcd-workbench/etcd-workbench.conf \
-    tzfun/etcd-workbench:latest
+    tzfun/etcd-workbench:latest &
 ```
 
 The working directory of the image is in `/usr/tzfun/etcd-workbench`, and its directory structure is as follows:
 
 ```
+├── bin
 ├── data
 ├── logs
 ├── temp
