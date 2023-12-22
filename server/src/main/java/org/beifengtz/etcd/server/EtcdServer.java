@@ -33,11 +33,11 @@ public class EtcdServer {
 
     private static void loadConfiguration() throws Exception {
         String config = null;
-        File file = new File(SystemPropertyUtil.get("user.dir"), "app.conf");
+        File file = new File(SystemPropertyUtil.get("user.dir"), "etcd-workbench.conf");
         if (file.exists()) {
             config = Files.readString(file.toPath());
         } else {
-            InputStream is = EtcdServer.class.getResourceAsStream("/app.conf");
+            InputStream is = EtcdServer.class.getResourceAsStream("/etcd-workbench.conf");
             if (is != null) {
                 config = IOUtil.toString(is);
             }
