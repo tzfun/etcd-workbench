@@ -337,9 +337,7 @@ export function login(user: string, password: string): Promise<any> {
 export function checkLogin(): Promise<any> {
     if (isLogin()) {
         const token = getToken()
-        return request.post(host + PUBLIC_API_PREFIX + "/auth/check_login", {
-            token: token
-        })
+        return request.post(host + PUBLIC_API_PREFIX + "/auth/check_login", token)
     } else {
         return new Promise(resolve => resolve(true))
     }

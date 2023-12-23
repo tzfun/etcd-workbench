@@ -13,6 +13,7 @@ import org.beifengtz.jvmm.common.util.SignatureUtil;
 import org.beifengtz.jvmm.common.util.StringUtil;
 import org.beifengtz.jvmm.convey.annotation.HttpController;
 import org.beifengtz.jvmm.convey.annotation.HttpRequest;
+import org.beifengtz.jvmm.convey.annotation.RequestBody;
 import org.beifengtz.jvmm.convey.annotation.RequestParam;
 import org.beifengtz.jvmm.convey.enums.Method;
 
@@ -108,7 +109,7 @@ public class AuthController {
     }
 
     @HttpRequest(value = Mapping.PUBLIC_API_PREFIX + "/auth/check_login", method = Method.POST)
-    public ResultVO checkLogin(@RequestParam String token) throws Exception {
+    public ResultVO checkLogin(@RequestBody String token) throws Exception {
         boolean needLogin = false;
         if (Configuration.INSTANCE.isEnableAuth()) {
             try {

@@ -2,8 +2,8 @@
 
 </script>
 <template>
-  <el-config-provider namespace="ep" v-loading.fullscreen.lock="false">
-    <BaseBody/>
+  <el-config-provider namespace="ep">
+    <BaseBody v-loading.fullscreen.lock="false"/>
   </el-config-provider>
 </template>
 

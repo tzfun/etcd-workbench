@@ -12,7 +12,7 @@ export interface ResultData {
 export interface Request {
     <T>(
         url: string,
-        params?: Record<string, unknown>,
+        params?: Record<string, unknown> | string | null,
         config?: AxiosRequestConfig,
         notifyError?: boolean,
         withLoading?: boolean
