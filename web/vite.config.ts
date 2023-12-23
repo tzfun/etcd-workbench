@@ -90,6 +90,16 @@ export default defineConfig({
     Inspect(),
   ],
   build:{
-    chunkSizeWarningLimit:1500
+    chunkSizeWarningLimit:1500,
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true
+      },
+      format: {
+        comments: true
+      }
+    }
   }
 })

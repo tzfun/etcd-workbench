@@ -186,7 +186,7 @@ const diff = (row: KeyDTO) => {
       versionDiffInfo.key,
       versionDiffInfo.createRevision,
       versionDiffInfo.modRevision).then(data => {
-    versionDiffInfo.versionHistory = data.sort()
+    versionDiffInfo.versionHistory = data
     getKV(props.sessionKey, versionDiffInfo.key).then(data => {
       versionDiffInfo.versionB = row.modRevision
       versionDiffInfo.versionBContent = data.value

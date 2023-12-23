@@ -3,7 +3,10 @@ package org.beifengtz.etcd.server.util;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import io.etcd.jetcd.ByteSequence;
+import io.netty.channel.Channel;
+import io.netty.handler.codec.http.FullHttpRequest;
 import org.beifengtz.jvmm.common.util.SignatureUtil;
+import org.beifengtz.jvmm.convey.channel.ChannelUtil;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -33,6 +36,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 public class CommonUtil {
 
     public static final String EMPTY_STR = "";
+    public static final String EMPTY_IP = "::::";
 
     public static ByteSequence toByteSequence(String str) {
         if (str == null || str.isEmpty()) {
@@ -123,5 +127,13 @@ public class CommonUtil {
         Cipher cipher = Cipher.getInstance("RSA");
         cipher.init(Cipher.DECRYPT_MODE, priKey);
         return cipher.doFinal(inputByte);
+    }
+
+    public static String getHttpRealIp(FullHttpRequest msg) {
+        String ip = msg.headers().get("X-Real-IP");
+        if (ip == null) {
+            ip = EMPTY_IP;
+        }
+        return ip;
     }
 }

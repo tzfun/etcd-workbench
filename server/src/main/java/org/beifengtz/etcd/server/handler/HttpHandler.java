@@ -15,6 +15,7 @@ import org.beifengtz.etcd.server.config.Configuration;
 import org.beifengtz.etcd.server.config.Mapping;
 import org.beifengtz.etcd.server.config.ResultCode;
 import org.beifengtz.etcd.server.controller.AuthController;
+import org.beifengtz.etcd.server.util.CommonUtil;
 import org.beifengtz.jvmm.common.util.IOUtil;
 import org.beifengtz.jvmm.common.util.StringUtil;
 import org.beifengtz.jvmm.convey.channel.ChannelUtil;
@@ -100,7 +101,10 @@ public class HttpHandler extends HttpChannelHandler {
                 ctx.channel().attr(ATTR_USER).set(Configuration.DEFAULT_SYSTEM_USER);
             }
         }
-        logger.info("Http request {} {} ({})", msg.method(),uri, ChannelUtil.getIpByCtx(ctx));
+
+        String sendIp = ChannelUtil.getIpByCtx(ctx);
+        String srcIp = CommonUtil.getHttpRealIp(msg);
+        logger.info("Http request {} {} ({} / {})", msg.method(), uri, sendIp, srcIp);
         return true;
     }
 

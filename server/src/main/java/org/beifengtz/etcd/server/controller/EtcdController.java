@@ -14,7 +14,6 @@ import org.beifengtz.etcd.server.entity.dto.PermissionDTO;
 import org.beifengtz.etcd.server.entity.vo.ResultVO;
 import org.beifengtz.etcd.server.etcd.EtcdConnector;
 import org.beifengtz.etcd.server.etcd.EtcdConnectorFactory;
-import org.beifengtz.etcd.server.util.CommonUtil;
 import org.beifengtz.jvmm.common.util.StringUtil;
 import org.beifengtz.jvmm.convey.annotation.HttpController;
 import org.beifengtz.jvmm.convey.annotation.HttpRequest;
@@ -25,7 +24,6 @@ import org.beifengtz.jvmm.convey.enums.Method;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
