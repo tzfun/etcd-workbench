@@ -114,3 +114,7 @@ The working directory of the image is in `/usr/tzfun/etcd-workbench`, and its di
 ```
 
 # Screenshot
+
+# License
+
+[Apache License 2.0](LICENSE)
