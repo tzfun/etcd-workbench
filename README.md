@@ -8,9 +8,15 @@
 
 A beautiful, lightweight, privately deployable ETCD client that supports SSL, SSH Tunnel connections, and multi-account session management.
 
+# Why choose it?
+
+1. The official client tool supports few functions and has poor online editing effect. This tool provides SSH tunnel, online code editing, version comparison, quick copy and other functions to make configuration center management more efficient!
+2. Most of the nice third-party tools need to be charged. 💔
+3. This tool is completely open source and free!
+
 # Quick Start
 
-## Demo
+## Example
 
 Access [http://etcd.beifengtz.com](http://etcd.beifengtz.com)
 
@@ -52,7 +58,7 @@ configEncryptKey = etcdWorkbench@*?
 [auth]
 # If set to true, user must log in to use etcd workbench, and add the user field to configure the user.
 # If set to false, all connection data can be used and shared by anyone!!!
-enable = true
+enable = false
 # If enabled authentication, add username and password with `user` field.
 # Supports repeatedly adding multiple `user` fields.
 user = username1:password1

@@ -8,6 +8,12 @@
 
 一个漂亮的、轻量的、可私有化部署的 ETCD 客户端，支持SSL、SSH Tunnel连接，支持多账户 session 管理。
 
+# 为什么选择它？
+
+1. 官方的客户端工具支持功能少，在线编辑效果差，本工具提供了SSH tunnel、在线代码编辑、版本对比、快捷复制等功能，让配置中心管理更高效！
+2. 大部分好用的第三方工具需要收费，扎了免费党的心💔
+3. 本工具完全开源免费！
+
 # 快速体验
 
 ## Demo
@@ -52,7 +58,7 @@ configEncryptKey = etcdWorkbench@*?
 [auth]
 # If set to true, user must log in to use etcd workbench, and add the user field to configure the user.
 # If set to false, all connection data can be used and shared by anyone!!!
-enable = true
+enable = false
 # If enabled authentication, add username and password with `user` field.
 # Supports repeatedly adding multiple `user` fields.
 user = username1:password1
