@@ -270,3 +270,52 @@ export function _md5(obj: string): string {
     hash.update(obj)
     return hash.hex()
 }
+
+export function _parseCodeLanguage(filename:string, content:string):string {
+    let lang;
+    if (filename) {
+        filename = filename.toLowerCase()
+        let splitter = filename.split(".")
+        if (splitter.length > 0) {
+            let fileType = splitter[splitter.length - 1]
+            switch (fileType) {
+                case "xml":
+                case "html":
+                case "htm":
+                    lang = 'xml'
+                    break
+                case "json":
+                    lang = 'json'
+                    break
+                case "conf":
+                case "properties":
+                    lang = 'properties'
+                    break
+                case "yaml":
+                case "yml":
+                    lang = "yaml"
+                    break
+                case "sql":
+                    lang = "sql"
+                    break
+            }
+        }
+    }
+    if (!lang && content) {
+        if (content.startsWith('<')) {
+            lang = 'xml'
+        } else if (content.startsWith('{') || content.startsWith('[')) {
+            lang = 'json'
+        } else if (content.startsWith('---')) {
+            lang = 'yaml'
+        } else if (content.startsWith("--")) {
+            lang = "sql"
+        }
+    }
+    if (!lang) {
+        lang = 'text'
+    }
+
+    console.log("parse lang " ,filename, lang)
+    return lang
+}

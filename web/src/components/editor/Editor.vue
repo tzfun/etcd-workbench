@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import {EditorConfig} from "~/common/Types";
 import {computed, onMounted, reactive, shallowRef, watch} from "vue";
-import {dracula, smoothy} from "./themes";
+import {barf, clouds} from "./themes";
 import {EditorView, ViewUpdate} from "@codemirror/view";
 import {redo, undo} from "@codemirror/commands";
 import {Codemirror} from "vue-codemirror";
@@ -10,16 +10,18 @@ import xmlLanguage from "./lang/xml";
 import yamlLanguage from "./lang/yaml";
 import {_byteFormat, _bytesToStr, _hexToStr, _strToBytes, _strToHex} from "~/common/Util";
 import {isDark} from "~/composables";
+import sqlLanguage from "~/components/editor/lang/sql";
+import propertiesLanguage from "~/components/editor/lang/properties";
 
-const theme = ref(dracula)
+const theme = ref(barf)
 
 watch(
     isDark,
     (newVal, oldVal) => {
       if (newVal) {
-        theme.value = dracula
+        theme.value = barf
       } else {
-        theme.value = smoothy
+        theme.value = clouds
       }
     },
     {immediate: true}
@@ -44,7 +46,9 @@ const allLanguages = reactive([
   'blob',
   'json',
   'yaml',
-  'xml'
+  'xml',
+  'sql',
+  'properties'
 ])
 
 /**
@@ -85,6 +89,12 @@ const extensions = computed(() => {
       break
     case 'yaml':
       result.push(yamlLanguage())
+      break
+    case 'sql':
+      result.push(sqlLanguage())
+      break
+    case 'properties':
+      result.push(propertiesLanguage())
       break
   }
   result.push(theme.value)
@@ -179,7 +189,7 @@ defineExpose({
         Format:
         <el-select v-model="config.language"
                    fit-input-width
-                   style="width: 100px"
+                   style="width: 130px"
                    class="m-2"
                    placeholder="Select language">
           <el-option

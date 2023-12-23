@@ -3,6 +3,7 @@ import {Delete, Document, DocumentCopy, Finished, Folder, InfoFilled, Search, Ti
 import {EditorConfig, KeyValueDTO, TreeNode} from "~/common/Types";
 import {reactive} from "vue";
 import {isDark} from "~/composables";
+import {_parseCodeLanguage} from "~/common/Util";
 
 const props = defineProps({
   data: Array<TreeNode>,
@@ -69,16 +70,7 @@ const clickTreeNode = (node: TreeNode) => {
         callback: data => {
           changed.value = false
           editingKV.value = data
-          const content = data.value
-          if (content.startsWith('<')) {
-            editorConfig.language = 'xml'
-          } else if (content.startsWith('{') || content.startsWith('[')) {
-            editorConfig.language = 'json'
-          } else if (content.startsWith('---')) {
-            editorConfig.language = 'yaml'
-          } else {
-            editorConfig.language = 'text'
-          }
+          editorConfig.language = _parseCodeLanguage(node.label, data.value)
         }
       })
     }

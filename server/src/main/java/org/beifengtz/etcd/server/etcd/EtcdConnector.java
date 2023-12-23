@@ -278,7 +278,7 @@ public class EtcdConnector {
                     .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS)
                     .thenCompose(resp -> {
                         long lease = 0;
-                        if (resp.getCount() == 0) {
+                        if (resp.getCount() == 1) {
                             lease = resp.getKvs().get(0).getLease();
                         }
                         if (lease != 0) {

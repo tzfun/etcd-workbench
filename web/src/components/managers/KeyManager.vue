@@ -5,7 +5,7 @@ import {EditorConfig, KeyDTO, KeyValueDTO, TreeNode} from "~/common/Types";
 import Editor from "~/components/editor/Editor.vue";
 import {isDark} from "~/composables";
 import {reactive} from "vue";
-import {_isEmpty} from "~/common/Util";
+import {_isEmpty, _parseCodeLanguage} from "~/common/Util";
 import {CodeDiff} from "v-code-diff";
 import KeyTableViewer from "~/components/viewer/KeyTableViewer.vue";
 import KeyTreeViewer from "~/components/viewer/KeyTreeViewer.vue";
@@ -154,16 +154,7 @@ const add = () => {
 const edit = (info: KeyDTO) => {
   getKV(props.sessionKey, info.key).then(data => {
     editingKV.value = data
-    const content = data.value
-    if (content.startsWith('<')) {
-      editorConfig.language = 'xml'
-    } else if (content.startsWith('{') || content.startsWith('[')) {
-      editorConfig.language = 'json'
-    } else if (content.startsWith('---')) {
-      editorConfig.language = 'yaml'
-    } else {
-      editorConfig.language = 'text'
-    }
+    editorConfig.language = _parseCodeLanguage(info.key, data.value)
 
     isNew.value = false
     editing.value = true
