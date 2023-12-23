@@ -2,10 +2,10 @@ import Axios, {AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse, Int
 import {Request, ResultData} from "~/request/type";
 
 import {ElMessage} from "element-plus";
-import {_endLoading, _nonEmpty, _startLoading} from "~/util/Util";
-import {pushEvent} from "~/util/Event";
-import {getToken} from "~/store";
-import {PRIVATE_API_PREFIX} from "~/service";
+import {_endLoading, _nonEmpty, _startLoading} from "~/common/Util";
+import {pushEvent} from "~/common/Event";
+import {getToken} from "~/common/Store";
+import {PRIVATE_API_PREFIX} from "~/common/Service";
 
 /**
  * 封装的 element-plus 的消息提示框

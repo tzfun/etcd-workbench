@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import {copyAndSave, deleteKey, getAllKeys, getKV, getKVHistory, putKV} from "~/service";
+import {copyAndSave, deleteKey, getAllKeys, getKV, getKVHistory, putKV} from "~/common/Service";
 import {Delete, DocumentAdd, Refresh, Switch} from "@element-plus/icons-vue";
-import {EditorConfig, KeyDTO, KeyValueDTO, TreeNode} from "~/entitys/TransformTypes";
+import {EditorConfig, KeyDTO, KeyValueDTO, TreeNode} from "~/common/Types";
 import Editor from "~/components/editor/Editor.vue";
 import {isDark} from "~/composables";
 import {reactive} from "vue";
-import {_isEmpty} from "~/util/Util";
+import {_isEmpty} from "~/common/Util";
 import {CodeDiff} from "v-code-diff";
 import KeyTableViewer from "~/components/viewer/KeyTableViewer.vue";
 import KeyTreeViewer from "~/components/viewer/KeyTreeViewer.vue";
@@ -136,9 +136,8 @@ const editorConfig = reactive<EditorConfig>({
   tabSize: 2,
   autofocus: true,
   height: "50vh",
-  fontSize: "1.2rem",
-  language: 'json',
-  theme: isDark ? 'oneDark' : 'default'
+  fontSize: "1rem",
+  language: 'json'
 })
 
 const add = () => {

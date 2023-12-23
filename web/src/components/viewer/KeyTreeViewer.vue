@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {Delete, Document, DocumentCopy, Finished, Folder, InfoFilled, Search, Tickets} from "@element-plus/icons-vue";
-import {EditorConfig, KeyValueDTO, TreeNode} from "~/entitys/TransformTypes";
+import {EditorConfig, KeyValueDTO, TreeNode} from "~/common/Types";
 import {reactive} from "vue";
 import {isDark} from "~/composables";
 
@@ -33,9 +33,8 @@ const editorConfig = reactive<EditorConfig>({
   tabSize: 2,
   autofocus: false,
   height: "100%",
-  fontSize: "1.2rem",
-  language: 'json',
-  theme: isDark ? 'oneDark' : 'default'
+  fontSize: "1rem",
+  language: 'json'
 })
 
 watch(keySearch, (val) => {

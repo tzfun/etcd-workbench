@@ -1,10 +1,10 @@
 <script lang="ts" setup>
 import etcd from "~/assets/etcd.png"
 import {Ref, ref} from "vue";
-import {newSession, testSession} from "~/service";
-import {_isEmpty} from "~/util/Util";
+import {newSession, testSession} from "~/common/Service";
+import {_isEmpty} from "~/common/Util";
 import {ElMessage, UploadFile} from "element-plus";
-import {SessionConfig, SessionStoreConfig, SSHConfig} from "~/entitys/TransformTypes";
+import {SessionConfig, SessionStoreConfig, SSHConfig} from "~/common/Types";
 
 const emits = defineEmits(["connected", "save"])
 

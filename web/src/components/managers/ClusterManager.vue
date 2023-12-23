@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import {getCluster, getMemberStatus} from "~/service";
+import {getCluster, getMemberStatus} from "~/common/Service";
 import {Connection, Link, More, Refresh} from "@element-plus/icons-vue";
-import {MemberStatus} from "~/entitys/TransformTypes";
+import {MemberStatus} from "~/common/Types";
 
 const props = defineProps({
   sessionKey: String

@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import {reactive} from "vue";
-import {_isEmpty} from "~/util/Util";
-import {login} from "~/service";
-import {pushEvent} from "~/util/Event";
-import {setToken, setUser} from "~/store";
+import {_isEmpty} from "~/common/Util";
+import {login} from "~/common/Service";
+import {pushEvent} from "~/common/Event";
+import {setToken, setUser} from "~/common/Store";
 import {ElMessage} from "element-plus";
 
 const form = reactive({

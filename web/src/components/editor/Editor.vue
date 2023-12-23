@@ -1,14 +1,29 @@
 <script lang="ts" setup>
-import {EditorConfig} from "~/entitys/TransformTypes";
+import {EditorConfig} from "~/common/Types";
 import {computed, onMounted, reactive, shallowRef, watch} from "vue";
-import {oneDark} from "@codemirror/theme-one-dark";
+import {dracula, smoothy} from "./themes";
 import {EditorView, ViewUpdate} from "@codemirror/view";
 import {redo, undo} from "@codemirror/commands";
 import {Codemirror} from "vue-codemirror";
 import jsonLanguage from "./lang/json";
 import xmlLanguage from "./lang/xml";
 import yamlLanguage from "./lang/yaml";
-import {_byteFormat, _bytesToStr, _hexToStr, _strToBytes, _strToHex} from "~/util/Util";
+import {_byteFormat, _bytesToStr, _hexToStr, _strToBytes, _strToHex} from "~/common/Util";
+import {isDark} from "~/composables";
+
+const theme = ref(dracula)
+
+watch(
+    isDark,
+    (newVal, oldVal) => {
+      if (newVal) {
+        theme.value = dracula
+      } else {
+        theme.value = smoothy
+      }
+    },
+    {immediate: true}
+)
 
 const props = defineProps({
   config: {
@@ -21,7 +36,7 @@ const props = defineProps({
   }
 })
 
-const emits = defineEmits(["change","save"])
+const emits = defineEmits(["change", "save"])
 
 const allLanguages = reactive([
   'text',
@@ -58,7 +73,6 @@ const formatData = (content, newLang, curLang) => {
   return contentStr
 }
 
-const allTabSize = reactive([2, 4, 8])
 const code = shallowRef(formatData(props.code, props.config.language, 'text'))
 const extensions = computed(() => {
   const result = []
@@ -73,8 +87,7 @@ const extensions = computed(() => {
       result.push(yamlLanguage())
       break
   }
-
-  result.push(props.config.theme !== 'default' ? oneDark : void 0)
+  result.push(theme.value)
   return result
 })
 
@@ -177,21 +190,21 @@ defineExpose({
           />
         </el-select>
       </div>
-<!--      <div class="item">-->
-<!--        Tab Size:-->
-<!--        <el-select v-model="config.tabSize"-->
-<!--                   fit-input-width-->
-<!--                   style="width: 80px"-->
-<!--                   class="m-2"-->
-<!--                   placeholder="Select tab size">-->
-<!--          <el-option-->
-<!--              v-for="item in allTabSize"-->
-<!--              :key="item"-->
-<!--              :label="item"-->
-<!--              :value="item"-->
-<!--          />-->
-<!--        </el-select>-->
-<!--      </div>-->
+      <!--      <div class="item">-->
+      <!--        Tab Size:-->
+      <!--        <el-select v-model="config.tabSize"-->
+      <!--                   fit-input-width-->
+      <!--                   style="width: 80px"-->
+      <!--                   class="m-2"-->
+      <!--                   placeholder="Select tab size">-->
+      <!--          <el-option-->
+      <!--              v-for="item in allTabSize"-->
+      <!--              :key="item"-->
+      <!--              :label="item"-->
+      <!--              :value="item"-->
+      <!--          />-->
+      <!--        </el-select>-->
+      <!--      </div>-->
     </div>
     <div class="editor">
       <codemirror
@@ -219,11 +232,11 @@ defineExpose({
         <slot name="footerAppender"></slot>
         <div class="infos">
           <span class="item">Size: {{ size }}</span>
-<!--          <span class="item">Spaces: {{ config.tabSize }}</span>-->
-<!--          <span class="item">Length: {{ state.length }}</span>-->
-<!--          <span class="item">Lines: {{ state.lines }}</span>-->
-<!--          <span class="item">Cursor: {{ state.cursor }}</span>-->
-<!--          <span class="item">Selected: {{ state.selected }}</span>-->
+          <!--          <span class="item">Spaces: {{ config.tabSize }}</span>-->
+          <!--          <span class="item">Length: {{ state.length }}</span>-->
+          <!--          <span class="item">Lines: {{ state.lines }}</span>-->
+          <!--          <span class="item">Cursor: {{ state.cursor }}</span>-->
+          <!--          <span class="item">Selected: {{ state.selected }}</span>-->
         </div>
       </div>
     </div>

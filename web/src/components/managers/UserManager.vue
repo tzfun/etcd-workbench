@@ -7,9 +7,9 @@ import {
   listUser,
   userGrantRole,
   userRevokeRole
-} from "~/service";
+} from "~/common/Service";
 import {Delete, Lock, Plus, Refresh, Search, Unlock, UserFilled} from "@element-plus/icons-vue";
-import {_isEmpty} from "~/util/Util";
+import {_isEmpty} from "~/common/Util";
 import {ElMessage} from "element-plus";
 
 const props = defineProps({

@@ -1,10 +1,10 @@
 <script lang="ts" setup>
 
 import {ref} from "vue";
-import {heartBeat} from "~/service";
+import {heartBeat} from "~/common/Service";
 import {ElMessage} from "element-plus";
-import {_nonEmpty} from "~/util/Util";
-import {SessionDTO, SessionStoreConfig} from "~/entitys/TransformTypes";
+import {_nonEmpty} from "~/common/Util";
+import {SessionDTO, SessionStoreConfig} from "~/common/Types";
 import {CirclePlus, Close, Connection} from "@element-plus/icons-vue";
 import {
   deleteConf,
@@ -13,7 +13,7 @@ import {
   registerConfigListener,
   saveConf,
   unregisterConfigListener
-} from "~/Config";
+} from "~/common/Config";
 
 const emits = defineEmits(['change'])
 defineProps({

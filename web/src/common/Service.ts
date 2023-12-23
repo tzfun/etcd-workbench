@@ -1,9 +1,9 @@
 import request from '~/request'
-import {host} from "~/Config";
-import {SessionConfig, SessionStoreConfig} from "~/entitys/TransformTypes";
+import {host} from "~/common/Config";
+import {SessionConfig, SessionStoreConfig} from "~/common/Types";
 import {ResultData} from "~/request/type";
-import {_md5, _rsaEncryptPartly} from "~/util/Util";
-import {getToken} from "~/store";
+import {_md5, _rsaEncryptPartly} from "~/common/Util";
+import {getToken} from "~/common/Store";
 
 export const PRIVATE_API_PREFIX = "/beifengtz/pri"
 export const PUBLIC_API_PREFIX = "/beifengtz/pub"

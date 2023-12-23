@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {KeyDTO, KeyValueDTO} from "~/entitys/TransformTypes";
+import {KeyDTO, KeyValueDTO} from "~/common/Types";
 import {Delete, DocumentCopy, Edit, Finished, Search} from "@element-plus/icons-vue";
 import Editor from "~/components/editor/Editor.vue";
 

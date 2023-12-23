@@ -1,7 +1,7 @@
 import 'hacktimer'
 import { createApp } from "vue";
 import App from "./App.vue";
-import 'default-passive-events'
+// import 'default-passive-events'
 
 // import "~/styles/element/index.scss";
 

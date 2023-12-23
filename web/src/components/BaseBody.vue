@@ -1,12 +1,12 @@
 <script lang="ts" setup>
-import {isDark} from "~/composables";
+import {isDark, toggleDark} from "~/composables";
 import {ref} from 'vue'
 import type {TabPaneName} from 'element-plus'
-import {checkLogin, closeSession} from "~/service";
-import {EventListener, pushEvent, registerEventListener} from "~/util/Event";
-import {unregisterConfigListener} from "~/Config";
-import {clearLoginStatus, getUser} from "~/store";
-import {_nonEmpty} from "~/util/Util";
+import {checkLogin, closeSession} from "~/common/Service";
+import {EventListener, pushEvent, registerEventListener} from "~/common/Event";
+import {unregisterConfigListener} from "~/common/Config";
+import {clearLoginStatus, getUser} from "~/common/Store";
+import {_nonEmpty} from "~/common/Util";
 import {Moon, Sunny} from "@element-plus/icons-vue";
 import etcd from "~/assets/etcd.png";
 

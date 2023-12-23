@@ -1,5 +1,5 @@
-import {SessionStoreConfig, SessionStoreConfigDict} from "~/entitys/TransformTypes";
-import {deleteConfig, listConfig, saveConfig} from "~/service";
+import {SessionStoreConfig, SessionStoreConfigDict} from "~/common/Types";
+import {deleteConfig, listConfig, saveConfig} from "~/common/Service";
 
 export const host = import.meta.env.MODE === "test" ? "http://127.0.0.1:8002" : ""
 

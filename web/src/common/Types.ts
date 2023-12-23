@@ -18,7 +18,6 @@ export type EditorConfig = {
     autofocus: boolean
     height: string | 'auto'
     language: string
-    theme: string,
     fontSize: string,
 }
 

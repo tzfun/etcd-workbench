@@ -1,5 +1,5 @@
-import {clearAllConf} from "~/Config";
-import {pushEvent} from "~/util/Event";
+import {clearAllConf} from "~/common/Config";
+import {pushEvent} from "~/common/Event";
 
 let data = {
     user: <string | null>null,
