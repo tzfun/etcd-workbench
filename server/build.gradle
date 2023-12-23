@@ -40,7 +40,7 @@ compileJava {
 
 task copyJar(type: Copy) {
     delete "$buildDir/libs/*"
-    from configurations.compileClasspath
+    from configurations.compile
     into "$buildDir/libs"
 }
 
