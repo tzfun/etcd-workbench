@@ -3,12 +3,12 @@ import {copyAndSave, deleteKey, getAllKeys, getKV, getKVHistory, putKV} from "~/
 import {Delete, DocumentAdd, Refresh, Switch} from "@element-plus/icons-vue";
 import {EditorConfig, KeyDTO, KeyValueDTO, TreeNode} from "~/common/Types";
 import Editor from "~/components/editor/Editor.vue";
-import {isDark} from "~/composables";
 import {reactive} from "vue";
 import {_isEmpty, _parseCodeLanguage} from "~/common/Util";
 import {CodeDiff} from "v-code-diff";
 import KeyTableViewer from "~/components/viewer/KeyTableViewer.vue";
 import KeyTreeViewer from "~/components/viewer/KeyTreeViewer.vue";
+import {isDark} from "~/composables";
 
 const editorRef = ref()
 const treeViewerRef = ref<InstanceType<typeof KeyTreeViewer>>()
@@ -588,6 +588,7 @@ const confirmCopyAndSave = () => {
           :old-string="versionDiffInfo.versionAContent"
           :new-string="versionDiffInfo.versionBContent"
           :file-name="versionDiffInfo.key"
+          :theme="isDark ? 'dark' : 'light'"
           output-format="side-by-side"/>
     </el-dialog>
 

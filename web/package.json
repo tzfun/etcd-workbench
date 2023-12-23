@@ -22,7 +22,7 @@
     "js-md5": "^0.8.3",
     "jsencrypt": "^3.3.2",
     "thememirror": "^2.0.1",
-    "v-code-diff": "^1.5.1",
+    "v-code-diff": "^1.8.0",
     "vue": "^3.3.4",
     "vue-codemirror": "^6.1.1"
   },
