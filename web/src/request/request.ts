@@ -64,22 +64,22 @@ const handleResponseCode = (res: ResultData, notifyError: boolean | undefined = 
     let msg = null
     switch (res.code) {
         case 10001:
-            msg = res.msg ? res.msg : "Invalid key file!"
+            msg = res.msg ? res.msg : "Invalid key file"
             break
         case 10002:
-            msg = res.msg ? res.msg : "Connect error!"
+            msg = res.msg ? res.msg : "Connect error"
             break
         case 10003:
-            msg = res.msg ? res.msg : "Etcd server error!"
+            msg = res.msg ? res.msg : "Etcd server error"
             break
         case 10004:
-            msg = res.msg ? res.msg : "Format error!"
+            msg = res.msg ? res.msg : "Format error"
             break
         case 10005:
-            msg = res.msg ? res.msg : "Not supported operation!"
+            msg = res.msg ? res.msg : "Not supported operation"
             break
         case 10006:
-            msg = res.msg ? res.msg : "Please login!"
+            msg = res.msg ? res.msg : "Please login"
             break
     }
     if (_nonEmpty(msg as string) && notifyError) {

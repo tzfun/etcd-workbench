@@ -23,11 +23,6 @@ const tryLogin = () => {
     setToken(token)
     pushEvent('loginSuccess')
   }).catch((e: any) => {
-    ElMessage({
-      message: e,
-      type: "warning",
-      duration: 1500,
-    });
   })
 }
 </script>

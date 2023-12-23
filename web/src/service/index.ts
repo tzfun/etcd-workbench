@@ -3,6 +3,7 @@ import {host} from "~/Config";
 import {SessionConfig, SessionStoreConfig} from "~/entitys/TransformTypes";
 import {ResultData} from "~/request/type";
 import {_md5, _rsaEncryptPartly} from "~/util/Util";
+import {getToken, isLogin} from "~/store";
 
 export const PRIVATE_API_PREFIX = "/beifengtz/pri"
 export const PUBLIC_API_PREFIX = "/beifengtz/pub"
@@ -331,4 +332,15 @@ export function login(user: string, password: string): Promise<any> {
         user: user,
         code: code
     })
+}
+
+export function checkLogin(): Promise<any> {
+    if (isLogin()) {
+        const token = getToken()
+        return request.post(host + PUBLIC_API_PREFIX + "/auth/check_login", {
+            token: token
+        })
+    } else {
+        return new Promise(resolve => resolve(true))
+    }
 }

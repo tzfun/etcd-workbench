@@ -10,6 +10,7 @@ import org.beifengtz.etcd.server.entity.TokenPayload;
 import org.beifengtz.etcd.server.entity.vo.ResultVO;
 import org.beifengtz.jvmm.common.util.FileUtil;
 import org.beifengtz.jvmm.common.util.SignatureUtil;
+import org.beifengtz.jvmm.common.util.StringUtil;
 import org.beifengtz.jvmm.convey.annotation.HttpController;
 import org.beifengtz.jvmm.convey.annotation.HttpRequest;
 import org.beifengtz.jvmm.convey.annotation.RequestParam;
@@ -66,6 +67,9 @@ public class AuthController {
      * @return user
      */
     public static String verifyToken(String token) {
+        if (StringUtil.isEmpty(token)) {
+            throw new IllegalStateException();
+        }
         TokenPayload payload = TOKEN_CACHE.getIfPresent(token);
         if (payload == null) {
             throw new IllegalStateException();
@@ -82,7 +86,7 @@ public class AuthController {
         if (Configuration.INSTANCE.isEnableAuth()) {
             String password = Configuration.INSTANCE.getUsers().get(user);
             if (password == null) {
-                return ResultCode.LOGIN_FAILED.result();
+                return ResultCode.LOGIN_FAILED.result("Incorrect username or password",null);
             }
             if (Objects.equals(SignatureUtil.MD5(user + "," + password), code)) {
                 TokenPayload payload = new TokenPayload();
@@ -96,10 +100,23 @@ public class AuthController {
                 TOKEN_CACHE.put(token, payload);
                 return ResultCode.OK.result(token);
             } else {
-                return ResultCode.LOGIN_FAILED.result();
+                return ResultCode.LOGIN_FAILED.result("Incorrect username or password", null);
             }
         } else {
             return ResultCode.NOT_SUPPORTED.result();
         }
+    }
+
+    @HttpRequest(value = Mapping.PUBLIC_API_PREFIX + "/auth/check_login", method = Method.POST)
+    public ResultVO checkLogin(@RequestParam String token) throws Exception {
+        boolean needLogin = false;
+        if (Configuration.INSTANCE.isEnableAuth()) {
+            try {
+                verifyToken(token);
+            } catch (IllegalStateException e) {
+                needLogin = true;
+            }
+        }
+        return ResultCode.OK.result(needLogin);
     }
 }
