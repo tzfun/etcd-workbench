@@ -116,6 +116,34 @@ The working directory of the image is in `/usr/tzfun/etcd-workbench`, and its di
 
 # Screenshot
 
+This tool provides two themes: dark and light
+
+![connector-light](screenshot/connector-light.jpg)
+![connector-dark](screenshot/connector.jpg)
+
+Cluster manager
+
+![cluster-manager](screenshot/cluster-manager.jpg)
+
+Key manager
+![key-manager-table](screenshot/key-manager-table.jpg)
+
+Provide tree view
+![key-manager-tree](screenshot/key-manager-tree.jpg)
+
+Key editor
+![key-editor](screenshot/key-editor.jpg)
+
+Provide version comparison
+![key-diff](screenshot/key-diff.jpg)
+
+User manager
+![user-manager](screenshot/user-manager.jpg)
+
+Role manager
+![role-manager](screenshot/role-manager.jpg)
+![role-permission](screenshot/role-permission.jpg)
+
 # License
 
 [Apache License 2.0](LICENSE)

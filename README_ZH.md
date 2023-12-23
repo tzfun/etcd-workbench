@@ -116,6 +116,33 @@ docker run \
 
 # 截图
 
+本工具提供黑色和白色两种主题
+
+![connector-light](screenshot/connector-light.jpg)
+![connector-dark](screenshot/connector.jpg)
+
+集群管理
+![cluster-manager](screenshot/cluster-manager.jpg)
+
+Key管理
+![key-manager-table](screenshot/key-manager-table.jpg)
+
+提供树状试图
+![key-manager-tree](screenshot/key-manager-tree.jpg)
+
+Key编辑器
+![key-editor](screenshot/key-editor.jpg)
+
+支持版本对比
+![key-diff](screenshot/key-diff.jpg)
+
+用户管理
+![user-manager](screenshot/user-manager.jpg)
+
+角色管理
+![role-manager](screenshot/role-manager.jpg)
+![role-permission](screenshot/role-permission.jpg)
+
 # License
 
 [Apache License 2.0](LICENSE)
