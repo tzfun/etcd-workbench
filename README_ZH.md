@@ -86,6 +86,8 @@ java -jar etcd-workbench.jar
 
 ## Docker中部署
 
+Docker hub仓库地址：[https://hub.docker.com/r/tzfun/etcd-workbench](https://hub.docker.com/r/tzfun/etcd-workbench)
+
 拉取Docker镜像
 
 ```shell

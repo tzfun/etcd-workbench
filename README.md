@@ -86,6 +86,8 @@ Access `http://localhost:8002` in browser.
 
 ## Run in Docker
 
+Docker hub repository address: [https://hub.docker.com/r/tzfun/etcd-workbench](https://hub.docker.com/r/tzfun/etcd-workbench)
+
 Pull the Docker image:
 
 ```shell
