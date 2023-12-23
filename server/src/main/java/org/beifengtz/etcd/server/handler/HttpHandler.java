@@ -17,6 +17,7 @@ import org.beifengtz.etcd.server.config.ResultCode;
 import org.beifengtz.etcd.server.controller.AuthController;
 import org.beifengtz.jvmm.common.util.IOUtil;
 import org.beifengtz.jvmm.common.util.StringUtil;
+import org.beifengtz.jvmm.convey.channel.ChannelUtil;
 import org.beifengtz.jvmm.convey.handler.HttpChannelHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,17 +41,20 @@ import java.util.concurrent.TimeoutException;
  */
 public class HttpHandler extends HttpChannelHandler {
 
+    private static final Logger logger = LoggerFactory.getLogger(HttpHandler.class);
+
     public static final AttributeKey<String> ATTR_USER = AttributeKey.valueOf("user");
 
     static {
         globalHeaders.remove(HttpHeaderNames.ACCESS_CONTROL_ALLOW_HEADERS);
         globalHeaders.put(HttpHeaderNames.ACCESS_CONTROL_ALLOW_HEADERS, "content-type,authorization");
         globalHeaders.put(HttpHeaderNames.ACCESS_CONTROL_ALLOW_ORIGIN, "*");
+        logger.info("Initialization of http handler is completed");
     }
 
     @Override
     public Logger logger() {
-        return LoggerFactory.getLogger(HttpHandler.class);
+        return logger;
     }
 
     @Override
@@ -96,6 +100,7 @@ public class HttpHandler extends HttpChannelHandler {
                 ctx.channel().attr(ATTR_USER).set(Configuration.DEFAULT_SYSTEM_USER);
             }
         }
+        logger.info("Http request {} {} ({})", msg.method(),uri, ChannelUtil.getIpByCtx(ctx));
         return true;
     }
 
@@ -145,13 +150,13 @@ public class HttpHandler extends HttpChannelHandler {
     @Override
     protected void handleException(ChannelHandlerContext ctx, FullHttpRequest req, Throwable e) {
         if (e instanceof InvalidKeySpecException || e instanceof NoSuchAlgorithmException) {
-            logger().error(e.getMessage(), e);
+            logger.error(e.getMessage(), e);
             response(ctx, HttpResponseStatus.OK, ResultCode.INVALID_KEY.result("Invalid key spec: " + (e.getMessage() == null ? "" : e.getMessage()), false).toString());
         } else if (e instanceof TimeoutException) {
-            logger().debug(e.getMessage(), e);
+            logger.debug(e.getMessage(), e);
             response(ctx, HttpResponseStatus.OK, ResultCode.CONNECT_ERROR.result("Connect timeout " + e.getMessage(), null).toString());
         } else if (e instanceof IllegalArgumentException) {
-            logger().debug(e.getMessage(), e);
+            logger.debug(e.getMessage(), e);
             response(ctx, HttpResponseStatus.BAD_REQUEST);
         } else {
             super.handleException(ctx, req, e);

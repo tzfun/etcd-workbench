@@ -3,7 +3,7 @@ import {host} from "~/Config";
 import {SessionConfig, SessionStoreConfig} from "~/entitys/TransformTypes";
 import {ResultData} from "~/request/type";
 import {_md5, _rsaEncryptPartly} from "~/util/Util";
-import {getToken, isLogin} from "~/store";
+import {getToken} from "~/store";
 
 export const PRIVATE_API_PREFIX = "/beifengtz/pri"
 export const PUBLIC_API_PREFIX = "/beifengtz/pub"
@@ -27,7 +27,7 @@ export function newSession(data: SessionConfig) {
                     }).then(rd => {
                         resolve(rd)
                     }).catch(e => {
-                        resolve(e)
+                        reject(e)
                     })
                 } else {
                     reject("Signature error")
@@ -306,7 +306,7 @@ export function saveConfig(config: SessionStoreConfig): Promise<any> {
                     }).then(key => {
                         resolve(key)
                     }).catch(e => {
-                        resolve(e)
+                        reject(e)
                     })
                 } else {
                     reject("Signature error")
@@ -335,10 +335,5 @@ export function login(user: string, password: string): Promise<any> {
 }
 
 export function checkLogin(): Promise<any> {
-    if (isLogin()) {
-        const token = getToken()
-        return request.post(host + PUBLIC_API_PREFIX + "/auth/check_login", token)
-    } else {
-        return new Promise(resolve => resolve(true))
-    }
+    return request.post(host + PUBLIC_API_PREFIX + "/auth/check_login", getToken())
 }

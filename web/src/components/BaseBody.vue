@@ -12,13 +12,20 @@ import etcd from "~/assets/etcd.png";
 
 let tabIndex = 1
 const curTab = ref('1')
-const status = ref<'login' | 'main'>('login')
+const needLogin = ref(false)
+const status = ref<'login' | 'main' | 'none'>('none')
 const eventListener = ref<EventListener>()
 const user = ref()
 const etcdLogo = ref(etcd)
 
 onBeforeMount(async () => {
-  status.value = (await checkLogin() ? 'login' : 'main')
+  const result = await checkLogin()
+  if (result[0]) {
+    needLogin.value = true
+    status.value = (result[1] ? 'login' : 'main')
+  } else {
+    status.value = 'main'
+  }
 })
 
 onMounted(() => {
@@ -157,13 +164,16 @@ const handleSelectHeader = (key: string) => {
         <!--            @click="toggleDark()">-->
         <!--          <i inline-flex i="dark:ep-moon ep-sunny"/>-->
         <!--        </button>-->
-        <el-sub-menu index="user" v-if="_nonEmpty(user)">
-          <template #title>{{ user }}</template>
-          <el-menu-item index="logout">Sign out</el-menu-item>
-        </el-sub-menu>
-        <el-menu-item index="login" v-else>
-          Sign in
-        </el-menu-item>
+        <div v-if="needLogin">
+          <el-sub-menu index="user" v-if="_nonEmpty(user)">
+            <template #title>{{ user }}</template>
+            <el-menu-item index="logout">Sign out</el-menu-item>
+          </el-sub-menu>
+          <el-menu-item index="login" v-else>
+            Sign in
+          </el-menu-item>
+        </div>
+
       </el-menu>
 
     </div>

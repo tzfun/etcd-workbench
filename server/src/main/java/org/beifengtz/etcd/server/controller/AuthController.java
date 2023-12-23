@@ -87,7 +87,7 @@ public class AuthController {
         if (Configuration.INSTANCE.isEnableAuth()) {
             String password = Configuration.INSTANCE.getUsers().get(user);
             if (password == null) {
-                return ResultCode.LOGIN_FAILED.result("Incorrect username or password",null);
+                return ResultCode.LOGIN_FAILED.result("Incorrect username or password", null);
             }
             if (Objects.equals(SignatureUtil.MD5(user + "," + password), code)) {
                 TokenPayload payload = new TokenPayload();
@@ -110,14 +110,15 @@ public class AuthController {
 
     @HttpRequest(value = Mapping.PUBLIC_API_PREFIX + "/auth/check_login", method = Method.POST)
     public ResultVO checkLogin(@RequestBody String token) throws Exception {
-        boolean needLogin = false;
-        if (Configuration.INSTANCE.isEnableAuth()) {
+        boolean[] result = new boolean[2];
+        result[0] = Configuration.INSTANCE.isEnableAuth();
+        if (result[0]) {
             try {
                 verifyToken(token);
             } catch (IllegalStateException e) {
-                needLogin = true;
+                result[1] = true;
             }
         }
-        return ResultCode.OK.result(needLogin);
+        return ResultCode.OK.result(result);
     }
 }
