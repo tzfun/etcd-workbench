@@ -102,9 +102,12 @@ public class HttpHandler extends HttpChannelHandler {
             }
         }
 
-        String sendIp = ChannelUtil.getIpByCtx(ctx);
-        String srcIp = CommonUtil.getHttpRealIp(msg);
-        logger.info("Http request {} {} ({} / {})", msg.method(), uri, sendIp, srcIp);
+        if (uri == null || !uri.endsWith("heart_beat")) {
+            String sendIp = ChannelUtil.getIpByCtx(ctx);
+            String srcIp = CommonUtil.getHttpRealIp(msg);
+            logger.info("Http request {} {} ({} / {})", msg.method(), uri, sendIp, srcIp);
+        }
+
         return true;
     }
 

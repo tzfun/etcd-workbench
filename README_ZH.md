@@ -136,7 +136,7 @@ docker run \
 Key管理
 ![key-manager-table](screenshot/key-manager-table.jpg)
 
-提供树状试图
+提供树状视图
 ![key-manager-tree](screenshot/key-manager-tree.jpg)
 
 Key编辑器
