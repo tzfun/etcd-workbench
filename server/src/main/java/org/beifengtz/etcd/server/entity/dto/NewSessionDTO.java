@@ -11,7 +11,6 @@ import lombok.Data;
 @Data
 public class NewSessionDTO {
     private String namespace;
-    private String protocol;
     private String host;
     private int port;
     private String user;

@@ -87,29 +87,14 @@ public class EtcdConnectorFactory {
             data.setHost(sshContext.getProxyLocalHost());
         }
         ClientBuilder builder = Client.builder().keepaliveWithoutCalls(false);
-
+        String caType = data.getCaType().toLowerCase();
         String target;
-        if (IPNameResolver.SCHEME.equals(data.getProtocol())) {
-            target = data.getProtocol() + ":///" + data.getHost() + ":" + data.getPort();
-        } else {
-            target = data.getProtocol() + "://" + data.getHost() + ":" + data.getPort();
-        }
-
-        builder.executorService(ExecutorFactory.getThreadPool())
-                .target(target)
-                .namespace(data.getNamespace() == null ? ByteSequence.EMPTY : CommonUtil.toByteSequence(data.getNamespace()));
-        if (StringUtil.nonEmpty(data.getUser())) {
-            builder.user(CommonUtil.toByteSequence(data.getUser()));
-        }
-        if (StringUtil.nonEmpty(data.getPassword())) {
-            builder.password(CommonUtil.toByteSequence(data.getPassword()));
-        }
         SslContext ssl = null;
         ApplicationProtocolConfig alpn = new ApplicationProtocolConfig(ApplicationProtocolConfig.Protocol.ALPN,
                 ApplicationProtocolConfig.SelectorFailureBehavior.NO_ADVERTISE,
                 ApplicationProtocolConfig.SelectedListenerFailureBehavior.ACCEPT,
                 ApplicationProtocolNames.HTTP_2);
-        switch (data.getCaType().toLowerCase()) {
+        switch (caType) {
             case "custom": {
                 File caFile = new File("temp", UUID.randomUUID().toString());
                 File certFile = new File("temp", UUID.randomUUID().toString());
@@ -139,6 +124,7 @@ public class EtcdConnectorFactory {
                     FileUtil.delFile(certFile);
                     FileUtil.delFile(certKeyFile);
                 }
+                target = "https://" + data.getHost() + ":" + data.getPort();
                 break;
             }
             case "public": {
@@ -147,12 +133,31 @@ public class EtcdConnectorFactory {
                         .applicationProtocolConfig(alpn)
                         .trustManager(InsecureTrustManagerFactory.INSTANCE)
                         .build();
+                target = "https://" + data.getHost() + ":" + data.getPort();
                 break;
+            }
+            default:{
+                if (data.getHost().matches("\\d+\\.\\d+\\.\\d+\\.\\d+")){
+                    target = IPNameResolver.SCHEME + ":///" + data.getHost() + ":" + data.getPort();
+                } else {
+                    target = "http://" + data.getHost() + ":" + data.getPort();
+                }
             }
         }
         if (ssl != null) {
             builder.sslContext(ssl);
         }
+
+        builder.executorService(ExecutorFactory.getThreadPool())
+                .target(target)
+                .namespace(data.getNamespace() == null ? ByteSequence.EMPTY : CommonUtil.toByteSequence(data.getNamespace()));
+        if (StringUtil.nonEmpty(data.getUser())) {
+            builder.user(CommonUtil.toByteSequence(data.getUser()));
+        }
+        if (StringUtil.nonEmpty(data.getPassword())) {
+            builder.password(CommonUtil.toByteSequence(data.getPassword()));
+        }
+
         return new EtcdConnector(builder.build(), sshContext);
     }
 

@@ -46,7 +46,6 @@ export interface SSHConfig {
 
 export interface SessionConfig extends Record<string, any> {
     namespace: string | ''
-    protocol: string
     host: string
     port: number
     user?: string

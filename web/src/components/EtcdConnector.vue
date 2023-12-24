@@ -17,7 +17,6 @@ const certKeyFile = ref<UploadFile>()
 const sshKeyFile = ref<UploadFile>()
 const defaultForm = {
   name: 'localhost',
-  protocol: 'http',
   host: '127.0.0.1',
   port: 2379,
   namespace: '',
@@ -69,7 +68,6 @@ const _packFormData = async (): Promise<SessionConfig> => {
   } else {
     data.host = form.value.host
     data.port = form.value.port
-    data.protocol = form.value.protocol
     if (form.value.enableFunc.auth) {
       data.user = form.value.auth.username
       data.password = form.value.auth.password
@@ -219,7 +217,6 @@ const _saveSessionConfig = () => {
     const sessionConfig: SessionStoreConfig = {
       enableFunc: form.value.enableFunc,
       name: form.value.name,
-      protocol: form.value.protocol,
       host: form.value.host,
       port: form.value.port,
       namespace: data.namespace,
@@ -247,7 +244,6 @@ const _saveSessionConfig = () => {
 const loadSessionConfig = (config: SessionStoreConfig) => {
   _resetForm()
   form.value.name = config.name
-  form.value.protocol = config.protocol
   form.value.enableFunc = config.enableFunc
       ? config.enableFunc
       : {
@@ -328,13 +324,6 @@ defineExpose({
       <el-form reg="connectionForm" v-model="form" :label-width="160" label-suffix=":" label-position="left">
         <el-form-item label="Session Name">
           <el-input v-model="form.name" placeholder="Please input session name"/>
-        </el-form-item>
-        <el-form-item label="Protocol" placeholder="Please select connect protocol">
-          <el-select v-model="form.protocol">
-            <el-option label="ip" value="ip"/>
-            <el-option label="http" value="http"/>
-            <el-option label="https" value="https"/>
-          </el-select>
         </el-form-item>
         <el-form-item label="Host">
           <el-input v-model="form.host" placeholder="Please input connect host"/>
