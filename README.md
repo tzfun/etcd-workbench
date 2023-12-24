@@ -28,7 +28,7 @@ Access [http://etcd.beifengtz.com](http://etcd.beifengtz.com)
 
 ## Private Deployment
 
-First, make sure your local environment has JDK 11 or above, download the latest jar package and execute:
+First, make sure your local environment has JDK 11 or above, download the latest jar package from [release](https://github.com/tzfun/etcd-workbench/releases) and execute:
 
 ```shell
 java -jar etcd-workbench.jar
@@ -82,7 +82,7 @@ printers = std,file
 
 ## Run in Local
 
-First, make sure that your local environment has the **JDK 11+** version, download the latest jar package, and place the configuration file `etcd-workbench.conf` in the same directory as the jar package to take effect. Execute startup:
+First, make sure that your local environment has the **JDK 11+** version, download the latest jar package from [release](https://github.com/tzfun/etcd-workbench/releases), and place the configuration file `etcd-workbench.conf` in the same directory as the jar package to take effect. Execute startup:
 
 ```shell
 java -jar etcd-workbench.jar

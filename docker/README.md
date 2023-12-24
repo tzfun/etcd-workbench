@@ -36,7 +36,7 @@ Then access `http://localhost:8002` in browser.
 
 ## Custom configuration
 
-You just need to replace the default configuration file. Configuration please see [etcd-workbench.conf](https://raw.githubusercontent.com/tzfun/etcd-workbench/master/server/src/main/resources/etcd-workbench.conf)
+You just need to replace the default configuration file. Please view the configuration file from [etcd-workbench.conf](https://raw.githubusercontent.com/tzfun/etcd-workbench/master/server/src/main/resources/etcd-workbench.conf)
 
 ```shell
 docker run \

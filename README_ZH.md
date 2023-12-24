@@ -11,7 +11,7 @@
 # 为什么选择它？
 
 1. 官方的客户端工具支持功能少，在线编辑效果差，本工具提供了SSH tunnel、在线代码编辑、版本对比、快捷复制等功能，让配置中心管理更高效！
-2. 大部分好用的第三方工具需要收费，扎了免费党的心💔
+2. 大部分好用的第三方工具需要收费💔
 3. 本工具完全开源免费！
 
 # 快速体验
@@ -28,7 +28,7 @@
 
 ## 私有部署
 
-首先需确保你的本地环境拥有 JDK 11及以上的版本，下载最新的 jar 包后执行：
+首先需确保你的本地环境拥有 JDK 11及以上的版本，前往 [release](https://github.com/tzfun/etcd-workbench/releases) 下载最新的 jar 包后执行：
 
 ```shell
 java -jar etcd-workbench.jar
@@ -82,7 +82,7 @@ printers = std,file
 
 ## 本地部署
 
-首先需确保你的本地环境拥有 **JDK 11+** 的版本，下载最新的 jar 包，将配置文件 `etcd-workbench.conf` 放到和 jar 包同级目录即可生效，执行启动：
+首先需确保你的本地环境拥有 **JDK 11+** 的版本，前往 [release](https://github.com/tzfun/etcd-workbench/releases) 下载最新的 jar 包，将配置文件 `etcd-workbench.conf` 放到和 jar 包同级目录即可生效，执行启动：
 
 ```shell
 java -jar etcd-workbench.jar
