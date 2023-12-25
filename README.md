@@ -6,7 +6,7 @@
 
 # Etcd Workbench
 
-A beautiful, lightweight, privately deployable ETCD client that supports SSL, SSH Tunnel connections, and multi-account session management.
+A beautiful, lightweight, privately deployable ETCD V3 client that supports SSL, SSH Tunnel connections, and multi-account session management.
 
 # Why choose it?
 

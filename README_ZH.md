@@ -6,7 +6,7 @@
 
 # Etcd Workbench
 
-一个漂亮的、轻量的、可私有化部署的 ETCD 客户端，支持SSL、SSH Tunnel连接，支持多账户 session 管理。
+一个漂亮的、轻量的、可私有化部署的 ETCD V3 客户端，支持SSL、SSH Tunnel连接，支持多账户 session 管理。
 
 # 为什么选择它？
 
