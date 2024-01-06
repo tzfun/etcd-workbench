@@ -11,6 +11,8 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.AsciiString;
 import io.netty.util.AttributeKey;
+import io.netty.util.internal.logging.InternalLogger;
+import io.netty.util.internal.logging.InternalLoggerFactory;
 import org.beifengtz.etcd.server.config.Configuration;
 import org.beifengtz.etcd.server.config.Mapping;
 import org.beifengtz.etcd.server.config.ResultCode;
@@ -42,7 +44,7 @@ import java.util.concurrent.TimeoutException;
  */
 public class HttpHandler extends HttpChannelHandler {
 
-    private static final Logger logger = LoggerFactory.getLogger(HttpHandler.class);
+    private static final InternalLogger logger = InternalLoggerFactory.getInstance(HttpHandler.class);
 
     public static final AttributeKey<String> ATTR_USER = AttributeKey.valueOf("user");
 
@@ -54,7 +56,7 @@ public class HttpHandler extends HttpChannelHandler {
     }
 
     @Override
-    public Logger logger() {
+    public InternalLogger logger() {
         return logger;
     }
 
@@ -109,6 +111,11 @@ public class HttpHandler extends HttpChannelHandler {
         }
 
         return true;
+    }
+
+    @Override
+    protected void handleFinally(ChannelHandlerContext ctx, FullHttpRequest msg) {
+
     }
 
     @Override

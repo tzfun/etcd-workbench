@@ -61,7 +61,6 @@ public class EtcdTest {
         NewSessionDTO config = new NewSessionDTO();
         config.setHost("127.0.0.1");
         config.setPort(2379);
-        config.setProtocol("ip");
 
         EtcdConnector connector = EtcdConnectorFactory.newConnector(config);
         GetOption option = GetOption.newBuilder()
@@ -92,7 +91,6 @@ public class EtcdTest {
     @Test
     public void testSshTunnelConnect() throws Exception {
         NewSessionDTO config = new NewSessionDTO();
-        config.setProtocol("http");
         config.setHost("127.0.0.1");
         config.setPort(2379);
         config.setNamespace("xxxx");
