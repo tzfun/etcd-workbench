@@ -2,6 +2,7 @@ package org.beifengtz.etcd.server;
 
 import org.beifengtz.etcd.server.config.Configuration;
 import org.beifengtz.etcd.server.service.HttpService;
+import org.beifengtz.jvmm.common.util.CommonUtil;
 import org.beifengtz.jvmm.common.util.IOUtil;
 import org.beifengtz.jvmm.common.util.StringUtil;
 import org.beifengtz.jvmm.common.util.SystemPropertyUtil;
@@ -20,15 +21,13 @@ import java.nio.file.Files;
  */
 public class EtcdServer {
 
-    private static final String JVMM_VERSION = "2.2.0";
-
     private static void loadBanner() throws Exception {
         InputStream is = EtcdServer.class.getResourceAsStream("/banner.txt");
         if (is != null) {
             System.out.print(IOUtil.toString(is));
         }
         System.out.print("Powered by \u001b[0m\u001b[92mJVMM\u001b[0m\u001b[96m(https://github.com/tzfun/jvmm)\u001b[0m\n");
-        System.out.printf("Framework version: \u001b[0m\u001b[93m%s\u001b[0m\n\n", JVMM_VERSION);
+        System.out.printf("Framework version: \u001b[0m\u001b[93m%s\u001b[0m\n\n", CommonUtil.getJvmmVersion());
     }
 
     private static void loadConfiguration() throws Exception {

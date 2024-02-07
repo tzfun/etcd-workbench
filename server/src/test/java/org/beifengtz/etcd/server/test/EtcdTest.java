@@ -1,6 +1,5 @@
 package org.beifengtz.etcd.server.test;
 
-import com.jcraft.jsch.Session;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.KV;
@@ -8,7 +7,6 @@ import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.options.GetOption;
 import io.netty.handler.ssl.ApplicationProtocolConfig;
 import io.netty.handler.ssl.ApplicationProtocolNames;
-import org.beifengtz.etcd.server.entity.bo.SessionBO;
 import org.beifengtz.etcd.server.entity.dto.NewSessionDTO;
 import org.beifengtz.etcd.server.entity.dto.SshDTO;
 import org.beifengtz.etcd.server.etcd.EtcdConnector;
