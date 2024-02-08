@@ -2,7 +2,7 @@
 import {isDark, toggleDark} from "~/composables";
 import {ref} from 'vue'
 import type {TabPaneName} from 'element-plus'
-import {checkLogin, closeSession} from "~/common/Service";
+import {_checkLogin, _closeSession} from "~/common/Service";
 import {EventListener, pushEvent, registerEventListener} from "~/common/Event";
 import {unregisterConfigListener} from "~/common/Config";
 import {clearLoginStatus, getUser} from "~/common/Store";
@@ -19,7 +19,7 @@ const user = ref()
 const etcdLogo = ref(etcd)
 
 onBeforeMount(async () => {
-  const result = await checkLogin()
+  const result = await _checkLogin()
   if (result[0]) {
     needLogin.value = true
     status.value = (result[1] ? 'login' : 'main')
@@ -80,7 +80,7 @@ const tabRemove = (targetName: TabPaneName) => {
   }
   if (idx >= 0) {
     if (tab.state !== 'new') {
-      closeSession(tab.sessionKey)
+      _closeSession(tab.sessionKey)
     }
     const nextTab = tabs.value[idx + 1] || tabs.value[idx - 1]
     tabs.value.splice(idx, 1)

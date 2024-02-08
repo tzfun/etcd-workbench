@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 
 import {ref} from "vue";
-import {heartBeat} from "~/common/Service";
+import {_heartBeat} from "~/common/Service";
 import {ElMessage} from "element-plus";
 import {_nonEmpty} from "~/common/Util";
 import {SessionDTO, SessionStoreConfig} from "~/common/Types";
@@ -60,7 +60,7 @@ const onNewSession = ({sessionInfo, name}) => {
   })
   heartBeatId.value = setInterval(() => {
     if (state.value != 'new') {
-      heartBeat(key).catch(e => {
+      _heartBeat(key).catch(e => {
         if (state.value !== 'new') {
           onSessionClosed()
           if (_nonEmpty(e)) {

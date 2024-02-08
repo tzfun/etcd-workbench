@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import etcd from "~/assets/etcd.png"
 import {Ref, ref} from "vue";
-import {newSession, testSession} from "~/common/Service";
+import {_newSession, _testSession} from "~/common/Service";
 import {_isEmpty} from "~/common/Util";
 import {ElMessage, UploadFile} from "element-plus";
 import {SessionConfig, SessionStoreConfig, SSHConfig} from "~/common/Types";
@@ -180,7 +180,7 @@ const _resetForm = () => {
 
 const _testConnect = () => {
   _packFormData().then(formData => {
-    testSession(formData).then(res => {
+    _testSession(formData).then(res => {
       ElMessage({
         showClose: true,
         message: "Connect successful!",
@@ -198,7 +198,7 @@ const _testConnect = () => {
 
 const _connect = () => {
   _packFormData().then(formData => {
-    newSession(formData).then(res => {
+    _newSession(formData).then(res => {
       console.log(res)
       emits('connected', {sessionInfo: res, name: form.value.name})
     })

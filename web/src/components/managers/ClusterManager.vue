@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {getCluster, getMemberStatus} from "~/common/Service";
+import {_getCluster, _getMemberStatus} from "~/common/Service";
 import {Connection, Link, More, Refresh} from "@element-plus/icons-vue";
 import {MemberStatus} from "~/common/Types";
 
@@ -14,7 +14,7 @@ const cluster = ref()
 const showStatusDialog = ref(false)
 const memberStatus = ref<MemberStatus>()
 const loadCluster = () => {
-  getCluster(props.sessionKey!).then(data => {
+  _getCluster(props.sessionKey!).then(data => {
     cluster.value = data
   })
 }
@@ -24,7 +24,7 @@ const add = () => {
 }
 
 const getStatus = (target: string) => {
-  getMemberStatus(props.sessionKey!, target).then((data: MemberStatus) => {
+  _getMemberStatus(props.sessionKey!, target).then((data: MemberStatus) => {
     memberStatus.value = data
     showStatusDialog.value = true
   })

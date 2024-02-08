@@ -1,5 +1,5 @@
 import {SessionStoreConfig, SessionStoreConfigDict} from "~/common/Types";
-import {deleteConfig, listConfig, saveConfig} from "~/common/Service";
+import {_deleteConfig, _listConfig, _saveConfig} from "~/common/Service";
 
 export const host = import.meta.env.MODE === "test" ? "http://127.0.0.1:8002" : ""
 
@@ -31,7 +31,7 @@ export function unregisterConfigListener(listener: Function | undefined) {
 }
 
 export function loadConfAsync() {
-    listConfig().then(list => {
+    _listConfig().then(list => {
         let dict: SessionStoreConfigDict = {}
         for (let config of list) {
             dict[config.key!] = config
@@ -61,7 +61,7 @@ export function deleteConf(key: string) {
             type: 'info',
         }
     ).then(() => {
-        deleteConfig(key).then(() => {
+        _deleteConfig(key).then(() => {
             delete configDict[key]
             onDirty()
         }).catch(e => {
@@ -72,7 +72,7 @@ export function deleteConf(key: string) {
 }
 
 export function saveConf(config: SessionStoreConfig) {
-    saveConfig(config).then(key => {
+    _saveConfig(config).then(key => {
         config.key = key
         configDict[key] = config
         onDirty()

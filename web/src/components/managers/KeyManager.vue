@@ -1,10 +1,19 @@
 <script setup lang="ts">
-import {copyAndSave, deleteKey, getAllKeys, getKV, getKVHistory, putKV} from "~/common/Service";
-import {Delete, DocumentAdd, Refresh, Switch} from "@element-plus/icons-vue";
+import {
+  _copyAndSave,
+  _deleteKey,
+  _exportKeys,
+  _getAllKeys,
+  _getKV,
+  _getKVHistory,
+  _importKeys,
+  _putKV
+} from "~/common/Service";
+import {BottomRight, Delete, DocumentAdd, Refresh, Switch, TopRight} from "@element-plus/icons-vue";
 import {EditorConfig, KeyDTO, KeyValueDTO, TreeNode} from "~/common/Types";
 import Editor from "~/components/editor/Editor.vue";
 import {reactive} from "vue";
-import {_isEmpty, _parseCodeLanguage} from "~/common/Util";
+import {_endLoading, _isEmpty, _parseCodeLanguage, _saveFile, _startLoading} from "~/common/Util";
 import {CodeDiff} from "v-code-diff";
 import KeyTableViewer from "~/components/viewer/KeyTableViewer.vue";
 import KeyTreeViewer from "~/components/viewer/KeyTreeViewer.vue";
@@ -53,7 +62,7 @@ const copyAndSaveForm = reactive({
 })
 
 const loadAllKeys = () => {
-  getAllKeys(props.sessionKey as string).then(data => {
+  _getAllKeys(props.sessionKey as string).then(data => {
     tableData.value = data
     constructTree(data)
   })
@@ -152,7 +161,7 @@ const add = () => {
 }
 
 const edit = (info: KeyDTO) => {
-  getKV(props.sessionKey, info.key).then(data => {
+  _getKV(props.sessionKey, info.key).then(data => {
     editingKV.value = data
     editorConfig.language = _parseCodeLanguage(info.key, data.value)
 
@@ -162,7 +171,7 @@ const edit = (info: KeyDTO) => {
 }
 
 const getKVDetail = ({key, callback}) => {
-  getKV(props.sessionKey, key).then(data => {
+  _getKV(props.sessionKey, key).then(data => {
     callback(data)
   })
 }
@@ -181,13 +190,13 @@ const diff = (row: KeyDTO) => {
   versionDiffInfo.createRevision = row.createRevision
   versionDiffInfo.modRevision = row.modRevision
 
-  getKVHistory(
+  _getKVHistory(
       props.sessionKey,
       versionDiffInfo.key,
       versionDiffInfo.createRevision,
       versionDiffInfo.modRevision).then(data => {
     versionDiffInfo.versionHistory = data
-    getKV(props.sessionKey, versionDiffInfo.key).then(data => {
+    _getKV(props.sessionKey, versionDiffInfo.key).then(data => {
       versionDiffInfo.versionB = row.modRevision
       versionDiffInfo.versionBContent = data.value
 
@@ -205,7 +214,7 @@ const diff = (row: KeyDTO) => {
 const loadDiff = (forA: Boolean) => {
   const queryVersion = forA ? versionDiffInfo.versionA : versionDiffInfo.versionB
 
-  getKV(props.sessionKey, versionDiffInfo.key, queryVersion).then(data => {
+  _getKV(props.sessionKey, versionDiffInfo.key, queryVersion).then(data => {
     let queryValue = '';
     if (data == null) {
       ElMessage({
@@ -239,7 +248,7 @@ const del = ({key, callback}) => {
         type: 'warning',
       }
   ).then(() => {
-    deleteKey(props.sessionKey, [key]).then(() => {
+    _deleteKey(props.sessionKey, [key]).then(() => {
       ElMessage({
         type: 'success',
         message: 'Deleted successfully',
@@ -257,14 +266,14 @@ const del = ({key, callback}) => {
 }
 
 const delBatch = () => {
-  let deleteKeys
+  let keys
   if (viewer.value === 'tree') {
-    deleteKeys = treeViewerRef.value!.getSelectedKeys()
+    keys = treeViewerRef.value!.getSelectedKeys()
   } else {
-    deleteKeys = tableViewerRef.value!.getSelectedKeys()
+    keys = tableViewerRef.value!.getSelectedKeys()
   }
 
-  if (deleteKeys.length == 0) {
+  if (keys.length == 0) {
     ElMessage({
       type: 'info',
       message: 'No selected keys',
@@ -281,14 +290,14 @@ const delBatch = () => {
         type: 'warning',
       }
   ).then(() => {
-    deleteKey(props.sessionKey, deleteKeys).then(() => {
+    _deleteKey(props.sessionKey, keys).then(() => {
       ElMessage({
         type: 'success',
         message: 'Deleted successfully',
       })
       if (viewer.value === 'tree') {
         treeViewerRef.value!.clearSelectedKeys()
-        deleteKeysFromTree(deleteKeys)
+        deleteKeysFromTree(keys)
       } else {
         tableViewerRef.value!.clearSelectedKeys()
         loadAllKeys()
@@ -297,6 +306,36 @@ const delBatch = () => {
       console.error(e)
     })
   }).catch(() => {
+  })
+}
+
+const exportKeys = () => {
+  let keys
+  if (viewer.value === 'tree') {
+    keys = treeViewerRef.value!.getSelectedKeys()
+  } else {
+    keys = tableViewerRef.value!.getSelectedKeys()
+  }
+
+  if (keys.length == 0) {
+    ElMessage({
+      type: 'info',
+      message: 'No selected keys',
+    })
+    return
+  }
+  _startLoading("Search selected keys...")
+  _exportKeys(props.sessionKey, keys).then((data) => {
+    const blob = new Blob([data], { type : 'plain/text' });
+    _saveFile(blob, "export-keys.ew")
+  }).finally(() => {
+    _endLoading()
+  })
+}
+
+const importKeys = () => {
+  _importKeys(props.sessionKey, "").then(() => {
+
   })
 }
 
@@ -401,7 +440,7 @@ const tablePutKey = () => {
 }
 
 const putKeyValue = ({kv, callback}) => {
-  putKV(props.sessionKey, kv.key, kv.value, kv.ttl).then((data: KeyValueDTO) => {
+  _putKV(props.sessionKey, kv.key, kv.value, kv.ttl).then((data: KeyValueDTO) => {
     if (callback) {
       callback()
     }
@@ -452,7 +491,7 @@ const confirmCopyAndSave = () => {
   }
 
   console.debug("copy", copyAndSaveForm.src, "to", copyAndSaveForm.dest, "in ttl", copyAndSaveForm.ttl)
-  copyAndSave(
+  _copyAndSave(
       props.sessionKey,
       copyAndSaveForm.src as string,
       copyAndSaveForm.dest as string,
@@ -477,8 +516,10 @@ const confirmCopyAndSave = () => {
   <div class="page">
     <div class="button-list">
       <el-button :icon="Refresh" @click="loadAllKeys">Refresh</el-button>
-      <el-button type="primary" :icon="DocumentAdd" @click="add">Add Key / Value</el-button>
+      <el-button type="primary" :icon="DocumentAdd" @click="add">Add Key</el-button>
       <el-button type="danger" :icon="Delete" @click="delBatch">Delete Keys</el-button>
+      <el-button type="success" :icon="TopRight" @click="exportKeys">Export Keys</el-button>
+      <el-button type="warning" :icon="BottomRight" @click="importKeys">Import Keys</el-button>
       <el-button type="info" :icon="Switch" @click="switchViewer">{{ viewer === 'tree' ? 'Table' : 'Tree' }} View
       </el-button>
     </div>

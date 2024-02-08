@@ -23,6 +23,7 @@ import io.etcd.jetcd.auth.Permission;
 import io.etcd.jetcd.cluster.Member;
 import io.etcd.jetcd.cluster.MemberUpdateResponse;
 import io.etcd.jetcd.kv.DeleteResponse;
+import io.etcd.jetcd.kv.PutResponse;
 import io.etcd.jetcd.maintenance.AlarmMember;
 import io.etcd.jetcd.maintenance.AlarmResponse;
 import io.etcd.jetcd.maintenance.AlarmType;
@@ -32,6 +33,7 @@ import io.etcd.jetcd.options.DeleteOption;
 import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.options.PutOption;
 import io.grpc.stub.StreamObserver;
+import io.netty.util.internal.StringUtil;
 import org.beifengtz.etcd.server.config.Configuration;
 import org.beifengtz.etcd.server.entity.SshContext;
 import org.beifengtz.etcd.server.entity.bo.ClusterBO;
@@ -42,6 +44,7 @@ import org.beifengtz.etcd.server.entity.bo.PermissionBO;
 import org.beifengtz.etcd.server.entity.bo.PermissionBO.PermissionBOBuilder;
 import org.beifengtz.etcd.server.entity.bo.UserBO;
 import org.beifengtz.etcd.server.util.CommonUtil;
+import org.beifengtz.jvmm.common.util.meta.PairKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +60,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.TimeUnit;
@@ -797,8 +801,69 @@ public class EtcdConnector {
      * 关闭认证
      */
     public CompletableFuture<AuthDisableResponse> authDisable() {
+        onActive();
         return client.getAuthClient()
                 .authDisable()
                 .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
+    }
+
+    @SuppressWarnings("unchecked")
+    public CompletableFuture<String> exportKeys(String[] keys) {
+        onActive();
+        CompletableFuture<String>[] futures = new CompletableFuture[keys.length];
+        for (int i = 0; i < keys.length; i++) {
+            String key = keys[i];
+            futures[i] = client.getKVClient().get(CommonUtil.toByteSequence(key)).thenApply(r -> {
+                long count = r.getCount();
+                if (count == 0) {
+                    return null;
+                }
+                if (count > 1) {
+                    throw new IllegalStateException("Exist duplicate key: " + key);
+                }
+                byte[] k = r.getKvs().get(0).getKey().getBytes();
+                byte[] v = r.getKvs().get(0).getValue().getBytes();
+                return StringUtil.toHexString(k) + "," + StringUtil.toHexString(v);
+            });
+        }
+        CompletableFuture<String> future = new CompletableFuture<>();
+        CompletableFuture.allOf(futures).whenComplete((v, t) -> {
+            if (t == null) {
+                List<String> list = new ArrayList<>(futures.length);
+                for (CompletableFuture<String> f : futures) {
+                    String result = f.getNow(null);
+                    if (result != null) {
+                        list.add(result);
+                    }
+                }
+                future.complete(org.beifengtz.jvmm.common.util.StringUtil.join(";", list));
+            } else {
+                future.completeExceptionally(t);
+            }
+        });
+        return future;
+    }
+
+    @SuppressWarnings("unchecked")
+    public CompletableFuture<Void> importKeys(String data) {
+        onActive();
+        try {
+            String[] split = data.split(";");
+            ByteSequence[][] kvArr = new ByteSequence[split.length][2];
+            for (int i = 0; i < split.length; i++) {
+                String[] kv = split[i].split(",");
+                ByteSequence key = ByteSequence.from(StringUtil.decodeHexDump(kv[0]));
+                ByteSequence value = ByteSequence.from(StringUtil.decodeHexDump(kv[1]));
+                kvArr[i] = new ByteSequence[]{key, value};
+            }
+
+            CompletableFuture<PutResponse>[] futures = new CompletableFuture[kvArr.length];
+            for (int i = 0; i < kvArr.length; i++) {
+                futures[i] = client.getKVClient().put(kvArr[i][0], kvArr[i][1]);
+            }
+            return CompletableFuture.allOf(futures);
+        } catch (IndexOutOfBoundsException | NullPointerException e) {
+            return CompletableFuture.failedFuture(e);
+        }
     }
 }

@@ -271,7 +271,7 @@ export function _md5(obj: string): string {
     return hash.hex()
 }
 
-export function _parseCodeLanguage(filename:string, content:string):string {
+export function _parseCodeLanguage(filename: string, content: string): string {
     let lang;
     if (filename) {
         filename = filename.toLowerCase()
@@ -316,6 +316,23 @@ export function _parseCodeLanguage(filename:string, content:string):string {
         lang = 'text'
     }
 
-    console.log("parse lang " ,filename, lang)
+    console.log("parse lang ", filename, lang)
     return lang
+}
+
+export function _saveFile(blob: Blob, name: string) {
+    _startLoading("Downloading...")
+    let urlObject = window.URL || window.webkitURL || window;
+    let url = urlObject.createObjectURL(blob);
+    _download(url, name)
+    _endLoading()
+}
+
+export function _download(url: string, filename: string) {
+    let urlObject = window.URL || window.webkitURL || window
+    let el = document.createElement("a")
+    el.href = url
+    el.download = filename
+    el.click()
+    urlObject.revokeObjectURL(url)
 }

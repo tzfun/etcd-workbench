@@ -7,6 +7,7 @@ import org.beifengtz.etcd.server.config.Mapping;
 import org.beifengtz.etcd.server.config.ResultCode;
 import org.beifengtz.etcd.server.entity.bo.KeyValueBO;
 import org.beifengtz.etcd.server.entity.dto.CodedDTO;
+import org.beifengtz.etcd.server.entity.dto.ImportDTO;
 import org.beifengtz.etcd.server.entity.dto.KeyValueDTO;
 import org.beifengtz.etcd.server.entity.dto.MemberDTO;
 import org.beifengtz.etcd.server.entity.dto.NewSessionDTO;
@@ -362,6 +363,22 @@ public class EtcdController {
                             ResponseFuture future) {
         EtcdConnectorFactory.get(sessionId)
                 .authDisable()
+                .whenComplete((resp, throwable) -> handleEtcdComplete(future, resp, throwable));
+    }
+
+    @HttpRequest(Mapping.PRIVATE_API_PREFIX + "/session/etcd/export_keys")
+    public void exportKeys(@RequestParam String sessionId,
+                           @RequestParam String[] keys,
+                           ResponseFuture future) {
+        EtcdConnectorFactory.get(sessionId)
+                .exportKeys(keys)
+                .whenComplete((resp, throwable) -> handleEtcdComplete(future, resp, throwable));
+    }
+
+    @HttpRequest(value = Mapping.PRIVATE_API_PREFIX + "/session/etcd/import_keys", method = Method.POST)
+    public void importKeys(@RequestBody ImportDTO data, ResponseFuture future) {
+        EtcdConnectorFactory.get(data.getSessionId())
+                .importKeys(data.getData())
                 .whenComplete((resp, throwable) -> handleEtcdComplete(future, resp, throwable));
     }
 

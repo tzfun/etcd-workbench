@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import {Delete, Lock, Refresh, Search, User} from "@element-plus/icons-vue";
 import {
-  addRole,
-  deleteRole,
-  getRolePermission,
-  listRoles,
-  roleGrantPermission,
-  roleRevokePermission
+  _addRole,
+  _deleteRole,
+  _getRolePermission,
+  _listRoles,
+  _roleGrantPermission,
+  _roleRevokePermission
 } from "~/common/Service";
 import {_isEmpty} from "~/common/Util";
 import {FormInstance} from "element-plus";
@@ -30,7 +30,7 @@ const filterTableData = computed(() =>
 const keySearch = ref()
 
 const loadAllRole = () => {
-  listRoles(props.sessionKey).then(data => {
+  _listRoles(props.sessionKey).then(data => {
     tableData.value = data
   }).catch(e => {
     console.error(e)
@@ -49,7 +49,7 @@ const add = () => {
       })
       return
     }
-    addRole(props.sessionKey, value).then(() => {
+    _addRole(props.sessionKey, value).then(() => {
       tableData.value.push(value)
     })
   }).catch(() => {
@@ -67,7 +67,7 @@ const del = (role: string, idx: number) => {
         type: 'warning',
       }
   ).then(() => {
-    deleteRole(props.sessionKey, role).then(() => {
+    _deleteRole(props.sessionKey, role).then(() => {
       ElMessage({
         type: 'success',
         message: 'Deleted successfully',
@@ -98,7 +98,7 @@ const grantPermissionForm = reactive<Permission>({
   prefix: false
 })
 const openPermissionDialog = (role: string, idx: number) => {
-  getRolePermission(props.sessionKey, role).then(data => {
+  _getRolePermission(props.sessionKey, role).then(data => {
     permissions.value = data
     curRole.value = role
     resetGrantPermissionForm()
@@ -117,7 +117,7 @@ const revokePermission = (role: string, permission: Permission, idx: number) => 
         type: 'warning',
       }
   ).then(() => {
-    roleRevokePermission(props.sessionKey, role, permission).then(() => {
+    _roleRevokePermission(props.sessionKey, role, permission).then(() => {
       ElMessage({
         type: 'success',
         message: 'Revoked successfully',
@@ -153,7 +153,7 @@ const grantPermission = () => {
     return
   }
   const newPermission = grantPermissionForm as Permission
-  roleGrantPermission(props.sessionKey, curRole.value, newPermission).then(() => {
+  _roleGrantPermission(props.sessionKey, curRole.value, newPermission).then(() => {
     ElMessage({
       type: 'success',
       message: 'Grant permission successfully',

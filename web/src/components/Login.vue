@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {reactive} from "vue";
 import {_isEmpty} from "~/common/Util";
-import {login} from "~/common/Service";
+import {_login} from "~/common/Service";
 import {pushEvent} from "~/common/Event";
 import {setToken, setUser} from "~/common/Store";
 import {ElMessage} from "element-plus";
@@ -18,7 +18,7 @@ const tryLogin = () => {
   if (_isEmpty(form.password)) {
     return
   }
-  login(form.name, form.password).then((token: string) => {
+  _login(form.name, form.password).then((token: string) => {
     setUser(form.name)
     setToken(token)
     pushEvent('loginSuccess')

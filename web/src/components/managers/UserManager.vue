@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import {
-  addUser, authDisable,
-  authEnable,
-  deleteUser,
-  listRoles,
-  listUser,
-  userGrantRole,
-  userRevokeRole
+  _addUser, _authDisable,
+  _authEnable,
+  _deleteUser,
+  _listRoles,
+  _listUser,
+  _userGrantRole,
+  _userRevokeRole
 } from "~/common/Service";
 import {Delete, Lock, Plus, Refresh, Search, Unlock, UserFilled} from "@element-plus/icons-vue";
 import {_isEmpty} from "~/common/Util";
@@ -36,7 +36,7 @@ const filterTableData = computed(() =>
 const keySearch = ref()
 
 const loadAllUser = () => {
-  listUser(props.sessionKey).then(data => {
+  _listUser(props.sessionKey).then(data => {
     tableData.value = data
   }).catch(e => {
     console.error(e)
@@ -54,7 +54,7 @@ const del = (user: string, idx: number) => {
         type: 'warning',
       }
   ).then(() => {
-    deleteUser(props.sessionKey, user).then(() => {
+    _deleteUser(props.sessionKey, user).then(() => {
       ElMessage({
         type: 'success',
         message: 'Deleted successfully',
@@ -83,7 +83,7 @@ const openRoleDialog = async (user: User, idx: number) => {
 }
 
 const loadAllRoles = async () => {
-  allRoles.value = await listRoles(props.sessionKey)
+  allRoles.value = await _listRoles(props.sessionKey)
 }
 
 const grantUserRole = () => {
@@ -101,7 +101,7 @@ const grantUserRole = () => {
     })
     return
   }
-  userGrantRole(props.sessionKey, curUser.value?.user, grantRole.value).then(() => {
+  _userGrantRole(props.sessionKey, curUser.value?.user, grantRole.value).then(() => {
     tableData.value[curUserIdx.value].roles.push(grantRole.value)
   }).catch(e => {
     console.error(e)
@@ -119,7 +119,7 @@ const revokeRole = (user: string, role: string, idx: number) => {
         type: 'warning',
       }
   ).then(() => {
-    userRevokeRole(props.sessionKey, user, role).then(() => {
+    _userRevokeRole(props.sessionKey, user, role).then(() => {
       tableData.value[curUserIdx.value].roles.splice(grantRole.value, 1)
     }).catch(e => {
       console.error(e)
@@ -157,7 +157,7 @@ const add = () => {
     return
   }
 
-  addUser(props.sessionKey!, addForm.user, addForm.password).then(() => {
+  _addUser(props.sessionKey!, addForm.user, addForm.password).then(() => {
     showAddDialog.value = false
     loadAllUser()
   }).catch(e => {
@@ -166,7 +166,7 @@ const add = () => {
 }
 
 const doAuthEnable = () => {
-  authEnable(props.sessionKey!).then(() => {
+  _authEnable(props.sessionKey!).then(() => {
     ElMessage({
       type: 'success',
       message: 'Enabled authentication',
@@ -177,7 +177,7 @@ const doAuthEnable = () => {
 }
 
 const doAuthDisable = () => {
-  authDisable(props.sessionKey!).then(() => {
+  _authDisable(props.sessionKey!).then(() => {
     ElMessage({
       type: 'success',
       message: 'Disabled authentication',

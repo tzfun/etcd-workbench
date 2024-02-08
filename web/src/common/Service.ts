@@ -14,11 +14,11 @@ function code(): string {
     return v.toString(r) + (r < 10 ? '0' + r : r)
 }
 
-export function newSession(data: SessionConfig) {
+export function _newSession(data: SessionConfig) {
     return new Promise<ResultData>((resolve, reject) => {
         try {
             let c = code()
-            ping(c).then(resultData => {
+            _ping(c).then(resultData => {
                 let content = _rsaEncryptPartly(JSON.stringify(data), resultData, "|")
                 if (content) {
                     request.post(host + PRIVATE_API_PREFIX + "/session/new", {
@@ -41,21 +41,21 @@ export function newSession(data: SessionConfig) {
     })
 }
 
-function ping(code: string): Promise<any> {
+function _ping(code: string): Promise<any> {
     return request.get(host + PRIVATE_API_PREFIX + "/auth/ping", {
         code: code
     })
 }
 
-export function closeSession(sessionId: string): Promise<any> {
+export function _closeSession(sessionId: string): Promise<any> {
     return request.get(host + PRIVATE_API_PREFIX + "/session/close", {sessionId: sessionId})
 }
 
-export function testSession(data: SessionConfig): Promise<any> {
+export function _testSession(data: SessionConfig): Promise<any> {
     return new Promise<ResultData>((resolve, reject) => {
         try {
             let c = code()
-            ping(c).then(resultData => {
+            _ping(c).then(resultData => {
                 let content = _rsaEncryptPartly(JSON.stringify(data), resultData, "|")
                 if (content) {
                     request.post(host + PRIVATE_API_PREFIX + "/session/test", {
@@ -78,15 +78,15 @@ export function testSession(data: SessionConfig): Promise<any> {
     })
 }
 
-export function heartBeat(sessionId: string): Promise<any> {
+export function _heartBeat(sessionId: string): Promise<any> {
     return request.get(host + PRIVATE_API_PREFIX + "/session/heart_beat", {sessionId: sessionId}, undefined, false, false)
 }
 
-export function getAllKeys(sessionId: string): Promise<any> {
+export function _getAllKeys(sessionId: string): Promise<any> {
     return request.get(host + PRIVATE_API_PREFIX + "/session/etcd/kv/get_all_keys", {sessionId: sessionId})
 }
 
-export function getKV(sessionId: string, key: string, version?: number | null): Promise<any> {
+export function _getKV(sessionId: string, key: string, version?: number | null): Promise<any> {
     return request.get(host + PRIVATE_API_PREFIX + "/session/etcd/kv/get", {
         sessionId: sessionId,
         key: key,
@@ -94,7 +94,7 @@ export function getKV(sessionId: string, key: string, version?: number | null): 
     })
 }
 
-export function getKVHistory(
+export function _getKVHistory(
     sessionId: string,
     key: string,
     startVersion: number,
@@ -108,7 +108,7 @@ export function getKVHistory(
     })
 }
 
-export function copyAndSave(
+export function _copyAndSave(
     sessionId: string,
     srcKey: string,
     destKey: string,
@@ -122,14 +122,14 @@ export function copyAndSave(
     })
 }
 
-export function deleteKey(sessionId: string, keys: string[]): Promise<any> {
+export function _deleteKey(sessionId: string, keys: string[]): Promise<any> {
     return request.get(host + PRIVATE_API_PREFIX + "/session/etcd/kv/delete", {
         sessionId: sessionId,
         keys: keys
     })
 }
 
-export function putKV(sessionId: string, key: string, value: string, ttl?: number): Promise<any> {
+export function _putKV(sessionId: string, key: string, value: string, ttl?: number): Promise<any> {
     return request.post(host + PRIVATE_API_PREFIX + "/session/etcd/kv/put", {
         sessionId: sessionId,
         key: key,
@@ -138,20 +138,20 @@ export function putKV(sessionId: string, key: string, value: string, ttl?: numbe
     })
 }
 
-export function listUser(sessionId: string): Promise<any> {
+export function _listUser(sessionId: string): Promise<any> {
     return request.get(host + PRIVATE_API_PREFIX + "/session/etcd/user/list", {
         sessionId: sessionId
     })
 }
 
-export function deleteUser(sessionId: string, user: string): Promise<any> {
+export function _deleteUser(sessionId: string, user: string): Promise<any> {
     return request.get(host + PRIVATE_API_PREFIX + "/session/etcd/user/delete", {
         sessionId: sessionId,
         user: user
     })
 }
 
-export function addUser(sessionId: string, user: string, password: string): Promise<any> {
+export function _addUser(sessionId: string, user: string, password: string): Promise<any> {
     return request.get(host + PRIVATE_API_PREFIX + "/session/etcd/user/add", {
         sessionId: sessionId,
         user: user,
@@ -159,7 +159,7 @@ export function addUser(sessionId: string, user: string, password: string): Prom
     })
 }
 
-export function userChangePassword(sessionId: string, user: string, password: string): Promise<any> {
+export function _userChangePassword(sessionId: string, user: string, password: string): Promise<any> {
     return request.get(host + PRIVATE_API_PREFIX + "/session/etcd/user/change_password", {
         sessionId: sessionId,
         user: user,
@@ -167,7 +167,7 @@ export function userChangePassword(sessionId: string, user: string, password: st
     })
 }
 
-export function userGrantRole(sessionId: string, user: string, role: string): Promise<any> {
+export function _userGrantRole(sessionId: string, user: string, role: string): Promise<any> {
     return request.get(host + PRIVATE_API_PREFIX + "/session/etcd/user/grant_role", {
         sessionId: sessionId,
         user: user,
@@ -175,7 +175,7 @@ export function userGrantRole(sessionId: string, user: string, role: string): Pr
     })
 }
 
-export function userRevokeRole(sessionId: string, user: string, role: string): Promise<any> {
+export function _userRevokeRole(sessionId: string, user: string, role: string): Promise<any> {
     return request.get(host + PRIVATE_API_PREFIX + "/session/etcd/user/revoke_role", {
         sessionId: sessionId,
         user: user,
@@ -183,36 +183,36 @@ export function userRevokeRole(sessionId: string, user: string, role: string): P
     })
 }
 
-export function listRoles(sessionId: string): Promise<any> {
+export function _listRoles(sessionId: string): Promise<any> {
     return request.get(host + PRIVATE_API_PREFIX + "/session/etcd/role/list", {
         sessionId: sessionId
     })
 }
 
-export function addRole(sessionId: string, role: string): Promise<any> {
+export function _addRole(sessionId: string, role: string): Promise<any> {
     return request.get(host + PRIVATE_API_PREFIX + "/session/etcd/role/add", {
         sessionId: sessionId,
         role: role
     })
 }
 
-export function deleteRole(sessionId: string, role: string): Promise<any> {
+export function _deleteRole(sessionId: string, role: string): Promise<any> {
     return request.get(host + PRIVATE_API_PREFIX + "/session/etcd/role/delete", {
         sessionId: sessionId,
         role: role
     })
 }
 
-export function getRolePermission(sessionId: string, role: string): Promise<any> {
+export function _getRolePermission(sessionId: string, role: string): Promise<any> {
     return request.get(host + PRIVATE_API_PREFIX + "/session/etcd/role/get_permissions", {
         sessionId: sessionId,
         role: role
     })
 }
 
-export function roleGrantPermission(sessionId: string,
-                                    role: string,
-                                    permission: object): Promise<any> {
+export function _roleGrantPermission(sessionId: string,
+                                     role: string,
+                                     permission: object): Promise<any> {
     return request.post(host + PRIVATE_API_PREFIX + "/session/etcd/role/grant_permission", {
         sessionId: sessionId,
         role: role,
@@ -220,9 +220,9 @@ export function roleGrantPermission(sessionId: string,
     })
 }
 
-export function roleRevokePermission(sessionId: string,
-                                     role: string,
-                                     permission: object): Promise<any> {
+export function _roleRevokePermission(sessionId: string,
+                                      role: string,
+                                      permission: object): Promise<any> {
     return request.post(host + PRIVATE_API_PREFIX + "/session/etcd/role/revoke_permission", {
         sessionId: sessionId,
         role: role,
@@ -230,27 +230,27 @@ export function roleRevokePermission(sessionId: string,
     })
 }
 
-export function getCluster(sessionId: string): Promise<any> {
+export function _getCluster(sessionId: string): Promise<any> {
     return request.get(host + PRIVATE_API_PREFIX + "/session/etcd/cluster/get", {
         sessionId: sessionId
     })
 }
 
-export function removeClusterMember(sessionId: string, memberId: number): Promise<any> {
+export function _removeClusterMember(sessionId: string, memberId: number): Promise<any> {
     return request.get(host + PRIVATE_API_PREFIX + "/session/etcd/cluster/remove_member", {
         sessionId: sessionId,
         memberId: memberId
     })
 }
 
-export function addClusterMember(sessionId: string, urlList: string[]): Promise<any> {
+export function _addClusterMember(sessionId: string, urlList: string[]): Promise<any> {
     return request.post(host + PRIVATE_API_PREFIX + "/session/etcd/cluster/add_member", {
         sessionId: sessionId,
         urlList: urlList
     })
 }
 
-export function updateClusterMember(sessionId: string, memberId: number, urlList: string[]): Promise<any> {
+export function _updateClusterMember(sessionId: string, memberId: number, urlList: string[]): Promise<any> {
     return request.post(host + PRIVATE_API_PREFIX + "/session/etcd/cluster/update_member", {
         sessionId: sessionId,
         memberId: memberId,
@@ -258,26 +258,26 @@ export function updateClusterMember(sessionId: string, memberId: number, urlList
     })
 }
 
-export function getMemberStatus(sessionId: string, target: string): Promise<any> {
+export function _getMemberStatus(sessionId: string, target: string): Promise<any> {
     return request.get(host + PRIVATE_API_PREFIX + "/session/etcd/cluster/get_status", {
         sessionId: sessionId,
         target: target
     })
 }
 
-export function authEnable(sessionId: string): Promise<any> {
+export function _authEnable(sessionId: string): Promise<any> {
     return request.get(host + PRIVATE_API_PREFIX + "/session/etcd/auth/enable", {
         sessionId: sessionId
     })
 }
 
-export function authDisable(sessionId: string): Promise<any> {
+export function _authDisable(sessionId: string): Promise<any> {
     return request.get(host + PRIVATE_API_PREFIX + "/session/etcd/auth/disable", {
         sessionId: sessionId
     })
 }
 
-export function listConfig(): Promise<SessionStoreConfig[]> {
+export function _listConfig(): Promise<SessionStoreConfig[]> {
     return new Promise<SessionStoreConfig[]>((resolve, reject) => {
         request.get(host + PRIVATE_API_PREFIX + "/config/list").then((data: Record<string, any>) => {
             let result: SessionStoreConfig[] = []
@@ -293,11 +293,11 @@ export function listConfig(): Promise<SessionStoreConfig[]> {
     })
 }
 
-export function saveConfig(config: SessionStoreConfig): Promise<any> {
+export function _saveConfig(config: SessionStoreConfig): Promise<any> {
     return new Promise<ResultData>((resolve, reject) => {
         try {
             let c = code()
-            ping(c).then(resultData => {
+            _ping(c).then(resultData => {
                 let content = _rsaEncryptPartly(JSON.stringify(config), resultData, "|")
                 if (content) {
                     request.post(host + PRIVATE_API_PREFIX + "/config/save", {
@@ -320,13 +320,13 @@ export function saveConfig(config: SessionStoreConfig): Promise<any> {
     })
 }
 
-export function deleteConfig(key: string): Promise<any> {
+export function _deleteConfig(key: string): Promise<any> {
     return request.get(host + PRIVATE_API_PREFIX + "/config/delete", {
         key: key
     })
 }
 
-export function login(user: string, password: string): Promise<any> {
+export function _login(user: string, password: string): Promise<any> {
     let code = _md5(user + ',' + password)
     return request.get(host + PUBLIC_API_PREFIX + "/auth/login", {
         user: user,
@@ -334,6 +334,20 @@ export function login(user: string, password: string): Promise<any> {
     })
 }
 
-export function checkLogin(): Promise<any> {
+export function _checkLogin(): Promise<any> {
     return request.post(host + PUBLIC_API_PREFIX + "/auth/check_login", getToken())
+}
+
+export function _exportKeys(sessionId: string, keys: string[]): Promise<any> {
+    return request.get(host + PRIVATE_API_PREFIX + "/session/etcd/export_keys", {
+        sessionId: sessionId,
+        keys: keys
+    })
+}
+
+export function _importKeys(sessionId: string, data: string): Promise<any> {
+    return request.post(host + PRIVATE_API_PREFIX + "/session/etcd/import_keys", {
+        sessionId: sessionId,
+        data: data
+    })
 }
