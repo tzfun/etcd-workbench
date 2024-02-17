@@ -8,7 +8,7 @@ A beautiful, lightweight, privately deployable ETCD client that supports SSL, SS
 
 # Tag logs
 
-* `lateset`: Always latest version.
+* `latest`: Always latest version.
 * `1.1.0`: Supports batch import and export of keys.
 * `1.0.0`: The first public verison, enjoy it!
 
