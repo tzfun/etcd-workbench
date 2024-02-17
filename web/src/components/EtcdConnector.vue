@@ -318,7 +318,7 @@ defineExpose({
   <div class="container">
     <div class="header mb-4 mt-4">
       <el-image style="width: 100px; height: 100px" :src="etcdLogo" fit="cover"/>
-      <h1 class="header-title">Etcd Connection</h1>
+      <h1 class="header-title">ETCD Connection</h1>
     </div>
     <el-card class="box-card">
       <el-form reg="connectionForm" v-model="form" :label-width="160" label-suffix=":" label-position="left">

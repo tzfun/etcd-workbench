@@ -29,7 +29,7 @@ const tryLogin = () => {
 
 <template>
   <div class="login-container">
-    <h1 class="login-title">Login Workbench</h1>
+    <h1 class="login-title">Login ETCD Workbench</h1>
     <el-card class="login-box">
       <el-form reg="connectionForm" v-model="form" :label-width="100" label-suffix=":" label-position="right">
         <el-form-item label="Username">

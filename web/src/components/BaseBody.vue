@@ -131,7 +131,7 @@ const handleSelectHeader = (key: string) => {
         <div class="header-item" style="margin-left: 1em">
           <el-image style="width: 30px; height: 30px" :src="etcdLogo" fit="cover"/>
         </div>
-        <span class="header-title">Etcd Workbench</span>
+        <span class="header-title">ETCD Workbench</span>
         <div class="flex-grow"/>
 
         <div class="header-item">
