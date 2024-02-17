@@ -9,7 +9,7 @@ import {
   _importKeys,
   _putKV
 } from "~/common/Service";
-import {BottomRight, Delete, DocumentAdd, Refresh, Switch, TopRight} from "@element-plus/icons-vue";
+import {BottomRight, Delete, DocumentAdd, Refresh, Switch, TopRight, UploadFilled} from "@element-plus/icons-vue";
 import {EditorConfig, KeyDTO, KeyValueDTO, TreeNode} from "~/common/Types";
 import Editor from "~/components/editor/Editor.vue";
 import {reactive} from "vue";
@@ -18,6 +18,7 @@ import {CodeDiff} from "v-code-diff";
 import KeyTableViewer from "~/components/viewer/KeyTableViewer.vue";
 import KeyTreeViewer from "~/components/viewer/KeyTreeViewer.vue";
 import {isDark} from "~/composables";
+import {ElMessage, UploadFile} from "element-plus";
 
 const editorRef = ref()
 const treeViewerRef = ref<InstanceType<typeof KeyTreeViewer>>()
@@ -28,6 +29,7 @@ const props = defineProps({
     required: true
   }
 })
+const drawer = ref(false)
 
 onMounted(() => {
   loadAllKeys()
@@ -60,6 +62,7 @@ const copyAndSaveForm = reactive({
   dest: <string | null>null,
   ttl: 0
 })
+const importKeysFile = ref<UploadUserFile[]>()
 
 const loadAllKeys = () => {
   _getAllKeys(props.sessionKey as string).then(data => {
@@ -327,16 +330,46 @@ const exportKeys = () => {
   _startLoading("Search selected keys...")
   _exportKeys(props.sessionKey, keys).then((data) => {
     const blob = new Blob([data], { type : 'plain/text' });
-    _saveFile(blob, "export-keys.ew")
+    _saveFile(blob, "keys-dump.ew")
   }).finally(() => {
     _endLoading()
   })
 }
 
 const importKeys = () => {
-  _importKeys(props.sessionKey, "").then(() => {
-
-  })
+  const file = importKeysFile.value[0]
+  if (file) {
+    (file.raw as File).text().then(data => {
+      ElMessageBox.confirm(
+          `Are you sure want to import key/value(s) from file \'${file.name}\'?`,
+          'Confirm',
+          {
+            confirmButtonText: 'Yes',
+            cancelButtonText: 'Cancel',
+            type: 'info',
+          }
+      ).then(() => {
+        _importKeys(props.sessionKey, data).then(() => {
+          drawer.value = false
+          importKeysFile.value = []
+          loadAllKeys()
+          ElMessage({
+            showClose: true,
+            message: "Import success",
+            type: "success"
+          })
+        })
+      }).catch(() => {
+      })
+    }).catch(e => {
+      ElMessage({
+        showClose: true,
+        message: e.message,
+        type: "error",
+        duration: 5000,
+      })
+    })
+  }
 }
 
 const onCopyAndSave = (key: string) => {
@@ -510,6 +543,7 @@ const confirmCopyAndSave = () => {
     console.error(e)
   })
 }
+
 </script>
 
 <template>
@@ -518,10 +552,9 @@ const confirmCopyAndSave = () => {
       <el-button :icon="Refresh" @click="loadAllKeys">Refresh</el-button>
       <el-button type="primary" :icon="DocumentAdd" @click="add">Add Key</el-button>
       <el-button type="danger" :icon="Delete" @click="delBatch">Delete Keys</el-button>
+      <el-button type="info" :icon="Switch" @click="switchViewer">{{ viewer === 'tree' ? 'Table' : 'Tree' }} View</el-button>
       <el-button type="success" :icon="TopRight" @click="exportKeys">Export Keys</el-button>
-      <el-button type="warning" :icon="BottomRight" @click="importKeys">Import Keys</el-button>
-      <el-button type="info" :icon="Switch" @click="switchViewer">{{ viewer === 'tree' ? 'Table' : 'Tree' }} View
-      </el-button>
+      <el-button type="warning" :icon="BottomRight" @click="drawer=true">Import Keys</el-button>
     </div>
 
     <key-tree-viewer ref="treeViewerRef"
@@ -666,6 +699,32 @@ const confirmCopyAndSave = () => {
         </span>
       </template>
     </el-dialog>
+
+    <el-drawer v-model="drawer" title="Select import file" :with-header="false">
+      <el-alert title="If there are already existing parts in the imported keys, these parts will be forcibly overwritten, and non-existing keys will be inserted."
+                type="warning"
+                :closable="false"
+                class="mb-2"/>
+      <el-upload
+          class="upload-demo"
+          drag
+          :auto-upload="false"
+          accept=".ew"
+          :limit="1"
+          v-model:file-list="importKeysFile"
+      >
+        <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
+        <div class="el-upload__text">
+          Drop file here or <em>click to select</em>
+        </div>
+        <template #tip>
+          <div class="el-upload__tip">
+            Only supports files in <em>.ew</em> format.
+          </div>
+        </template>
+      </el-upload>
+      <el-button type="success" @click="importKeys" class="mt-2">Upload</el-button>
+    </el-drawer>
   </div>
 </template>
 

@@ -807,6 +807,11 @@ public class EtcdConnector {
                 .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
     }
 
+    /**
+     * 导出指定key，输出为base64编码的数据
+     * @param keys key array
+     * @return String {@link CompletableFuture}
+     */
     @SuppressWarnings("unchecked")
     public CompletableFuture<String> exportKeys(String[] keys) {
         onActive();
@@ -844,6 +849,11 @@ public class EtcdConnector {
         return future;
     }
 
+    /**
+     * 导入数据
+     * @param data base64编码的数据
+     * @return {@link CompletableFuture}
+     */
     @SuppressWarnings("unchecked")
     public CompletableFuture<Void> importKeys(String data) {
         onActive();
