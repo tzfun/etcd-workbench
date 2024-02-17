@@ -84,7 +84,7 @@ const extensions = computed(() => {
     case 'json':
       result.push(jsonLanguage())
       break
-    case 'yml':
+    case 'xml':
       result.push(xmlLanguage())
       break
     case 'yaml':
