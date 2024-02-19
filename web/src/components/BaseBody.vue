@@ -22,8 +22,14 @@ onBeforeMount(async () => {
   const result = await _checkLogin()
   if (result[0]) {
     needLogin.value = true
-    status.value = (result[1] ? 'login' : 'main')
+    if(result[1]) {
+      status.value = 'login'
+      clearLoginStatus()
+    } else {
+      status.value = 'main'
+    }
   } else {
+    clearLoginStatus()
     status.value = 'main'
   }
 })

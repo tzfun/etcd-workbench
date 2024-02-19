@@ -553,8 +553,8 @@ const confirmCopyAndSave = () => {
       <el-button type="primary" :icon="DocumentAdd" @click="add">Add Key</el-button>
       <el-button type="danger" :icon="Delete" @click="delBatch">Delete Keys</el-button>
       <el-button type="info" :icon="Switch" @click="switchViewer">{{ viewer === 'tree' ? 'Table' : 'Tree' }} View</el-button>
-      <el-button type="success" :icon="TopRight" @click="exportKeys">Export Keys</el-button>
-      <el-button type="warning" :icon="BottomRight" @click="drawer=true">Import Keys</el-button>
+      <el-button type="success" plain :icon="TopRight" @click="exportKeys">Export Keys</el-button>
+      <el-button type="warning" plain :icon="BottomRight" @click="drawer=true">Import Keys</el-button>
     </div>
 
     <key-tree-viewer ref="treeViewerRef"
