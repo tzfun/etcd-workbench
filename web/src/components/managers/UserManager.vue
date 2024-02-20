@@ -120,7 +120,7 @@ const revokeRole = (user: string, role: string, idx: number) => {
       }
   ).then(() => {
     _userRevokeRole(props.sessionKey, user, role).then(() => {
-      tableData.value[curUserIdx.value].roles.splice(grantRole.value, 1)
+      tableData.value[curUserIdx.value].roles.splice(idx, 1)
     }).catch(e => {
       console.error(e)
     })
