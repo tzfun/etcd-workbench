@@ -81,6 +81,9 @@ const handleResponseCode = (res: ResultData, notifyError: boolean | undefined = 
         case 10006:
             msg = res.msg ? res.msg : "Please login"
             break
+        case 10007:
+            msg = "Session lost! Please close the current session and reopen it."
+            break
     }
     if (_nonEmpty(msg as string) && notifyError) {
         ElMessage({

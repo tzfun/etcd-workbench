@@ -16,6 +16,7 @@ public enum ResultCode {
     PARAM_FORMAT_ERROR(10004, "Param error"),
     NOT_SUPPORTED(10005, "Not supported operation"),
     LOGIN_FAILED(10006, "Please login"),
+    ETCD_SESSION_LOST(10007, "Session lost")
     ;
     private final int code;
     private final String msg;

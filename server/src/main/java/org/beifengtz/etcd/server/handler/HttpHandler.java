@@ -17,13 +17,12 @@ import org.beifengtz.etcd.server.config.Configuration;
 import org.beifengtz.etcd.server.config.Mapping;
 import org.beifengtz.etcd.server.config.ResultCode;
 import org.beifengtz.etcd.server.controller.AuthController;
+import org.beifengtz.etcd.server.exceptions.EtcdSessionLostException;
 import org.beifengtz.etcd.server.util.CommonUtil;
 import org.beifengtz.jvmm.common.util.IOUtil;
 import org.beifengtz.jvmm.common.util.StringUtil;
 import org.beifengtz.jvmm.convey.channel.ChannelUtil;
 import org.beifengtz.jvmm.convey.handler.HttpChannelHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -172,7 +171,9 @@ public class HttpHandler extends HttpChannelHandler {
         } else if (e instanceof IllegalArgumentException) {
             logger.debug(e.getMessage(), e);
             response(ctx, HttpResponseStatus.BAD_REQUEST);
-        } else {
+        } else if (e instanceof EtcdSessionLostException) {
+            response(ctx, HttpResponseStatus.OK, ResultCode.ETCD_SESSION_LOST.result(e.getMessage(), null).toString());
+        }else {
             super.handleException(ctx, req, e);
         }
     }

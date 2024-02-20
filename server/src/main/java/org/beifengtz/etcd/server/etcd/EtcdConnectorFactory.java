@@ -24,6 +24,7 @@ import org.beifengtz.etcd.server.entity.bo.KeyValueBO;
 import org.beifengtz.etcd.server.entity.bo.SessionBO;
 import org.beifengtz.etcd.server.entity.dto.NewSessionDTO;
 import org.beifengtz.etcd.server.entity.dto.SshDTO;
+import org.beifengtz.etcd.server.exceptions.EtcdSessionLostException;
 import org.beifengtz.etcd.server.util.CommonUtil;
 import org.beifengtz.etcd.server.util.RSAKey;
 import org.beifengtz.jvmm.common.factory.ExecutorFactory;
@@ -75,9 +76,13 @@ public class EtcdConnectorFactory {
 
     public static EtcdConnector get(String sessionId) {
         if (sessionId == null) {
-            throw new IllegalArgumentException("Session lost");
+            throw new EtcdSessionLostException("Session lost");
         }
-        return CONNECTORS.get(sessionId);
+        EtcdConnector connector = CONNECTORS.get(sessionId);
+        if (connector == null) {
+            throw new EtcdSessionLostException("Session lost");
+        }
+        return connector;
     }
 
     public static EtcdConnector newConnector(NewSessionDTO data) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException, JSchException {
