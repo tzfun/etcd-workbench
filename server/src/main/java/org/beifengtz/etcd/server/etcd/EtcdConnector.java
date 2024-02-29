@@ -743,10 +743,10 @@ public class EtcdConnector {
      * @param type     警报类型
      * @return 剩余的警报
      */
-    public CompletableFuture<List<AlarmMember>> maintenanceAlarmDisarm(long memberId, AlarmType type) {
+    public CompletableFuture<List<AlarmMember>> maintenanceAlarmDisarm(String memberId, AlarmType type) {
         onActive();
         return client.getMaintenanceClient()
-                .alarmDisarm(new AlarmMember(memberId, type))
+                .alarmDisarm(new AlarmMember(new BigInteger(memberId).longValue(), type))
                 .thenApply(AlarmResponse::getAlarms)
                 .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
     }

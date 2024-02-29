@@ -20,7 +20,7 @@ import java.nio.charset.StandardCharsets;
 public class KeyBO implements JsonParsable {
 
     private String key;
-    private long lease;
+    private String lease;
     private long createRevision;
     private long modRevision;
     private long version;
@@ -33,7 +33,7 @@ public class KeyBO implements JsonParsable {
     public static KeyBO parseFrom(KeyValue kv) {
         return KeyBO.builder()
                 .key(kv.getKey().toString(StandardCharsets.UTF_8))
-                .lease(kv.getLease())
+                .lease(Long.toUnsignedString(kv.getLease()))
                 .createRevision(kv.getCreateRevision())
                 .modRevision(kv.getModRevision())
                 .version(kv.getVersion())

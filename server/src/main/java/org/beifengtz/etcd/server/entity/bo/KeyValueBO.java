@@ -22,7 +22,7 @@ public class KeyValueBO extends KeyBO {
     public static KeyValueBO parseFrom(KeyValue kv) {
         return KeyValueBO.builder()
                 .key(kv.getKey().toString(StandardCharsets.UTF_8))
-                .lease(kv.getLease())
+                .lease(Long.toUnsignedString(kv.getLease()))
                 .createRevision(kv.getCreateRevision())
                 .modRevision(kv.getModRevision())
                 .version(kv.getVersion())
