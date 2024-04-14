@@ -2,7 +2,7 @@ import request from '~/request'
 import {host} from "~/common/Config";
 import {SessionConfig, SessionStoreConfig} from "~/common/Types";
 import {ResultData} from "~/request/type";
-import {_md5, _rsaEncryptPartly} from "~/common/Util";
+import {_md5, _rsaEncryptPartly, _base64Decode} from "~/common/Util";
 import {getToken} from "~/common/Store";
 
 export const PRIVATE_API_PREFIX = "/beifengtz/pri"
@@ -279,10 +279,12 @@ export function _authDisable(sessionId: string): Promise<any> {
 
 export function _listConfig(): Promise<SessionStoreConfig[]> {
     return new Promise<SessionStoreConfig[]>((resolve, reject) => {
-        request.get(host + PRIVATE_API_PREFIX + "/config/list").then((data: Record<string, any>) => {
+        request.get(host + PRIVATE_API_PREFIX + "/config/list").then(async (data: Record<string, any>) => {
             let result: SessionStoreConfig[] = []
             for (let key in data) {
-                let config: SessionStoreConfig = JSON.parse(atob(data[key]))
+                let contentSrc = _base64Decode(data[key])
+                console.log(contentSrc)
+                let config: SessionStoreConfig = JSON.parse(contentSrc)
                 config.key = key
                 result.push(config)
             }

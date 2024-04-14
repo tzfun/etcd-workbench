@@ -336,3 +336,13 @@ export function _download(url: string, filename: string) {
     el.click()
     urlObject.revokeObjectURL(url)
 }
+
+export function _base64Decode(base64: string): string {
+    let binary_string = window.atob(base64);
+    let len = binary_string.length;
+    let bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+        bytes[i] = binary_string.charCodeAt(i);
+    }
+    return new TextDecoder().decode(bytes);
+}
