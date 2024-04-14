@@ -34,7 +34,7 @@ const getStatus = (target: string) => {
 
 <template>
   <div class="page">
-    <div class="mb-5">
+    <div class="mb-5 button-list">
       <el-button @click="loadCluster" :icon="Refresh">Refresh</el-button>
 <!--      <el-button type="primary" :icon="MostlyCloudy" @click="add">Add Member</el-button>-->
     </div>

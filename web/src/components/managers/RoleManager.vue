@@ -166,8 +166,8 @@ const grantPermission = () => {
 
 <template>
   <div class="page">
-    <div class="mb-5">
-      <el-button @click="loadAllRole" :icon="Refresh">Refresh Table</el-button>
+    <div class="mb-5 button-list">
+      <el-button @click="loadAllRole" :icon="Refresh">Refresh</el-button>
       <el-button type="primary" :icon="User" @click="add">Add Role</el-button>
     </div>
     <el-table :data="filterTableData"

@@ -161,10 +161,10 @@ const handleSelectMenu = (key: string) => {
   overflow: hidden;
 
   .aside {
-    width: $--ep-custom-aside-width;
+    width: var(--ep-custom-aside-width);
 
     .aside-menu {
-      width: $--ep-custom-aside-width;
+      width: var(--ep-custom-aside-width);
       height: 100%;
       position: fixed;
       left: 0;
@@ -187,7 +187,7 @@ const handleSelectMenu = (key: string) => {
   }
 
   .connector-body {
-    width: calc(100% - $--ep-custom-aside-width);
+    width: calc(100% - var(--ep-custom-aside-width));
     overflow: auto;
     padding: 50px;
 

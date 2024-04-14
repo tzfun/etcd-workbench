@@ -190,8 +190,8 @@ const doAuthDisable = () => {
 
 <template>
   <div class="page">
-    <div class="mb-5">
-      <el-button @click="loadAllUser" :icon="Refresh">Refresh Table</el-button>
+    <div class="mb-5 button-list">
+      <el-button @click="loadAllUser" :icon="Refresh">Refresh</el-button>
       <el-button type="primary" :icon="UserFilled" @click="openAddDialog">Add User</el-button>
       <el-button type="success" :icon="Lock" @click="doAuthEnable">Auth Enable</el-button>
       <el-button type="danger" :icon="Unlock" @click="doAuthDisable">Auth Disable</el-button>

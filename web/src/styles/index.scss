@@ -1,7 +1,54 @@
 // import dark theme
 @use "element-plus/theme-chalk/src/dark/css-vars.scss" as *;
 
-$--ep-custom-aside-width: 300px;
+$xs: 'screen and (max-width:480px)'; //手机屏幕
+$sm: 'screen and (max-width:750px)'; //pad屏幕
+$md: 'screen and (max-width:970px)'; //中等屏幕
+$lg: 'screen and (max-width:1170px)'; //大屏幕
+
+:root {
+  --ep-custom-aside-width: 300px;
+  --button-list-padding: 8px 30px;
+}
+
+@media screen and (max-width: 1000px) {
+  :root {
+    --ep-custom-aside-width: 180px;
+    --button-list-padding: 8px 15px;
+  }
+
+  .page .button-list .ep-button {
+    font-size: 0.5em;
+  }
+
+  .tree-editor .footer,
+  .tree-editor .header {
+    font-size: 0.3em;
+  }
+}
+
+@media screen and (max-width: 1500px) and (min-width: 1000.001px) {
+  :root {
+    --ep-custom-aside-width: 200px;
+    --button-list-padding: 8px 20px;
+  }
+
+  .page .button-list .ep-button {
+    font-size: 0.8em;
+  }
+
+  .tree-editor .footer,
+  .tree-editor .header {
+    font-size: 0.5em;
+  }
+}
+
+@media screen and (min-width: 1500.001px) {
+  :root {
+    --ep-custom-aside-width: 300px;
+    --button-list-padding: 8px 45px;
+  }
+}
 
 $--header-height: 50px;
 $--header-color: whitesmoke;
@@ -70,6 +117,14 @@ code {
 
 .page {
   height: 100%;
+
+  .button-list {
+    display: flex;
+
+    .ep-button {
+      padding: var(--button-list-padding);
+    }
+  }
 }
 
 .ep-tabs__nav {

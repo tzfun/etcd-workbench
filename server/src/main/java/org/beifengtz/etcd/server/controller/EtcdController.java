@@ -70,18 +70,13 @@ public class EtcdController {
     @HttpRequest(Mapping.PRIVATE_API_PREFIX + "/session/close")
     public ResultVO closeSession(@RequestParam String sessionId) {
         EtcdConnector connector = EtcdConnectorFactory.get(sessionId);
-        if (connector != null) {
-            connector.close();
-        }
+        connector.close();
         return ResultCode.OK.result(null);
     }
 
     @HttpRequest(Mapping.PRIVATE_API_PREFIX + "/session/heart_beat")
     public ResultVO heartBeat(@RequestParam String sessionId) {
         EtcdConnector connector = EtcdConnectorFactory.get(sessionId);
-        if (connector == null) {
-            return ResultCode.CONNECT_ERROR.result("Connect has been lost", null);
-        }
         connector.onActive();
         return ResultCode.OK.result(null);
     }

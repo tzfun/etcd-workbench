@@ -82,10 +82,10 @@ const handleSelect = (key: string, keyPath: string[]) => {
   display: flex;
 
   .aside {
-    width: $--ep-custom-aside-width;
+    width: var(--ep-custom-aside-width);
 
     .aside-menu {
-      width: $--ep-custom-aside-width;
+      width: var(--ep-custom-aside-width);
       height: 100%;
       position: fixed;
       left: 0;
@@ -95,7 +95,7 @@ const handleSelect = (key: string, keyPath: string[]) => {
   $--body-padding: 15px;
 
   .body {
-    width: calc(100% - $--ep-custom-aside-width - $--body-padding * 2);
+    width: calc(100% - var(--ep-custom-aside-width) - $--body-padding * 2);
     padding: $--body-padding $--body-padding 0 $--body-padding;
     overflow: auto;
   }
