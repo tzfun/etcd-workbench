@@ -109,7 +109,7 @@ const handleReady = ({view}: any) => {
   cm.dispatch({
     selection: {
       anchor: 0,
-      head: 5
+      head: 0
     },
     scrollIntoView: true
   });
