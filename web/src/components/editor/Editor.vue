@@ -103,7 +103,16 @@ const extensions = computed(() => {
 
 const cmView = shallowRef<EditorView>()
 const handleReady = ({view}: any) => {
-  cmView.value = view
+  const cm = view as EditorView
+  cmView.value = cm
+  //  scroll to top
+  cm.dispatch({
+    selection: {
+      anchor: 0,
+      head: 5
+    },
+    scrollIntoView: true
+  });
 }
 const onChanged = (data) => {
   emits('change', data)
