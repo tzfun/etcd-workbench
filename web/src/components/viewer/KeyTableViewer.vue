@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import {KeyDTO, KeyValueDTO} from "~/common/Types";
 import {Delete, DocumentCopy, Edit, Finished, Search} from "@element-plus/icons-vue";
-import Editor from "~/components/editor/Editor.vue";
+import {reactive} from "vue";
+import {_isEmpty} from "~/common/Util";
 
 const props = defineProps({
   data: Array<KeyDTO>
@@ -10,13 +11,28 @@ const emits = defineEmits(['on-edit', 'on-diff', 'on-delete', 'copy-and-save'])
 
 const keySearch = ref()
 const selectedKey = ref<string[]>([])
-const filterTableData = computed(() =>
-    props.data?.filter(
+const pagination = reactive({
+  total: 0,
+  pageSize: 15,
+  page: 1
+})
+const filterTableData = computed(() => {
+  if (_isEmpty(keySearch.value)) {
+    pagination.total = props.data?.length
+    let idx = (pagination.page - 1) * pagination.pageSize
+    if (idx >= pagination.total) {
+      pagination.page = 1;
+      idx = 0;
+    }
+    return props.data?.slice(idx, idx + pagination.pageSize)
+  } else {
+    return props.data?.filter(
         (data) =>
             !keySearch.value ||
             data.key.toLowerCase().includes(keySearch.value.toLowerCase())
     )
-)
+  }
+})
 
 const handleSelectionChange = (rows: KeyValueDTO[]) => {
   let selected = []
@@ -47,12 +63,20 @@ const del = (index: number, row: KeyDTO) => {
   })
 }
 
-const getSelectedKeys = ():string[] => {
+const getSelectedKeys = (): string[] => {
   return selectedKey.value
 }
 
 const clearSelectedKeys = () => {
   selectedKey.value = []
+}
+
+const handlePaginationSizeChange = (val: number) => {
+  pagination.pageSize = val
+}
+
+const handlePaginationPageChange = (val: number) => {
+  pagination.page = val
 }
 
 defineExpose({
@@ -84,14 +108,31 @@ defineExpose({
           <el-button type="info" :icon="DocumentCopy" size="small" @click="diff(scope.row)">Version
             Diff
           </el-button>
-          <el-button type="warning" :icon="Finished" size="small" @click="copyAndSave(scope.row)">Copy And Save</el-button>
+          <el-button type="warning" :icon="Finished" size="small" @click="copyAndSave(scope.row)">Copy And Save
+          </el-button>
           <el-button type="danger" :icon="Delete" size="small" @click="del(scope.$index,scope.row)">Delete</el-button>
         </template>
       </el-table-column>
     </el-table>
+
+    <div class="pagination-block" v-if="_isEmpty(keySearch)">
+      <el-pagination
+          v-model:current-page="pagination.page"
+          v-model:page-size="pagination.pageSize"
+          :page-sizes="[15, 50, 100, 300, 500]"
+          layout="sizes, prev, pager, next"
+          :total="pagination.total"
+          @size-change="handlePaginationSizeChange"
+          @current-change="handlePaginationPageChange"
+      />
+    </div>
   </div>
 </template>
 
 <style scoped>
-
+.pagination-block {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+}
 </style>
