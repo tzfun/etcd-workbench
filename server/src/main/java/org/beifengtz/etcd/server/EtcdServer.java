@@ -21,12 +21,14 @@ import java.nio.file.Files;
  */
 public class EtcdServer {
 
+    private static final String JVMM_URL = "https://github.com/tzfun/jvmm";
+
     private static void loadBanner() throws Exception {
         InputStream is = EtcdServer.class.getResourceAsStream("/banner.txt");
         if (is != null) {
             System.out.print(IOUtil.toString(is));
         }
-        System.out.print("Powered by \u001b[0m\u001b[92mJVMM\u001b[0m\u001b[96m(https://github.com/tzfun/jvmm)\u001b[0m\n");
+        System.out.print("Powered by \u001b[0m\u001b[92mJVMM\u001b[0m\u001b[96m " + JVMM_URL + " \u001b[0m\n");
         System.out.printf("Framework version: \u001b[0m\u001b[93m%s\u001b[0m\n\n", CommonUtil.getJvmmVersion());
     }
 
