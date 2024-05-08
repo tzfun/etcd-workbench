@@ -2,18 +2,23 @@ package org.beifengtz.etcd.server.test;
 
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
+import io.etcd.jetcd.ClientBuilder;
 import io.etcd.jetcd.KV;
 import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.options.GetOption;
 import io.netty.handler.ssl.ApplicationProtocolConfig;
 import io.netty.handler.ssl.ApplicationProtocolNames;
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.SslProvider;
 import org.beifengtz.etcd.server.entity.dto.NewSessionDTO;
 import org.beifengtz.etcd.server.entity.dto.SshDTO;
 import org.beifengtz.etcd.server.etcd.EtcdConnector;
 import org.beifengtz.etcd.server.etcd.EtcdConnectorFactory;
 import org.beifengtz.etcd.server.util.CommonUtil;
+import org.beifengtz.jvmm.common.util.StringUtil;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
@@ -26,21 +31,9 @@ import java.util.concurrent.TimeUnit;
 public class EtcdTest {
     @Test
     public void testConnect() throws Exception {
-
-        ApplicationProtocolConfig alpn = new ApplicationProtocolConfig(ApplicationProtocolConfig.Protocol.ALPN,
-                ApplicationProtocolConfig.SelectorFailureBehavior.NO_ADVERTISE,
-                ApplicationProtocolConfig.SelectedListenerFailureBehavior.ACCEPT,
-                ApplicationProtocolNames.HTTP_2);
-
         Client client = Client.builder()
                 .target("ip:///127.0.0.1:2379")
                 .namespace(ByteSequence.EMPTY)
-//                .sslContext(SslContextBuilder
-//                        .forClient()
-//                        .applicationProtocolConfig(alpn)
-//                        .trustManager(InsecureTrustManagerFactory.INSTANCE)
-//                        .build())
-                .authority("127.0.0.1")
                 .build();
         GetResponse resp = client.getKVClient().get(CommonUtil.toByteSequence(" "), GetOption.newBuilder()
                         .withKeysOnly(true)
@@ -48,6 +41,41 @@ public class EtcdTest {
                         .withRange(CommonUtil.toByteSequence("\0"))
                         .build())
                 .get(5, TimeUnit.SECONDS);
+        resp.getKvs().forEach(kv -> {
+            System.out.println(kv.getKey().toString(StandardCharsets.UTF_8) + " = " + kv.getValue().toString(StandardCharsets.UTF_8) + ", lease = " +
+                    kv.getLease() + ", CreateRevision = " + kv.getCreateRevision() + ", ModRevision = " + kv.getModRevision() + ", version = " + kv.getVersion());
+        });
+    }
+
+    @Test
+    public void testSslConnect() throws Exception {
+        File caFile = new File("cert-key/ca.crt");
+        File certFile = new File("cert-key/client.crt");
+        File certKeyFile = new File("cert-key/client.key");
+        ApplicationProtocolConfig alpn = new ApplicationProtocolConfig(ApplicationProtocolConfig.Protocol.ALPN,
+                ApplicationProtocolConfig.SelectorFailureBehavior.NO_ADVERTISE,
+                ApplicationProtocolConfig.SelectedListenerFailureBehavior.ACCEPT,
+                ApplicationProtocolNames.HTTP_2);
+
+        SslContextBuilder sslBuilder = SslContextBuilder
+                .forClient()
+                .applicationProtocolConfig(alpn)
+                .sslProvider(SslProvider.JDK)
+                .trustManager(caFile)
+                .keyManager(certFile, certKeyFile);
+        ClientBuilder clientBuilder = Client.builder()
+                .target("ip:///127.0.0.1:2379")
+                .namespace(ByteSequence.EMPTY)
+                .sslContext(sslBuilder.build());
+        System.out.println(StringUtil.getGson().toJson(clientBuilder));
+        Client client = clientBuilder.build();
+        GetResponse resp = client.getKVClient().get(CommonUtil.toByteSequence(" "), GetOption.newBuilder()
+                        .withKeysOnly(true)
+                        .isPrefix(true)
+                        .withRange(CommonUtil.toByteSequence("\0"))
+                        .build())
+                .get(5, TimeUnit.SECONDS);
+        System.out.println(resp);
         resp.getKvs().forEach(kv -> {
             System.out.println(kv.getKey().toString(StandardCharsets.UTF_8) + " = " + kv.getValue().toString(StandardCharsets.UTF_8) + ", lease = " +
                     kv.getLease() + ", CreateRevision = " + kv.getCreateRevision() + ", ModRevision = " + kv.getModRevision() + ", version = " + kv.getVersion());
@@ -94,7 +122,6 @@ public class EtcdTest {
         config.setNamespace("xxxx");
         config.setUser("xxxx");
         config.setPassword("xxx");
-
 
         SshDTO ssh = new SshDTO();
         ssh.setHost("xxx");

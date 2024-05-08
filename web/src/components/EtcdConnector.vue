@@ -111,6 +111,7 @@ const _packFormData = async (): Promise<SessionConfig> => {
           return Promise.reject("Warning, please select client cert file!")
         }
 
+        data.clientCertMode = form.value.cert.certMode
         //  读取Client Cert Auth
         if (form.value.cert.certMode === 'password') {
           data.clientCertPassword = form.value.cert.password

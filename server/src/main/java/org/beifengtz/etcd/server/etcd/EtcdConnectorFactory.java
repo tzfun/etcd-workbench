@@ -6,11 +6,9 @@ import com.jcraft.jsch.Session;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
 import io.etcd.jetcd.ClientBuilder;
-import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.resolver.DnsSrvResolverProvider;
 import io.etcd.jetcd.resolver.HttpResolverProvider;
 import io.etcd.jetcd.resolver.HttpsResolverProvider;
-import io.etcd.jetcd.resolver.IPNameResolver;
 import io.etcd.jetcd.resolver.IPResolverProvider;
 import io.grpc.NameResolverRegistry;
 import io.netty.handler.ssl.ApplicationProtocolConfig;
@@ -20,7 +18,6 @@ import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import org.beifengtz.etcd.server.entity.SshContext;
-import org.beifengtz.etcd.server.entity.bo.KeyValueBO;
 import org.beifengtz.etcd.server.entity.bo.SessionBO;
 import org.beifengtz.etcd.server.entity.dto.NewSessionDTO;
 import org.beifengtz.etcd.server.entity.dto.SshDTO;
@@ -36,6 +33,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
@@ -43,9 +42,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * description: TODO
@@ -93,7 +90,7 @@ public class EtcdConnectorFactory {
         }
         ClientBuilder builder = Client.builder().keepaliveWithoutCalls(false);
         String caType = data.getCaType().toLowerCase();
-        String target;
+        String endpointsStr;
         SslContext ssl = null;
         ApplicationProtocolConfig alpn = new ApplicationProtocolConfig(ApplicationProtocolConfig.Protocol.ALPN,
                 ApplicationProtocolConfig.SelectorFailureBehavior.NO_ADVERTISE,
@@ -110,7 +107,7 @@ public class EtcdConnectorFactory {
                     SslContextBuilder sslBuilder = SslContextBuilder
                             .forClient()
                             .applicationProtocolConfig(alpn)
-                            .sslProvider(SslProvider.OPENSSL)
+                            .sslProvider(SslProvider.JDK)
                             .trustManager(caFile);
                     switch (data.getClientCertMode().toLowerCase()) {
                         case "password": {
@@ -124,12 +121,13 @@ public class EtcdConnectorFactory {
                             break;
                         }
                     }
+                    ssl = sslBuilder.build();
                 } finally {
                     FileUtil.delFile(caFile);
                     FileUtil.delFile(certFile);
                     FileUtil.delFile(certKeyFile);
                 }
-                target = "https://" + data.getHost() + ":" + data.getPort();
+                endpointsStr = "https://" + data.getHost() + ":" + data.getPort();
                 break;
             }
             case "public": {
@@ -138,23 +136,24 @@ public class EtcdConnectorFactory {
                         .applicationProtocolConfig(alpn)
                         .trustManager(InsecureTrustManagerFactory.INSTANCE)
                         .build();
-                target = "https://" + data.getHost() + ":" + data.getPort();
+                endpointsStr = "https://" + data.getHost() + ":" + data.getPort();
                 break;
             }
-            default:{
-                if (data.getHost().matches("\\d+\\.\\d+\\.\\d+\\.\\d+")){
-                    target = IPNameResolver.SCHEME + ":///" + data.getHost() + ":" + data.getPort();
-                } else {
-                    target = "http://" + data.getHost() + ":" + data.getPort();
-                }
+            default: {
+                endpointsStr = "http://" + data.getHost() + ":" + data.getPort();
             }
         }
         if (ssl != null) {
             builder.sslContext(ssl);
         }
-
+        URI endpoints = null;
+        try {
+            endpoints = new URI(endpointsStr);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException(e);
+        }
         builder.executorService(ExecutorFactory.getThreadPool())
-                .target(target)
+                .endpoints(endpoints)
                 .namespace(data.getNamespace() == null ? ByteSequence.EMPTY : CommonUtil.toByteSequence(data.getNamespace()));
         if (StringUtil.nonEmpty(data.getUser())) {
             builder.user(CommonUtil.toByteSequence(data.getUser()));
@@ -169,7 +168,7 @@ public class EtcdConnectorFactory {
     /**
      * 建立ssh隧道，如果有隧道需要建立，会修改传入{@link NewSessionDTO}相关的配置
      *
-     * @param ssh {@link SshDTO}
+     * @param ssh       {@link SshDTO}
      * @param proxyHost 代理 host
      * @param proxyPort 代理 port
      * @return ssh {@link SshContext}

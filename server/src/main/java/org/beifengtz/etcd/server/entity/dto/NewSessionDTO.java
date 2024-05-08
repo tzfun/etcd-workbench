@@ -15,7 +15,6 @@ public class NewSessionDTO {
     private int port;
     private String user;
     private String password;
-    private String authority;
     /**
      * CA证书的类型
      * none | custom | public

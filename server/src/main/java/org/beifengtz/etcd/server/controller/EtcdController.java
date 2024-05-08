@@ -50,11 +50,11 @@ public class EtcdController {
         try {
             EtcdConnector connector = EtcdConnectorFactory.newConnector(data);
             CompletableFuture<KeyValueBO> respFuture = connector.kvGet(" ");
-            respFuture.whenComplete((kv, throwable) -> {
-                connector.close();
-                handleEtcdComplete(future, true, throwable);
-            });
-            respFuture.orTimeout(5, TimeUnit.SECONDS);
+            respFuture.orTimeout(5, TimeUnit.SECONDS)
+                    .whenComplete((kv, throwable) -> {
+                        connector.close();
+                        handleEtcdComplete(future, true, throwable);
+                    });
         } catch (Throwable e) {
             handleEtcdComplete(future, false, e);
         }
@@ -388,8 +388,10 @@ public class EtcdController {
                 throwable = throwable.getCause();
             }
             if (throwable instanceof TimeoutException) {
+                log.debug(throwable.getMessage(), throwable);
                 future.apply(ResultCode.CONNECT_ERROR.result("Connect timeout", null));
             } else if (throwable instanceof IllegalArgumentException) {
+                log.debug(throwable.getMessage(), throwable);
                 future.apply(ResultCode.PARAM_FORMAT_ERROR.result(throwable.getMessage(), null));
             } else {
                 if (!(throwable instanceof EtcdException)) {
