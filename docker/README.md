@@ -14,6 +14,7 @@ A beautiful, lightweight, privately deployable ETCD client that supports SSL, SS
 * `1.1.0`: Supports batch import and export of keys.
     * `1.1.1`: Fix some display bug.
     * `1.1.2`: Optimized some displays and fixed some bugs.
+    * `1.1.3`: The docker image supports the arm64 platform and fixed the problem of SSL connection failure.
 * `1.0.0`: The first public verison, enjoy it!
 
 # Reference
