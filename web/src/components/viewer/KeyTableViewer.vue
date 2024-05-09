@@ -63,6 +63,20 @@ const del = (index: number, row: KeyDTO) => {
   })
 }
 
+const deleteKey = (key:string) => {
+  let idx = -1
+  for (let i = 0; i <props.data!.length; i++) {
+    if (props.data![i].key == key) {
+      idx = i
+      break
+    }
+  }
+
+  if (idx >= 0) {
+    props.data!.splice(idx, 1)
+  }
+}
+
 const getSelectedKeys = (): string[] => {
   return selectedKey.value
 }
@@ -81,7 +95,8 @@ const handlePaginationPageChange = (val: number) => {
 
 defineExpose({
   getSelectedKeys,
-  clearSelectedKeys
+  clearSelectedKeys,
+  deleteKey
 })
 
 </script>

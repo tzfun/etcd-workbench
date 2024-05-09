@@ -1,10 +1,18 @@
 <script setup lang="ts">
 import {Delete, Document, DocumentCopy, Finished, Folder, InfoFilled, Search, Tickets} from "@element-plus/icons-vue";
 import {EditorConfig, KeyValueDTO, TreeNode} from "~/common/Types";
-import {reactive} from "vue";
-import {isDark} from "~/composables";
+import {reactive, ref} from "vue";
 import {_parseCodeLanguage} from "~/common/Util";
+import WorkbenchLogo from "~/design/WorkbenchLogo.vue";
 
+const EMPTY_KV = {
+  key: '',
+  value: '',
+  version: 0,
+  createRevision: 0,
+  modRevision: 0,
+  lease: 0
+}
 const props = defineProps({
   data: Array<TreeNode>,
 })
@@ -19,14 +27,7 @@ const treeDefaultProps = {
   children: 'children',
   label: 'label'
 }
-const editingKV = ref<KeyValueDTO>({
-  key: '',
-  value: '',
-  version: 0,
-  createRevision: 0,
-  modRevision: 0,
-  lease: 0
-})
+const editingKV = ref<KeyValueDTO>(EMPTY_KV)
 
 const editorConfig = reactive<EditorConfig>({
   disabled: false,
@@ -111,7 +112,7 @@ const del = () => {
   emits('on-delete', {
     key: key,
     callback: () => {
-      currentNode.value = undefined
+      clear()
       changed.value = false
     }
   })
@@ -131,10 +132,16 @@ const clearSelectedKeys = () => {
   treeRef.value!.setCheckedKeys([], false)
 }
 
+const clear = () => {
+  clearSelectedKeys()
+  editingKV.value = EMPTY_KV
+  currentNode.value = undefined
+}
 
 defineExpose({
   getSelectedKeys,
   clearSelectedKeys,
+  clear
 })
 
 </script>
@@ -167,13 +174,14 @@ defineExpose({
     </div>
     <div class="tree-editor">
       <editor ref="editorRef"
+              v-if="currentNode"
               :key="editingKV"
               :code="(editingKV as KeyValueDTO).value"
               :config="editorConfig"
               @change="editorChange"
               @save="editorSave">
         <template #headerAppender>
-          <div v-if="currentNode">
+          <div>
             <el-button type="primary" :icon="Tickets" size="small" @click="saveKV">Save{{
                 changed ? " *" : ""
               }}
@@ -184,7 +192,7 @@ defineExpose({
           </div>
         </template>
         <template #footerAppender>
-          <div v-if="currentNode">
+          <div>
             <span class="item">{{ currentNode.path }}</span>
             <span class="item"><strong>Version</strong>: {{ editingKV.version }}</span>
             <span class="item"><strong>Create Revision</strong>: {{ editingKV.createRevision }}</span>
@@ -193,6 +201,9 @@ defineExpose({
           </div>
         </template>
       </editor>
+      <div v-else class="no-key-preview">
+        <workbench-logo matrix logo-size="150px" font-size="80px"/>
+      </div>
     </div>
   </div>
 </template>
@@ -241,6 +252,18 @@ defineExpose({
     .node-key {
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+
+    .no-key-preview {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+      filter: grayscale(30%);
+      opacity: 0.5;
     }
   }
 }

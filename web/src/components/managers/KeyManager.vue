@@ -68,6 +68,9 @@ const loadAllKeys = () => {
   _getAllKeys(props.sessionKey as string).then(data => {
     tableData.value = data
     constructTree(data)
+    if (viewer.value === 'tree') {
+      treeViewerRef.value!.clear()
+    }
   })
 }
 const KEY_SPLITTER = "/"
@@ -261,6 +264,7 @@ const del = ({key, callback}) => {
         callback(key)
       }
       deleteKeysFromTree([key])
+      tableViewerRef.value!.deleteKey(key)
     }).catch(e => {
       console.error(e)
     })
@@ -269,7 +273,7 @@ const del = ({key, callback}) => {
 }
 
 const delBatch = () => {
-  let keys
+  let keys:string[]
   if (viewer.value === 'tree') {
     keys = treeViewerRef.value!.getSelectedKeys()
   } else {
@@ -298,13 +302,13 @@ const delBatch = () => {
         type: 'success',
         message: 'Deleted successfully',
       })
-      if (viewer.value === 'tree') {
-        treeViewerRef.value!.clearSelectedKeys()
-        deleteKeysFromTree(keys)
-      } else {
-        tableViewerRef.value!.clearSelectedKeys()
-        loadAllKeys()
-      }
+      //  删除tree试图
+      treeViewerRef.value!.clearSelectedKeys()
+      deleteKeysFromTree(keys)
+
+      //  删除table视图
+      tableViewerRef.value!.clearSelectedKeys()
+      tableData.value = tableData.value.filter(item => !keys.includes(item.key))
     }).catch(e => {
       console.error(e)
     })
