@@ -7,7 +7,9 @@ import org.beifengtz.etcd.server.config.Configuration;
 import org.beifengtz.etcd.server.config.Mapping;
 import org.beifengtz.etcd.server.config.ResultCode;
 import org.beifengtz.etcd.server.entity.TokenPayload;
+import org.beifengtz.etcd.server.entity.vo.CheckLoginVO;
 import org.beifengtz.etcd.server.entity.vo.ResultVO;
+import org.beifengtz.etcd.server.util.CommonUtil;
 import org.beifengtz.jvmm.common.util.FileUtil;
 import org.beifengtz.jvmm.common.util.SignatureUtil;
 import org.beifengtz.jvmm.common.util.StringUtil;
@@ -109,16 +111,19 @@ public class AuthController {
     }
 
     @HttpRequest(value = Mapping.PUBLIC_API_PREFIX + "/auth/check_login", method = Method.POST)
-    public ResultVO checkLogin(@RequestBody String token) throws Exception {
-        boolean[] result = new boolean[2];
-        result[0] = Configuration.INSTANCE.isEnableAuth();
-        if (result[0]) {
+    public ResultVO checkLogin(@RequestBody String token) {
+        CheckLoginVO result = new CheckLoginVO();
+        result.setEnableAuth(Configuration.INSTANCE.isEnableAuth());
+        if (result.isEnableAuth()) {
             try {
                 verifyToken(token);
-            } catch (IllegalStateException e) {
-                result[1] = true;
+            } catch (Exception e) {
+                result.setNeedLogin(true);
             }
         }
+        String[] versionInfo = CommonUtil.getVersionInfo();
+        result.setVersion(versionInfo[0]);
+        result.setBuildHash(versionInfo[1]);
         return ResultCode.OK.result(result);
     }
 }

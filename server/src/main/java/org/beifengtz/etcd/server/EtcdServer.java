@@ -6,6 +6,7 @@ import org.beifengtz.jvmm.common.util.CommonUtil;
 import org.beifengtz.jvmm.common.util.IOUtil;
 import org.beifengtz.jvmm.common.util.StringUtil;
 import org.beifengtz.jvmm.common.util.SystemPropertyUtil;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.naming.ConfigurationException;
@@ -102,6 +103,10 @@ public class EtcdServer {
 
     private static void bootstrap() {
         new HttpService().start(Configuration.INSTANCE.getPort());
+        String[] versionInfo = org.beifengtz.etcd.server.util.CommonUtil.getVersionInfo();
+        Logger logger = LoggerFactory.getLogger(EtcdServer.class);
+        logger.info("Etcd workbench version: {}", versionInfo[0]);
+        logger.info("Etcd workbench build hash: {}", versionInfo[1]);
     }
 
     public static void main(String[] args) throws Exception {

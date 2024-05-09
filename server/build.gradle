@@ -34,7 +34,25 @@ test {
     useJUnitPlatform()
 }
 
+task writeVersionFile() {
+    File targetFile = new File("src/main/resources/workbench-version.txt")
+    if (targetFile.exists()) {
+        def out = new ByteArrayOutputStream()
+        def cmd = 'git rev-parse --short HEAD'
+        def isWindows = System.getProperty('os.name').toLowerCase(Locale.ROOT).contains("windows")
+
+        exec {
+            ExecSpec execSpec ->
+                executable(isWindows ? 'cmd' : 'sh')
+                args isWindows ? '/c' : '-c', cmd
+                standardOutput = out
+        }
+        targetFile.write((version as String) + "\n" + out.toString())
+    }
+}
+
 compileJava {
+    dependsOn writeVersionFile
     options.compilerArgs << "-parameters" << "-Xlint:unchecked" << "-Xlint:deprecation"
 }
 
@@ -50,7 +68,7 @@ jar {
     archiveName("etcd-workbench.jar")
 
     manifest {
-        attributes (
+        attributes(
                 "Manifest-Version": 1.0,
                 'Main-Class': 'org.beifengtz.etcd.server.EtcdServer'
         )

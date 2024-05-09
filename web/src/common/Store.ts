@@ -3,7 +3,9 @@ import {pushEvent} from "~/common/Event";
 
 let data = {
     user: <string | null>null,
-    token: <string | null>null
+    token: <string | null>null,
+    version: <string | null>null,
+    buildHash: <string | null>null
 }
 
 export function loadStore() {
@@ -45,6 +47,20 @@ export function clearLoginStatus() {
     data.token = null
     clearAllConf()
     onDirty()
+}
+
+export function saveVersionInfo(version: string | null, buildHash: string | null) {
+    data.version = version
+    data.buildHash = buildHash
+    onDirty()
+}
+
+export function getVersion(): string | null {
+    return data.version
+}
+
+export function getBuildHash(): string | null {
+    return data.buildHash
 }
 
 loadStore()

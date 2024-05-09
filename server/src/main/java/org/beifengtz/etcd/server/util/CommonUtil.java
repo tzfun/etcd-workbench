@@ -2,16 +2,24 @@ package org.beifengtz.etcd.server.util;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
+import com.google.common.io.Resources;
 import io.etcd.jetcd.ByteSequence;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.util.internal.ResourcesUtil;
+import io.netty.util.internal.logging.InternalLoggerFactory;
+import org.beifengtz.etcd.server.etcd.EtcdConnectorFactory;
+import org.beifengtz.jvmm.common.util.IOUtil;
 import org.beifengtz.jvmm.common.util.SignatureUtil;
 import org.beifengtz.jvmm.convey.channel.ChannelUtil;
+import org.slf4j.LoggerFactory;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
@@ -135,5 +143,21 @@ public class CommonUtil {
             ip = EMPTY_IP;
         }
         return ip;
+    }
+
+    public static String[] getVersionInfo() {
+        try {
+            InputStream is = CommonUtil.class.getResourceAsStream("/workbench-version.txt");
+            if (is != null) {
+                String content = IOUtil.toString(is);
+                String[] split = content.split("\n");
+                if (split.length > 1) {
+                    return split;
+                }
+            }
+        } catch (IOException e) {
+            LoggerFactory.getLogger(CommonUtil.class).debug("Failed to read workbench version", e);
+        }
+        return new String[]{"0.0.0", null};
     }
 }

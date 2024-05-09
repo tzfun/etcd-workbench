@@ -1,3 +1,10 @@
+export interface ServerInfo {
+    enableAuth?: boolean;
+    needLogin?: boolean;
+    version: string | null;
+    buildHash: string | null;
+}
+
 export interface KeyDTO {
     key: string;
     version: number | 0;

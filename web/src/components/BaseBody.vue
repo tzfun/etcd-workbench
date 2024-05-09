@@ -1,14 +1,16 @@
 <script lang="ts" setup>
 import {isDark, toggleDark} from "~/composables";
-import {ref} from 'vue'
+import {reactive, ref} from 'vue'
 import type {TabPaneName} from 'element-plus'
 import {_checkLogin, _closeSession} from "~/common/Service";
 import {EventListener, pushEvent, registerEventListener} from "~/common/Event";
 import {unregisterConfigListener} from "~/common/Config";
-import {clearLoginStatus, getUser} from "~/common/Store";
+import {clearLoginStatus, getBuildHash, getUser, getVersion, saveVersionInfo} from "~/common/Store";
 import {_nonEmpty} from "~/common/Util";
-import {Moon, Sunny} from "@element-plus/icons-vue";
+import {Moon, Sunny, InfoFilled} from "@element-plus/icons-vue";
 import etcd from "~/assets/etcd.png";
+import {ServerInfo} from "~/common/Types";
+import WorkbenchLogo from "~/design/WorkbenchLogo.vue";
 
 let tabIndex = 1
 const curTab = ref('1')
@@ -17,12 +19,17 @@ const status = ref<'login' | 'main' | 'none'>('none')
 const eventListener = ref<EventListener>()
 const user = ref()
 const etcdLogo = ref(etcd)
+const enableInfoDialog = ref(false)
+const workbenchInfo = reactive<ServerInfo>({
+  version: '',
+  buildHash: null
+})
 
 onBeforeMount(async () => {
-  const result = await _checkLogin()
-  if (result[0]) {
+  const result:ServerInfo = await _checkLogin()
+  if (result.enableAuth) {
     needLogin.value = true
-    if(result[1]) {
+    if(result.needLogin) {
       status.value = 'login'
       clearLoginStatus()
     } else {
@@ -32,6 +39,7 @@ onBeforeMount(async () => {
     clearLoginStatus()
     status.value = 'main'
   }
+  saveVersionInfo(result.version, result.buildHash)
 })
 
 onMounted(() => {
@@ -127,6 +135,12 @@ const handleSelectHeader = (key: string) => {
     window.open('https://www.github.com/tzfun/etcd-workbench', '_blank')
   }
 }
+
+const showInfo = () => {
+  workbenchInfo.version = getVersion()
+  workbenchInfo.buildHash = getBuildHash()
+  enableInfoDialog.value = true
+}
 </script>
 
 <template>
@@ -145,6 +159,9 @@ const handleSelectHeader = (key: string) => {
         <span class="header-title">ETCD Workbench</span>
         <div class="flex-grow"/>
 
+        <div class="header-item">
+          <el-icon class="workbench-info" size="26" @click="showInfo"><InfoFilled /></el-icon>
+        </div>
         <div class="header-item">
           <a href="https://www.github.com/tzfun/etcd-workbench" target="_blank" title="Fork from GitHub">
             <svg t="1702187888545"
@@ -209,6 +226,54 @@ const handleSelectHeader = (key: string) => {
       </el-tabs>
     </div>
 
+    <el-dialog
+        v-model="enableInfoDialog"
+        title="About"
+        width="600"
+    >
+      <div class="workbench-info-container">
+        <workbench-logo/>
+        <p class="description">A beautiful and lightweight ETCD V3 client for web</p>
+        <p class="copyright">
+          Copyright &copy; 2024 <a class="link" target="_blank" href="https://github.com/tzfun">beifengtz</a>. All rights reserved.
+        </p>
+        <div class="info">
+          <div class="info-item">
+            <div class="info-label">Version</div>
+            <div class="info-content"><strong>{{ workbenchInfo.version }}</strong></div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Build Hash</div>
+            <div class="info-content"><strong>{{ workbenchInfo.buildHash }}</strong></div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Open Source</div>
+            <div class="info-content">
+              <a class="link" href="https://github.com/tzfun/etcd-workbench/" target="_blank">Github</a> and
+              <a class="link" href="https://gitee.com/tzfun/etcd-workbench/" target="_blank">Gitee</a>
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">LICENSE</div>
+            <div class="info-content">
+              <a class="link" href="https://github.com/tzfun/etcd-workbench/blob/master/LICENSE" target="_blank">Apache License 2.0</a>
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Report Bug</div>
+            <div class="info-content">
+              <a class="link" href="https://github.com/tzfun/etcd-workbench/issues/new" target="_blank">Go to submit</a>
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Contact Author</div>
+            <div class="info-content"><a class="link" href="mailto:beifengtz@qq.com">beifengtz@qq.com</a> </div>
+          </div>
+
+        </div>
+      </div>
+
+    </el-dialog>
   </div>
 </template>
 
@@ -263,6 +328,10 @@ const handleSelectHeader = (key: string) => {
     a {
       display: inline-flex;
     }
+
+    .workbench-info {
+      cursor: pointer;
+    }
   }
 }
 
@@ -275,6 +344,62 @@ const handleSelectHeader = (key: string) => {
       position: fixed;
       height: calc(100% - var(--ep-tabs-header-height) - $--header-height);
       overflow: auto;
+    }
+  }
+}
+
+.workbench-info-container {
+
+  .description {
+    text-align: center;
+    font-size: 20px;
+  }
+
+  .copyright {
+    color: #9f9b9b;
+    text-align: center;
+
+    .link {
+      color: unset;
+      text-decoration-line: none;
+      font-weight: 600;
+    }
+
+    .link:hover {
+      text-decoration-line: underline;
+    }
+  }
+
+  .info {
+    width: max-content;
+    text-align: left;
+    margin: 50px auto 0 auto;
+
+    .info-item {
+      margin: 15px 0;
+
+      .info-label {
+        width: 140px;
+        text-align: right;
+        display: inline-block;
+      }
+
+      .info-content {
+        display: inline-block;
+        margin-left: 10px;
+
+        .link {
+          text-decoration-line: none;
+        }
+
+        .link:hover {
+          text-decoration-line: underline;
+        }
+      }
+
+      .info-label::after {
+        content: ':';
+      }
     }
   }
 }
