@@ -448,21 +448,16 @@ const tablePutKey = () => {
 
   const value = editorRef.value.readDataString()
 
-  if (_isEmpty(value)) {
-    ElMessage({
-      type: 'warning',
-      message: 'Content value is empty',
-    })
-    return
+  if (!isNew.value) {
+    if (value == kv.value) {
+      ElMessage({
+        type: 'warning',
+        message: 'Content not change',
+      })
+      return
+    }
   }
 
-  if (value == kv.value) {
-    ElMessage({
-      type: 'warning',
-      message: 'Content not change',
-    })
-    return
-  }
   putKeyValue({
     kv: {
       ...kv,
