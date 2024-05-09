@@ -315,8 +315,6 @@ export function _parseCodeLanguage(filename: string, content: string): string {
     if (!lang) {
         lang = 'text'
     }
-
-    console.log("parse lang ", filename, lang)
     return lang
 }
 

@@ -283,7 +283,6 @@ export function _listConfig(): Promise<SessionStoreConfig[]> {
             let result: SessionStoreConfig[] = []
             for (let key in data) {
                 let contentSrc = _base64Decode(data[key])
-                console.log(contentSrc)
                 let config: SessionStoreConfig = JSON.parse(contentSrc)
                 config.key = key
                 result.push(config)

@@ -164,8 +164,8 @@ defineExpose({
         >
           <template #default="{ node, data }">
             <span class="tree-node-icon">
-              <el-icon v-if="data.type === 'dir'"><Folder/></el-icon>
-              <el-icon v-else><Document/></el-icon>
+              <el-icon v-if="data.type === 'dir'" class="node-icon-folder"><Folder/></el-icon>
+              <el-icon v-else class="node-icon-doc"><Document/></el-icon>
             </span>
             <span :class="data.type === 'file' ? 'tree-node-file' : 'tree-node-dir'">{{ node.label }}</span>
           </template>
@@ -235,6 +235,14 @@ defineExpose({
       .tree-node-icon {
         margin: 0 5px;
         line-height: 0;
+
+        .node-icon-folder {
+          color: #949393;
+        }
+
+        .node-icon-doc {
+          color: #ae57f0;
+        }
       }
     }
   }
@@ -268,9 +276,9 @@ defineExpose({
   }
 }
 
-.tree-node-file {
-  color: #4380ad;
-}
+//.tree-node-file {
+//  color: #2e9f52;
+//}
 
 .flow-tree {
   min-width: 100%;

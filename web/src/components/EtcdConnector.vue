@@ -200,7 +200,6 @@ const _testConnect = () => {
 const _connect = () => {
   _packFormData().then(formData => {
     _newSession(formData).then(res => {
-      console.log(res)
       emits('connected', {sessionInfo: res, name: form.value.name})
     })
   }).catch(e => {

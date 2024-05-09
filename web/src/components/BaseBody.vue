@@ -42,6 +42,8 @@ onMounted(() => {
       status.value = 'login'
 
       tabs.value.splice(0, tabs.value.length)
+      curTab.value = '1'
+      tabIndex = 0
       tabAdd()
     } else if (key === 'loginSuccess') {
       status.value = 'main'
