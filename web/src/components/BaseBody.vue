@@ -40,6 +40,9 @@ onMounted(() => {
     if (key === 'login' || key === 'logout') {
       clearLoginStatus()
       status.value = 'login'
+
+      tabs.value.splice(0, tabs.value.length)
+      tabAdd()
     } else if (key === 'loginSuccess') {
       status.value = 'main'
     } else if (key == 'storeChange') {
