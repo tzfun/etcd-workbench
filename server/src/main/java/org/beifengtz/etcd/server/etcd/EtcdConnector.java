@@ -6,20 +6,7 @@ import io.etcd.jetcd.Client;
 import io.etcd.jetcd.KV;
 import io.etcd.jetcd.KeyValue;
 import io.etcd.jetcd.Response.Header;
-import io.etcd.jetcd.auth.AuthDisableResponse;
-import io.etcd.jetcd.auth.AuthEnableResponse;
-import io.etcd.jetcd.auth.AuthRoleAddResponse;
-import io.etcd.jetcd.auth.AuthRoleDeleteResponse;
-import io.etcd.jetcd.auth.AuthRoleGrantPermissionResponse;
-import io.etcd.jetcd.auth.AuthRoleListResponse;
-import io.etcd.jetcd.auth.AuthRoleRevokePermissionResponse;
-import io.etcd.jetcd.auth.AuthUserAddResponse;
-import io.etcd.jetcd.auth.AuthUserChangePasswordResponse;
-import io.etcd.jetcd.auth.AuthUserDeleteResponse;
-import io.etcd.jetcd.auth.AuthUserGetResponse;
-import io.etcd.jetcd.auth.AuthUserGrantRoleResponse;
-import io.etcd.jetcd.auth.AuthUserRevokeRoleResponse;
-import io.etcd.jetcd.auth.Permission;
+import io.etcd.jetcd.auth.*;
 import io.etcd.jetcd.cluster.Member;
 import io.etcd.jetcd.cluster.MemberUpdateResponse;
 import io.etcd.jetcd.kv.DeleteResponse;
@@ -44,7 +31,6 @@ import org.beifengtz.etcd.server.entity.bo.PermissionBO;
 import org.beifengtz.etcd.server.entity.bo.PermissionBO.PermissionBOBuilder;
 import org.beifengtz.etcd.server.entity.bo.UserBO;
 import org.beifengtz.etcd.server.util.CommonUtil;
-import org.beifengtz.jvmm.common.util.meta.PairKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,7 +46,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.TimeUnit;
@@ -214,6 +199,7 @@ public class EtcdConnector {
                                     .withRevision(v)
                                     .withKeysOnly(true)
                                     .build())
+                            .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS)
                             .whenComplete((getResponse, throwable) -> {
                                 if (throwable == null) {
                                     if (getResponse.getCount() > 0) {
@@ -229,7 +215,8 @@ public class EtcdConnector {
                                         future.complete(historyVersion);
                                     }
                                 } else {
-                                    future.completeExceptionally(throwable);
+                                    logger.debug("An exception occurred while retrieving historical versions: " + throwable.getMessage(), throwable);
+                                    future.complete(historyVersion);
                                 }
                             });
                 } else {
@@ -770,7 +757,7 @@ public class EtcdConnector {
      *
      * @param target 目标 endpoints，也可以是 URL
      */
-    public CompletableFuture<DefragmentResponse> maintenanceGc(String target) {
+    public CompletableFuture<DefragmentResponse> maintenanceDefragment(String target) {
         onActive();
         return client.getMaintenanceClient()
                 .defragmentMember(transferTarget(target))
@@ -809,6 +796,7 @@ public class EtcdConnector {
 
     /**
      * 导出指定key，输出为base64编码的数据
+     *
      * @param keys key array
      * @return String {@link CompletableFuture}
      */
@@ -851,6 +839,7 @@ public class EtcdConnector {
 
     /**
      * 导入数据
+     *
      * @param data base64编码的数据
      * @return {@link CompletableFuture}
      */
