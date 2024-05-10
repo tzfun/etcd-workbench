@@ -1,6 +1,7 @@
 package org.beifengtz.etcd.server.util;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -405,7 +406,7 @@ public class RSAKey {
      * @param convertToPublic 等于true时含私钥的RSA将只返回公钥，仅含公钥的RSA不受影响
      * @return 公钥如：-----BEGIN RSA PUBLIC KEY-----，私钥如：-----BEGIN RSA PRIVATE KEY-----
      */
-    public String toPemPKCS1(boolean convertToPublic) throws Exception {
+    public String toPemPKCS1(boolean convertToPublic) throws IOException {
         return toPem(convertToPublic, false, false);
     }
 
@@ -414,7 +415,7 @@ public class RSAKey {
      * @param convertToPublic 等于true时含私钥的RSA将只返回公钥，仅含公钥的RSA不受影响
      * @return 公钥如：-----BEGIN PUBLIC KEY-----，私钥如：-----BEGIN PRIVATE KEY-----
      */
-    public String toPemPKCS18(boolean convertToPublic) throws Exception {
+    public String toPemPKCS8(boolean convertToPublic) throws IOException {
         return toPem(convertToPublic, true, true);
     }
 
@@ -425,7 +426,7 @@ public class RSAKey {
      * @param publicUsePKCS8 公钥的返回格式，等于true时返回PKCS#8格式（-----BEGIN PUBLIC KEY-----），否则返回PKCS#1格式（-----BEGIN RSA PUBLIC KEY-----），返回私钥时此参数无效；一般用的多的是true PKCS#8格式公钥，PKCS#1格式公钥似乎比较少见
      * @return 公钥如：-----BEGIN PUBLIC KEY-----，私钥如：-----BEGIN PRIVATE KEY-----
      */
-    public String toPem(boolean convertToPublic, boolean privateUsePKCS8, boolean publicUsePKCS8) throws Exception {
+    public String toPem(boolean convertToPublic, boolean privateUsePKCS8, boolean publicUsePKCS8) throws IOException {
         //https://www.jianshu.com/p/25803dd9527d
         //https://www.cnblogs.com/ylz8401/p/8443819.html
         //https://blog.csdn.net/jiayanhui2877/article/details/47187077
@@ -554,7 +555,7 @@ public class RSAKey {
     /**
      * 写入一块数据
      **/
-    private static void writeBlock(byte[] byts, ByteArrayOutputStream ms) throws Exception {
+    private static void writeBlock(byte[] byts, ByteArrayOutputStream ms) throws IOException {
         boolean addZero = ((byts[0] & 0xff) >> 4) >= 0x8;
         ms.write(0x02);
         int len = byts.length + (addZero ? 1 : 0);

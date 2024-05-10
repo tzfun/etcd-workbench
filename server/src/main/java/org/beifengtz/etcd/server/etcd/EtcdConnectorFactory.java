@@ -82,7 +82,7 @@ public class EtcdConnectorFactory {
         return connector;
     }
 
-    public static EtcdConnector newConnector(NewSessionDTO data) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException, JSchException {
+    public static EtcdConnector newConnector(NewSessionDTO data) throws IOException, NoSuchAlgorithmException, JSchException {
         SshContext sshContext = connectSshTunnel(data.getSsh(), data.getPort(), data.getHost());
         if (sshContext != null) {
             data.setPort(sshContext.getProxyLocalPort());
@@ -116,12 +116,15 @@ public class EtcdConnectorFactory {
                         }
                         case "key": {
                             FileUtil.writeByteArrayToFile(certFile, data.getClientCert().getBytes(StandardCharsets.UTF_8));
-                            FileUtil.writeByteArrayToFile(certKeyFile, data.getClientCertKey().getBytes(StandardCharsets.UTF_8));
+                            String pemPKCS8Key = RSAKey.fromPem(data.getClientCertKey()).toPemPKCS8(false);
+                            FileUtil.writeByteArrayToFile(certKeyFile, pemPKCS8Key.getBytes(StandardCharsets.UTF_8));
                             sslBuilder.keyManager(certFile, certKeyFile);
                             break;
                         }
                     }
                     ssl = sslBuilder.build();
+                } catch (InvalidKeySpecException e) {
+                    throw new IllegalArgumentException("Failed to read cert key: " + e.getMessage(), e);
                 } finally {
                     FileUtil.delFile(caFile);
                     FileUtil.delFile(certFile);
