@@ -21,7 +21,7 @@ cp ../bin/*.jar ./
 IMAGE_NAME="tzfun/etcd-workbench:$VERSION"
 
 echo Building dockerfile $IMAGE_NAME
-docker buildx build --platform linux/amd64,linux/amd64/v2,linux/amd64/v3,linux/arm64,linux/arm64/v8,windows/amd64 -f Dockerfile -t $IMAGE_NAME --push .
+docker buildx build --platform linux/amd64,linux/arm64,linux/arm64/v8,windows/amd64 -f Dockerfile -t $IMAGE_NAME --push .
 wait
 if [ $? -ne 0 ]; then
     exit $?
