@@ -6,6 +6,8 @@
 
 A beautiful, lightweight, privately deployable ETCD client that supports SSL, SSH Tunnel connections, and multi-account session management.
 
+Supported platforms: linux/amd64, linux/arm64, linux/arm64/v8, windows/amd64
+
 # Tag logs
 
 > new -> old
