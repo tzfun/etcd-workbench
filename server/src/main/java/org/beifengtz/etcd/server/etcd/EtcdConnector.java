@@ -38,19 +38,11 @@ import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 /**
@@ -174,7 +166,7 @@ public class EtcdConnector {
     }
 
     /**
-     * 获取某一个key的所有历史版本
+     * 获取某一个key的所有历史版本，如果某一个版本被压缩，将终止搜索并返回已搜索成功的历史版本
      *
      * @param key           key
      * @param startRevision 开始版本号
@@ -184,48 +176,54 @@ public class EtcdConnector {
     public CompletableFuture<Collection<Long>> kvGetHistoryVersion(String key, long startRevision, long endRevision) {
         onActive();
         CompletableFuture<Collection<Long>> future = new CompletableFuture<>();
-        assert endRevision > startRevision;
-        KV kvClient = client.getKVClient();
-        ByteSequence keyByte = CommonUtil.toByteSequence(key);
-        Set<Long> historyVersion = new ConcurrentSkipListSet<>();
-        AtomicLong rev = new AtomicLong(endRevision);
-
-        Runnable search = new Runnable() {
-            @Override
-            public void run() {
-                long v = rev.get();
-                if (v >= startRevision && v <= endRevision) {
-                    kvClient.get(keyByte, GetOption.newBuilder()
-                                    .withRevision(v)
-                                    .withKeysOnly(true)
-                                    .build())
-                            .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS)
-                            .whenComplete((getResponse, throwable) -> {
-                                if (throwable == null) {
-                                    if (getResponse.getCount() > 0) {
-                                        KeyValue kv = getResponse.getKvs().get(0);
-                                        if (v >= kv.getCreateRevision() && v <= kv.getModRevision()) {
-                                            historyVersion.add(v);
-                                            rev.decrementAndGet();
-                                        } else {
-                                            rev.set(kv.getModRevision());
-                                        }
-                                        this.run();
-                                    } else {
-                                        future.complete(historyVersion);
-                                    }
-                                } else {
-                                    logger.debug("An exception occurred while retrieving historical versions: " + throwable.getMessage(), throwable);
-                                    future.complete(historyVersion);
-                                }
-                            });
-                } else {
-                    future.complete(historyVersion);
-                }
-            }
-        };
-        search.run();
+        if (endRevision <= startRevision) {
+            future.completeExceptionally(new IllegalArgumentException("Out of range error: start value is greater than end value"));
+        } else {
+            kvGetHistoryVersion0(
+                    CommonUtil.toByteSequence(key),
+                    endRevision,
+                    startRevision,
+                    endRevision,
+                    client.getKVClient(),
+                    new TreeSet<>(),
+                    future
+            );
+        }
         return future;
+    }
+
+    private void kvGetHistoryVersion0(ByteSequence keyByte, long revision, long startRevision, long endRevision, KV kvClient,
+                                      Set<Long> historyVersion, CompletableFuture<Collection<Long>> future) {
+        if (revision >= startRevision && revision <= endRevision) {
+            kvClient.get(keyByte, GetOption.newBuilder()
+                            .withRevision(revision)
+                            .withKeysOnly(true)
+                            .build())
+                    .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS)
+                    .whenComplete((getResponse, throwable) -> {
+                        if (throwable == null) {
+                            if (getResponse.getCount() > 0) {
+                                KeyValue kv = getResponse.getKvs().get(0);
+                                long nextRevision;
+                                if (revision >= kv.getCreateRevision() && revision <= kv.getModRevision()) {
+                                    historyVersion.add(revision);
+                                    nextRevision = revision - 1;
+                                } else {
+                                    nextRevision = kv.getModRevision();
+                                }
+
+                                kvGetHistoryVersion0(keyByte, nextRevision, startRevision, endRevision, kvClient, historyVersion, future);
+                            } else {
+                                future.complete(historyVersion);
+                            }
+                        } else {
+                            logger.debug("An exception occurred while retrieving historical versions: " + throwable.getMessage(), throwable);
+                            future.complete(historyVersion);
+                        }
+                    });
+        } else {
+            future.complete(historyVersion);
+        }
     }
 
     /**
@@ -647,20 +645,44 @@ public class EtcdConnector {
      */
     public CompletableFuture<ClusterBO> clusterInfo() {
         onActive();
-        return client.getClusterClient().listMember().thenApply(memberListResponse -> {
-            Header header = memberListResponse.getHeader();
 
-            ClusterBO cluster = new ClusterBO();
-            cluster.setClusterId(Long.toUnsignedString(header.getClusterId()));
-            cluster.setLeaderId(Long.toUnsignedString(header.getMemberId()));
-            cluster.setRevision(header.getRevision());
-            cluster.setRaftTerm(header.getRaftTerm());
-            List<Member> memberList = memberListResponse.getMembers();
-            if (!memberList.isEmpty()) {
-                cluster.setMembers(memberList.stream().map(MemberBO::parseFrom).collect(Collectors.toList()));
-            }
+        ClusterBO cluster = new ClusterBO();
+        Map<String, MemberBO> memberMap = new HashMap<>();
+        Map<String, AlarmType> alarmMap = new HashMap<>();
+
+        var futures = new CompletableFuture[2];
+        futures[0] = client.getClusterClient()
+                .listMember()
+                .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS)
+                .thenAccept(response -> {
+                    Header header = response.getHeader();
+
+                    cluster.setClusterId(Long.toUnsignedString(header.getClusterId()));
+                    cluster.setLeaderId(Long.toUnsignedString(header.getMemberId()));
+                    cluster.setRevision(header.getRevision());
+                    cluster.setRaftTerm(header.getRaftTerm());
+                    List<Member> memberList = response.getMembers();
+                    if (!memberList.isEmpty()) {
+                        cluster.setMembers(memberList.stream().map(o -> {
+                            MemberBO member = MemberBO.parseFrom(o);
+                            memberMap.put(member.getId(), member);
+                            return member;
+                        }).collect(Collectors.toList()));
+                    }
+                });
+        futures[1] = client.getMaintenanceClient()
+                .listAlarms()
+                .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS)
+                .thenAccept(response -> {
+                    for (AlarmMember alarmMember : response.getAlarms()) {
+                        alarmMap.put(Long.toUnsignedString(alarmMember.getMemberId()), alarmMember.getAlarmType());
+                    }
+                });
+
+        return CompletableFuture.allOf(futures).thenApply(v -> {
+            memberMap.forEach((id, member) -> member.setAlarmType(alarmMap.get(id)));
             return cluster;
-        }).orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
+        });
     }
 
     /**
@@ -753,7 +775,7 @@ public class EtcdConnector {
     }
 
     /**
-     * 对节点进行碎片清理。这是一个比较消耗资源的操作，谨慎调用。
+     * 对节点进行碎片整理。这是一个比较消耗资源的操作，谨慎调用。
      *
      * @param target 目标 endpoints，也可以是 URL
      */

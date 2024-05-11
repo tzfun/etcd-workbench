@@ -1,6 +1,7 @@
 package org.beifengtz.etcd.server.entity.bo;
 
 import io.etcd.jetcd.cluster.Member;
+import io.etcd.jetcd.maintenance.AlarmType;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.beifengtz.jvmm.common.JsonParsable;
@@ -16,13 +17,13 @@ import java.util.List;
  * @author beifengtz
  */
 @Data
-@Slf4j
 public class MemberBO implements JsonParsable {
     private String id;
     private String name;
     private List<String> peerUri = List.of();
     private List<String> clientUri = List.of();
     private MemberStatusBO status;
+    private AlarmType alarmType;
 
     public static MemberBO parseFrom(Member member) {
         MemberBO memberBO = new MemberBO();
@@ -30,7 +31,7 @@ public class MemberBO implements JsonParsable {
         memberBO.setName(member.getName());
 
         List<URI> peerURIs = member.getPeerURIs();
-        if (peerURIs != null && peerURIs.size() > 0) {
+        if (peerURIs != null && !peerURIs.isEmpty()) {
             List<String> list = new ArrayList<>(peerURIs.size());
             for (URI uri : peerURIs) {
                 list.add(uri.toString());
@@ -39,7 +40,7 @@ public class MemberBO implements JsonParsable {
         }
 
         List<URI> clientURIs = member.getClientURIs();
-        if (clientURIs != null && clientURIs.size() > 0) {
+        if (clientURIs != null && !clientURIs.isEmpty()) {
             List<String> list = new ArrayList<>(clientURIs.size());
             for (URI uri : clientURIs) {
                 list.add(uri.toString());

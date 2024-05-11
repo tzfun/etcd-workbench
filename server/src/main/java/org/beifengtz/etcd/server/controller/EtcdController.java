@@ -345,6 +345,15 @@ public class EtcdController {
                 .whenComplete((memberStatusBO, throwable) -> handleEtcdComplete(future, memberStatusBO, throwable));
     }
 
+    @HttpRequest(Mapping.PRIVATE_API_PREFIX + "/session/etcd/cluster/defragment")
+    public void defragment(@RequestParam String sessionId,
+                           @RequestParam String target,
+                           ResponseFuture future) {
+        EtcdConnectorFactory.get(sessionId)
+                .maintenanceDefragment(target)
+                .whenComplete((memberStatusBO, throwable) -> handleEtcdComplete(future, memberStatusBO, throwable));
+    }
+
     @HttpRequest(Mapping.PRIVATE_API_PREFIX + "/session/etcd/auth/enable")
     public void authEnable(@RequestParam String sessionId,
                            ResponseFuture future) {
