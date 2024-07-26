@@ -1,0 +1,5 @@
+@use 'vuetify/settings' with (
+  $tooltip-padding: 5px 10px,
+  $tooltip-font-size: 0.8em,
+  $system-bar-icon-opacity: 1,
+);
