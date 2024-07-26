@@ -4,12 +4,16 @@ import etcdLogo from '~/assets/etcd.png';
 import {_confirm, events} from "~/common/events.ts";
 import {DialogItem, TipsItem} from "~/common/types.ts";
 import {onMounted, ref} from "vue";
+import {Platform, platform as getPlatform} from "@tauri-apps/api/os";
 
 const loading = ref(false)
 const dialogs = ref<DialogItem[]>([])
 const tips = ref<TipsItem[]>([])
+const platform = ref<Platform>('win32')
 
 onMounted(async () => {
+
+  platform.value = await getPlatform()
 
   //  频闭右键事件
   disableRightMenu()
@@ -87,6 +91,7 @@ const closeApp = () => {
   <v-app id="vuetify-app">
     <v-layout style="height: 50px">
       <v-system-bar window
+                    v-if="platform == 'win32'"
                     :height="28"
                     @dblclick="appWindow.toggleMaximize()"
                     data-tauri-drag-region

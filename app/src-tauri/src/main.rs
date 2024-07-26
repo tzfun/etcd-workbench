@@ -1,6 +1,10 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod api;
+mod transport;
+mod etcd;
+
 use log::warn;
 use tauri::Manager;
 use window_shadows::set_shadow;
@@ -18,6 +22,10 @@ fn main() {
             if let Err(e) = set_shadow(&window, true) {
                 warn!("Can not set window shadow: {}", e)
             }
+
+            #[cfg(target_os = "macos")]
+            window.set_decorations(true)?;
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![greet])
