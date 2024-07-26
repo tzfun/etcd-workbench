@@ -1,8 +1,9 @@
 use std::time::Duration;
 
-use etcd_client::{Certificate, Client, ConnectOptions, Error, Identity, TlsOptions};
+use etcd_client::{Certificate, Client, ConnectOptions, Error, GetOptions, Identity, TlsOptions};
 
 use crate::transport::connection::Connection;
+use crate::transport::kv::SerializableKeyValues;
 
 pub struct EtcdConnector {
     namespace: Option<String>,
@@ -44,5 +45,37 @@ impl EtcdConnector {
             namespace: connection.namespace,
             client,
         })
+    }
+
+    pub fn get_client(&self) -> &Client {
+        &self.client
+    }
+
+    pub fn has_namespace(&self) -> bool {
+        if let Some(_) = self.namespace {
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn get_namespace_unchecked(&self) -> &String {
+        &self.namespace.as_ref().unwrap()
+    }
+
+    pub async fn get_all_keys(&self) -> Result<SerializableKeyValues, Error> {
+        let mut kv_client = self.get_client().kv_client();
+        let root_path = if self.has_namespace() {
+            format!("{}/", self.get_namespace_unchecked())
+        } else {
+            String::from("/")
+        };
+        let get_options = GetOptions::new()
+            .with_prefix()
+            .with_all_keys()
+            .with_keys_only()
+            .with_range("\0");
+        let mut response = kv_client.get(root_path, Some(get_options)).await?;
+        Ok(SerializableKeyValues::from_kv_vec(response.take_kvs()))
     }
 }

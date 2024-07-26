@@ -4,12 +4,12 @@ import etcdLogo from '~/assets/etcd.png';
 import {_confirm, events} from "~/common/events.ts";
 import {DialogItem, TipsItem} from "~/common/types.ts";
 import {onMounted, ref} from "vue";
-import {Platform, platform as getPlatform} from "@tauri-apps/api/os";
+import {platform as getPlatform} from "@tauri-apps/api/os";
 
 const loading = ref(false)
 const dialogs = ref<DialogItem[]>([])
 const tips = ref<TipsItem[]>([])
-const platform = ref<Platform>('win32')
+const platform = ref<string>('win32')
 
 onMounted(async () => {
 
