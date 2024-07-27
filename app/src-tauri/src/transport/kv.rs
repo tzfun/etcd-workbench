@@ -32,6 +32,7 @@ impl From<KeyValue> for SerializableKeyValue {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize)]
 pub struct SerializableKeyValues {
     inner: Vec<SerializableKeyValue>,
 }

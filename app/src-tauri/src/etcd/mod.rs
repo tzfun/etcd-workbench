@@ -10,6 +10,7 @@ use crate::etcd::etcd_connector::EtcdConnector;
 use crate::transport::connection::Connection;
 
 pub mod etcd_connector;
+mod test;
 
 const CONNECTION_ID_COUNTER: AtomicI64 = AtomicI64::new(1);
 
