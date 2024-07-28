@@ -47,4 +47,8 @@ impl SerializableKeyValues {
             inner: kvs
         }
     }
+
+    pub fn take(self) -> Vec<SerializableKeyValue> {
+        self.inner
+    }
 }

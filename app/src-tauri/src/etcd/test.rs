@@ -16,7 +16,17 @@ mod test_connect {
         };
         let connector = EtcdConnector::new(connection).await?;
         let kvs = connector.get_all_keys().await?;
-        println!("{:?}", kvs);
+        let mut first = false;
+        for kv in kvs.take() {
+            let k = kv.key.clone();
+            if !first {
+                let kv = connector.get_key_value(k).await?;
+                println!("==> {:?}", kv);
+                first = true;
+            }
+            println!("{:?}", kv);
+        }
+
         Ok(())
     }
 }

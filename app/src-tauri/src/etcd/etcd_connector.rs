@@ -3,7 +3,7 @@ use std::time::Duration;
 use etcd_client::{Certificate, Client, ConnectOptions, Error, GetOptions, Identity, TlsOptions};
 
 use crate::transport::connection::Connection;
-use crate::transport::kv::SerializableKeyValues;
+use crate::transport::kv::{SerializableKeyValue, SerializableKeyValues};
 
 pub struct EtcdConnector {
     namespace: Option<String>,
@@ -65,11 +65,7 @@ impl EtcdConnector {
 
     pub async fn get_all_keys(&self) -> Result<SerializableKeyValues, Error> {
         let mut kv_client = self.get_client().kv_client();
-        let root_path = if self.has_namespace() {
-            format!("{}/", self.get_namespace_unchecked())
-        } else {
-            String::from("/")
-        };
+        let root_path = self.get_full_key("/");
         let get_options = GetOptions::new()
             .with_prefix()
             .with_all_keys()
@@ -77,5 +73,28 @@ impl EtcdConnector {
             .with_range("\0");
         let mut response = kv_client.get(root_path, Some(get_options)).await?;
         Ok(SerializableKeyValues::from_kv_vec(response.take_kvs()))
+    }
+
+    pub async fn get_key_value(&self, key: impl Into<Vec<u8>>) -> Result<SerializableKeyValue, Error> {
+        let mut kv_client = self.get_client().kv_client();
+        let path = self.get_full_key(key);
+        let mut response = kv_client.get(path, None).await?;
+        let kv = response.take_kvs();
+        if kv.is_empty() {
+            Err(Error::InvalidArgs(String::from("Key not found")))
+        } else {
+            let s_kv = SerializableKeyValue::from(kv.first().unwrap().to_owned());
+            Ok(s_kv)
+        }
+    }
+
+    fn get_full_key(&self, key: impl Into<Vec<u8>>) -> Vec<u8> {
+        if self.has_namespace() {
+            let mut full_key = self.get_namespace_unchecked().clone().into_bytes();
+            full_key.append(&mut key.into());
+            full_key
+        } else {
+            key.into()
+        }
     }
 }
