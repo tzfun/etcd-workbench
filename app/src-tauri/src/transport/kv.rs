@@ -31,24 +31,3 @@ impl From<KeyValue> for SerializableKeyValue {
         }
     }
 }
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct SerializableKeyValues {
-    inner: Vec<SerializableKeyValue>,
-}
-
-impl SerializableKeyValues {
-    pub fn from_kv_vec(kv_vec: Vec<KeyValue>) -> SerializableKeyValues {
-        let mut kvs = Vec::with_capacity(kv_vec.len());
-        for kv in kv_vec {
-            kvs.push(SerializableKeyValue::from(kv));
-        }
-        SerializableKeyValues {
-            inner: kvs
-        }
-    }
-
-    pub fn take(self) -> Vec<SerializableKeyValue> {
-        self.inner
-    }
-}
