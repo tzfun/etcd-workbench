@@ -20,12 +20,12 @@ mod test_connect {
     #[tokio::test]
     async fn connect() -> Result<(), Error> {
         let connector = get_connector().await?;
-        let kvs = connector.get_all_keys().await?;
+        let kvs = connector.kv_get_all_keys().await?;
         let mut first = false;
         for kv in kvs {
             let k = kv.key.clone();
             if !first {
-                let kv = connector.get_key_value(k).await?;
+                let kv = connector.kv_get(k).await?;
                 println!("==> {:?}", kv);
                 first = true;
             }
@@ -38,8 +38,16 @@ mod test_connect {
     #[tokio::test]
     async fn get_history_version() -> Result<(), Error> {
         let connector = get_connector().await?;
-        let history = connector.get_kv_history_versions(String::from("/asda/sdas/dasd/asd"), 8, 41).await?;
+        let history = connector.kv_get_history_versions(String::from("/asda/sdas/dasd/asd"), 8, 41).await?;
         println!("{:?}", history);
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn get_user() -> Result<(), Error> {
+        let connector = get_connector().await?;
+        let user = connector.user_get_all().await?;
+        println!("{:?}", user);
         Ok(())
     }
 }

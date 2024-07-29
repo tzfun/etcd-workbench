@@ -3,10 +3,11 @@ use std::pin::Pin;
 use std::time::Duration;
 
 use etcd_client::{Certificate, Client, ConnectOptions, Error, GetOptions, Identity, PutOptions, TlsOptions};
-use log::{debug};
+use log::debug;
 
 use crate::transport::connection::Connection;
 use crate::transport::kv::SerializableKeyValue;
+use crate::transport::user::SerializableUser;
 
 pub struct EtcdConnector {
     namespace: Option<String>,
@@ -66,7 +67,7 @@ impl EtcdConnector {
         &self.namespace.as_ref().unwrap()
     }
 
-    pub async fn get_all_keys(&self) -> Result<Vec<SerializableKeyValue>, Error> {
+    pub async fn kv_get_all_keys(&self) -> Result<Vec<SerializableKeyValue>, Error> {
         let mut kv_client = self.get_client().kv_client();
         let root_path = self.get_full_key("/");
         let get_options = GetOptions::new()
@@ -83,7 +84,7 @@ impl EtcdConnector {
         Ok(arr)
     }
 
-    pub async fn get_key_value(&self, key: impl Into<Vec<u8>>) -> Result<SerializableKeyValue, Error> {
+    pub async fn kv_get(&self, key: impl Into<Vec<u8>>) -> Result<SerializableKeyValue, Error> {
         let mut kv_client = self.get_client().kv_client();
         let path = self.get_full_key(key);
         let mut response = kv_client.get(path, None).await?;
@@ -96,7 +97,7 @@ impl EtcdConnector {
         }
     }
 
-    pub async fn put_key_value(&self, key: impl Into<Vec<u8>>, value: impl Into<Vec<u8>>, ttl: Option<i64>) -> Result<(), Error> {
+    pub async fn kv_put(&self, key: impl Into<Vec<u8>>, value: impl Into<Vec<u8>>, ttl: Option<i64>) -> Result<(), Error> {
         let mut lease_id = 0;
         let final_key = self.get_full_key(key);
         if let Some(ttl_param) = ttl {
@@ -120,7 +121,7 @@ impl EtcdConnector {
         Ok(())
     }
 
-    pub async fn del_key(&self, keys: Vec<impl Into<Vec<u8>>>) -> Result<usize, Error> {
+    pub async fn kv_delele(&self, keys: Vec<impl Into<Vec<u8>>>) -> Result<usize, Error> {
         let mut client = self.client.kv_client();
         let mut success = 0usize;
         for key in keys {
@@ -133,21 +134,21 @@ impl EtcdConnector {
         Ok(success)
     }
 
-    pub async fn get_kv_history_versions(&self, key: impl Into<Vec<u8>>, start: i64, end: i64) -> Result<Vec<i64>, Error> {
+    pub async fn kv_get_history_versions(&self, key: impl Into<Vec<u8>>, start: i64, end: i64) -> Result<Vec<i64>, Error> {
         let mut history = Vec::new();
         let final_key = self.get_full_key(key);
-        self.get_kv_history_versions0(final_key, end, start, end, &mut history).await?;
+        self.kv_get_history_versions0(final_key, end, start, end, &mut history).await;
         Ok(history)
     }
 
-    fn get_kv_history_versions0<'a>(
+    fn kv_get_history_versions0<'a>(
         &'a self,
         key: Vec<u8>,
         revision: i64,
         start: i64,
         end: i64,
         history: &'a mut Vec<i64>,
-    ) -> Pin<Box<dyn Future<Output = Result<(), Error>> + 'a>> {
+    ) -> Pin<Box<dyn Future<Output=()> + 'a>> {
         Box::pin(async move {
             if revision >= start && revision <= end {
                 let result = self.client.kv_client().get(key.clone(), Some(GetOptions::new().with_keys_only().with_revision(revision))).await;
@@ -155,7 +156,7 @@ impl EtcdConnector {
                     Ok(response) => {
                         let kvs = response.kvs();
                         if kvs.is_empty() {
-                            return Ok(());
+                            return ();
                         }
                         let kv = &kvs[0];
                         let next_revision = if revision >= kv.create_revision() && revision <= kv.mod_revision() {
@@ -164,18 +165,82 @@ impl EtcdConnector {
                         } else {
                             kv.mod_revision()
                         };
-                        self.get_kv_history_versions0(key, next_revision, start, end, history).await?;
-                        Ok(())
+                        self.kv_get_history_versions0(key, next_revision, start, end, history).await;
+                        ()
                     }
                     Err(e) => {
                         debug!("get revision error: {e}");
-                        return Ok(());
+                        return ();
                     }
                 }
             } else {
-                Ok(())
+                ()
             }
         })
+    }
+
+    pub async fn user_get_all(&self) -> Result<Vec<SerializableUser>, Error> {
+        let mut auth_client = self.client.auth_client();
+        let response = auth_client.user_list().await?;
+        let users = response.users();
+        let mut result_users = Vec::with_capacity(users.len());
+        for user in response.users() {
+            let response = auth_client.user_get(user).await?;
+            result_users.push(SerializableUser {
+                user: user.clone(),
+                roles: Vec::from(response.roles()),
+            })
+        }
+        Ok(result_users)
+    }
+
+    pub async fn user_add(&self, user: String, password: String) -> Result<(), Error> {
+        self.client.auth_client().user_add(user, password, None).await?;
+        Ok(())
+    }
+
+    pub async fn user_delete(&self, user: String) -> Result<(), Error> {
+        self.client.auth_client().user_delete(user).await?;
+        Ok(())
+    }
+
+    pub async fn user_change_password(&self, user: String, password: String) -> Result<(), Error> {
+        self.client.auth_client().user_change_password(user, password).await?;
+        Ok(())
+    }
+
+    pub async fn user_grant_role(&self, user: String, role: String) -> Result<(), Error> {
+        self.client.auth_client().user_grant_role(user, role).await?;
+        Ok(())
+    }
+
+    pub async fn user_revoke_role(&self, user: String, role: String) -> Result<(), Error> {
+        self.client.auth_client().user_revoke_role(user, role).await?;
+        Ok(())
+    }
+
+    pub async fn user_is_root(&self, user: String) -> Result<bool, Error> {
+        if user == "root" {
+            return Ok(true);
+        }
+
+        let response = self.client.auth_client().user_get(user).await?;
+        for role in response.roles() {
+            if role == "root" {
+                return Ok(true);
+            }
+        }
+        Ok(false)
+    }
+
+    pub async fn auth_enable(&self) -> Result<(), Error> {
+        self.client.auth_client().auth_enable().await?;
+        Ok(())
+    }
+
+    pub async fn auth_disable(&self) -> Result<(), Error> {
+        self.client.auth_client().auth_disable().await?;
+        Ok(())
     }
 
     fn get_full_key(&self, key: impl Into<Vec<u8>>) -> Vec<u8> {
