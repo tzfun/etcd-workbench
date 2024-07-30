@@ -50,4 +50,12 @@ mod test_connect {
         println!("{:?}", user);
         Ok(())
     }
+
+    #[tokio::test]
+    async fn get_cluster_info() -> Result<(), Error> {
+        let connector = get_connector().await?;
+        let cluster = connector.cluster_get().await?;
+        println!("{:?}", cluster);
+        Ok(())
+    }
 }
