@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::future::Future;
+use std::num::ParseIntError;
 use std::pin::Pin;
 use std::time::Duration;
 
@@ -395,13 +396,35 @@ impl EtcdConnector {
 
     /// 集群移除成员节点
     pub async fn cluster_remove_member(&self, id: String) -> Result<(), Error> {
-        self.client.cluster_client().member_remove(u64::from(id)).await?;
-        Ok(())
+        match id.parse::<u64>() {
+            Ok(id) => {
+                self.client.cluster_client().member_remove(id).await?;
+                Ok(())
+            }
+            Err(e) => {
+                Err(Error::InvalidArgs(e.to_string()))
+            }
+        }
     }
 
     /// 集群更新成员节点
     pub async fn cluster_update_member(&self, id: String, urls: impl Into<Vec<String>>) -> Result<(), Error> {
-        self.client.cluster_client().member_update(u64::from(id), urls).await?;
+        match id.parse::<u64>() {
+            Ok(id) => {
+                self.client.cluster_client().member_update(id, urls).await?;
+                Ok(())
+            }
+            Err(e) => {
+                Err(Error::InvalidArgs(e.to_string()))
+            }
+        }
+    }
+
+    /// 对节点进行碎片整理。这是一个比较消耗资源的操作，谨慎调用。
+    pub async fn maintenance_defragment(&self) -> Result<(), Error> {
+        self.client.maintenance_client().defragment().await?;
         Ok(())
     }
+
+
 }
