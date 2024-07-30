@@ -2,12 +2,12 @@ use std::future::Future;
 use std::pin::Pin;
 use std::time::Duration;
 
-use etcd_client::{Certificate, Client, ConnectOptions, Error, GetOptions, Identity, PutOptions, TlsOptions};
-use log::debug;
+use etcd_client::{Certificate, Client, ConnectOptions, Error, GetOptions, Identity, Permission, PermissionType, PutOptions, RoleRevokePermissionOptions, TlsOptions};
+use log::{debug, warn};
 
 use crate::transport::connection::Connection;
 use crate::transport::kv::SerializableKeyValue;
-use crate::transport::user::SerializableUser;
+use crate::transport::user::{SerializablePermission, SerializableUser};
 
 pub struct EtcdConnector {
     namespace: Option<String>,
@@ -179,7 +179,7 @@ impl EtcdConnector {
         })
     }
 
-    pub async fn user_get_all(&self) -> Result<Vec<SerializableUser>, Error> {
+    pub async fn user_list(&self) -> Result<Vec<SerializableUser>, Error> {
         let mut auth_client = self.client.auth_client();
         let response = auth_client.user_list().await?;
         let users = response.users();
@@ -240,6 +240,72 @@ impl EtcdConnector {
 
     pub async fn auth_disable(&self) -> Result<(), Error> {
         self.client.auth_client().auth_disable().await?;
+        Ok(())
+    }
+
+    pub async fn role_list(&self) -> Result<Vec<String>, Error> {
+        let response = self.client.auth_client().role_list().await?;
+        Ok(Vec::from(response.roles()))
+    }
+
+    pub async fn role_get_permissions(&self, role: String) -> Result<Vec<SerializablePermission>, Error> {
+        let response = self.client.auth_client().role_get(role).await?;
+        let permissions = response.permissions();
+        let mut result = Vec::with_capacity(permissions.len());
+
+        for permission in permissions {
+            let key_bytes = permission.key();
+            let key = String::from(key_bytes);
+            let perm_type = PermissionType::try_from(permission.get_type()).unwrap_or_else(|p| {
+                warn!("Catch a unknown enum value in PermissionType: {}", p);
+                PermissionType::Read
+            });
+            let range_end = permission.range_end();
+
+            let prefix = permission.is_prefix();
+
+            let key_bytes_len = key_bytes.len();
+            let range_end_len = range_end.len();
+            //  为兼容老版本的etcd，空字符串是一个长度为1且内容为0的byte数组
+            let all_keys = (key_bytes_len == 0 && range_end_len == 0)
+                || (key_bytes_len == 1 && range_end_len == 1 && key_bytes[0] == 0 && range_end[0] == 0);
+
+            result.push(SerializablePermission {
+                key,
+                perm_type,
+                prefix,
+                all_keys,
+            })
+        }
+
+        Ok(result)
+    }
+
+    pub async fn role_add(&self, role: String) -> Result<(), Error> {
+        self.client.auth_client().role_add(role).await?;
+        Ok(())
+    }
+
+    pub async fn role_delete(&self, role: String) -> Result<(), Error> {
+        self.client.auth_client().role_delete(role).await?;
+        Ok(())
+    }
+
+    pub async fn role_grant_permission(
+        &self,
+        role: String,
+        permission: SerializablePermission,
+    ) -> Result<(), Error> {
+        self.client.auth_client().role_grant_permission(role, permission.into()).await?;
+        Ok(())
+    }
+
+    pub async fn role_revoke_permission(&self, role: String, permission: SerializablePermission,) -> Result<(), Error> {
+        let range_ned = permission.parse_range_end();
+        self.client.auth_client()
+            .role_revoke_permission(role, permission.key, Some(RoleRevokePermissionOptions::new().with_range_end(range_ned)))
+            .await?;
+
         Ok(())
     }
 

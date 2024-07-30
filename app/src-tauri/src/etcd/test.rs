@@ -46,7 +46,7 @@ mod test_connect {
     #[tokio::test]
     async fn get_user() -> Result<(), Error> {
         let connector = get_connector().await?;
-        let user = connector.user_get_all().await?;
+        let user = connector.user_list().await?;
         println!("{:?}", user);
         Ok(())
     }
