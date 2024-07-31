@@ -1,10 +1,10 @@
+#![allow(unused)]
 use std::collections::HashMap;
 use std::future::Future;
-use std::num::ParseIntError;
 use std::pin::Pin;
 use std::time::Duration;
 
-use etcd_client::{AlarmAction, AlarmType, Certificate, Client, ConnectOptions, Error, GetOptions, Identity, MemberAddOptions, PutOptions, RoleRevokePermissionOptions, TlsOptions};
+use etcd_client::{AlarmAction, AlarmType, Certificate, Client, ConnectOptions, Error, GetOptions, Identity, PutOptions, RoleRevokePermissionOptions, TlsOptions};
 use log::debug;
 
 use crate::transport::connection::Connection;
@@ -68,6 +68,12 @@ impl EtcdConnector {
 
     pub fn get_namespace_unchecked(&self) -> &String {
         &self.namespace.as_ref().unwrap()
+    }
+
+    pub async fn test_connection(&self) -> Result<(), Error> {
+        let key = self.get_full_key("/");
+        self.client.kv_client().get(key, Some(GetOptions::new().with_keys_only())).await?;
+        Ok(())
     }
 
     /// 获取所有key，不包含value
@@ -244,7 +250,7 @@ impl EtcdConnector {
     }
 
     /// 判断用户是否是 root 用户（拥有root角色权限的用户也被认为是root用户）
-    pub async fn user_is_root(&self, user: String) -> Result<bool, Error> {
+    pub async fn user_is_root(&self, user: &String) -> Result<bool, Error> {
         if user == "root" {
             return Ok(true);
         }
@@ -425,6 +431,4 @@ impl EtcdConnector {
         self.client.maintenance_client().defragment().await?;
         Ok(())
     }
-
-
 }

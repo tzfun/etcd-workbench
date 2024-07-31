@@ -1,5 +1,6 @@
+#![allow(unused)]
 use std::sync::Arc;
-use std::sync::atomic::{AtomicI32, AtomicI64, Ordering};
+use std::sync::atomic::{AtomicI32, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use dashmap::DashMap;
@@ -7,7 +8,7 @@ use etcd_client::Error;
 use lazy_static::lazy_static;
 
 use crate::etcd::etcd_connector::EtcdConnector;
-use crate::transport::connection::Connection;
+use crate::transport::connection::{Connection, SessionData};
 
 pub mod etcd_connector;
 mod test;
@@ -29,11 +30,28 @@ pub fn now_timestamp() -> u128 {
         .as_millis()
 }
 
-pub async fn new_connector(connection: Connection) -> Result<i32, Error> {
+pub async fn new_connector(connection: Connection) -> Result<SessionData, Error> {
+    let user = if let Some(u) = &connection.user {
+        Some(u.username.clone())
+    } else {
+        None
+    };
     let connector = EtcdConnector::new(connection).await?;
+
+    let root = if let Some(u) = &user {
+        connector.user_is_root(u).await?
+    } else {
+        true
+    };
+
     let connector_id = gen_connection_id();
     CONNECTION_POOL.insert(connector_id, Arc::new(connector));
-    Ok(connector_id)
+
+    Ok(SessionData {
+        id: connector_id,
+        user,
+        root,
+    })
 }
 
 pub fn get_connector(id: &i32) -> Option<Arc<EtcdConnector>> {

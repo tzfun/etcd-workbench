@@ -63,3 +63,10 @@ pub struct ConnectionInfo {
     pub name: String,
     pub connection: Connection
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SessionData {
+    pub id: i32,
+    pub user: Option<String>,
+    pub root: bool
+}

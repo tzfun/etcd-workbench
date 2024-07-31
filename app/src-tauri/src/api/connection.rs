@@ -1,17 +1,19 @@
 use crate::api::LogicError;
 use crate::etcd;
 use crate::etcd::etcd_connector::EtcdConnector;
-use crate::transport::connection::Connection;
+use crate::transport::connection::{Connection, SessionData};
 
 #[tauri::command]
 pub async fn connect_test(connection: Connection) -> Result<(), LogicError> {
     let connector = EtcdConnector::new(connection).await?;
-    connector.user_is_root()
+    connector.test_connection().await?;
+    Ok(())
 }
 
 #[tauri::command]
-pub async fn connect(connection: Connection) -> Result<i32, LogicError> {
-
+pub async fn connect(connection: Connection) -> Result<SessionData, LogicError> {
+    let session = etcd::new_connector(connection).await?;
+    Ok(session)
 }
 
 #[tauri::command]

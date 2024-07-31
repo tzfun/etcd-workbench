@@ -14,3 +14,11 @@ html,body,#app {
   -ms-user-select: none;
   -webkit-user-select: none;
 }
+
+.transition-none {
+  transition: none !important;
+  -moz-transition: none !important;
+  -ms-transition: none !important;
+  -o-transition: none !important;
+  -webkit-transition: none !important;
+}

@@ -5,13 +5,33 @@ import {_confirm, events} from "~/common/events.ts";
 import {DialogItem, TipsItem} from "~/common/types.ts";
 import {onMounted, ref} from "vue";
 import {platform as getPlatform} from "@tauri-apps/api/os";
+import {goBrowserPage} from "~/common/utils.ts";
+import {useTheme} from "vuetify";
 
 const loading = ref(false)
 const dialogs = ref<DialogItem[]>([])
 const tips = ref<TipsItem[]>([])
 const platform = ref<string>('win32')
+const activeTab = ref<string>('home')
+const tabList = ref([
+  {
+    name: '连接1',
+    session: {
+      id: 1,
+      user: "xxx",
+      root: false
+    },
+    route: '/connection/1/cluster'
+  }
+])
+
+const theme = useTheme()
 
 onMounted(async () => {
+  let systemTheme = await appWindow.theme()
+  if(systemTheme) {
+    theme.global.name.value = systemTheme
+  }
 
   platform.value = await getPlatform()
 
@@ -85,6 +105,18 @@ const closeApp = () => {
   })
 }
 
+const showAppInfo = () => {
+
+}
+
+const setting = () => {
+
+}
+
+const toggleTheme = () => {
+  theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark'
+}
+
 </script>
 
 <template>
@@ -106,6 +138,36 @@ const closeApp = () => {
         </v-icon>
         <span class="user-select-none">ETCD Workbench</span>
 
+        <v-btn class="system-extend-btn ms-2"
+               icon="mdi-cog"
+               size="small"
+               variant="text"
+               :rounded="false"
+               density="comfortable"
+               title="Settings"
+               :ripple="false"
+               @click="setting"
+        ></v-btn>
+        <v-btn class="system-extend-btn ms-2"
+               icon="mdi-github"
+               size="small"
+               variant="text"
+               :rounded="false"
+               density="comfortable"
+               title="Fork on GitHub"
+               :ripple="false"
+               @click="goBrowserPage('https://github.com/tzfun/etcd-workbench')"
+        ></v-btn>
+        <v-btn class="system-extend-btn ms-2"
+               icon="mdi-information-variant-circle"
+               size="small"
+               variant="text"
+               :rounded="false"
+               density="comfortable"
+               title="About"
+               :ripple="false"
+               @click="showAppInfo"
+        ></v-btn>
         <v-spacer></v-spacer>
         <v-btn class="system-native-btn"
                icon="mdi-minus"
@@ -133,7 +195,42 @@ const closeApp = () => {
         ></v-btn>
       </v-system-bar>
       <v-main class="fill-height">
+        <v-tabs v-model="activeTab"
+                show-arrows
+                :height="30"
+                density="compact"
+                color="primary"
+        >
+          <v-tab icon="mdi-home"
+                 value="home"
+                 density="compact"
+                 class="text-grey-lighten-1"
+                 :ripple="false"
+                 :min-width="50"
+                 to="/"
+          >
+            <v-icon>mdi-home</v-icon>
+          </v-tab>
+          <v-tab v-for="tab in tabList"
+                 :key="tab.name"
+                 :value="tab.name"
+                 class="text-grey-lighten-1"
+                 :ripple="false"
+                 :to="tab.route"
+          >
+            {{tab.name}}
+            <template v-slot:append>
+              <v-icon class="tab-icon-close">mdi-close</v-icon>
+            </template>
+          </v-tab>
+        </v-tabs>
+        <v-divider></v-divider>
 
+        <router-view v-slot="{ Component, route }">
+          <keep-alive>
+            <component :is="Component" :key="route.path"/>
+          </keep-alive>
+        </router-view>
       </v-main>
     </v-layout>
 
@@ -199,6 +296,9 @@ const closeApp = () => {
 </template>
 
 <style scoped>
+.system-extend-btn {
+  font-size: 1.1em;
+}
 .system-native-btn {
   font-size: 1em;
   color: black;
@@ -207,5 +307,13 @@ const closeApp = () => {
 .system-native-btn-close:hover {
   background-color: #D50000;
   color: white;
+}
+
+.tab-icon-close {
+  color: #BDBDBD
+}
+
+.tab-icon-close:hover {
+  color: #757575
 }
 </style>
