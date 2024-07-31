@@ -5,7 +5,7 @@ import {_confirm, events} from "~/common/events.ts";
 import {DialogItem, TipsItem} from "~/common/types.ts";
 import {onMounted, ref} from "vue";
 import {platform as getPlatform} from "@tauri-apps/api/os";
-import {goBrowserPage} from "~/common/utils.ts";
+import {_goBrowserPage} from "~/common/utils.ts";
 import {useTheme} from "vuetify";
 
 const loading = ref(false)
@@ -24,10 +24,14 @@ const tabList = ref([
     route: '/connection/1/cluster'
   }
 ])
+const maximize = ref(false)
 
 const theme = useTheme()
 
 onMounted(async () => {
+
+  maximize.value = await appWindow.isMaximized()
+
   let systemTheme = await appWindow.theme()
   if(systemTheme) {
     theme.global.name.value = systemTheme
@@ -105,6 +109,12 @@ const closeApp = () => {
   })
 }
 
+const toggleMaximize = () => {
+  appWindow.toggleMaximize().then(() => {
+    maximize.value = !maximize.value
+  })
+}
+
 const showAppInfo = () => {
 
 }
@@ -156,7 +166,7 @@ const toggleTheme = () => {
                density="comfortable"
                title="Fork on GitHub"
                :ripple="false"
-               @click="goBrowserPage('https://github.com/tzfun/etcd-workbench')"
+               @click="_goBrowserPage('https://github.com/tzfun/etcd-workbench')"
         ></v-btn>
         <v-btn class="system-extend-btn ms-2"
                icon="mdi-information-variant-circle"
@@ -168,7 +178,19 @@ const toggleTheme = () => {
                :ripple="false"
                @click="showAppInfo"
         ></v-btn>
+        <v-btn class="system-extend-btn ms-2"
+               icon="mdi-brightness-6"
+               size="small"
+               variant="text"
+               :rounded="false"
+               density="comfortable"
+               title="About"
+               :ripple="false"
+               @click="toggleTheme"
+        ></v-btn>
+
         <v-spacer></v-spacer>
+
         <v-btn class="system-native-btn"
                icon="mdi-minus"
                size="small"
@@ -178,12 +200,13 @@ const toggleTheme = () => {
                @click="appWindow.minimize()"
         ></v-btn>
         <v-btn class="system-native-btn ms-2"
+               style="transform: rotate(90deg);"
                size="small"
-               icon="mdi-checkbox-blank-outline"
+               :icon="maximize ? 'mdi-vector-arrange-below' : 'mdi-checkbox-blank-outline'"
                variant="text"
                :rounded="false"
                density="comfortable"
-               @click="appWindow.toggleMaximize()"
+               @click="toggleMaximize"
         ></v-btn>
         <v-btn class="system-native-btn system-native-btn-close ms-2"
                size="small"
@@ -194,7 +217,9 @@ const toggleTheme = () => {
                @click="closeApp"
         ></v-btn>
       </v-system-bar>
+
       <v-main class="fill-height">
+
         <v-tabs v-model="activeTab"
                 show-arrows
                 :height="30"
@@ -225,12 +250,13 @@ const toggleTheme = () => {
           </v-tab>
         </v-tabs>
         <v-divider></v-divider>
-
-        <router-view v-slot="{ Component, route }">
-          <keep-alive>
-            <component :is="Component" :key="route.path"/>
-          </keep-alive>
-        </router-view>
+        <div style="height: calc(100% - 30px);">
+          <router-view v-slot="{ Component, route }">
+            <keep-alive>
+              <component :is="Component" :key="route.path"/>
+            </keep-alive>
+          </router-view>
+        </div>
       </v-main>
     </v-layout>
 
@@ -251,12 +277,13 @@ const toggleTheme = () => {
         v-for="(item, key) in dialogs"
         :key="key"
         v-model="item.value"
-        persistent
+        :persistent="item.persistent == undefined ? true : item.persistent"
+        :scrollable="item.scrollable == undefined ? true : item.scrollable"
         width="auto"
     >
       <v-card
-          max-width="500"
-          min-width="400"
+          :max-width="item.maxWidth ? item.maxWidth : 500"
+          :min-width="item.minWidth ? item.minWidth : 400"
           :prepend-icon="item.icon"
           :text="item.content"
           :title="item.title"
@@ -300,8 +327,12 @@ const toggleTheme = () => {
   font-size: 1.1em;
 }
 .system-native-btn {
-  font-size: 1em;
-  color: black;
+  font-size: 0.9em;
+  opacity: 0.5;
+}
+
+.system-native-btn:hover {
+  opacity: 1;
 }
 
 .system-native-btn-close:hover {

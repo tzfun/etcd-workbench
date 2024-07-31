@@ -43,6 +43,25 @@ export function _confirm(text: string): Promise<undefined> {
 
 }
 
+export function _dialogContent(content: string) {
+    let dialog: DialogItem = {
+        value: true,
+        title:'Display Content',
+        content: content,
+        buttons: [
+            {
+                text: "Close",
+                callback: (item: DialogItem) => {
+                    item.value = false
+                }
+            }
+        ],
+        maxWidth: 1200
+    }
+
+    events.emit('dialog', dialog)
+}
+
 export function _alertError(text: string) {
     let dialog: DialogItem = {
         value: true,
