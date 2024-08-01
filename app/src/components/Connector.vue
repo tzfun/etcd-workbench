@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import {ref} from "vue";
-import {ConnectionForm, DefaultConnection} from "~/common/types.ts";
+import {ConnectionForm, ConnectionSshForm, ConnectionTlsForm, DefaultConnection} from "~/common/types.ts";
 import etcdLogo from '~/assets/etcd.png'
 import SingleFileSelector from "~/components/SingleFileSelector.vue";
+import {Connection, SessionData, SshIdentity} from "~/common/transport/connection.ts";
+import {_nonEmpty} from "~/common/utils.ts";
+import {_connect, _connectTest} from "~/common/services.ts";
+import {_tipError, _tipSuccess} from "~/common/events.ts";
 
 const formData = ref<ConnectionForm>(JSON.parse(JSON.stringify(DefaultConnection)))
-
 const formRules = ref({
   host: [
     (v?: string) => !!v || 'Host is required',
@@ -43,6 +46,7 @@ const formRules = ref({
           return 'Namespace must be start with \'/\''
         }
       }
+      return true
     }
   ],
   user: {
@@ -144,9 +148,107 @@ const formRules = ref({
     }
   }
 })
+const formRef = ref(null)
+
+const checkForm = async (): Connection => {
+  const {valid} = await (formRef.value as HTMLFormElement).validate()
+  if (valid) {
+    let connection: Connection = {
+      host: formData.value.host,
+      port: parseInt(formData.value.port),
+    }
+
+    if (_nonEmpty(formData.value.namespace)) {
+      connection.namespace = formData.value.namespace
+    }
+
+    if (formData.value.user.enable) {
+      connection.user = {
+        username: formData.value.user.username,
+        password: formData.value.user.password
+      }
+    }
+
+    let encoder = new TextEncoder()
+    let tlsForm: ConnectionTlsForm = formData.value.tls
+    if (tlsForm.enable) {
+      connection.tls = {
+        domain: tlsForm.domain,
+        cert: [encoder.encode(tlsForm.cert.content)]
+      }
+
+      if (tlsForm.identity.enable) {
+        connection.tls.identity = {
+          cert: encoder.encode(tlsForm.identity.cert.content),
+          key: encoder.encode(tlsForm.identity.key.content)
+        }
+      }
+    }
+
+    let sshForm: ConnectionSshForm = formData.value.ssh
+    if (sshForm.enable) {
+      connection.ssh = {
+        host: sshForm.host,
+        port: parseInt(sshForm.port),
+        user: sshForm.user,
+      }
+      switch (sshForm.identity.model) {
+        case "password":
+          connection.ssh.identity = {
+            password: sshForm.identity.password
+          }
+          break
+        case "key":
+          let identity: SshIdentity = {
+            key: {
+              key: encoder.encode(sshForm.identity.key.key.content)
+            }
+          }
+
+          if (_nonEmpty(sshForm.identity.key.passphrase)) {
+            identity.key!.passphrase = sshForm.identity.key.passphrase
+          }
+
+          connection.ssh.identity = identity
+          break
+      }
+    }
+
+    return connection
+  } else {
+    throw new Error("Form invalid")
+  }
+}
+
+const resetForm = () => {
+  (formRef.value as HTMLFormElement).reset()
+}
+
+const testConnect = () => {
+  checkForm().then((connection: Connection) => {
+    console.log("connection:", connection)
+    _connectTest(connection).then(() => {
+      _tipSuccess("Succeeded!")
+    }).catch(e => {
+      console.error(e)
+      _tipError(`Failed: ${e}`)
+    })
+  }).catch(() => {
+
+  })
+}
 
 const connect = () => {
+  checkForm().then((connection: Connection) => {
+    _connect(connection).then((data: SessionData) => {
+      console.log(data)
+    }).catch(e => {
+      console.error(e)
+      _tipError(`Failed: ${e}`)
+    })
+  }).catch(() => {
 
+  })
 }
 </script>
 
@@ -162,270 +264,273 @@ const connect = () => {
       <v-sheet class="justify-center mx-auto mt-5">
         <v-card width="600" class="connection-card">
           <v-card-text>
-            <div class="d-flex">
-              <div class="form-label">
-                Connection Name
-              </div>
-              <div class="form-input">
-                <v-text-field
-                    v-model="formData.name"
-                    density="comfortable"
-                    placeholder="New connection"
-                ></v-text-field>
-              </div>
-            </div>
-
-            <div class="d-flex">
-              <div class="form-label">
-                Host
-              </div>
-              <div class="form-input">
-                <v-text-field
-                    v-model="formData.host"
-                    :rules="formRules.host"
-                    density="comfortable"
-                    placeholder="127.0.0.1"
-                ></v-text-field>
-              </div>
-            </div>
-
-            <div class="d-flex">
-              <div class="form-label">
-                Port
-              </div>
-              <div class="form-input">
-                <v-text-field
-                    v-model="formData.port"
-                    :rules="formRules.port"
-                    type="number"
-                    density="comfortable"
-                    placeholder="2379"
-                ></v-text-field>
-              </div>
-            </div>
-
-            <div class="d-flex">
-              <div class="form-label">
-                Namespace
-              </div>
-              <div class="form-input">
-                <v-text-field
-                    v-model="formData.namespace"
-                    :rules="formRules.namespace"
-                    density="comfortable"
-                    placeholder="Default is empty"
-                ></v-text-field>
-              </div>
-            </div>
-
-            <v-row>
-              <v-col class="align-content-center">
-                <v-checkbox label="Auth" v-model="formData.user.enable"></v-checkbox>
-              </v-col>
-              <v-col>
-                <v-checkbox label="SSL" v-model="formData.tls.enable"></v-checkbox>
-              </v-col>
-              <v-col>
-                <v-checkbox label="SSH" v-model="formData.ssh.enable"></v-checkbox>
-              </v-col>
-            </v-row>
-
-            <v-sheet v-show="formData.user.enable">
-              <v-divider>Authentication</v-divider>
-
-              <div class="d-flex mt-5">
+            <v-form ref="formRef">
+              <div class="d-flex">
                 <div class="form-label">
-                  Username
+                  Connection Name
                 </div>
                 <div class="form-input">
                   <v-text-field
-                      v-model="formData.user.username"
-                      :rules="formRules.user.username"
+                      v-model="formData.name"
                       density="comfortable"
-                      placeholder="Etcd auth username"
+                      placeholder="New connection"
                   ></v-text-field>
                 </div>
               </div>
 
               <div class="d-flex">
                 <div class="form-label">
-                  Password
-                </div>
-                <div class="form-input">
-                  <v-text-field
-                      v-model="formData.user.password"
-                      :rules="formRules.user.password"
-                      type="password"
-                      density="comfortable"
-                      placeholder="Etcd auth password"
-                  ></v-text-field>
-                </div>
-              </div>
-            </v-sheet>
-
-            <v-sheet v-show="formData.tls.enable">
-              <v-divider>SSL/TLS</v-divider>
-
-              <div class="d-flex mt-5">
-                <div class="form-label">
-                  Authority
-                </div>
-                <div class="form-input">
-                  <v-text-field
-                      v-model="formData.tls.domain"
-                      :rules="formRules.tls.domain"
-                      density="comfortable"
-                      placeholder="Domain"
-                  ></v-text-field>
-                </div>
-              </div>
-
-              <div class="d-flex mt-5">
-                <div class="form-label">
-                  CA File
-                </div>
-                <div class="form-input">
-                  <SingleFileSelector v-model="formData.tls.cert"
-                                      :max-size="128*1024"
-                                      prompt-text="The file must be smaller than 128KB"
-                  ></SingleFileSelector>
-                </div>
-              </div>
-
-              <div class="d-flex mt-5">
-                <div class="form-label">
-                  Identity
-                </div>
-                <div class="form-input">
-                  <v-checkbox v-model="formData.tls.identity.enable" label="Enable"></v-checkbox>
-                </div>
-              </div>
-
-              <div class="d-flex mt-5" v-if="formData.tls.identity.enable">
-                <div class="form-label">
-                  Cert File
-                </div>
-                <div class="form-input">
-                  <SingleFileSelector v-model="formData.tls.identity.cert"
-                                      :max-size="128*1024"
-                                      prompt-text="The file must be smaller than 128KB"
-                  ></SingleFileSelector>
-                </div>
-              </div>
-
-              <div class="d-flex mt-5" v-if="formData.tls.identity.enable">
-                <div class="form-label">
-                  Cert Key File
-                </div>
-                <div class="form-input">
-                  <SingleFileSelector v-model="formData.tls.identity.key"
-                                      :max-size="128*1024"
-                                      prompt-text="The file must be smaller than 128KB"
-                  ></SingleFileSelector>
-                </div>
-              </div>
-            </v-sheet>
-
-            <v-sheet v-show="formData.ssh.enable">
-              <v-divider>SSH Tunnel</v-divider>
-
-              <div class="d-flex mt-5">
-                <div class="form-label">
                   Host
                 </div>
                 <div class="form-input">
                   <v-text-field
-                      v-model="formData.ssh.host"
-                      :rules="formRules.ssh.host"
+                      v-model="formData.host"
+                      :rules="formRules.host"
                       density="comfortable"
-                      placeholder="Host"
+                      placeholder="127.0.0.1"
                   ></v-text-field>
                 </div>
               </div>
 
-              <div class="d-flex mt-5">
+              <div class="d-flex">
                 <div class="form-label">
                   Port
                 </div>
                 <div class="form-input">
                   <v-text-field
-                      v-model="formData.ssh.port"
-                      :rules="formRules.ssh.port"
+                      v-model="formData.port"
+                      :rules="formRules.port"
                       type="number"
                       density="comfortable"
-                      placeholder="Port"
+                      placeholder="2379"
                   ></v-text-field>
                 </div>
               </div>
 
-              <div class="d-flex mt-5">
+              <div class="d-flex">
                 <div class="form-label">
-                  User
+                  Namespace
                 </div>
                 <div class="form-input">
                   <v-text-field
-                      v-model="formData.ssh.user"
-                      :rules="formRules.ssh.user"
+                      v-model="formData.namespace"
+                      :rules="formRules.namespace"
                       density="comfortable"
-                      placeholder="User"
+                      placeholder="Default is empty"
                   ></v-text-field>
                 </div>
               </div>
 
-              <div class="d-flex mt-5">
-                <div class="form-label">
-                  Identity
-                </div>
-                <div class="form-input">
-                  <v-radio-group v-model="formData.ssh.identity.model"
-                                 inline
-                  >
-                    <v-radio
-                        label="None"
-                        value="none"
-                    ></v-radio>
-                    <v-radio
-                        class="ml-2"
-                        label="Password"
-                        value="password"
-                    ></v-radio>
-                    <v-radio
-                        class="ml-2"
-                        label="Private Key"
-                        value="key"
-                    ></v-radio>
-                  </v-radio-group>
+              <v-row>
+                <v-col class="align-content-center">
+                  <v-checkbox label="Auth" v-model="formData.user.enable"></v-checkbox>
+                </v-col>
+                <v-col>
+                  <v-checkbox label="SSL" v-model="formData.tls.enable"></v-checkbox>
+                </v-col>
+                <v-col>
+                  <v-checkbox label="SSH" v-model="formData.ssh.enable"></v-checkbox>
+                </v-col>
+              </v-row>
 
-                  <v-text-field
-                      v-if="formData.ssh.identity.model == 'password'"
-                      v-model="formData.ssh.identity.password"
-                      :rules="formRules.ssh.identity.password"
-                      type="password"
-                      density="comfortable"
-                      placeholder="Password"
-                  ></v-text-field>
-                  <div v-else-if="formData.ssh.identity.model == 'key'">
-                    <SingleFileSelector v-model="formData.ssh.identity.key.key"
-                                        :max-size="128*1024"
-                                        prompt-text="The file must be smaller than 128KB"
-                    ></SingleFileSelector>
+              <v-sheet v-show="formData.user.enable">
+                <v-divider>Authentication</v-divider>
 
+                <div class="d-flex mt-5">
+                  <div class="form-label">
+                    Username
+                  </div>
+                  <div class="form-input">
                     <v-text-field
-                        v-model="formData.ssh.identity.key.passphrase"
-                        type="password"
+                        v-model="formData.user.username"
+                        :rules="formRules.user.username"
                         density="comfortable"
-                        placeholder="Passphrase"
+                        placeholder="Etcd auth username"
                     ></v-text-field>
                   </div>
                 </div>
-              </div>
-            </v-sheet>
+
+                <div class="d-flex">
+                  <div class="form-label">
+                    Password
+                  </div>
+                  <div class="form-input">
+                    <v-text-field
+                        v-model="formData.user.password"
+                        :rules="formRules.user.password"
+                        type="password"
+                        density="comfortable"
+                        placeholder="Etcd auth password"
+                    ></v-text-field>
+                  </div>
+                </div>
+              </v-sheet>
+
+              <v-sheet v-show="formData.tls.enable">
+                <v-divider>SSL/TLS</v-divider>
+
+                <div class="d-flex mt-5">
+                  <div class="form-label">
+                    Authority
+                  </div>
+                  <div class="form-input">
+                    <v-text-field
+                        v-model="formData.tls.domain"
+                        :rules="formRules.tls.domain"
+                        density="comfortable"
+                        placeholder="Domain"
+                    ></v-text-field>
+                  </div>
+                </div>
+
+                <div class="d-flex mt-5">
+                  <div class="form-label">
+                    CA File
+                  </div>
+                  <div class="form-input">
+                    <SingleFileSelector v-model="formData.tls.cert"
+                                        :max-size="128*1024"
+                                        prompt-text="The file must be smaller than 128KB"
+                    ></SingleFileSelector>
+                  </div>
+                </div>
+
+                <div class="d-flex mt-5">
+                  <div class="form-label">
+                    Identity
+                  </div>
+                  <div class="form-input">
+                    <v-checkbox v-model="formData.tls.identity.enable" label="Enable"></v-checkbox>
+                  </div>
+                </div>
+
+                <div class="d-flex mt-5" v-if="formData.tls.identity.enable">
+                  <div class="form-label">
+                    Cert File
+                  </div>
+                  <div class="form-input">
+                    <SingleFileSelector v-model="formData.tls.identity.cert"
+                                        :max-size="128*1024"
+                                        prompt-text="The file must be smaller than 128KB"
+                    ></SingleFileSelector>
+                  </div>
+                </div>
+
+                <div class="d-flex mt-5" v-if="formData.tls.identity.enable">
+                  <div class="form-label">
+                    Cert Key File
+                  </div>
+                  <div class="form-input">
+                    <SingleFileSelector v-model="formData.tls.identity.key"
+                                        :max-size="128*1024"
+                                        prompt-text="The file must be smaller than 128KB"
+                    ></SingleFileSelector>
+                  </div>
+                </div>
+              </v-sheet>
+
+              <v-sheet v-show="formData.ssh.enable">
+                <v-divider>SSH Tunnel</v-divider>
+
+                <div class="d-flex mt-5">
+                  <div class="form-label">
+                    Host
+                  </div>
+                  <div class="form-input">
+                    <v-text-field
+                        v-model="formData.ssh.host"
+                        :rules="formRules.ssh.host"
+                        density="comfortable"
+                        placeholder="Host"
+                    ></v-text-field>
+                  </div>
+                </div>
+
+                <div class="d-flex mt-5">
+                  <div class="form-label">
+                    Port
+                  </div>
+                  <div class="form-input">
+                    <v-text-field
+                        v-model="formData.ssh.port"
+                        :rules="formRules.ssh.port"
+                        type="number"
+                        density="comfortable"
+                        placeholder="Port"
+                    ></v-text-field>
+                  </div>
+                </div>
+
+                <div class="d-flex mt-5">
+                  <div class="form-label">
+                    User
+                  </div>
+                  <div class="form-input">
+                    <v-text-field
+                        v-model="formData.ssh.user"
+                        :rules="formRules.ssh.user"
+                        density="comfortable"
+                        placeholder="User"
+                    ></v-text-field>
+                  </div>
+                </div>
+
+                <div class="d-flex mt-5">
+                  <div class="form-label">
+                    Identity
+                  </div>
+                  <div class="form-input">
+                    <v-radio-group v-model="formData.ssh.identity.model"
+                                   inline
+                    >
+                      <v-radio
+                          label="None"
+                          value="none"
+                      ></v-radio>
+                      <v-radio
+                          class="ml-2"
+                          label="Password"
+                          value="password"
+                      ></v-radio>
+                      <v-radio
+                          class="ml-2"
+                          label="Private Key"
+                          value="key"
+                      ></v-radio>
+                    </v-radio-group>
+
+                    <v-text-field
+                        v-if="formData.ssh.identity.model == 'password'"
+                        v-model="formData.ssh.identity.password"
+                        :rules="formRules.ssh.identity.password"
+                        type="password"
+                        density="comfortable"
+                        placeholder="Password"
+                    ></v-text-field>
+                    <div v-else-if="formData.ssh.identity.model == 'key'">
+                      <SingleFileSelector v-model="formData.ssh.identity.key.key"
+                                          :max-size="128*1024"
+                                          prompt-text="The file must be smaller than 128KB"
+                      ></SingleFileSelector>
+
+                      <v-text-field
+                          v-model="formData.ssh.identity.key.passphrase"
+                          type="password"
+                          density="comfortable"
+                          placeholder="Passphrase"
+                      ></v-text-field>
+                    </div>
+                  </div>
+                </div>
+              </v-sheet>
+            </v-form>
 
             <div class="text-center pt-7 pb-7">
               <v-btn class="mt-2 pa-0 text-capitalize"
                      variant="text"
                      :ripple="false"
                      color="primary"
+                     @click="testConnect"
               >Test Connect
               </v-btn>
               <v-btn class="mt-2 ml-4 text-capitalize"

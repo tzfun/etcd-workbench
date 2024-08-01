@@ -43,7 +43,8 @@ const fileInputChange = (event: Event) => {
     }
     modelValueMirror.file = file
     let reader = new FileReader();
-    reader.readAsText(modelValueMirror.file, 'utf-8');
+    reader.readAsText(modelValueMirror.file, 'utf-8')
+    // reader.readAsArrayBuffer(modelValueMirror.file)
     fileReadStatus.value = 'reading'
     reader.onload = function () {
       modelValueMirror.content = reader.result as string

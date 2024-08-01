@@ -33,7 +33,7 @@ impl EtcdConnector {
             let mut tls_option = TlsOptions::new();
 
             for cert in tls.cert {
-                tls_option = tls_option.ca_certificate(Certificate::from_pem(cert.inner));
+                tls_option = tls_option.ca_certificate(Certificate::from_pem(cert));
             }
 
             if let Some(domain) = tls.domain {
@@ -41,7 +41,7 @@ impl EtcdConnector {
             };
 
             if let Some(identity) = tls.identity {
-                tls_option = tls_option.identity(Identity::from_pem(identity.cert.inner, identity.key))
+                tls_option = tls_option.identity(Identity::from_pem(identity.cert, identity.key))
             };
 
             option = option.with_tls(tls_option)

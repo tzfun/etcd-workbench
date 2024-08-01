@@ -6,11 +6,7 @@ pub struct ConnectionUser {
     pub password: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-#[repr(align(8))]
-pub struct TlsCertificate {
-    pub inner: Vec<u8>
-}
+pub type TlsCertificate = Vec<u8>;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TlsIdentity {

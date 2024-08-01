@@ -72,3 +72,7 @@ export function _dateFormat(fmt: string, date: Date) {
 export function _isEmpty(str: string | null | undefined) {
     return !str || str.trim().length == 0;
 }
+
+export function _nonEmpty(str: string | null | undefined) {
+    return !_isEmpty(str);
+}
