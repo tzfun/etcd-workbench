@@ -108,6 +108,13 @@ impl EtcdConnector {
         }
     }
 
+    /// 获取Key的数量
+    pub async fn kv_count(&self) -> Result<i64, Error> {
+        let key = self.get_full_key("/");
+        let response = self.client.kv_client().get(key, Some(GetOptions::new().with_count_only())).await?;
+        Ok(response.count())
+    }
+
     /// 更新键值对
     pub async fn kv_put(&self, key: impl Into<Vec<u8>>, value: impl Into<Vec<u8>>, ttl: Option<i64>) -> Result<(), Error> {
         let mut lease_id = 0;

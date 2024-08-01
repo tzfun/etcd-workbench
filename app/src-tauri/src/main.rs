@@ -5,11 +5,15 @@ mod api;
 mod transport;
 mod etcd;
 
-use log::warn;
+use log::{LevelFilter, warn};
 use tauri::Manager;
 use window_shadows::set_shadow;
 
 fn main() {
+    env_logger::Builder::from_default_env()
+        .filter_level(LevelFilter::Debug)
+        .init();
+
     tauri::Builder::default()
         .setup(|app| {
             let window = app.get_window("main").unwrap();

@@ -13,12 +13,14 @@ export function toggleTheme() {
     theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark'
 }
 
-export function _confirm(text: string): Promise<undefined> {
+export function _confirm(title: string, text: string): Promise<undefined> {
     return new Promise((resolve, reject) => {
         let dialog: DialogItem = {
             value: true,
             content: text,
+            title,
             icon: 'mdi-alert-circle-outline',
+            iconColor: 'yellow-darken-4',
             buttons: [
                 {
                     text: "Cancel",
@@ -48,15 +50,8 @@ export function _dialogContent(content: string) {
         value: true,
         title:'Display Content',
         content: content,
-        buttons: [
-            {
-                text: "Close",
-                callback: (item: DialogItem) => {
-                    item.value = false
-                }
-            }
-        ],
-        maxWidth: 1200
+        maxWidth: 1200,
+        closeBtn: true
     }
 
     events.emit('dialog', dialog)
@@ -68,6 +63,7 @@ export function _alertError(text: string) {
         title: "Error",
         content: text,
         icon: 'mdi-alert-circle-outline',
+        iconColor: "red",
         buttons: [
             {
                 text: "Close",

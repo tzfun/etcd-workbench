@@ -103,7 +103,7 @@ const disableRightMenu = () => {
 }
 
 const closeApp = () => {
-  _confirm("Are you sure you want to close the app?").then(() => {
+  _confirm("Exist Workbench","Are you sure you want to close the app?").then(() => {
     appWindow.close()
   }).catch(() => {
   })
@@ -284,15 +284,20 @@ const toggleTheme = () => {
       <v-card
           :max-width="item.maxWidth ? item.maxWidth : 500"
           :min-width="item.minWidth ? item.minWidth : 400"
-          :prepend-icon="item.icon"
           :text="item.content"
           :title="item.title"
       >
+        <template v-slot:prepend>
+          <v-icon :color="item.iconColor">{{item.icon}}</v-icon>
+        </template>
+        <template v-slot:append v-if="item.closeBtn">
+          <v-icon class="cursor-pointer" @click="item.value = false">mdi-close</v-icon>
+        </template>
         <template v-slot:actions v-if="item.buttons">
           <v-btn
               v-for="(btn,k ) in item.buttons"
               :key="k"
-              :class="btn.class"
+              :class="btn.class + ' text-none'"
               :text="btn.text"
               @click="btn.callback(item, $event)"
           ></v-btn>

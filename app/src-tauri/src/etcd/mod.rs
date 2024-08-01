@@ -13,14 +13,14 @@ use crate::transport::connection::{Connection, SessionData};
 pub mod etcd_connector;
 mod test;
 
-const CONNECTION_ID_COUNTER: AtomicI32 = AtomicI32::new(1);
+static CONNECTION_ID_COUNTER: AtomicI32 = AtomicI32::new(1);
 
 lazy_static! {
     static ref CONNECTION_POOL:DashMap<i32, Arc<EtcdConnector>> = DashMap::with_capacity(2);
 }
 
 fn gen_connection_id() -> i32 {
-    CONNECTION_ID_COUNTER.fetch_add(1, Ordering::Relaxed)
+    CONNECTION_ID_COUNTER.fetch_add(1, Ordering::SeqCst)
 }
 
 pub fn now_timestamp() -> u128 {
@@ -37,6 +37,7 @@ pub async fn new_connector(connection: Connection) -> Result<SessionData, Error>
         None
     };
     let connector = EtcdConnector::new(connection).await?;
+    let _ = connector.kv_count().await?;
 
     let root = if let Some(u) = &user {
         connector.user_is_root(u).await?

@@ -6,7 +6,7 @@ import SingleFileSelector from "~/components/SingleFileSelector.vue";
 import {Connection, SessionData, SshIdentity} from "~/common/transport/connection.ts";
 import {_nonEmpty} from "~/common/utils.ts";
 import {_connect, _connectTest} from "~/common/services.ts";
-import {_tipError, _tipSuccess} from "~/common/events.ts";
+import {_loading, _tipError, _tipSuccess} from "~/common/events.ts";
 
 const formData = ref<ConnectionForm>(JSON.parse(JSON.stringify(DefaultConnection)))
 const formRules = ref({
@@ -226,12 +226,15 @@ const resetForm = () => {
 
 const testConnect = () => {
   checkForm().then((connection: Connection) => {
-    console.log("connection:", connection)
+    console.log("test connection:", connection)
+    _loading(true)
     _connectTest(connection).then(() => {
       _tipSuccess("Succeeded!")
     }).catch(e => {
       console.error(e)
       _tipError(`Failed: ${e}`)
+    }).finally(() => {
+      _loading(false)
     })
   }).catch(() => {
 
@@ -240,11 +243,15 @@ const testConnect = () => {
 
 const connect = () => {
   checkForm().then((connection: Connection) => {
+    console.log("connection:", connection)
+    _loading(true)
     _connect(connection).then((data: SessionData) => {
       console.log(data)
     }).catch(e => {
       console.error(e)
       _tipError(`Failed: ${e}`)
+    }).finally(() => {
+      _loading(false)
     })
   }).catch(() => {
 

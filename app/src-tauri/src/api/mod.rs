@@ -1,3 +1,5 @@
+use etcd_client::Error;
+use log::error;
 use serde::{Serialize, Serializer};
 
 pub mod kv;
@@ -17,7 +19,15 @@ impl Serialize for LogicError {
     {
         match self {
             LogicError::EtcdClientError(e) => {
-                serializer.serialize_str(&e.to_string())
+                error!("{:?}", e);
+                match e {
+                    Error::GRpcStatus(status) => {
+                        serializer.serialize_str(status.code().description())
+                    },
+                    _ => {
+                        serializer.serialize_str(&e.to_string())
+                    }
+                }
             },
             LogicError::ConnectionLose => serializer.serialize_str("connection lose")
         }

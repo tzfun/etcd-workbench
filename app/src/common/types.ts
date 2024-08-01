@@ -12,11 +12,13 @@ export type DialogItem = {
     title?: string,
     content: string,
     icon?: string,
+    iconColor?: string,
     buttons?: DialogButton[],
     minWidth?: number,
     maxWidth?: number,
     persistent?: boolean
-    scrollable?: boolean
+    scrollable?: boolean,
+    closeBtn?: boolean
 }
 
 export type TipsItem = {
