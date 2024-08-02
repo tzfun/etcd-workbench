@@ -6,5 +6,5 @@ export function _connectTest(connection: Connection): Promise<undefined> {
 }
 
 export function _connect(connection: Connection): Promise<SessionData> {
-    return invoke('connect', {connection})
+    return invoke('connect', {connection: connection})
 }

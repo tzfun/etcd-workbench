@@ -6,7 +6,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use dashmap::DashMap;
 use etcd_client::Error;
 use lazy_static::lazy_static;
-
+use crate::error::LogicError;
 use crate::etcd::etcd_connector::EtcdConnector;
 use crate::transport::connection::{Connection, SessionData};
 
@@ -30,7 +30,7 @@ pub fn now_timestamp() -> u128 {
         .as_millis()
 }
 
-pub async fn new_connector(connection: Connection) -> Result<SessionData, Error> {
+pub async fn new_connector(connection: Connection) -> Result<SessionData, LogicError> {
     let user = if let Some(u) = &connection.user {
         Some(u.username.clone())
     } else {

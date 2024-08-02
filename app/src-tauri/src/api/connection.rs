@@ -1,4 +1,4 @@
-use crate::api::LogicError;
+use crate::error::LogicError;
 use crate::etcd;
 use crate::etcd::etcd_connector::EtcdConnector;
 use crate::transport::connection::{Connection, SessionData};

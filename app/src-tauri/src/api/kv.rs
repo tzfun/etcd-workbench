@@ -1,4 +1,4 @@
-use crate::api::LogicError;
+use crate::error::LogicError;
 use crate::etcd;
 use crate::transport::kv::SerializableKeyValue;
 

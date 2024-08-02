@@ -4,6 +4,8 @@
 mod api;
 mod transport;
 mod etcd;
+mod ssh;
+mod error;
 
 use log::{LevelFilter, warn};
 use tauri::Manager;

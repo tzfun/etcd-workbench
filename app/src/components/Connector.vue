@@ -524,7 +524,7 @@ const connect = () => {
                           v-model="formData.ssh.identity.key.passphrase"
                           type="password"
                           density="comfortable"
-                          placeholder="Passphrase"
+                          placeholder="Passphrase (optional)"
                       ></v-text-field>
                     </div>
                   </div>

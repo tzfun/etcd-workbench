@@ -6,7 +6,8 @@ use std::time::Duration;
 
 use etcd_client::{AlarmAction, AlarmType, Certificate, Client, ConnectOptions, Error, GetOptions, Identity, PutOptions, RoleRevokePermissionOptions, TlsOptions};
 use log::debug;
-
+use crate::error::LogicError;
+use crate::ssh::ssh_tunnel::SshTunnel;
 use crate::transport::connection::Connection;
 use crate::transport::kv::SerializableKeyValue;
 use crate::transport::maintenance::{SerializableCluster, SerializableClusterMember, SerializableClusterStatus};
@@ -15,10 +16,11 @@ use crate::transport::user::{SerializablePermission, SerializableUser};
 pub struct EtcdConnector {
     namespace: Option<String>,
     client: Client,
+    ssh: Option<SshTunnel>
 }
 
 impl EtcdConnector {
-    pub async fn new(connection: Connection) -> Result<Self, Error> {
+    pub async fn new(connection: Connection) -> Result<Self, LogicError> {
         let mut option = ConnectOptions::new()
             .with_keep_alive_while_idle(true)
             .with_tcp_keepalive(Duration::from_secs(5))
@@ -46,11 +48,24 @@ impl EtcdConnector {
 
             option = option.with_tls(tls_option)
         };
-        let address = format!("{}:{}", connection.host, connection.port);
+        let host = Box::leak(connection.host.into_boxed_str());
+        let mut port = connection.port;
+        let namespace = connection.namespace.clone();
+
+        let ssh = if let Some(ssh) = connection.ssh {
+            let ssh_context = SshTunnel::new(ssh, host, port)?;
+            port = ssh_context.get_proxy_port();
+            Some(ssh_context)
+        } else {
+            None
+        };
+
+        let address = format!("{}:{}", host, port);
         let client = Client::connect([address], Some(option)).await?;
         Ok(EtcdConnector {
-            namespace: connection.namespace,
+            namespace,
             client,
+            ssh
         })
     }
 
