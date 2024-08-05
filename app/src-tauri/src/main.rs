@@ -1,20 +1,25 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use log::{LevelFilter, warn};
+use tauri::Manager;
+use window_shadows::set_shadow;
+
+use crate::utils::file_util;
+
 mod api;
 mod transport;
 mod etcd;
 mod ssh;
 mod error;
-
-use log::{LevelFilter, warn};
-use tauri::Manager;
-use window_shadows::set_shadow;
+mod utils;
 
 fn main() {
     env_logger::Builder::from_default_env()
         .filter_level(LevelFilter::Debug)
         .init();
+
+    file_util::init().unwrap();
 
     tauri::Builder::default()
         .setup(|app| {
@@ -32,7 +37,10 @@ fn main() {
             api::connection::connect_test,
             api::connection::connect,
             api::connection::disconnect,
-            api::kv::kv_get_all_keys
+            api::kv::kv_get_all_keys,
+            api::settings::get_settings,
+            api::settings::save_connection,
+            api::settings::get_connection_list,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

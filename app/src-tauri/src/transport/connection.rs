@@ -10,6 +10,7 @@ pub type TlsCertificate = Vec<u8>;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TlsIdentity {
+
     pub cert: TlsCertificate,
     pub key: Vec<u8>,
 }

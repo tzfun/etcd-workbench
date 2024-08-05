@@ -1,18 +1,15 @@
 use std::{fs, thread};
-use std::env::temp_dir;
-use std::fs::File;
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::path::Path;
 use std::sync::Arc;
-use std::thread::JoinHandle;
 use std::time::Duration;
 
 use log::{debug, warn};
-use uuid::Uuid;
 
 use crate::error::LogicError;
 use crate::transport::connection::ConnectionSsh;
+use crate::utils::file_util;
 
 const BUFFER_SIZE: usize = 2048;
 
@@ -34,12 +31,7 @@ impl SshTunnel {
 
         if let Some(identity) = remote.identity {
             if let Some(key) = identity.key {
-                let mut dir = temp_dir();
-                let private_key_file = format!("{}", Uuid::new_v4());
-                dir.push(private_key_file);
-                let file_name = dir.display().to_string();
-                let mut file = File::create(dir)?;
-                file.write(key.key.as_slice())?;
+                let file_name = file_util::create_temp_file(key.key.as_slice())?;
 
                 debug!("Temporarily create an ssh private key file {}", file_name);
 
@@ -98,7 +90,6 @@ impl SshTunnel {
                         }
                         channel.close().unwrap();
                     });
-
                 }
                 debug!("Accept thread closed");
             })?;
@@ -107,7 +98,7 @@ impl SshTunnel {
         Ok(SshTunnel {
             session,
             proxy_port,
-            proxy_listener
+            proxy_listener,
         })
     }
 
