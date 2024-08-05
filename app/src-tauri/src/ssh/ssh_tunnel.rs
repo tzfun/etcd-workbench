@@ -1,11 +1,16 @@
 use std::{fs, thread};
-use std::io::{Read, Write};
-use std::net::{TcpListener, TcpStream};
+use std::io::{ErrorKind, Read, Write};
+use std::net::TcpStream;
 use std::path::Path;
 use std::sync::Arc;
 use std::time::Duration;
 
 use log::{debug, warn};
+use ssh2::Session;
+use tokio::io::{AsyncRead, AsyncReadExt, AsyncWriteExt};
+use tokio::net::TcpListener;
+use tokio::select;
+use tokio::sync::watch;
 
 use crate::error::LogicError;
 use crate::transport::connection::ConnectionSsh;
@@ -14,14 +19,14 @@ use crate::utils::file_util;
 const BUFFER_SIZE: usize = 2048;
 
 pub struct SshTunnel {
-    session: Arc<ssh2::Session>,
-    proxy_listener: Arc<TcpListener>,
+    session: Arc<Session>,
     proxy_port: u16,
+    send_abort: watch::Sender<()>,
 }
 
 impl SshTunnel {
-    pub fn new(remote: ConnectionSsh, forward_host: &'static str, forward_port: u16) -> Result<Self, LogicError> {
-        let mut session = ssh2::Session::new()?;
+    pub async fn new(remote: ConnectionSsh, forward_host: &'static str, forward_port: u16) -> Result<Self, LogicError> {
+        let mut session = Session::new()?;
         let addr = format!("{}:{}", remote.host, remote.port);
         let tcp = TcpStream::connect(addr)?;
         session.set_tcp_stream(tcp);
@@ -55,50 +60,18 @@ impl SshTunnel {
         }
 
         let session = Arc::new(session);
-
-        let listener = TcpListener::bind("127.0.0.1:0")?;
+        let listener = TcpListener::bind("127.0.0.1:0").await?;
         let proxy_port = listener.local_addr()?.port();
-        let ssh_session = Arc::clone(&session);
-        let listener = Arc::new(listener);
 
-        let proxy_listener = Arc::clone(&listener);
-        thread::Builder::new()
-            .name(format!("ssh-accept-{}", forward_port))
-            .spawn(move || {
-                for stream in listener.incoming() {
-                    let mut stream = stream.unwrap();
+        let (send_abort, rcv_abort) = watch::channel(());
+        Self::handle_tcp_proxy(listener, Arc::clone(&session), forward_host, forward_port, rcv_abort);
 
-                    let ssh_session = Arc::clone(&ssh_session);
-                    thread::spawn(move || {
-                        let mut channel = ssh_session.channel_direct_tcpip(forward_host, forward_port, None).unwrap();
-                        loop {
-                            let (request, size) = read_stream(&mut stream);
-                            if size <= 0 {
-                                break;
-                            }
-
-                            channel.write_all(&request[..size]).unwrap();
-                            channel.flush().unwrap();
-
-                            let (response, size) = read_channel(&mut channel);
-                            if size <= 0 {
-                                break;
-                            }
-
-                            stream.write_all(&response[..size]).unwrap();
-                            stream.flush().unwrap();
-                        }
-                        channel.close().unwrap();
-                    });
-                }
-                debug!("Accept thread closed");
-            })?;
-        debug!("Created ssh forward accept thread");
+        debug!("Created ssh forward accept handler");
 
         Ok(SshTunnel {
             session,
             proxy_port,
-            proxy_listener,
+            send_abort,
         })
     }
 
@@ -106,19 +79,109 @@ impl SshTunnel {
         self.proxy_port
     }
 
-    pub fn close(self) {
-        let listener = self.proxy_listener;
-        drop(listener);
+    fn handle_tcp_proxy(
+        listener: TcpListener,
+        ssh_session: Arc<Session>,
+        forward_host: &'static str,
+        forward_port: u16,
+        rcv_abort: watch::Receiver<()>,
+    ) {
+        tokio::spawn(async move {
+            debug!("Ssh proxy accept task started");
+            let mut rcv_abort1 = rcv_abort.clone();
+            let rcv_abort2 = rcv_abort.clone();
+
+            let accept_task = async move {
+                loop {
+                    let accept_result = listener.accept().await;
+                    match accept_result {
+                        Ok((mut stream, _)) => {
+                            let mut rcv_abort3 = rcv_abort2.clone();
+                            let ssh_session = Arc::clone(&ssh_session);
+                            debug!("Ssh proxy stream task started");
+                            let session_task = async move {
+                                let mut channel = ssh_session.channel_direct_tcpip(forward_host, forward_port, None).unwrap();
+                                loop {
+                                    let (request, size) = read_stream(&mut stream).await;
+                                    if size <= 0 {
+                                        break;
+                                    }
+
+                                    channel.write_all(&request[..size]).unwrap();
+                                    channel.flush().unwrap();
+                                    let (response, size) = read_channel(&mut channel);
+                                    if size <= 0 {
+                                        break;
+                                    }
+
+                                    let r = stream.write_all(&response[..size]).await;
+                                    if let Err(e) = r {
+                                        warn!("ssh stream write error {e}");
+                                        break;
+                                    }
+                                    let r = stream.flush().await;
+                                    if let Err(e) = r {
+                                        warn!("ssh stream flush error {e}");
+                                        break;
+                                    }
+                                }
+                                let _ = channel.close();
+                                debug!("Ssh proxy stream task loop finished")
+                            };
+                            tokio::spawn(async move {
+                                select! {
+                                    _stream_handle = session_task => {
+                                        debug!("Ssh proxy stream task finished")
+                                    }
+                                    _abort = rcv_abort3.changed() => {
+                                        debug!("Accept task received abort event");
+                                    }
+                                }
+                            });
+                        }
+                        Err(e) => {
+                            warn!("ssh listener error: {e}");
+                            break;
+                        }
+                    }
+                };
+                debug!("Ssh proxy accept loop finished");
+            };
+            select! {
+                _accept = accept_task => {
+                    debug!("Ssh proxy accept task finished")
+                }
+                _abort = rcv_abort1.changed() => {
+                    debug!("Ssh proxy accept task received abort event");
+                }
+            }
+        });
     }
 }
 
-fn read_stream<R: Read>(mut stream: R) -> (Vec<u8>, usize) {
+impl Drop for SshTunnel {
+    fn drop(&mut self) {
+        match self.send_abort.send(()) {
+            Ok(_) => {
+                debug!("Ssh send abort success")
+            }
+            Err(e) => {
+                warn!("Ssh send abort error: {e}")
+            }
+        }
+        self.session.disconnect(None, "close", None)
+            .unwrap_or_else(|e| warn!("Ssh session disconnect error: {e}"));
+        debug!("Ssh tunnel dropped");
+    }
+}
+
+async fn read_stream<R: AsyncRead + Unpin>(mut stream: R) -> (Vec<u8>, usize) {
     let mut request_buffer = vec![];
     let mut request_len = 0usize;
     loop {
         let mut buffer = vec![0; BUFFER_SIZE];
 
-        match stream.read(&mut buffer) {
+        match stream.read(&mut buffer).await {
             Ok(n) => {
                 if !read_buf_bytes(&mut request_len, &mut request_buffer, n, buffer) {
                     break;
@@ -149,7 +212,11 @@ fn read_channel<R: Read>(channel: &mut R) -> (Vec<u8>, usize) {
                 }
             }
             Err(e) => {
-                warn!("Error in reading response data: {:?}", e);
+                if e.kind() == ErrorKind::Other {
+                    debug!("Error in reading response data: {:?}", e);
+                } else {
+                    warn!("Error in reading response data: {:?}", e);
+                }
                 break;
             }
         }

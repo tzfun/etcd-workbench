@@ -4,18 +4,18 @@ export interface ConnectionUser {
 }
 
 export interface TlsIdentity {
-    cert: Uint8Array,
-    key: Uint8Array
+    cert: number[],
+    key: number[]
 }
 
 export interface ConnectionTls {
     domain?: string,
-    cert: Uint8Array[],
+    cert: number[][],
     identity?: TlsIdentity
 }
 
 export interface SshPrivateKey {
-    key: Uint8Array,
+    key: number[],
     passphrase?: string
 }
 

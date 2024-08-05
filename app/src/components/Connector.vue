@@ -187,7 +187,7 @@ watch(() => props.modelValue, (info: ConnectionInfo) => {
     if (tls) {
       form.tls.enable = true
       if (tls.cert.length > 0) {
-        form.tls.cert.content = decoder.decode(tls.cert[0])
+        form.tls.cert.content = decoder.decode(Uint8Array.from(tls.cert[0]))
       }
       if (tls.domain) {
         form.tls.domain = tls.domain
@@ -195,8 +195,8 @@ watch(() => props.modelValue, (info: ConnectionInfo) => {
       let identity = tls.identity
       if (identity) {
         form.tls.identity.enable = true
-        form.tls.identity.cert.content = decoder.decode(identity.cert)
-        form.tls.identity.key.content = decoder.decode(identity.key)
+        form.tls.identity.cert.content = decoder.decode(Uint8Array.from(identity.cert))
+        form.tls.identity.key.content = decoder.decode(Uint8Array.from(identity.key))
       }
     }
 
@@ -214,7 +214,7 @@ watch(() => props.modelValue, (info: ConnectionInfo) => {
           form.ssh.identity.password = identity.password
         } else if (identity.key) {
           form.ssh.identity.model = 'key'
-          form.ssh.identity.key.key.content = decoder.decode(identity.key.key)
+          form.ssh.identity.key.key.content = decoder.decode(Uint8Array.from(identity.key.key))
 
           let passphrase = identity.key.passphrase
           if (passphrase) {
@@ -254,13 +254,13 @@ const checkForm = async (): Connection => {
     if (tlsForm.enable) {
       connection.tls = {
         domain: tlsForm.domain,
-        cert: [encoder.encode(tlsForm.cert.content)]
+        cert: [Array.from(encoder.encode(tlsForm.cert.content))]
       }
 
       if (tlsForm.identity.enable) {
         connection.tls.identity = {
-          cert: encoder.encode(tlsForm.identity.cert.content),
-          key: encoder.encode(tlsForm.identity.key.content)
+          cert: Array.from(encoder.encode(tlsForm.identity.cert.content)),
+          key: Array.from(encoder.encode(tlsForm.identity.key.content))
         }
       }
     }
@@ -281,7 +281,7 @@ const checkForm = async (): Connection => {
         case "key":
           let identity: SshIdentity = {
             key: {
-              key: encoder.encode(sshForm.identity.key.key.content)
+              key: Array.from(encoder.encode(sshForm.identity.key.key.content))
             }
           }
 

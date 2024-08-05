@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {PropType, ref} from "vue";
+import {onMounted, PropType, ref} from "vue";
 import {FileForm} from "~/common/types.ts";
 import {_byteTextFormat, _timeFormat} from "~/common/utils.ts";
 import {_dialogContent, _tipError} from "~/common/events.ts";
@@ -28,6 +28,12 @@ const fileReadStatus = ref<'none' | 'reading' | 'success' | 'error'>('none')
 
 const fileInputRef = ref(null)
 const modelValueMirror = props.modelValue
+
+onMounted(() => {
+  if (props.modelValue?.content) {
+    fileReadStatus.value = 'success'
+  }
+})
 
 const clickFileInput = () => {
   fileInputRef.value?.click()

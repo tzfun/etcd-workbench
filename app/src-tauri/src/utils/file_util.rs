@@ -2,7 +2,7 @@ use std::{fs, io};
 use std::env::temp_dir;
 use std::fs::File;
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::{PathBuf};
 
 use uuid::Uuid;
 
@@ -22,20 +22,41 @@ pub fn create_temp_file(data: &[u8]) -> io::Result<String> {
 }
 
 pub fn init() -> io::Result<()> {
-    let dir = get_storage_dir()?;
-    let path = Path::new(&dir);
+    let path = get_storage_path();
     if !path.exists() {
         fs::create_dir_all(path)?;
     }
+
+    let config_path = get_config_dir_path();
+    if !config_path.exists() {
+        fs::create_dir_all(&config_path)?;
+    }
+
     Ok(())
 }
 
+pub fn get_config_dir_path() -> PathBuf {
+    let mut path = PathBuf::from(get_storage_dir());
+    path.push(CONFIG_DIR);
+    path
+}
+
+pub fn get_setting_file_path() -> PathBuf {
+    let mut path = PathBuf::from(get_storage_dir());
+    path.push(SETTINGS_FILE);
+    path
+}
+
+pub fn get_storage_path() -> PathBuf {
+    PathBuf::from(get_storage_dir())
+}
+
 #[cfg(windows)]
-pub fn get_storage_dir() -> io::Result<String> {
-    Ok(format!("C:\\ProgramData\\{}", BASE_DIR))
+pub fn get_storage_dir() -> String {
+    format!("C:\\ProgramData\\{}", BASE_DIR)
 }
 
 #[cfg(unix)]
-pub fn get_storage_dir() -> io::Result<String> {
-    Ok(format!("~/{}", BASE_DIR))
+pub fn get_storage_dir() -> String {
+    format!("~/{}", BASE_DIR)
 }

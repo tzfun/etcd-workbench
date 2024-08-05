@@ -53,7 +53,7 @@ impl EtcdConnector {
         let namespace = connection.namespace.clone();
 
         let ssh = if let Some(ssh) = connection.ssh {
-            let ssh_context = SshTunnel::new(ssh, host, port)?;
+            let ssh_context = SshTunnel::new(ssh, host, port).await?;
             port = ssh_context.get_proxy_port();
             Some(ssh_context)
         } else {

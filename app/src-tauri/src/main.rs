@@ -40,6 +40,7 @@ fn main() {
             api::kv::kv_get_all_keys,
             api::settings::get_settings,
             api::settings::save_connection,
+            api::settings::remove_connection,
             api::settings::get_connection_list,
         ])
         .run(tauri::generate_context!())

@@ -218,7 +218,7 @@ const toggleTheme = () => {
         ></v-btn>
       </v-system-bar>
 
-      <v-main class="fill-height">
+      <v-main class="fill-height" id="mainBody">
 
         <v-tabs v-model="activeTab"
                 show-arrows
@@ -264,6 +264,9 @@ const toggleTheme = () => {
 
     <v-overlay
         :model-value="loading"
+        persistent
+        data-tauri-drag-region
+        attach="#mainBody"
         class="align-center justify-center"
     >
       <v-progress-circular
@@ -327,7 +330,7 @@ const toggleTheme = () => {
   </v-app>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .system-extend-btn {
   font-size: 1.1em;
 }
@@ -351,5 +354,11 @@ const toggleTheme = () => {
 
 .tab-icon-close:hover {
   color: #757575
+}
+</style>
+
+<style lang="scss">
+.v-overlay, .v-overlay__scrim {
+  margin-top: 28px;
 }
 </style>
