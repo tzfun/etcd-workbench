@@ -33,9 +33,12 @@ pub fn get_settings() -> Result<Settings, LogicError> {
 pub fn save_connection(connection: ConnectionInfo) -> Result<(), LogicError> {
     let mut dir = PathBuf::from(file_util::get_storage_dir()?);
     dir.push(file_util::CONFIG_DIR);
+    if !dir.exists() {
+        fs::create_dir_all(&dir)?;
+    }
 
     let digest = md5::compute(&connection.name);
-    dir.push(String::from_utf8_lossy(&digest.0[..]).to_string());
+    dir.push(format!("{:x}", digest));
     let mut file = if dir.exists() {
         File::open(dir)?
     } else {
@@ -53,18 +56,21 @@ pub fn save_connection(connection: ConnectionInfo) -> Result<(), LogicError> {
 pub fn get_connection_list() -> Result<Vec<ConnectionInfo>, LogicError> {
     let mut dir = PathBuf::from(file_util::get_storage_dir()?);
     dir.push(file_util::CONFIG_DIR);
-    let entries = fs::read_dir(dir)?;
     let mut result = Vec::new();
-    for entry in entries {
-        let path = entry?.path();
-        if !path.is_dir() {
-            let mut file = File::open(path)?;
-            let mut content = String::new();
-            file.read_to_string(&mut content)?;
-            let json = BASE64_STANDARD.decode(content)?;
-            let info = serde_json::from_slice::<ConnectionInfo>(json.as_slice())?;
-            result.push(info);
+    if dir.exists() {
+        let entries = fs::read_dir(dir)?;
+        for entry in entries {
+            let path = entry?.path();
+            if !path.is_dir() {
+                let mut file = File::open(path)?;
+                let mut content = String::new();
+                file.read_to_string(&mut content)?;
+                let json = BASE64_STANDARD.decode(content)?;
+                let info = serde_json::from_slice::<ConnectionInfo>(json.as_slice())?;
+                result.push(info);
+            }
         }
     }
+
     Ok(result)
 }

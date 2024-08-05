@@ -40,6 +40,21 @@ export interface Connection {
     ssh?: ConnectionSsh
 }
 
+export interface ConnectionInfo {
+    name: string,
+    connection: Connection,
+    default: boolean
+}
+
+export const DEFAULT_CONNECTION: ConnectionInfo = {
+    name: '',
+    connection: {
+        host: '',
+        port: 2379
+    },
+    default: true
+}
+
 export interface SessionData {
     id: number,
     user?: string,

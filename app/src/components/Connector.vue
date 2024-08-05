@@ -1,12 +1,25 @@
 <script setup lang="ts">
-import {ref} from "vue";
+import {PropType, ref, watch} from "vue";
 import {ConnectionForm, ConnectionSshForm, ConnectionTlsForm, DefaultConnection} from "~/common/types.ts";
 import etcdLogo from '~/assets/etcd.png'
 import SingleFileSelector from "~/components/SingleFileSelector.vue";
-import {Connection, SessionData, SshIdentity} from "~/common/transport/connection.ts";
-import {_nonEmpty} from "~/common/utils.ts";
-import {_connect, _connectTest} from "~/common/services.ts";
-import {_loading, _tipError, _tipSuccess} from "~/common/events.ts";
+import {
+  Connection,
+  ConnectionInfo,
+  ConnectionSsh,
+  ConnectionTls,
+  SessionData,
+  SshIdentity
+} from "~/common/transport/connection.ts";
+import {_isEmpty, _nonEmpty} from "~/common/utils.ts";
+import {_connect, _connectTest, _saveConnection} from "~/common/services.ts";
+import {_loading, _tipError, _tipSuccess, _tipWarn} from "~/common/events.ts";
+import {VForm} from "vuetify/components";
+
+const emits = defineEmits(['on-save'])
+const props = defineProps({
+  modelValue: Object as PropType<ConnectionInfo>
+})
 
 const formData = ref<ConnectionForm>(JSON.parse(JSON.stringify(DefaultConnection)))
 const formRules = ref({
@@ -150,6 +163,73 @@ const formRules = ref({
 })
 const formRef = ref(null)
 
+watch(() => props.modelValue, (info: ConnectionInfo) => {
+  let form: ConnectionForm = JSON.parse(JSON.stringify(DefaultConnection))
+  if (!info.default) {
+    form.name = info.name
+    let connection: Connection = info.connection
+
+    form.host = connection.host
+    form.port = connection.port
+
+    if (connection.namespace) {
+      form.namespace = connection.namespace
+    }
+
+    let user = connection.user
+    if (user) {
+      form.user.enable = true
+      form.user.username = user.username
+      form.user.password = user.password
+    }
+    let decoder = new TextDecoder()
+    let tls: ConnectionTls = connection.tls
+    if (tls) {
+      form.tls.enable = true
+      if (tls.cert.length > 0) {
+        form.tls.cert.content = decoder.decode(tls.cert[0])
+      }
+      if (tls.domain) {
+        form.tls.domain = tls.domain
+      }
+      let identity = tls.identity
+      if (identity) {
+        form.tls.identity.enable = true
+        form.tls.identity.cert.content = decoder.decode(identity.cert)
+        form.tls.identity.key.content = decoder.decode(identity.key)
+      }
+    }
+
+    let ssh: ConnectionSsh = connection.ssh
+    if (ssh) {
+      form.ssh.enable = true
+      form.ssh.host = ssh.host
+      form.ssh.port = ssh.port
+      form.ssh.user = ssh.user
+
+      let identity = ssh.identity
+      if (identity) {
+        if (identity.password) {
+          form.ssh.identity.model = 'password'
+          form.ssh.identity.password = identity.password
+        } else if (identity.key) {
+          form.ssh.identity.model = 'key'
+          form.ssh.identity.key.key.content = decoder.decode(identity.key.key)
+
+          let passphrase = identity.key.passphrase
+          if (passphrase) {
+            form.ssh.identity.key.passphrase = passphrase
+          }
+        }
+      } else {
+        form.ssh.identity.model = 'none'
+      }
+    }
+  }
+  formData.value = form
+  resetFormValidation()
+})
+
 const checkForm = async (): Connection => {
   const {valid} = await (formRef.value as HTMLFormElement).validate()
   if (valid) {
@@ -221,7 +301,11 @@ const checkForm = async (): Connection => {
 }
 
 const resetForm = () => {
-  (formRef.value as HTMLFormElement).reset()
+  (formRef.value as VForm).reset()
+}
+
+const resetFormValidation = () => {
+  (formRef.value as VForm).resetValidation()
 }
 
 const testConnect = () => {
@@ -252,6 +336,26 @@ const connect = () => {
       _tipError(`Failed: ${e}`)
     }).finally(() => {
       _loading(false)
+    })
+  }).catch(() => {
+
+  })
+}
+
+const saveConnection = () => {
+  let name = formData.value.name
+  if (_isEmpty(name)) {
+    _tipWarn("Connection name can not be empty")
+    return
+  }
+  checkForm().then(connection => {
+    _saveConnection({
+      name,
+      connection
+    }).then(() => {
+      emits('on-save')
+    }).catch(e => {
+      _tipWarn(e)
     })
   }).catch(() => {
 
@@ -542,6 +646,7 @@ const connect = () => {
               </v-btn>
               <v-btn class="mt-2 ml-4 text-capitalize"
                      variant="outlined"
+                     @click="saveConnection"
               >Save to Favorites
               </v-btn>
               <v-btn class="mt-2 ml-4 text-capitalize"

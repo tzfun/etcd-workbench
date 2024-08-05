@@ -2,7 +2,7 @@ use std::{fs, io};
 use std::env::temp_dir;
 use std::fs::File;
 use std::io::Write;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use uuid::Uuid;
 

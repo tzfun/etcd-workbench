@@ -1,9 +1,38 @@
 <script setup lang="ts">
 
 import Connector from "~/components/Connector.vue";
+import {_getConnectionList} from "~/common/services.ts";
+import {_alertError} from "~/common/events.ts";
+import {onActivated, onMounted, ref} from "vue";
+import {ConnectionInfo, DEFAULT_CONNECTION} from "~/common/transport/connection.ts";
 
-const onSelectConnection = ({id}:any) => {
-  console.log(id)
+const connectionList = ref<ConnectionInfo[]>([])
+const currentConnection = ref<ConnectionInfo>(DEFAULT_CONNECTION)
+
+onActivated(() => {
+  loadConnectionList()
+})
+
+onMounted(() => {
+  loadConnectionList()
+})
+
+const loadConnectionList = () => {
+  _getConnectionList().then(list => {
+    list.sort((a, b) => a.name.localeCompare(b.name))
+    connectionList.value = list
+  }).catch(e => {
+    console.error(e)
+    _alertError(e)
+  })
+}
+
+const onSelectConnection = ({id}: any) => {
+  if (id === 'new') {
+    currentConnection.value = DEFAULT_CONNECTION
+  } else {
+    currentConnection.value = id
+  }
 }
 </script>
 
@@ -24,9 +53,11 @@ const onSelectConnection = ({id}:any) => {
           </template>
         </v-list-item>
         <v-list-subheader>Favorites List</v-list-subheader>
-        <v-list-item value="session-1"
+        <v-list-item v-for="item in connectionList"
+                     :key="item.name"
+                     :value="item"
         >
-          Session 1
+          {{ item.name }}
           <template v-slot:prepend>
             <v-avatar>
               <v-icon>mdi-database-outline</v-icon>
@@ -39,7 +70,7 @@ const onSelectConnection = ({id}:any) => {
       </v-list>
     </v-navigation-drawer>
     <v-main class="fill-height">
-      <Connector></Connector>
+      <Connector v-model="currentConnection" @on-save="loadConnectionList"></Connector>
     </v-main>
   </v-layout>
 </template>
