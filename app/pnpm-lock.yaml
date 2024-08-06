@@ -17,9 +17,6 @@ importers:
       vue:
         specifier: ^3.3.4
         version: 3.3.4
-      vue-router:
-        specifier: ^4.3.3
-        version: 4.4.0(vue@3.3.4)
       vuetify:
         specifier: ^3.6.12
         version: 3.6.12(typescript@5.2.2)(vite-plugin-vuetify@2.0.3)(vue@3.3.4)
@@ -410,9 +407,6 @@ packages:
   '@vue/compiler-ssr@3.3.4':
     resolution: {integrity: sha512-m0v6oKpup2nMSehwA6Uuu+j+wEwcy7QmwMkVNVfrV9P2qE5KshC6RwOCq8fjGS/Eak/uNb8AaWekfiXxbBB6gQ==}
 
-  '@vue/devtools-api@6.6.3':
-    resolution: {integrity: sha512-0MiMsFma/HqA6g3KLKn+AGpL1kgKhFWszC9U29NfpWK5LE7bjeXxySWJrOJ77hBz+TBrBQ7o4QJqbPbqbs8rJw==}
-
   '@vue/language-core@2.0.22':
     resolution: {integrity: sha512-dNTAAtEOuMiz7N1s5tKpypnVVCtawxVSF5BukD0ELcYSw+DSbrSlYYSw8GuwvurodCeYFSHsmslE+c2sYDNoiA==}
     peerDependencies:
@@ -686,11 +680,6 @@ packages:
 
   vscode-uri@3.0.8:
     resolution: {integrity: sha512-AyFQ0EVmsOZOlAnxoFOGOq1SQDWAB7C6aqMGS23svWAllfOaxbuFvcT8D1i8z3Gyn8fraVeZNNmN6e9bxxXkKw==}
-
-  vue-router@4.4.0:
-    resolution: {integrity: sha512-HB+t2p611aIZraV2aPSRNXf0Z/oLZFrlygJm+sZbdJaW6lcFqEDQwnzUBXn+DApw+/QzDU/I9TeWx9izEjTmsA==}
-    peerDependencies:
-      vue: ^3.2.0
 
   vue-template-compiler@2.7.16:
     resolution: {integrity: sha512-AYbUWAJHLGGQM7+cNTELw+KsOG9nl2CnSv467WobS5Cv9uk3wFcnr1Etsz2sEIHEZvw1U+o9mRlEO6QbZvUPGQ==}
@@ -969,8 +958,6 @@ snapshots:
       '@vue/compiler-dom': 3.3.4
       '@vue/shared': 3.3.4
 
-  '@vue/devtools-api@6.6.3': {}
-
   '@vue/language-core@2.0.22(typescript@5.2.2)':
     dependencies:
       '@volar/language-core': 2.3.4
@@ -1229,11 +1216,6 @@ snapshots:
       sass: 1.59.3
 
   vscode-uri@3.0.8: {}
-
-  vue-router@4.4.0(vue@3.3.4):
-    dependencies:
-      '@vue/devtools-api': 6.6.3
-      vue: 3.3.4
 
   vue-template-compiler@2.7.16:
     dependencies:

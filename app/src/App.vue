@@ -9,21 +9,21 @@ import {_goBrowserPage} from "~/common/utils.ts";
 import {useTheme} from "vuetify";
 import {SessionData} from "~/common/transport/connection.ts";
 import {_disconnect} from "~/common/services.ts";
-import {useRouter} from "vue-router";
-
-const router = useRouter()
+import {_addSession, _removeSession} from "~/common/store.ts";
+import Connection from "~/pages/Connection.vue";
+import Home from "~/pages/Home.vue";
 
 type TabItem = {
   name: string,
-  session: SessionData,
-  route: string
+  session: SessionData
 }
 
 const loading = ref(false)
 const dialogs = ref<DialogItem[]>([])
 const tips = ref<TipsItem[]>([])
 const platform = ref<string>('win32')
-const activeTab = ref<string>('home')
+const HOME_TAB = "___home"
+const activeTab = ref<string>(HOME_TAB)
 const tabList = reactive<TabItem[]>([])
 const maximize = ref(false)
 
@@ -47,17 +47,30 @@ onMounted(async () => {
     loading.value = !!state;
   })
 
-  events.on('newConnection', ({name, session}) => {
-    let route = `/connection/${session.id}/cluster`
-    tabList.push({
-      name,
-      session,
-      route
-    })
+  events.on('newConnection', (e: any) => {
+    let name = e.name as string
+    let session = e.session as SessionData
 
-    router.push({
-      path: route
-    })
+    for (let i = tabList.length - 1; i >= 0; i--) {
+      let tab = tabList[i]
+      if (tab.name == name) {
+        name += '(1)'
+        break
+      }
+      if (tab.name.startsWith(name) && tab.name.endsWith(")")) {
+        let num = parseInt(tab.name.substring(tab.name.lastIndexOf("(") + 1, tab.name.length))
+        name += `(${num + 1})`
+        break
+      }
+    }
+    let tabItem = {
+      name,
+      session
+    }
+    tabList.push(tabItem)
+
+    _addSession(session)
+    activeTab.value = tabItem.name
   })
 
   events.on('dialog', (param) => {
@@ -152,27 +165,20 @@ const closeTab = (id: number) => {
       }
     }
     _disconnect(id)
-
-
+    _removeSession(id)
 
     if (idx >= 0) {
-      let nextRoute = '/'
       let nextTab = 'home'
       if (tabList.length > 1) {
         if (idx == 0) {
           let next = tabList[idx + 1];
-          nextRoute = next.route
           nextTab = next.name
         } else {
           let next = tabList[idx - 1]
-          nextRoute = next.route
           nextTab = next.name
         }
       }
       activeTab.value = nextTab
-      router.push({
-        path: nextRoute
-      })
 
       tabList.splice(idx, 1)
     }
@@ -272,7 +278,6 @@ const closeTab = (id: number) => {
       </v-system-bar>
 
       <v-main class="fill-height" id="mainBody">
-
         <v-tabs v-model="activeTab"
                 show-arrows
                 :height="30"
@@ -280,12 +285,11 @@ const closeTab = (id: number) => {
                 color="primary"
         >
           <v-tab icon="mdi-home"
-                 value="home"
+                 :value="HOME_TAB"
                  density="compact"
                  class="text-grey-lighten-1"
                  :ripple="false"
                  :min-width="50"
-                 to="/"
           >
             <v-icon>mdi-home</v-icon>
           </v-tab>
@@ -294,7 +298,7 @@ const closeTab = (id: number) => {
                  :value="tab.name"
                  class="text-grey-lighten-1 text-none"
                  :ripple="false"
-                 :to="tab.route"
+                 @click="activeTab = tab.name"
           >
             {{ tab.name }}
             <template v-slot:append>
@@ -304,11 +308,12 @@ const closeTab = (id: number) => {
         </v-tabs>
         <v-divider></v-divider>
         <div style="height: calc(100% - 30px);">
-          <router-view v-slot="{ Component, route }">
-            <keep-alive>
-              <component :is="Component" :key="route.path"/>
-            </keep-alive>
-          </router-view>
+          <Home v-show="activeTab == HOME_TAB"></Home>
+          <Connection :session="tab.session"
+                      v-for="tab in tabList"
+                      :key="tab.name"
+                      v-show="activeTab == tab.name"
+          ></Connection>
         </div>
       </v-main>
     </v-layout>

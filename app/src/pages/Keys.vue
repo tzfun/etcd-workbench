@@ -3,7 +3,9 @@
 </script>
 
 <template>
-
+  <div>
+    keys
+  </div>
 </template>
 
 <style scoped>

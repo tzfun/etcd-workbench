@@ -3,7 +3,9 @@
 </script>
 
 <template>
-
+  <div>
+    cluster
+  </div>
 </template>
 
 <style scoped>
