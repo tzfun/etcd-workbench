@@ -37,11 +37,12 @@ fn main() {
             api::connection::connect_test,
             api::connection::connect,
             api::connection::disconnect,
-            api::kv::kv_get_all_keys,
             api::settings::get_settings,
             api::settings::save_connection,
             api::settings::remove_connection,
             api::settings::get_connection_list,
+            api::kv::kv_get_all_keys,
+            api::maintenance::get_cluster,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

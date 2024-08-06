@@ -55,7 +55,11 @@ pub async fn new_connector(connection: Connection) -> Result<SessionData, LogicE
     })
 }
 
-pub fn get_connector(id: &i32) -> Option<Arc<EtcdConnector>> {
+pub fn get_connector(id: &i32) -> Result<Arc<EtcdConnector>, LogicError> {
+    get_connector_optional(id).ok_or(LogicError::ConnectionLose)
+}
+
+pub fn get_connector_optional(id: &i32) -> Option<Arc<EtcdConnector>> {
     let connector = CONNECTION_POOL.get(id)?;
     Some(Arc::clone(connector.value()))
 }

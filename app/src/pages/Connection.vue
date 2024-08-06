@@ -35,6 +35,7 @@ const clickList = (page: string) => {
       <v-list lines="two"
               activatable
               :activated="activeListItem"
+              color="primary"
               @click:activate="selectList"
       >
         <v-divider></v-divider>
@@ -51,20 +52,27 @@ const clickList = (page: string) => {
         <v-list-item value="users"
                      prepend-icon="mdi-account-supervisor"
                      @click="clickList('users')"
+                     :disabled="!session.root"
         >Manage Users
         </v-list-item>
         <v-list-item value="roles"
                      prepend-icon="mdi-lock"
                      @click="clickList('roles')"
+                     :disabled="!session.root"
         >Manage Roles
         </v-list-item>
       </v-list>
     </v-navigation-drawer>
     <v-main class="fill-height">
-      <Cluster v-show="activeListItem == 'cluster'"></Cluster>
-      <Keys v-show="activeListItem == 'keys'"></Keys>
-      <Users v-show="activeListItem == 'users'"></Users>
-      <Roles v-show="activeListItem == 'roles'"></Roles>
+      <Cluster v-show="activeListItem == 'cluster'"
+               :session="session"
+      ></Cluster>
+      <Keys v-show="activeListItem == 'keys'"
+            :session="session"></Keys>
+      <Users v-show="activeListItem == 'users'"
+             :session="session"></Users>
+      <Roles v-show="activeListItem == 'roles'"
+             :session="session"></Roles>
     </v-main>
   </v-layout>
 </template>

@@ -66,6 +66,7 @@ const removeConnectionConfig = (name: string) => {
       <v-list lines="two"
               activatable
               activated="new"
+              color="primary"
               @click:activate="selectConnection"
       >
         <v-list-item value="new">
