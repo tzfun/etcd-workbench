@@ -13,7 +13,7 @@ import {
 } from "~/common/transport/connection.ts";
 import {_isEmpty, _nonEmpty} from "~/common/utils.ts";
 import {_connect, _connectTest, _saveConnection} from "~/common/services.ts";
-import {_loading, _tipError, _tipSuccess, _tipWarn} from "~/common/events.ts";
+import {_loading, _tipError, _tipSuccess, _tipWarn, events} from "~/common/events.ts";
 import {VForm} from "vuetify/components";
 
 const emits = defineEmits(['on-save'])
@@ -327,10 +327,14 @@ const testConnect = () => {
 
 const connect = () => {
   checkForm().then((connection: Connection) => {
-    console.log("connection:", connection)
+    let fd: ConnectionForm = formData.value;
+    let name = fd.name
+    if (_isEmpty(name)) {
+      name = fd.host + ":" + fd.port
+    }
     _loading(true)
-    _connect(connection).then((data: SessionData) => {
-      console.log(data)
+    _connect(connection).then((session: SessionData) => {
+      events.emit('newConnection', {name, session})
     }).catch(e => {
       console.error(e)
       _tipError(`Failed: ${e}`)

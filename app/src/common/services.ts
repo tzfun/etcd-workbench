@@ -9,10 +9,18 @@ export function _connect(connection: Connection): Promise<SessionData> {
     return invoke('connect', {connection: connection})
 }
 
+export function _disconnect(sessionId: number): Promise<undefined> {
+    return invoke('disconnect', {session: sessionId})
+}
+
 export function _getConnectionList(): Promise<ConnectionInfo[]> {
     return invoke('get_connection_list')
 }
 
-export function _saveConnection(connection: ConnectionInfo) :Promise<undefined> {
+export function _saveConnection(connection: ConnectionInfo): Promise<undefined> {
     return invoke("save_connection", {connection: connection})
+}
+
+export function _removeConnection(name: string): Promise<undefined> {
+    return invoke("remove_connection", {name: name})
 }

@@ -3,27 +3,28 @@ import {appWindow} from '@tauri-apps/api/window'
 import etcdLogo from '~/assets/etcd.png';
 import {_confirm, events} from "~/common/events.ts";
 import {DialogItem, TipsItem} from "~/common/types.ts";
-import {onMounted, ref} from "vue";
+import {onMounted, reactive, ref} from "vue";
 import {platform as getPlatform} from "@tauri-apps/api/os";
 import {_goBrowserPage} from "~/common/utils.ts";
 import {useTheme} from "vuetify";
+import {SessionData} from "~/common/transport/connection.ts";
+import {_disconnect} from "~/common/services.ts";
+import {useRouter} from "vue-router";
+
+const router = useRouter()
+
+type TabItem = {
+  name: string,
+  session: SessionData,
+  route: string
+}
 
 const loading = ref(false)
 const dialogs = ref<DialogItem[]>([])
 const tips = ref<TipsItem[]>([])
 const platform = ref<string>('win32')
 const activeTab = ref<string>('home')
-const tabList = ref([
-  {
-    name: '连接1',
-    session: {
-      id: 1,
-      user: "xxx",
-      root: false
-    },
-    route: '/connection/1/cluster'
-  }
-])
+const tabList = reactive<TabItem[]>([])
 const maximize = ref(false)
 
 const theme = useTheme()
@@ -33,7 +34,7 @@ onMounted(async () => {
   maximize.value = await appWindow.isMaximized()
 
   let systemTheme = await appWindow.theme()
-  if(systemTheme) {
+  if (systemTheme) {
     theme.global.name.value = systemTheme
   }
 
@@ -44,6 +45,19 @@ onMounted(async () => {
 
   events.on('loading', (state) => {
     loading.value = !!state;
+  })
+
+  events.on('newConnection', ({name, session}) => {
+    let route = `/connection/${session.id}/cluster`
+    tabList.push({
+      name,
+      session,
+      route
+    })
+
+    router.push({
+      path: route
+    })
   })
 
   events.on('dialog', (param) => {
@@ -103,7 +117,7 @@ const disableRightMenu = () => {
 }
 
 const closeApp = () => {
-  _confirm("Exist Workbench","Are you sure you want to close the app?").then(() => {
+  _confirm("Exist Workbench", "Are you sure you want to close the app?").then(() => {
     appWindow.close()
   }).catch(() => {
   })
@@ -125,6 +139,45 @@ const setting = () => {
 
 const toggleTheme = () => {
   theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark'
+}
+
+const closeTab = (id: number) => {
+  _confirm('System', 'Are you sure to close the current connection?').then(() => {
+    let idx = -1;
+    for (let i in tabList) {
+      let item: TabItem = tabList[i]
+      if (item.session.id == id) {
+        idx = i;
+        break
+      }
+    }
+    _disconnect(id)
+
+
+
+    if (idx >= 0) {
+      let nextRoute = '/'
+      let nextTab = 'home'
+      if (tabList.length > 1) {
+        if (idx == 0) {
+          let next = tabList[idx + 1];
+          nextRoute = next.route
+          nextTab = next.name
+        } else {
+          let next = tabList[idx - 1]
+          nextRoute = next.route
+          nextTab = next.name
+        }
+      }
+      activeTab.value = nextTab
+      router.push({
+        path: nextRoute
+      })
+
+      tabList.splice(idx, 1)
+    }
+  }).catch(() => {
+  })
 }
 
 </script>
@@ -239,13 +292,13 @@ const toggleTheme = () => {
           <v-tab v-for="tab in tabList"
                  :key="tab.name"
                  :value="tab.name"
-                 class="text-grey-lighten-1"
+                 class="text-grey-lighten-1 text-none"
                  :ripple="false"
                  :to="tab.route"
           >
-            {{tab.name}}
+            {{ tab.name }}
             <template v-slot:append>
-              <v-icon class="tab-icon-close">mdi-close</v-icon>
+              <v-icon class="tab-icon-close" @click="closeTab(tab.session.id)">mdi-close</v-icon>
             </template>
           </v-tab>
         </v-tabs>
@@ -291,7 +344,7 @@ const toggleTheme = () => {
           :title="item.title"
       >
         <template v-slot:prepend>
-          <v-icon :color="item.iconColor">{{item.icon}}</v-icon>
+          <v-icon :color="item.iconColor">{{ item.icon }}</v-icon>
         </template>
         <template v-slot:append v-if="item.closeBtn">
           <v-icon class="cursor-pointer" @click="item.value = false">mdi-close</v-icon>
@@ -334,6 +387,7 @@ const toggleTheme = () => {
 .system-extend-btn {
   font-size: 1.1em;
 }
+
 .system-native-btn {
   font-size: 0.9em;
   opacity: 0.5;

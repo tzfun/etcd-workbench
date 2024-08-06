@@ -1,8 +1,8 @@
 <script setup lang="ts">
 
 import Connector from "~/components/Connector.vue";
-import {_getConnectionList} from "~/common/services.ts";
-import {_alertError} from "~/common/events.ts";
+import {_getConnectionList, _removeConnection} from "~/common/services.ts";
+import {_alertError, _confirm} from "~/common/events.ts";
 import {onActivated, onMounted, ref} from "vue";
 import {ConnectionInfo, DEFAULT_CONNECTION} from "~/common/transport/connection.ts";
 
@@ -27,12 +27,36 @@ const loadConnectionList = () => {
   })
 }
 
-const onSelectConnection = ({id}: any) => {
+const selectConnection = ({id}: any) => {
   if (id === 'new') {
     currentConnection.value = DEFAULT_CONNECTION
   } else {
     currentConnection.value = id
   }
+}
+
+const removeConnectionConfig = (name: string) => {
+  _confirm('System', 'Are you sure you want to remove this configuration from your favorites list?').then(() => {
+    _removeConnection(name).then(() => {
+      let idx = -1
+      for (let i in connectionList.value) {
+        if (connectionList.value[i].name == name) {
+          idx = i;
+          break
+        }
+      }
+      if (idx >= 0) {
+        connectionList.value.splice(idx, 1)
+        if (currentConnection.value.name == name) {
+          currentConnection.value = DEFAULT_CONNECTION
+        }
+      }
+    }).catch(e => {
+      _alertError(e)
+    })
+  }).catch(() => {
+
+  })
 }
 </script>
 
@@ -42,7 +66,7 @@ const onSelectConnection = ({id}: any) => {
       <v-list lines="two"
               activatable
               activated="new"
-              @click:activate="onSelectConnection"
+              @click:activate="selectConnection"
       >
         <v-list-item value="new">
           New Connection
@@ -64,7 +88,7 @@ const onSelectConnection = ({id}: any) => {
             </v-avatar>
           </template>
           <template v-slot:append>
-            <v-icon>mdi-close</v-icon>
+            <v-icon @click="removeConnectionConfig(item.name)">mdi-close</v-icon>
           </template>
         </v-list-item>
       </v-list>
