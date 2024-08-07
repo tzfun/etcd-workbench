@@ -32,7 +32,8 @@ impl SshTunnel {
         session.set_tcp_stream(tcp);
         session.handshake()?;
 
-        session.set_keepalive(false, 5);
+        session.set_keepalive(true, 5);
+        session.set_timeout(10 * 1000);
 
         if let Some(identity) = remote.identity {
             if let Some(key) = identity.key {
@@ -109,8 +110,8 @@ impl SshTunnel {
                             let ssh_session = Arc::clone(&ssh_session);
                             debug!("Ssh[{}] proxy stream task started", ssh_addr2);
                             let ssh_addr3 = Arc::clone(&ssh_addr2);
-                            let session_task = async move {
-                                let mut channel = ssh_session.channel_direct_tcpip(forward_host, forward_port, None).unwrap();
+                            let mut channel = ssh_session.channel_direct_tcpip(forward_host, forward_port, None).unwrap();
+                            let stream_write_task = async move {
                                 info!("Created ssh[{}] proxy stream {}:{}", ssh_addr3, forward_host, forward_port);
                                 loop {
                                     let (request, size) = read_stream(&mut stream).await;
@@ -120,6 +121,7 @@ impl SshTunnel {
 
                                     channel.write_all(&request[..size]).unwrap();
                                     channel.flush().unwrap();
+
                                     let (response, size) = read_channel(&mut channel);
                                     if size <= 0 {
                                         break;
@@ -139,10 +141,11 @@ impl SshTunnel {
                                 let _ = channel.close();
                                 debug!("Ssh[{}] proxy stream task loop finished", ssh_addr3)
                             };
+
                             let ssh_addr4 = Arc::clone(&ssh_addr2);
                             tokio::spawn(async move {
                                 select! {
-                                    _stream_handle = session_task => {
+                                    _stream_handle = stream_write_task => {
                                         debug!("Ssh[{}] proxy stream task finished", ssh_addr4)
                                     }
                                     _abort = rcv_abort3.changed() => {

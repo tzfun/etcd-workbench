@@ -91,7 +91,8 @@ impl EtcdConnector {
 
     pub async fn test_connection(&self) -> Result<(), Error> {
         let key = self.get_full_key("/");
-        self.client.kv_client().get(key, Some(GetOptions::new().with_keys_only())).await?;
+        let response = self.client.kv_client().get(key, Some(GetOptions::new().with_keys_only())).await?;
+        debug!("test connection, kv length: {}", response.kvs().len());
         Ok(())
     }
 

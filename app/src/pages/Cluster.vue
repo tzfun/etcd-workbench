@@ -32,7 +32,7 @@ const MEMBER_COL = {
 }
 
 onMounted(() => {
-  loadCluster()
+  // loadCluster()
 })
 
 const loadCluster = () => {
