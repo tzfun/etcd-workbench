@@ -168,7 +168,7 @@ const closeTab = (id: number) => {
     _removeSession(id)
 
     if (idx >= 0) {
-      let nextTab = 'home'
+      let nextTab = HOME_TAB
       if (tabList.length > 1) {
         if (idx == 0) {
           let next = tabList[idx + 1];

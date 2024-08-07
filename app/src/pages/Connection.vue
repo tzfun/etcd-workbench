@@ -30,7 +30,7 @@ const clickList = (page: string) => {
 </script>
 
 <template>
-  <v-layout class="fill-height overflow-y-auto">
+  <v-layout class="fill-height">
     <v-navigation-drawer permanent>
       <v-list lines="two"
               activatable

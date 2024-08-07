@@ -43,7 +43,7 @@ export interface Connection {
 export interface ConnectionInfo {
     name: string,
     connection: Connection,
-    default: boolean
+    default?: boolean
 }
 
 export const DEFAULT_CONNECTION: ConnectionInfo = {

@@ -2,6 +2,7 @@ use etcd_client::KeyValue;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all="camelCase")]
 pub struct SerializableKeyValue {
     pub key: String,
     pub create_revision: i64,

@@ -1,15 +1,18 @@
 use std::io;
+
 use log::error;
 use serde::{Serialize, Serializer};
+use tokio::sync::oneshot;
 
 #[derive(Debug)]
 pub enum LogicError {
+    ConnectionLose,
     EtcdClientError(etcd_client::Error),
     SshError(ssh2::Error),
     IoError(io::Error),
     SerdeError(serde_json::Error),
     Base64DecodeError(base64::DecodeError),
-    ConnectionLose,
+    ChannelRcvError(oneshot::error::RecvError),
 }
 
 impl Serialize for LogicError {
@@ -45,7 +48,10 @@ impl Serialize for LogicError {
                 error!("[Base64Decode] {:?}", e);
                 serializer.serialize_str(&e.to_string())
             }
-            LogicError::ConnectionLose => serializer.serialize_str("connection lose")
+            LogicError::ChannelRcvError(e) => {
+                serializer.serialize_str(&e.to_string())
+            }
+            LogicError::ConnectionLose => serializer.serialize_str("connection lose"),
         }
     }
 }
@@ -77,5 +83,11 @@ impl From<serde_json::Error> for LogicError {
 impl From<base64::DecodeError> for LogicError {
     fn from(value: base64::DecodeError) -> Self {
         LogicError::Base64DecodeError(value)
+    }
+}
+
+impl From<oneshot::error::RecvError> for LogicError {
+    fn from(value: oneshot::error::RecvError) -> Self {
+        LogicError::ChannelRcvError(value)
     }
 }

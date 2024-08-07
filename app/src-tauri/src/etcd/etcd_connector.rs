@@ -5,7 +5,8 @@ use std::pin::Pin;
 use std::time::Duration;
 
 use etcd_client::{AlarmAction, AlarmType, Certificate, Client, ConnectOptions, Error, GetOptions, Identity, PutOptions, RoleRevokePermissionOptions, TlsOptions};
-use log::debug;
+use log::{debug, info};
+
 use crate::error::LogicError;
 use crate::ssh::ssh_tunnel::SshTunnel;
 use crate::transport::connection::Connection;
@@ -16,7 +17,7 @@ use crate::transport::user::{SerializablePermission, SerializableUser};
 pub struct EtcdConnector {
     namespace: Option<String>,
     client: Client,
-    ssh: Option<SshTunnel>
+    ssh: Option<SshTunnel>,
 }
 
 impl EtcdConnector {
@@ -48,24 +49,27 @@ impl EtcdConnector {
 
             option = option.with_tls(tls_option)
         };
-        let host = Box::leak(connection.host.into_boxed_str());
+        let mut host = connection.host;
         let mut port = connection.port;
         let namespace = connection.namespace.clone();
 
         let ssh = if let Some(ssh) = connection.ssh {
-            let ssh_context = SshTunnel::new(ssh, host, port).await?;
+            let ssh_context = SshTunnel::new(ssh, Box::leak(host.clone().into_boxed_str()), port).await?;
             port = ssh_context.get_proxy_port();
+            host.clear();
+            host.push_str("127.0.0.1");
             Some(ssh_context)
         } else {
             None
         };
 
         let address = format!("{}:{}", host, port);
+        info!("Connect to etcd server: {}", address);
         let client = Client::connect([address], Some(option)).await?;
         Ok(EtcdConnector {
             namespace,
             client,
-            ssh
+            ssh,
         })
     }
 
@@ -374,8 +378,8 @@ impl EtcdConnector {
 
         let cluster_status = SerializableClusterStatus {
             version: String::from(status.version()),
-            db_size: status.db_size(),
-            raft_used_db_size: status.raft_used_db_size(),
+            db_size_allocated: status.db_size(),
+            db_size_used: status.raft_used_db_size(),
             leader: status.leader().to_string(),
             raft_index: status.raft_index().to_string(),
             raft_term: status.raft_term().to_string(),
@@ -409,8 +413,8 @@ impl EtcdConnector {
 
         Ok(SerializableCluster {
             id: header.cluster_id().to_string(),
+            member_id: header.member_id().to_string(),
             revision: header.revision(),
-            raft_term: header.raft_term().to_string(),
             members,
             status: cluster_status,
         })

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {PropType, ref, watch} from "vue";
+import {PropType, reactive, ref, watch} from "vue";
 import {ConnectionForm, ConnectionSshForm, ConnectionTlsForm, DefaultConnection} from "~/common/types.ts";
 import etcdLogo from '~/assets/etcd.png'
 import SingleFileSelector from "~/components/SingleFileSelector.vue";
@@ -18,7 +18,10 @@ import {VForm} from "vuetify/components";
 
 const emits = defineEmits(['on-save'])
 const props = defineProps({
-  modelValue: Object as PropType<ConnectionInfo>
+  modelValue: {
+    type: Object as PropType<ConnectionInfo>,
+    required: true
+  }
 })
 
 const formData = ref<ConnectionForm>(JSON.parse(JSON.stringify(DefaultConnection)))
@@ -162,6 +165,11 @@ const formRules = ref({
   }
 })
 const formRef = ref(null)
+const formPasswordShow = reactive({
+  show1: false,
+  show2: false,
+  show3: false
+})
 
 watch(() => props.modelValue, (info: ConnectionInfo) => {
   let form: ConnectionForm = JSON.parse(JSON.stringify(DefaultConnection))
@@ -170,7 +178,7 @@ watch(() => props.modelValue, (info: ConnectionInfo) => {
     let connection: Connection = info.connection
 
     form.host = connection.host
-    form.port = connection.port
+    form.port = connection.port.toString()
 
     if (connection.namespace) {
       form.namespace = connection.namespace
@@ -204,7 +212,7 @@ watch(() => props.modelValue, (info: ConnectionInfo) => {
     if (ssh) {
       form.ssh.enable = true
       form.ssh.host = ssh.host
-      form.ssh.port = ssh.port
+      form.ssh.port = ssh.port.toString()
       form.ssh.user = ssh.user
 
       let identity = ssh.identity
@@ -230,8 +238,8 @@ watch(() => props.modelValue, (info: ConnectionInfo) => {
   resetFormValidation()
 })
 
-const checkForm = async (): Connection => {
-  const {valid} = await (formRef.value as HTMLFormElement).validate()
+const checkForm = async (): Promise<Connection> => {
+  const {valid} = await (formRef.value! as VForm).validate()
   if (valid) {
     let connection: Connection = {
       host: formData.value.host,
@@ -301,11 +309,15 @@ const checkForm = async (): Connection => {
 }
 
 const resetForm = () => {
-  (formRef.value as VForm).reset()
+  if(formRef.value) {
+    (formRef.value as VForm).reset()
+  }
 }
 
 const resetFormValidation = () => {
-  (formRef.value as VForm).resetValidation()
+  if(formRef.value) {
+    (formRef.value as VForm).resetValidation()
+  }
 }
 
 const testConnect = () => {
@@ -377,7 +389,7 @@ const saveConnection = () => {
         <h1 class="pt-0 pb-0 pl-5 header-title">ETCD Connection</h1>
       </div>
       <v-sheet class="justify-center mx-auto mt-5">
-        <v-card width="600" class="connection-card">
+        <v-card width="600" class="connection-card card-box-shadow">
           <v-card-text>
             <v-form ref="formRef">
               <div class="d-flex">
@@ -473,7 +485,9 @@ const saveConnection = () => {
                     <v-text-field
                         v-model="formData.user.password"
                         :rules="formRules.user.password"
-                        type="password"
+                        :type="formPasswordShow.show1 ? 'text' : 'password'"
+                        :append-inner-icon="formPasswordShow.show1 ? 'mdi-eye-off' : 'mdi-eye'"
+                        @click:append-inner="formPasswordShow.show1 = !formPasswordShow.show1"
                         density="comfortable"
                         placeholder="Etcd auth password"
                     ></v-text-field>
@@ -618,7 +632,9 @@ const saveConnection = () => {
                         v-if="formData.ssh.identity.model == 'password'"
                         v-model="formData.ssh.identity.password"
                         :rules="formRules.ssh.identity.password"
-                        type="password"
+                        :type="formPasswordShow.show2 ? 'text' : 'password'"
+                        :append-inner-icon="formPasswordShow.show2 ? 'mdi-eye-off' : 'mdi-eye'"
+                        @click:append-inner="formPasswordShow.show2 = !formPasswordShow.show2"
                         density="comfortable"
                         placeholder="Password"
                     ></v-text-field>
@@ -630,7 +646,9 @@ const saveConnection = () => {
 
                       <v-text-field
                           v-model="formData.ssh.identity.key.passphrase"
-                          type="password"
+                          :type="formPasswordShow.show3 ? 'text' : 'password'"
+                          :append-inner-icon="formPasswordShow.show3 ? 'mdi-eye-off' : 'mdi-eye'"
+                          @click:append-inner="formPasswordShow.show3 = !formPasswordShow.show3"
                           density="comfortable"
                           placeholder="Passphrase (optional)"
                       ></v-text-field>
@@ -685,8 +703,6 @@ const saveConnection = () => {
 }
 
 .connection-card {
-  box-shadow: 0 12px 32px 4px rgba(0, 0, 0, .04), 0 8px 20px rgba(0, 0, 0, .08);
-
   $--form-label-width: 150px;
 
   .form-label {

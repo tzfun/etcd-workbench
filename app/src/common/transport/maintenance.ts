@@ -1,7 +1,13 @@
+export enum Alarm {
+    None = 0,
+    Nospace = 1,
+    Corrupt = 2,
+}
+
 export interface Cluster {
     id: string,
+    memberId: string,
     revision: number,
-    raftTerm: string,
     members: ClusterMember[],
     status: ClusterStatus
 }
@@ -16,8 +22,8 @@ export interface ClusterMember {
 
 export interface ClusterStatus {
     version: string,
-    dbSize: number,
-    raftUsedDbSize: number,
+    dbSizeAllocated: number,
+    dbSizeUsed: number,
     leader: string,
     raftIndex: string,
     raftTerm: string,

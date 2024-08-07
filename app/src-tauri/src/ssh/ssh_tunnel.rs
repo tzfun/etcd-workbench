@@ -5,12 +5,12 @@ use std::path::Path;
 use std::sync::Arc;
 use std::time::Duration;
 
-use log::{debug, warn};
+use log::{debug, info, warn};
 use ssh2::Session;
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 use tokio::select;
-use tokio::sync::watch;
+use tokio::sync::{oneshot, watch};
 
 use crate::error::LogicError;
 use crate::transport::connection::ConnectionSsh;
@@ -28,7 +28,7 @@ impl SshTunnel {
     pub async fn new(remote: ConnectionSsh, forward_host: &'static str, forward_port: u16) -> Result<Self, LogicError> {
         let mut session = Session::new()?;
         let addr = format!("{}:{}", remote.host, remote.port);
-        let tcp = TcpStream::connect(addr)?;
+        let tcp = TcpStream::connect(addr.clone())?;
         session.set_tcp_stream(tcp);
         session.handshake()?;
 
@@ -64,9 +64,10 @@ impl SshTunnel {
         let proxy_port = listener.local_addr()?.port();
 
         let (send_abort, rcv_abort) = watch::channel(());
-        Self::handle_tcp_proxy(listener, Arc::clone(&session), forward_host, forward_port, rcv_abort);
 
-        debug!("Created ssh forward accept handler");
+        debug!("Create ssh[{}] forward accept handler.  {}:{} -> {}", addr, forward_host, forward_port, proxy_port);
+
+        Self::handle_tcp_proxy(addr, listener, Arc::clone(&session), forward_host, forward_port, rcv_abort).await?;
 
         Ok(SshTunnel {
             session,
@@ -79,28 +80,38 @@ impl SshTunnel {
         self.proxy_port
     }
 
-    fn handle_tcp_proxy(
+    async fn handle_tcp_proxy(
+        ssh_addr: String,
         listener: TcpListener,
         ssh_session: Arc<Session>,
         forward_host: &'static str,
         forward_port: u16,
         rcv_abort: watch::Receiver<()>,
-    ) {
+    ) -> Result<(), LogicError> {
+        let (sender, receiver) = oneshot::channel();
         tokio::spawn(async move {
-            debug!("Ssh proxy accept task started");
+            debug!("Ssh[{}] proxy accept task started", ssh_addr);
             let mut rcv_abort1 = rcv_abort.clone();
             let rcv_abort2 = rcv_abort.clone();
 
+            let ssh_addr1 = Arc::new(ssh_addr);
+            let ssh_addr2 = Arc::clone(&ssh_addr1);
+
             let accept_task = async move {
+                {
+                    sender.send(()).unwrap();
+                }
                 loop {
                     let accept_result = listener.accept().await;
                     match accept_result {
                         Ok((mut stream, _)) => {
                             let mut rcv_abort3 = rcv_abort2.clone();
                             let ssh_session = Arc::clone(&ssh_session);
-                            debug!("Ssh proxy stream task started");
+                            debug!("Ssh[{}] proxy stream task started", ssh_addr2);
+                            let ssh_addr3 = Arc::clone(&ssh_addr2);
                             let session_task = async move {
                                 let mut channel = ssh_session.channel_direct_tcpip(forward_host, forward_port, None).unwrap();
+                                info!("Created ssh[{}] proxy stream {}:{}", ssh_addr3, forward_host, forward_port);
                                 loop {
                                     let (request, size) = read_stream(&mut stream).await;
                                     if size <= 0 {
@@ -116,27 +127,29 @@ impl SshTunnel {
 
                                     let r = stream.write_all(&response[..size]).await;
                                     if let Err(e) = r {
-                                        warn!("ssh stream write error {e}");
+                                        warn!("Ssh[{}] stream write error {e}", ssh_addr3);
                                         break;
                                     }
                                     let r = stream.flush().await;
                                     if let Err(e) = r {
-                                        warn!("ssh stream flush error {e}");
+                                        warn!("Ssh[{}] stream flush error {e}", ssh_addr3);
                                         break;
                                     }
                                 }
                                 let _ = channel.close();
-                                debug!("Ssh proxy stream task loop finished")
+                                debug!("Ssh[{}] proxy stream task loop finished", ssh_addr3)
                             };
+                            let ssh_addr4 = Arc::clone(&ssh_addr2);
                             tokio::spawn(async move {
                                 select! {
                                     _stream_handle = session_task => {
-                                        debug!("Ssh proxy stream task finished")
+                                        debug!("Ssh[{}] proxy stream task finished", ssh_addr4)
                                     }
                                     _abort = rcv_abort3.changed() => {
-                                        debug!("Accept task received abort event");
+                                        debug!("Ssh[{}] proxy stream task received abort event", ssh_addr4);
                                     }
                                 }
+                                debug!("Ssh[{}] stream future finished", ssh_addr4);
                             });
                         }
                         Err(e) => {
@@ -145,17 +158,21 @@ impl SshTunnel {
                         }
                     }
                 };
-                debug!("Ssh proxy accept loop finished");
+                debug!("Ssh[{}] proxy accept loop finished", ssh_addr2);
             };
             select! {
                 _accept = accept_task => {
-                    debug!("Ssh proxy accept task finished")
+                    debug!("Ssh[{}] proxy accept task finished", ssh_addr1)
                 }
                 _abort = rcv_abort1.changed() => {
-                    debug!("Ssh proxy accept task received abort event");
+                    debug!("Ssh[{}] proxy accept task received abort event", ssh_addr1);
                 }
             }
+            debug!("Ssh[{}] accept future finished", ssh_addr1);
         });
+
+        let _ = receiver.await?;
+        Ok(())
     }
 }
 

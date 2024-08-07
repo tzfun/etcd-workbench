@@ -9,6 +9,7 @@ pub struct SerializableUser {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all="camelCase")]
 pub struct SerializablePermission {
     pub key: String,
     pub perm_type: i32,

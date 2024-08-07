@@ -1,15 +1,17 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all="camelCase")]
 pub struct SerializableCluster {
     pub id: String,
+    pub member_id: String,
     pub revision: i64,
-    pub raft_term: String,
     pub members: Vec<SerializableClusterMember>,
     pub status: SerializableClusterStatus
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all="camelCase")]
 pub struct SerializableClusterMember {
     pub id: String,
     pub name: String,
@@ -19,10 +21,11 @@ pub struct SerializableClusterMember {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all="camelCase")]
 pub struct SerializableClusterStatus {
     pub version: String,
-    pub db_size: i64,
-    pub raft_used_db_size: i64,
+    pub db_size_allocated: i64,
+    pub db_size_used: i64,
     pub leader: String,
     pub raft_index: String,
     pub raft_term: String,
