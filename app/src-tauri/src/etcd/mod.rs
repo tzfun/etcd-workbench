@@ -37,7 +37,7 @@ pub async fn new_connector(connection: Connection) -> Result<SessionData, LogicE
         None
     };
     let connector = EtcdConnector::new(connection).await?;
-    let _ = connector.kv_count().await?;
+    connector.test_connection().await?;
 
     let root = if let Some(u) = &user {
         connector.user_is_root(u).await?

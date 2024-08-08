@@ -1,3 +1,4 @@
+#![allow(unused)]
 use std::{fs, io};
 use std::env::temp_dir;
 use std::fs::File;

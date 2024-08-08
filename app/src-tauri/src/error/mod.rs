@@ -1,4 +1,5 @@
 use std::io;
+use std::string::FromUtf8Error;
 
 use log::error;
 use serde::{Serialize, Serializer};
@@ -8,11 +9,12 @@ use tokio::sync::oneshot;
 pub enum LogicError {
     ConnectionLose,
     EtcdClientError(etcd_client::Error),
-    SshError(ssh2::Error),
+    SshError(russh::Error),
     IoError(io::Error),
     SerdeError(serde_json::Error),
     Base64DecodeError(base64::DecodeError),
     ChannelRcvError(oneshot::error::RecvError),
+    StringConvertError(FromUtf8Error),
 }
 
 impl Serialize for LogicError {
@@ -51,6 +53,10 @@ impl Serialize for LogicError {
             LogicError::ChannelRcvError(e) => {
                 serializer.serialize_str(&e.to_string())
             }
+            LogicError::StringConvertError(e) => {
+                error!("[StrConvert] {:?}", e);
+                serializer.serialize_str("Can not convert string with utf-8")
+            }
             LogicError::ConnectionLose => serializer.serialize_str("connection lose"),
         }
     }
@@ -62,8 +68,8 @@ impl From<etcd_client::Error> for LogicError {
     }
 }
 
-impl From<ssh2::Error> for LogicError {
-    fn from(value: ssh2::Error) -> Self {
+impl From<russh::Error> for LogicError {
+    fn from(value: russh::Error) -> Self {
         LogicError::SshError(value)
     }
 }
@@ -89,5 +95,11 @@ impl From<base64::DecodeError> for LogicError {
 impl From<oneshot::error::RecvError> for LogicError {
     fn from(value: oneshot::error::RecvError) -> Self {
         LogicError::ChannelRcvError(value)
+    }
+}
+
+impl From<FromUtf8Error> for LogicError {
+    fn from(value: FromUtf8Error) -> Self {
+        LogicError::StringConvertError(value)
     }
 }
