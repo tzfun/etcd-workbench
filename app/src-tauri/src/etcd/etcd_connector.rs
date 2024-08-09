@@ -100,11 +100,10 @@ impl EtcdConnector {
     pub async fn kv_get_all_keys(&self) -> Result<Vec<SerializableKeyValue>, Error> {
         let mut kv_client = self.get_client().kv_client();
         let root_path = self.get_full_key("/");
+        info!("Get all keys: {}", String::from_utf8(root_path.clone()).unwrap());
         let get_options = GetOptions::new()
             .with_prefix()
-            .with_all_keys()
-            .with_keys_only()
-            .with_range("\0");
+            .with_keys_only();
         let mut response = kv_client.get(root_path, Some(get_options)).await?;
         let kvs = response.take_kvs();
         let mut arr = Vec::with_capacity(kvs.len());
