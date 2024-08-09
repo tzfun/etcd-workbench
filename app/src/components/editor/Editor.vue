@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import {barf, clouds} from "./themes";
+import {barf as darkTheme, espresso as lightTheme} from "./themes";
 import {computed, onMounted, PropType, reactive, ref, shallowRef, watch} from "vue";
 import {useTheme} from "vuetify";
 import {EditorConfig} from "~/common/types.ts";
@@ -17,7 +17,7 @@ type ContentFormatType = 'text' | 'blob'
 
 const theme = useTheme()
 
-const editorTheme = ref<any>(barf)
+const editorTheme = ref<any>(darkTheme)
 
 const props = defineProps({
   config: {
@@ -56,7 +56,8 @@ const formatData = (content: string, fromFormat: ContentFormatType, toFormat: Co
 
   //  blob to text
   if (fromFormat == 'blob') {
-    let uint8Array = _strArrToNumArr(content.split(/\s+/))
+    let uint8Array = _strArrToNumArr(content.trim().split(/\s+/))
+    console.log('blob to text', content.split(/\s+/), uint8Array, content)
     return _decodeBytesToString(uint8Array)
   }
 
@@ -64,11 +65,16 @@ const formatData = (content: string, fromFormat: ContentFormatType, toFormat: Co
   if (toFormat == 'blob') {
     let uint8Array = _encodeStringToBytes(content)
     let newContent = ""
-    for (let i = 0; i < uint8Array.length; i += 10) {
-      for (let j = i; j < 10; j++) {
+    const SPLIT_LEN = 20
+    for (let i = 0; i < uint8Array.length; i += SPLIT_LEN) {
+      let end = Math.min(i + SPLIT_LEN, uint8Array.length)
+      for (let j = i; j < end; j++) {
         newContent += `${uint8Array[j]} `
       }
+      newContent += '\n'
     }
+    console.log('text to blob', content, newContent)
+
     return newContent
   }
 
@@ -108,11 +114,11 @@ watch(
     () => theme,
     (newTheme) => {
       if (newTheme.global.name.value == 'dark') {
-        editorTheme.value = barf
+        editorTheme.value = darkTheme
       } else {
-        editorTheme.value = clouds
+        editorTheme.value = lightTheme
       }
-    },{
+    }, {
       deep: true
     }
 )
@@ -125,13 +131,13 @@ watch(
 )
 
 watch(
-    () => props.config,
-    (newConf, oldConf) => {
-      if (newConf?.language != oldConf?.language) {
+    () => props.config!.language,
+    (newLang, oldLang) => {
+      if (newLang != oldLang) {
         content.value = formatData(
             content.value,
-            oldConf?.language == 'blob' ? 'blob' : 'text',
-            newConf?.language == 'blob' ? 'blob' : 'text',
+            oldLang == 'blob' ? 'blob' : 'text',
+            newLang == 'blob' ? 'blob' : 'text',
         )
       }
     }, {
@@ -141,9 +147,9 @@ watch(
 
 onMounted(() => {
   if (theme.global.name.value == 'dark') {
-    editorTheme.value = barf
+    editorTheme.value = darkTheme
   } else {
-    editorTheme.value = clouds
+    editorTheme.value = lightTheme
   }
 })
 
@@ -175,7 +181,7 @@ const onKeyDown = (event: KeyboardEvent) => {
  * 将当前内容读出为字符串，会根据选择的格式化语言进行转换
  */
 const readDataString = (): string => {
-  return formatData(content.value, "text", props.config.language)
+  return formatData(content.value, "text", props.config!.language == 'blob' ? 'blob' : 'text')
 }
 
 defineExpose({

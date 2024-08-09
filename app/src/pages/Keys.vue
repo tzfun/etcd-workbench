@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import {_getAllKeys} from "~/common/services.ts";
+import {_getAllKeys, _getKV} from "~/common/services.ts";
 import {_tipError} from "~/common/events.ts";
 import {onMounted, PropType, reactive, ref} from "vue";
 import {SessionData} from "~/common/transport/connection.ts";
@@ -52,7 +52,7 @@ const editorConfig = reactive<EditorConfig>({
   autofocus: false,
   height: "100%",
   fontSize: "1rem",
-  language: 'json'
+  language: 'text'
 })
 onMounted(() => {
   loadAllKeys()
@@ -176,7 +176,12 @@ const deleteKey = () => {
 
 const treeSelected = ({id}: any) => {
   if (!treeSelectable.value) {
-    currentKv.value = id as KeyValue
+    _getKV(props.session?.id, (id as KeyValue).key).then((kv) => {
+      currentKv.value = kv
+    }).catch(e => {
+      _tipError(e)
+      currentKv.value = undefined
+    })
   }
 }
 

@@ -108,7 +108,11 @@ impl EtcdConnector {
         let kvs = response.take_kvs();
         let mut arr = Vec::with_capacity(kvs.len());
         for kv in kvs {
-            arr.push(SerializableKeyValue::from(kv));
+            let mut serializable_kv = SerializableKeyValue::from(kv);
+            if let Some(namespace) = &self.namespace {
+                serializable_kv.remove_prefix(namespace);
+            }
+            arr.push(serializable_kv);
         }
         Ok(arr)
     }

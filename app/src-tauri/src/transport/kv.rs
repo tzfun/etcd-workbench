@@ -32,3 +32,9 @@ impl From<KeyValue> for SerializableKeyValue {
         }
     }
 }
+
+impl SerializableKeyValue {
+    pub fn remove_prefix(&mut self, prefix: &String) {
+        self.key = self.key.replace(prefix.as_str(), "")
+    }
+}

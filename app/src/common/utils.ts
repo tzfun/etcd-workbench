@@ -80,9 +80,12 @@ export function _nonEmpty(str: string | null | undefined) {
 }
 
 export function _strArrToNumArr(strArr: string[]): number[] {
-    let numArr = new Array<number>(strArr.length)
+    let numArr = []
     for (let s of strArr) {
-        numArr.push(parseInt(s))
+        let a = parseInt(s)
+        if (!isNaN(a)) {
+            numArr.push(a)
+        }
     }
     return numArr
 }
