@@ -10,6 +10,16 @@
     "tauri": "tauri"
   },
   "dependencies": {
+    "@codemirror/lang-json": "^6.x",
+    "@codemirror/lang-xml": "^6.x",
+    "@codemirror/lang-yaml": "^6.x",
+    "@codemirror/lang-sql": "^6.x",
+    "@codemirror/language": "^6.x",
+    "@codemirror/legacy-modes": "^6.x",
+    "@codemirror/theme-one-dark": "^6.x",
+    "vue-codemirror": "^6.1.1",
+    "thememirror": "^2.0.1",
+    "codemirror": "^6.x",
     "mitt": "^3.0.1",
     "vue": "^3.3.4",
     "@tauri-apps/api": "^1",

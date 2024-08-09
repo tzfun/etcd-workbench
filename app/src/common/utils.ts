@@ -2,6 +2,8 @@ import {open} from '@tauri-apps/api/shell'
 import {_alertError} from "~/common/events.ts";
 
 export type TimeUnit = 'y' | 'm' | 'd' | 'H' | 'M' | 'S' | 's' | 'year' | 'month' | 'day' | 'hour' | 'minute' | 'second' | 'millisecond'
+const TEXT_DECODER = new TextDecoder();
+const TEXT_ENCODER = new TextEncoder();
 
 export function _goBrowserPage(address: string) {
     open(address)
@@ -75,4 +77,20 @@ export function _isEmpty(str: string | null | undefined) {
 
 export function _nonEmpty(str: string | null | undefined) {
     return !_isEmpty(str);
+}
+
+export function _strArrToNumArr(strArr: string[]): number[] {
+    let numArr = new Array<number>(strArr.length)
+    for (let s of strArr) {
+        numArr.push(parseInt(s))
+    }
+    return numArr
+}
+
+export function _decodeBytesToString(bytes: number[]): string {
+    return TEXT_DECODER.decode(Uint8Array.from(bytes))
+}
+
+export function _encodeStringToBytes(str: string): number[] {
+    return Array.from(TEXT_ENCODER.encode(str))
 }

@@ -10,7 +10,7 @@ defineProps({
 
 <template>
   <div class="d-flex drag-item">
-    <div class="drag-item-content">
+    <div class="drag-item-content overflow-y-auto">
       <slot></slot>
     </div>
     <div v-if="showResizeLine" class="drag-resize-line"></div>

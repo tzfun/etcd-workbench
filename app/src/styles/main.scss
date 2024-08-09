@@ -8,6 +8,35 @@ html,body,#app {
   height: 100%;
 }
 
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-button {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 6px;
+  border-style: dashed;
+  border-color: transparent;
+  border-width: 2px;
+  background-color: rgba(157, 165, 183, 0.4);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(157, 165, 183, 0.7);
+}
+
+::-webkit-scrollbar-track {
+  border-radius: 6px;
+}
+
 .user-select-none {
   user-select: none;
   -moz-user-select: none;
@@ -25,4 +54,14 @@ html,body,#app {
 
 .card-box-shadow {
   box-shadow: 0 12px 32px 4px rgba(0, 0, 0, .04), 0 8px 20px rgba(0, 0, 0, .08);
+}
+
+.ͼ1.cm-focused {
+  outline: none;
+}
+
+.editor-footer-item {
+  margin-left: 1em;
+  display: inline-block;
+  font-feature-settings: 'tnum';
 }

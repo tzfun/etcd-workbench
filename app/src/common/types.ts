@@ -130,3 +130,13 @@ export const DefaultConnection:ConnectionForm = {
         }
     }
 }
+
+export type EditorConfig = {
+    disabled: boolean
+    indentWithTab: boolean
+    tabSize: number
+    autofocus: boolean
+    height: string | 'auto'
+    language: string
+    fontSize: string,
+}
