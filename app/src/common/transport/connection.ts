@@ -58,5 +58,6 @@ export const DEFAULT_CONNECTION: ConnectionInfo = {
 export interface SessionData {
     id: number,
     user?: string,
-    root: boolean
+    root: boolean,
+    namespace?: string
 }

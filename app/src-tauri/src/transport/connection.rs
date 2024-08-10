@@ -65,5 +65,6 @@ pub struct ConnectionInfo {
 pub struct SessionData {
     pub id: i32,
     pub user: Option<String>,
-    pub root: bool
+    pub root: bool,
+    pub namespace: Option<String>
 }

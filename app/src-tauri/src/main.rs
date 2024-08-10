@@ -28,9 +28,6 @@ fn main() {
                 warn!("Can not set window shadow: {}", e)
             }
 
-            #[cfg(target_os = "macos")]
-            window.set_decorations(true)?;
-
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

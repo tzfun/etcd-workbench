@@ -40,8 +40,8 @@ onMounted(async () => {
 
   platform.value = await getPlatform()
 
-  //  频闭右键事件
-  disableRightMenu()
+  //  频闭Webview原生事件
+  disableWebviewNativeEvents()
 
   events.on('loading', (state) => {
     loading.value = !!state;
@@ -110,7 +110,7 @@ onMounted(async () => {
   })
 })
 
-const disableRightMenu = () => {
+const disableWebviewNativeEvents = () => {
 
   if (window.location.hostname !== "tauri.localhost") {
     return
@@ -136,10 +136,13 @@ const closeApp = () => {
   })
 }
 
-const toggleMaximize = () => {
-  appWindow.toggleMaximize().then(() => {
-    maximize.value = !maximize.value
-  })
+const toggleMaximize = async () => {
+  if(platform.value == 'darwin') {
+    await appWindow.setFullscreen(!(await appWindow.isFullscreen()))
+  } else {
+    await appWindow.toggleMaximize()
+  }
+  maximize.value = !maximize.value
 }
 
 const showAppInfo = () => {
@@ -192,7 +195,6 @@ const closeTab = (id: number) => {
   <v-app id="vuetify-app">
     <v-layout style="height: 50px">
       <v-system-bar window
-                    v-if="platform == 'win32'"
                     :height="28"
                     @dblclick="appWindow.toggleMaximize()"
                     data-tauri-drag-region

@@ -108,11 +108,11 @@ impl EtcdConnector {
         let kvs = response.take_kvs();
         let mut arr = Vec::with_capacity(kvs.len());
         for kv in kvs {
-            let mut serializable_kv = SerializableKeyValue::from(kv);
+            let mut s_kv = SerializableKeyValue::from(kv);
             if let Some(namespace) = &self.namespace {
-                serializable_kv.remove_prefix(namespace);
+                s_kv.remove_prefix(namespace);
             }
-            arr.push(serializable_kv);
+            arr.push(s_kv);
         }
         Ok(arr)
     }
@@ -126,7 +126,10 @@ impl EtcdConnector {
         if kv.is_empty() {
             Err(Error::InvalidArgs(String::from("Key not found")))
         } else {
-            let s_kv = SerializableKeyValue::from(kv.first().unwrap().to_owned());
+            let mut s_kv = SerializableKeyValue::from(kv.first().unwrap().to_owned());
+            if let Some(namespace) = &self.namespace {
+                s_kv.remove_prefix(namespace);
+            }
             Ok(s_kv)
         }
     }

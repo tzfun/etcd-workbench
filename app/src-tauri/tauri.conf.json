@@ -37,7 +37,7 @@
         "title": "Etcd Workbench",
         "width": 1200,
         "height": 800,
-        "decorations": false
+        "decorations": true
       }
     ],
     "security": {

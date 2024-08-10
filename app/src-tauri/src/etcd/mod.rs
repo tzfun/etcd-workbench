@@ -36,6 +36,7 @@ pub async fn new_connector(connection: Connection) -> Result<SessionData, LogicE
     } else {
         None
     };
+    let namespace = connection.namespace.clone();
     let connector = EtcdConnector::new(connection).await?;
     connector.test_connection().await?;
 
@@ -52,6 +53,7 @@ pub async fn new_connector(connection: Connection) -> Result<SessionData, LogicE
         id: connector_id,
         user,
         root,
+        namespace
     })
 }
 

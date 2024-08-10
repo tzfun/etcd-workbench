@@ -34,13 +34,13 @@ const treeSelectable = ref(false)
 const fileIcon = reactive({
   file: 'mdi-file-document-outline',
   js: 'mdi-nodejs',
-  ts: 'language-typescript',
+  ts: 'mdi-language-typescript',
   json: 'mdi-code-json',
   md: 'mdi-language-markdown',
   sql: 'mdi-database-search',
   xml: 'mdi-file-xml-box',
-  yml: 'code-block-braces',
-  ini: 'code-block-brackets'
+  yaml: 'mdi-code-block-braces',
+  properties: 'mdi-cog'
 })
 const currentKv = ref<KeyValue>()
 const currentKvChanged = ref<boolean>(false)
@@ -61,7 +61,6 @@ onMounted(() => {
 const loadAllKeys = () => {
   _getAllKeys(props.session?.id).then(data => {
     treeData.value = constructTreeData(data)
-    console.log(data, treeData.value)
   }).catch(e => {
     _tipError(e)
   })
@@ -122,14 +121,14 @@ const addKvToTree = (kv: KeyValue, root: TreeNode) => {
   let fileNode: TreeNode = {
     title: fileName,
     file: true,
-    iconKey: fileNameToIconType(fileName),
+    iconKey: tryParseFileNameToType(fileName, 'file')!,
     data: kv
   }
 
   node.children?.push(fileNode)
 }
 
-const fileNameToIconType = (fileName: string): string => {
+const tryParseFileNameToType = (fileName: string, defaultType?: string): string | undefined => {
   let dotIdx = fileName.lastIndexOf(".")
   if (dotIdx >= 0) {
     let type = fileName.substring(dotIdx + 1).toLowerCase()
@@ -145,8 +144,6 @@ const fileNameToIconType = (fileName: string): string => {
       case 'yml':
       case 'yaml':
         return 'yaml'
-      case 'ini':
-        return 'ini'
       case 'ts':
       case 'typescript':
         return 'ts'
@@ -156,12 +153,31 @@ const fileNameToIconType = (fileName: string): string => {
       case 'md':
       case 'markdown':
         return 'md'
+      case 'ini':
+      case 'conf':
+      case 'properties':
+        return 'properties'
       default:
-        return 'file'
+        return defaultType
     }
   }
 
-  return 'file'
+  return defaultType
+}
+
+const tryFileContentToType = (content: string):string => {
+  let lang = 'text'
+  content = content.trimStart()
+  if (content.startsWith('<')) {
+    lang = 'xml'
+  } else if (content.startsWith('{') || content.startsWith('[')) {
+    lang = 'json'
+  } else if (content.startsWith('---')) {
+    lang = 'yaml'
+  } else if (content.startsWith("--")) {
+    lang = "sql"
+  }
+  return lang
 }
 
 const addKey = () => {
@@ -176,7 +192,13 @@ const deleteKey = () => {
 
 const treeSelected = ({id}: any) => {
   if (!treeSelectable.value) {
-    _getKV(props.session?.id, (id as KeyValue).key).then((kv) => {
+    let selectedKv = id as KeyValue
+    _getKV(props.session?.id, selectedKv.key).then((kv) => {
+      let language = tryParseFileNameToType(kv.key)
+      if (!language) {
+        language = tryFileContentToType(_decodeBytesToString(kv.value))
+      }
+      editorConfig.language = language
       currentKv.value = kv
     }).catch(e => {
       _tipError(e)
@@ -210,7 +232,7 @@ const saveKV = (kv: KeyValue) => {
 
 <template>
   <div class="fill-height overflow-y-auto">
-    <div class="action-area">
+    <v-layout class="action-area">
       <v-btn class="text-none"
              prepend-icon="mdi-refresh"
              color="primary"
@@ -239,7 +261,21 @@ const saveKV = (kv: KeyValue) => {
       >
         Delete Key
       </v-btn>
-    </div>
+      <v-spacer></v-spacer>
+      <v-tooltip v-if="session.namespace"
+                 location="bottom"
+                 text="The namespace of the current connection"
+      >
+        <template v-slot:activator="{ props }">
+          <v-chip v-bind="props"
+                  label
+                  color="blue-grey-darken-1"
+                  class="font-weight-bold"
+                  prepend-icon="mdi-file-key-outline"
+          >{{session.namespace}}</v-chip>
+        </template>
+      </v-tooltip>
+    </v-layout>
     <v-layout class="main-area">
       <drag-box>
         <drag-item class="overflow-y-auto" style="min-width: 300px">
@@ -314,7 +350,7 @@ const saveKV = (kv: KeyValue) => {
                 <span class="editor-footer-item"><strong>Version</strong>: {{ currentKv.version }}</span>
                 <span class="editor-footer-item"><strong>Create Revision</strong>: {{ currentKv.createRevision }}</span>
                 <span class="editor-footer-item"><strong>Modify Revision</strong>: {{ currentKv.modRevision }}</span>
-                <span class="editor-footer-item"><strong>Lease</strong>: {{ currentKv.lease }}</span>
+                <span class="editor-footer-item" v-if="currentKv.lease > 0"><strong>Lease</strong>: {{ currentKv.lease }}</span>
               </div>
             </template>
           </editor>
