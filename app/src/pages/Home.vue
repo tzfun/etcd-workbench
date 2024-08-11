@@ -39,12 +39,13 @@ const removeConnectionConfig = (name: string) => {
   _confirm('System', 'Are you sure you want to remove this configuration from your favorites list?').then(() => {
     _removeConnection(name).then(() => {
       let idx = -1
-      for (let i in connectionList.value) {
+      for (let i = 0; i < connectionList.value.length; i++) {
         if (connectionList.value[i].name == name) {
           idx = i;
           break
         }
       }
+
       if (idx >= 0) {
         connectionList.value.splice(idx, 1)
         if (currentConnection.value.name == name) {

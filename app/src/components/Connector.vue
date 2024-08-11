@@ -6,8 +6,6 @@ import SingleFileSelector from "~/components/SingleFileSelector.vue";
 import {
   Connection,
   ConnectionInfo,
-  ConnectionSsh,
-  ConnectionTls,
   SessionData,
   SshIdentity
 } from "~/common/transport/connection.ts";
@@ -191,7 +189,7 @@ watch(() => props.modelValue, (info: ConnectionInfo) => {
       form.user.password = user.password
     }
     let decoder = new TextDecoder()
-    let tls: ConnectionTls = connection.tls
+    let tls = connection.tls
     if (tls) {
       form.tls.enable = true
       if (tls.cert.length > 0) {
@@ -208,7 +206,7 @@ watch(() => props.modelValue, (info: ConnectionInfo) => {
       }
     }
 
-    let ssh: ConnectionSsh = connection.ssh
+    let ssh = connection.ssh
     if (ssh) {
       form.ssh.enable = true
       form.ssh.host = ssh.host
@@ -305,12 +303,6 @@ const checkForm = async (): Promise<Connection> => {
     return connection
   } else {
     throw new Error("Form invalid")
-  }
-}
-
-const resetForm = () => {
-  if(formRef.value) {
-    (formRef.value as VForm).reset()
   }
 }
 

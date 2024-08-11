@@ -1,17 +1,16 @@
 <script setup lang="ts">
 import {appWindow} from '@tauri-apps/api/window'
-import etcdLogo from '~/assets/etcd.png';
 import {_confirm, events} from "~/common/events.ts";
 import {DialogItem, TipsItem} from "~/common/types.ts";
 import {onMounted, reactive, ref} from "vue";
 import {platform as getPlatform} from "@tauri-apps/api/os";
-import {_goBrowserPage} from "~/common/utils.ts";
 import {useTheme} from "vuetify";
 import {SessionData} from "~/common/transport/connection.ts";
 import {_disconnect} from "~/common/services.ts";
-import {_addSession, _removeSession} from "~/common/store.ts";
 import Connection from "~/pages/Connection.vue";
 import Home from "~/pages/Home.vue";
+import WindowsSystemBar from "~/components/system-bar/WindowsSystemBar.vue";
+import MacSystemBar from "~/components/system-bar/MacSystemBar.vue";
 
 type TabItem = {
   name: string,
@@ -25,13 +24,10 @@ const platform = ref<string>('win32')
 const HOME_TAB = "___home"
 const activeTab = ref<string>(HOME_TAB)
 const tabList = reactive<TabItem[]>([])
-const maximize = ref(false)
 
 const theme = useTheme()
 
 onMounted(async () => {
-
-  maximize.value = await appWindow.isMaximized()
 
   let systemTheme = await appWindow.theme()
   if (systemTheme) {
@@ -69,7 +65,6 @@ onMounted(async () => {
     }
     tabList.push(tabItem)
 
-    _addSession(session)
     activeTab.value = tabItem.name
   })
 
@@ -129,46 +124,18 @@ const disableWebviewNativeEvents = () => {
   }, {capture: true})
 }
 
-const closeApp = () => {
-  _confirm("Exist Workbench", "Are you sure you want to close the app?").then(() => {
-    appWindow.close()
-  }).catch(() => {
-  })
-}
-
-const toggleMaximize = async () => {
-  if(platform.value == 'darwin') {
-    await appWindow.setFullscreen(!(await appWindow.isFullscreen()))
-  } else {
-    await appWindow.toggleMaximize()
-  }
-  maximize.value = !maximize.value
-}
-
-const showAppInfo = () => {
-
-}
-
-const setting = () => {
-
-}
-
-const toggleTheme = () => {
-  theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark'
-}
-
 const closeTab = (id: number) => {
   _confirm('System', 'Are you sure to close the current connection?').then(() => {
     let idx = -1;
-    for (let i in tabList) {
+    for (let i = 0; i < tabList.length; i++) {
       let item: TabItem = tabList[i]
       if (item.session.id == id) {
         idx = i;
         break
       }
     }
+
     _disconnect(id)
-    _removeSession(id)
 
     if (idx >= 0) {
       let nextTab = HOME_TAB
@@ -193,91 +160,15 @@ const closeTab = (id: number) => {
 
 <template>
   <v-app id="vuetify-app">
-    <v-layout style="height: 50px">
-      <v-system-bar window
+    <v-layout>
+      <WindowsSystemBar v-if="platform == 'win32'"
+                        title="ETCD Workbench"
+                        :height="28"
+      ></WindowsSystemBar>
+      <MacSystemBar v-if="platform == 'darwin'"
+                    title="ETCD Workbench"
                     :height="28"
-                    @dblclick="appWindow.toggleMaximize()"
-                    data-tauri-drag-region
-                    class="pr-0"
-      >
-        <v-icon class="me-2">
-          <v-img :src="etcdLogo"
-                 cover
-                 :width="30"
-                 :height="30"
-          ></v-img>
-        </v-icon>
-        <span class="user-select-none">ETCD Workbench</span>
-
-        <v-btn class="system-extend-btn ms-2"
-               icon="mdi-cog"
-               size="small"
-               variant="text"
-               :rounded="false"
-               density="comfortable"
-               title="Settings"
-               :ripple="false"
-               @click="setting"
-        ></v-btn>
-        <v-btn class="system-extend-btn ms-2"
-               icon="mdi-github"
-               size="small"
-               variant="text"
-               :rounded="false"
-               density="comfortable"
-               title="Fork on GitHub"
-               :ripple="false"
-               @click="_goBrowserPage('https://github.com/tzfun/etcd-workbench')"
-        ></v-btn>
-        <v-btn class="system-extend-btn ms-2"
-               icon="mdi-information-variant-circle"
-               size="small"
-               variant="text"
-               :rounded="false"
-               density="comfortable"
-               title="About"
-               :ripple="false"
-               @click="showAppInfo"
-        ></v-btn>
-        <v-btn class="system-extend-btn ms-2"
-               icon="mdi-brightness-6"
-               size="small"
-               variant="text"
-               :rounded="false"
-               density="comfortable"
-               title="About"
-               :ripple="false"
-               @click="toggleTheme"
-        ></v-btn>
-
-        <v-spacer></v-spacer>
-
-        <v-btn class="system-native-btn"
-               icon="mdi-minus"
-               size="small"
-               variant="text"
-               :rounded="false"
-               density="comfortable"
-               @click="appWindow.minimize()"
-        ></v-btn>
-        <v-btn class="system-native-btn ms-2"
-               style="transform: rotate(90deg);"
-               size="small"
-               :icon="maximize ? 'mdi-vector-arrange-below' : 'mdi-checkbox-blank-outline'"
-               variant="text"
-               :rounded="false"
-               density="comfortable"
-               @click="toggleMaximize"
-        ></v-btn>
-        <v-btn class="system-native-btn system-native-btn-close ms-2"
-               size="small"
-               icon="mdi-close"
-               variant="text"
-               :rounded="false"
-               density="comfortable"
-               @click="closeApp"
-        ></v-btn>
-      </v-system-bar>
+      ></MacSystemBar>
 
       <v-main class="fill-height" id="mainBody">
         <v-tabs v-model="activeTab"
@@ -391,31 +282,7 @@ const closeTab = (id: number) => {
 </template>
 
 <style scoped lang="scss">
-.system-extend-btn {
-  font-size: 1.1em;
-}
 
-.system-native-btn {
-  font-size: 0.9em;
-  opacity: 0.5;
-}
-
-.system-native-btn:hover {
-  opacity: 1;
-}
-
-.system-native-btn-close:hover {
-  background-color: #D50000;
-  color: white;
-}
-
-.tab-icon-close {
-  color: #BDBDBD
-}
-
-.tab-icon-close:hover {
-  color: #757575
-}
 </style>
 
 <style lang="scss">

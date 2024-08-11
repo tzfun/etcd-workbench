@@ -166,7 +166,7 @@ const handleReady = ({view}: any) => {
   });
 }
 
-const onChanged = (data) => {
+const onChanged = (data: string) => {
   emits('change', data)
 }
 
@@ -194,13 +194,13 @@ defineExpose({
   <div class="fill-height">
     <div class="header">
       <slot name="headerPrepend"></slot>
-      <div class="item">
+      <div>
         <v-select
-            variant="outlined"
+            variant="solo-filled"
             v-model="config.language"
             density="compact"
             :items="allLanguages"
-            style="width: 140px"
+            :width="140"
             hide-details
             persistent-hint
             class="mr-3"
@@ -210,13 +210,7 @@ defineExpose({
     <div class="editor">
       <codemirror
           v-model="content"
-          :style="{
-          width: '100%',
-          height: config.height,
-          'font-size': config.fontSize,
-          backgroundColor: '#fff',
-          color: '#333'
-        }"
+          style="width: 100%;height: 100%;"
           placeholder="Please enter the content."
           :extensions="extensions"
           :autofocus="config.autofocus"

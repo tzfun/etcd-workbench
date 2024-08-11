@@ -31,7 +31,7 @@ const props = defineProps({
 const treeValue = ref([])
 const treeData = ref<TreeNode[]>([])
 const treeSelectable = ref(false)
-const fileIcon = reactive({
+const fileIcon = reactive<Record<string, string>>({
   file: 'mdi-file-document-outline',
   js: 'mdi-nodejs',
   ts: 'mdi-language-typescript',
@@ -294,10 +294,8 @@ const saveKV = (kv: KeyValue) => {
               class="user-select-none"
               height="100%"
           >
-            <template v-slot:prepend="{ item, open }">
-              <v-icon v-if="!item.file">
-                {{ open ? 'mdi-folder-open' : 'mdi-folder' }}
-              </v-icon>
+            <template v-slot:prepend="{ item }">
+              <v-icon v-if="!item.file">mdi-folder</v-icon>
               <v-icon v-else>
                 {{ fileIcon[item.iconKey] }}
               </v-icon>

@@ -17,7 +17,7 @@
     "@codemirror/language": "^6.x",
     "@codemirror/legacy-modes": "^6.x",
     "@codemirror/theme-one-dark": "^6.x",
-    "vue-codemirror": "^6.1.1",
+    "vue-codemirror": "^6.x",
     "thememirror": "^2.0.1",
     "codemirror": "^6.x",
     "mitt": "^3.0.1",

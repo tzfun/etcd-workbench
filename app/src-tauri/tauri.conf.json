@@ -17,15 +17,7 @@
         "open": true
       },
       "window": {
-        "all": false,
-        "close": true,
-        "hide": true,
-        "show": true,
-        "maximize": true,
-        "minimize": true,
-        "unmaximize": true,
-        "unminimize": true,
-        "startDragging": true
+        "all": true
       },
       "os": {
         "all": true
@@ -37,9 +29,11 @@
         "title": "Etcd Workbench",
         "width": 1200,
         "height": 800,
-        "decorations": true
+        "decorations": false,
+        "transparent": true
       }
     ],
+    "macOSPrivateApi": true,
     "security": {
       "csp": null
     },

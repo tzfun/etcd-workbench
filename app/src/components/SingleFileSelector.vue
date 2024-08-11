@@ -26,7 +26,7 @@ const props = defineProps({
 
 const fileReadStatus = ref<'none' | 'reading' | 'success' | 'error'>('none')
 
-const fileInputRef = ref(null)
+const fileInputRef = ref<HTMLInputElement>()
 const modelValueMirror = props.modelValue
 
 onMounted(() => {
@@ -36,7 +36,9 @@ onMounted(() => {
 })
 
 const clickFileInput = () => {
-  fileInputRef.value?.click()
+  if (fileInputRef.value) {
+    fileInputRef.value.click()
+  }
 }
 
 const fileInputChange = (event: Event) => {
