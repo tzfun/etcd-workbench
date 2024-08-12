@@ -10,7 +10,13 @@ import yamlLanguage from "./lang/yaml";
 import sqlLanguage from "./lang/sql";
 import propertiesLanguage from "./lang/properties";
 import {EditorView} from "codemirror";
-import {_byteTextFormat, _decodeBytesToString, _encodeStringToBytes, _strArrToNumArr} from "~/common/utils.ts";
+import {
+  _byteTextFormat,
+  _decodeBytesToString,
+  _encodeStringToBytes,
+  _strArrToNumArr,
+  fileTypeIcon
+} from "~/common/utils.ts";
 import {Codemirror} from "vue-codemirror";
 
 type ContentFormatType = 'text' | 'blob'
@@ -41,6 +47,11 @@ const allLanguages = reactive([
   'sql',
   'properties'
 ])
+const showLanguageSelection = ref<boolean>(false)
+
+
+const content = ref(props.value)
+const propsConfig = ref(props.config!)
 
 /**
  * 格式化数据
@@ -81,7 +92,6 @@ const formatData = (content: string, fromFormat: ContentFormatType, toFormat: Co
   return content
 }
 
-const content = ref(props.value)
 
 const extensions = computed(() => {
   const result = []
@@ -177,6 +187,11 @@ const onKeyDown = (event: KeyboardEvent) => {
   }
 }
 
+const changeLanguage = (lang) => {
+  propsConfig.value.language = lang
+  showLanguageSelection.value = false
+}
+
 /**
  * 将当前内容读出为字符串，会根据选择的格式化语言进行转换
  */
@@ -194,18 +209,6 @@ defineExpose({
   <div class="fill-height">
     <div class="header">
       <slot name="headerPrepend"></slot>
-      <div>
-        <v-select
-            variant="solo-filled"
-            v-model="config.language"
-            density="compact"
-            :items="allLanguages"
-            :width="140"
-            hide-details
-            persistent-hint
-            class="mr-3"
-        ></v-select>
-      </div>
     </div>
     <div class="editor">
       <codemirror
@@ -226,14 +229,38 @@ defineExpose({
     <div class="footer">
       <slot name="footerPrepend"></slot>
       <span class="editor-footer-item"><strong>Size</strong>: {{ size }}</span>
+      <span class="editor-footer-item">
+        <span class="text-primary cursor-pointer user-select-none"
+              @click="showLanguageSelection = !showLanguageSelection"
+        >
+          <v-icon>{{ fileTypeIcon[config.language] }}</v-icon>
+          {{ config.language }}
+        </span>
+      </span>
+
+      <div class="editor-language-selection card-box-shadow"
+           v-show="showLanguageSelection"
+      >
+        <v-list density="compact"
+        >
+          <v-list-item v-for="item in allLanguages"
+                       :key="item"
+                       :value="item"
+                       :title="item"
+                       :active="item == config.language"
+                       :prepend-icon="fileTypeIcon[item]"
+                       @click="changeLanguage(item)"
+          ></v-list-item>
+        </v-list>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped lang="scss">
+@import "~/styles/variables";
 
 $--editor-header-height: 50px;
-$--editor-footer-height: 2rem;
 $--editor-padding: 0 1rem;
 
 .header {
@@ -271,5 +298,15 @@ $--editor-padding: 0 1rem;
   justify-content: right;
   align-items: center;
   font-size: 90%;
+
+  .editor-language-selection {
+    position: absolute;
+    width: 200px;
+    min-height: 200px;
+    z-index: 100;
+    bottom: $--editor-footer-height;
+    border: 1px solid rgba(90, 90, 90, 0.12);
+    color-scheme: normal;
+  }
 }
 </style>

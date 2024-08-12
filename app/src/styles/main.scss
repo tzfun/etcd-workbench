@@ -1,5 +1,5 @@
 @use 'vuetify';
-
+@import "variables";
 html,body,#app {
   overflow: hidden;
   padding: 0;
@@ -68,4 +68,12 @@ html,body,#app {
   margin-left: 1em;
   display: inline-block;
   font-feature-settings: 'tnum';
+  height: $--editor-footer-height;
+  line-height: $--editor-footer-height;
+  opacity: 0.7;
 }
+
+.editor-footer-item:hover {
+  opacity: 1;
+}
+

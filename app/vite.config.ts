@@ -30,6 +30,6 @@ export default defineConfig(async () => ({
   resolve: {
     alias: {
       '~': join(__dirname, "src")
-    }
+    },
   }
 }));

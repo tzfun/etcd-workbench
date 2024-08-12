@@ -8,7 +8,7 @@ import DragBox from "~/components/DragBox.vue";
 import DragItem from "~/components/DragItem.vue";
 import {KeyValue} from "~/common/transport/kv.ts";
 import Editor from "~/components/editor/Editor.vue";
-import {_decodeBytesToString, _encodeStringToBytes} from "~/common/utils.ts";
+import {_decodeBytesToString, _encodeStringToBytes, fileTypeIcon} from "~/common/utils.ts";
 import {EditorConfig} from "~/common/types.ts";
 import {CodeDiff} from "v-code-diff";
 import {useTheme} from "vuetify";
@@ -40,17 +40,6 @@ const props = defineProps({
 const treeValue = ref([])
 const treeData = ref<TreeNode[]>([])
 const treeSelectable = ref(false)
-const fileIcon = reactive<Record<string, string>>({
-  file: 'mdi-file-document-outline',
-  js: 'mdi-nodejs',
-  ts: 'mdi-language-typescript',
-  json: 'mdi-code-json',
-  md: 'mdi-language-markdown',
-  sql: 'mdi-database-search',
-  xml: 'mdi-file-xml-box',
-  yaml: 'mdi-code-block-braces',
-  properties: 'mdi-cog'
-})
 const currentKv = ref<KeyValue>()
 const currentKvChanged = ref<boolean>(false)
 
@@ -601,7 +590,7 @@ const deleteKey = () => {
             <template v-slot:prepend="{ item }">
               <v-icon v-if="!item.file">mdi-folder</v-icon>
               <v-icon v-else>
-                {{ fileIcon[item.iconKey] }}
+                {{ fileTypeIcon[item.iconKey] }}
               </v-icon>
             </template>
           </v-treeview>

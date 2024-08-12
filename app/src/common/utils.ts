@@ -1,9 +1,23 @@
 import {open} from '@tauri-apps/api/shell'
 import {_alertError} from "~/common/events.ts";
 
-export type TimeUnit = 'y' | 'm' | 'd' | 'H' | 'M' | 'S' | 's' | 'year' | 'month' | 'day' | 'hour' | 'minute' | 'second' | 'millisecond'
 const TEXT_DECODER = new TextDecoder();
 const TEXT_ENCODER = new TextEncoder();
+
+export type TimeUnit = 'y' | 'm' | 'd' | 'H' | 'M' | 'S' | 's' | 'year' | 'month' | 'day' | 'hour' | 'minute' | 'second' | 'millisecond'
+export const fileTypeIcon = {
+    file: 'mdi-file-document-outline',
+    text: 'mdi-file-document-outline',
+    js: 'mdi-nodejs',
+    ts: 'mdi-language-typescript',
+    json: 'mdi-code-json',
+    md: 'mdi-language-markdown',
+    sql: 'mdi-database-search',
+    xml: 'mdi-file-xml-box',
+    yaml: 'mdi-code-block-braces',
+    properties: 'mdi-cog',
+    blob: 'mdi-alpha-b'
+}
 
 export function _goBrowserPage(address: string) {
     open(address)
