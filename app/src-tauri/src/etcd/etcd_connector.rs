@@ -4,7 +4,7 @@ use std::future::Future;
 use std::pin::Pin;
 use std::time::Duration;
 
-use etcd_client::{AlarmAction, AlarmType, Certificate, Client, ConnectOptions, Error, GetOptions, Identity, PutOptions, RoleRevokePermissionOptions, TlsOptions};
+use etcd_client::{AlarmAction, AlarmType, Certificate, Client, ConnectOptions, Error, GetOptions, GetResponse, Identity, PutOptions, RoleRevokePermissionOptions, TlsOptions};
 use log::{debug, info};
 
 use crate::error::LogicError;
@@ -100,7 +100,6 @@ impl EtcdConnector {
     pub async fn kv_get_all_keys(&self) -> Result<Vec<SerializableKeyValue>, Error> {
         let mut kv_client = self.get_client().kv_client();
         let root_path = self.get_full_key("/");
-        info!("Get all keys: {}", String::from_utf8(root_path.clone()).unwrap());
         let get_options = GetOptions::new()
             .with_prefix()
             .with_keys_only();
@@ -121,7 +120,21 @@ impl EtcdConnector {
     pub async fn kv_get(&self, key: impl Into<Vec<u8>>) -> Result<SerializableKeyValue, Error> {
         let mut kv_client = self.get_client().kv_client();
         let path = self.get_full_key(key);
-        let mut response = kv_client.get(path, None).await?;
+        let response = kv_client.get(path, None).await?;
+
+        self.parse_kv_get_response(response)
+    }
+
+    /// 根据历史版本获取键值对详情
+    pub async fn kv_get_by_version(&self, key: impl Into<Vec<u8>>, version: i64) -> Result<SerializableKeyValue, Error> {
+        let mut kv_client = self.get_client().kv_client();
+        let path = self.get_full_key(key);
+        let mut response = kv_client.get(path, Some(GetOptions::new().with_revision(version))).await?;
+
+        self.parse_kv_get_response(response)
+    }
+
+    fn parse_kv_get_response(&self, mut response: GetResponse) -> Result<SerializableKeyValue, Error> {
         let kv = response.take_kvs();
         if kv.is_empty() {
             Err(Error::InvalidArgs(String::from("Key not found")))
@@ -195,7 +208,7 @@ impl EtcdConnector {
         start: i64,
         end: i64,
         history: &'a mut Vec<i64>,
-    ) -> Pin<Box<dyn Future<Output=()> + 'a>> {
+    ) -> Pin<Box<dyn Future<Output=()> + Send + 'a>> {
         Box::pin(async move {
             if revision >= start && revision <= end {
                 let result = self.client.kv_client().get(key.clone(), Some(GetOptions::new().with_keys_only().with_revision(revision))).await;

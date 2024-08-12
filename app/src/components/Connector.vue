@@ -9,7 +9,7 @@ import {
   SessionData,
   SshIdentity
 } from "~/common/transport/connection.ts";
-import {_isEmpty, _nonEmpty} from "~/common/utils.ts";
+import {_decodeBytesToString, _encodeStringToBytes, _isEmpty, _nonEmpty} from "~/common/utils.ts";
 import {_connect, _connectTest, _saveConnection} from "~/common/services.ts";
 import {_loading, _tipError, _tipSuccess, _tipWarn, events} from "~/common/events.ts";
 import {VForm} from "vuetify/components";
@@ -188,12 +188,11 @@ watch(() => props.modelValue, (info: ConnectionInfo) => {
       form.user.username = user.username
       form.user.password = user.password
     }
-    let decoder = new TextDecoder()
     let tls = connection.tls
     if (tls) {
       form.tls.enable = true
       if (tls.cert.length > 0) {
-        form.tls.cert.content = decoder.decode(Uint8Array.from(tls.cert[0]))
+        form.tls.cert.content = _decodeBytesToString(tls.cert[0])
       }
       if (tls.domain) {
         form.tls.domain = tls.domain
@@ -201,8 +200,8 @@ watch(() => props.modelValue, (info: ConnectionInfo) => {
       let identity = tls.identity
       if (identity) {
         form.tls.identity.enable = true
-        form.tls.identity.cert.content = decoder.decode(Uint8Array.from(identity.cert))
-        form.tls.identity.key.content = decoder.decode(Uint8Array.from(identity.key))
+        form.tls.identity.cert.content = _decodeBytesToString(identity.cert)
+        form.tls.identity.key.content = _decodeBytesToString(identity.key)
       }
     }
 
@@ -220,7 +219,7 @@ watch(() => props.modelValue, (info: ConnectionInfo) => {
           form.ssh.identity.password = identity.password
         } else if (identity.key) {
           form.ssh.identity.model = 'key'
-          form.ssh.identity.key.key.content = decoder.decode(Uint8Array.from(identity.key.key))
+          form.ssh.identity.key.key.content = _decodeBytesToString(identity.key.key)
 
           let passphrase = identity.key.passphrase
           if (passphrase) {
@@ -255,18 +254,18 @@ const checkForm = async (): Promise<Connection> => {
       }
     }
 
-    let encoder = new TextEncoder()
     let tlsForm: ConnectionTlsForm = formData.value.tls
     if (tlsForm.enable) {
+
       connection.tls = {
         domain: tlsForm.domain,
-        cert: [Array.from(encoder.encode(tlsForm.cert.content))]
+        cert: [_encodeStringToBytes(tlsForm.cert.content)]
       }
 
       if (tlsForm.identity.enable) {
         connection.tls.identity = {
-          cert: Array.from(encoder.encode(tlsForm.identity.cert.content)),
-          key: Array.from(encoder.encode(tlsForm.identity.key.content))
+          cert: _encodeStringToBytes(tlsForm.identity.cert.content),
+          key: _encodeStringToBytes(tlsForm.identity.key.content)
         }
       }
     }
@@ -287,7 +286,7 @@ const checkForm = async (): Promise<Connection> => {
         case "key":
           let identity: SshIdentity = {
             key: {
-              key: Array.from(encoder.encode(sshForm.identity.key.key.content))
+              key: _encodeStringToBytes(sshForm.identity.key.key.content)
             }
           }
 

@@ -9,7 +9,7 @@ pub struct SerializableKeyValue {
     pub mod_revision: i64,
     pub version: i64,
     pub value: Vec<u8>,
-    pub lease: i64,
+    pub lease: String,
 }
 
 impl From<KeyValue> for SerializableKeyValue {
@@ -20,7 +20,7 @@ impl From<KeyValue> for SerializableKeyValue {
             let create_revision = kv.create_revision();
             let mod_revision = kv.mod_revision();
             let version = kv.version();
-            let lease = kv.lease();
+            let lease = kv.lease().to_string();
             SerializableKeyValue {
                 key,
                 value,

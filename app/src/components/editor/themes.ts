@@ -10,10 +10,10 @@ export {
     // cobalt,
     // coolGlow,
     // dracula,
-    espresso,
+    // espresso,
     // noctisLilac,
     // rosePineDawn,
-    // smoothy,
+    smoothy,
     // solarizedLight,
     // tomorrow
 } from 'thememirror'

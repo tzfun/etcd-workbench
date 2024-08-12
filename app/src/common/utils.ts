@@ -94,6 +94,6 @@ export function _decodeBytesToString(bytes: number[]): string {
     return TEXT_DECODER.decode(Uint8Array.from(bytes))
 }
 
-export function _encodeStringToBytes(str: string): number[] {
+export function _encodeStringToBytes(str?: string): number[] {
     return Array.from(TEXT_ENCODER.encode(str))
 }

@@ -4,5 +4,5 @@ export interface KeyValue {
     modRevision: number,
     version: number,
     value: number[],
-    lease: number
+    lease: string
 }

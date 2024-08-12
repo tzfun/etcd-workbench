@@ -8,6 +8,7 @@ use tokio::sync::oneshot;
 #[derive(Debug)]
 pub enum LogicError {
     ConnectionLose,
+    ArgError,
     EtcdClientError(etcd_client::Error),
     SshError(russh::Error),
     IoError(io::Error),
@@ -58,6 +59,7 @@ impl Serialize for LogicError {
                 serializer.serialize_str("Can not convert string with utf-8")
             }
             LogicError::ConnectionLose => serializer.serialize_str("connection lose"),
+            LogicError::ArgError => serializer.serialize_str("invalid argument"),
         }
     }
 }

@@ -39,7 +39,11 @@ fn main() {
             api::settings::remove_connection,
             api::settings::get_connection_list,
             api::kv::kv_get_all_keys,
-            api::kv::kv_get_kv,
+            api::kv::kv_get,
+            api::kv::kv_get_by_version,
+            api::kv::kv_put,
+            api::kv::kv_delete,
+            api::kv::kv_get_history_versions,
             api::maintenance::get_cluster,
         ])
         .run(tauri::generate_context!())

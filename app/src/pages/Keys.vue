@@ -200,6 +200,7 @@ const treeSelected = ({id}: any) => {
       }
       editorConfig.language = language
       currentKv.value = kv
+      currentKvChanged.value = false
     }).catch(e => {
       _tipError(e)
       currentKv.value = undefined
@@ -271,10 +272,23 @@ const saveKV = (kv: KeyValue) => {
                   label
                   color="blue-grey-darken-1"
                   class="font-weight-bold"
-                  prepend-icon="mdi-file-key-outline"
+                  prepend-icon="mdi-key"
           >{{session.namespace}}</v-chip>
         </template>
       </v-tooltip>
+      <v-tooltip v-if="currentKv"
+                 location="bottom"
+                 text="Current key"
+      >
+        <template v-slot:activator="{ props }">
+          <v-chip v-bind="props"
+                  label
+                  color="primary"
+                  class="font-weight-bold ml-2"
+          >{{currentKv.key}}</v-chip>
+        </template>
+      </v-tooltip>
+
     </v-layout>
     <v-layout class="main-area">
       <drag-box>
@@ -316,7 +330,7 @@ const saveKV = (kv: KeyValue) => {
                     color="primary"
                     size="small"
                     @click="saveKV"
-                    :text="`Save${currentKv ? ' *' : ''}`"
+                    :text="`Save${currentKvChanged ? ' *' : ''}`"
                     class="mr-2 text-none"
                 ></v-btn>
                 <v-btn
@@ -341,14 +355,10 @@ const saveKV = (kv: KeyValue) => {
             </template>
             <template #footerPrepend>
               <div>
-                <span class="editor-footer-item">
-                  <v-icon>mdi-key</v-icon>
-                  {{ currentKv.key }}
-                </span>
                 <span class="editor-footer-item"><strong>Version</strong>: {{ currentKv.version }}</span>
                 <span class="editor-footer-item"><strong>Create Revision</strong>: {{ currentKv.createRevision }}</span>
                 <span class="editor-footer-item"><strong>Modify Revision</strong>: {{ currentKv.modRevision }}</span>
-                <span class="editor-footer-item" v-if="currentKv.lease > 0"><strong>Lease</strong>: {{ currentKv.lease }}</span>
+                <span class="editor-footer-item" v-if="currentKv.lease != '0'"><strong>Lease</strong>: {{ currentKv.lease }}</span>
               </div>
             </template>
           </editor>

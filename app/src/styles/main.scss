@@ -8,6 +8,10 @@ html,body,#app {
   height: 100%;
 }
 
+.main-window-radius {
+  border-radius: 10px;
+  border: 1px solid rgba(69,67,67,0.41);
+}
 
 ::-webkit-scrollbar {
   width: 10px;

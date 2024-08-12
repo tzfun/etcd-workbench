@@ -28,13 +28,15 @@ const tabList = reactive<TabItem[]>([])
 const theme = useTheme()
 
 onMounted(async () => {
-
   let systemTheme = await appWindow.theme()
   if (systemTheme) {
     theme.global.name.value = systemTheme
   }
 
   platform.value = await getPlatform()
+  if(platform.value != 'win32') {
+    document.getElementById("app")!.classList.add("main-window-radius")
+  }
 
   //  频闭Webview原生事件
   disableWebviewNativeEvents()

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import {barf as darkTheme, espresso as lightTheme} from "./themes";
+import {barf as darkTheme, smoothy as lightTheme} from "./themes";
 import {computed, onMounted, PropType, reactive, ref, shallowRef, watch} from "vue";
 import {useTheme} from "vuetify";
 import {EditorConfig} from "~/common/types.ts";

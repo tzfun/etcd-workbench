@@ -27,8 +27,8 @@
       {
         "label": "main",
         "title": "Etcd Workbench",
-        "width": 1200,
-        "height": 800,
+        "width": 1400,
+        "height": 1000,
         "decorations": false,
         "transparent": true
       }
