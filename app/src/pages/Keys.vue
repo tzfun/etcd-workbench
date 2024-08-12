@@ -1,15 +1,19 @@
 <script setup lang="ts">
 
-import {_getAllKeys, _getKV} from "~/common/services.ts";
-import {_tipError} from "~/common/events.ts";
-import {onMounted, PropType, reactive, ref} from "vue";
+import {_getAllKeys, _getKV, _getKVByVersion, _getKVHistoryVersions, _putKV} from "~/common/services.ts";
+import {_tipError, _tipWarn} from "~/common/events.ts";
+import {computed, onMounted, PropType, reactive, ref} from "vue";
 import {SessionData} from "~/common/transport/connection.ts";
 import DragBox from "~/components/DragBox.vue";
 import DragItem from "~/components/DragItem.vue";
 import {KeyValue} from "~/common/transport/kv.ts";
 import Editor from "~/components/editor/Editor.vue";
-import {_decodeBytesToString} from "~/common/utils.ts";
+import {_decodeBytesToString, _encodeStringToBytes} from "~/common/utils.ts";
 import {EditorConfig} from "~/common/types.ts";
+import {CodeDiff} from "v-code-diff";
+import {useTheme} from "vuetify";
+
+const theme = useTheme()
 
 type TreeNode = {
   title: string,
@@ -17,6 +21,11 @@ type TreeNode = {
   iconKey: string,
   children?: TreeNode[],
   data?: KeyValue
+}
+
+type DiffInfo = {
+  version: number,
+  content: string
 }
 
 const KEY_SPLITTER = '/'
@@ -45,6 +54,7 @@ const fileIcon = reactive<Record<string, string>>({
 const currentKv = ref<KeyValue>()
 const currentKvChanged = ref<boolean>(false)
 
+const editorRef = ref<InstanceType<typeof Editor>>()
 const editorConfig = reactive<EditorConfig>({
   disabled: false,
   indentWithTab: true,
@@ -54,6 +64,33 @@ const editorConfig = reactive<EditorConfig>({
   fontSize: "1rem",
   language: 'text'
 })
+
+const loadingStore = reactive({
+  save: false,
+  diff: false
+})
+
+const versionDiffInfo = reactive({
+  show: false,
+  key: '',
+  version: 0,
+  createRevision: 0,
+  modRevision: 0,
+  language: 'plaintext',
+  versionHistory: <number[]>[],
+  A: <DiffInfo>{
+    version: 0,
+    content: ''
+  },
+  B: <DiffInfo>{
+    version: 0,
+    content: ''
+  }
+})
+const isDarkTheme = computed<boolean>(() => {
+  return theme.global.name.value === 'dark'
+})
+
 onMounted(() => {
   loadAllKeys()
 })
@@ -165,7 +202,7 @@ const tryParseFileNameToType = (fileName: string, defaultType?: string): string 
   return defaultType
 }
 
-const tryFileContentToType = (content: string):string => {
+const tryFileContentToType = (content: string): string => {
   let lang = 'text'
   content = content.trimStart()
   if (content.startsWith('<')) {
@@ -221,12 +258,111 @@ const editorChange = () => {
 
 const editorSave = () => {
   if (currentKv.value && currentKvChanged.value) {
-    saveKV(currentKv.value)
+    saveKV()
   }
 }
 
-const saveKV = (kv: KeyValue) => {
-  console.log("save", kv)
+const saveKV = () => {
+  let kv = currentKv.value
+  if (editorRef.value && kv) {
+    let value = editorRef.value.readDataString()
+    loadingStore.save = true
+    _putKV(props.session?.id, kv.key, _encodeStringToBytes(value)).then(() => {
+      currentKvChanged.value = false
+    }).catch(e => {
+      _tipError(e)
+    }).finally(() => {
+      loadingStore.save = false
+    })
+  }
+}
+
+const loadVersionDiff = () => {
+  let kv = currentKv.value
+  if (!kv) {
+    return
+  }
+  if (kv.version <= 1) {
+    _tipWarn('No multiple versions')
+    return;
+  }
+  loadingStore.diff = true
+  versionDiffInfo.key = kv.key
+  versionDiffInfo.version = kv.version
+  versionDiffInfo.createRevision = kv.createRevision
+  versionDiffInfo.modRevision = kv.modRevision
+  //  当前版本
+  versionDiffInfo.B.version = versionDiffInfo.modRevision
+  versionDiffInfo.B.content = _decodeBytesToString(kv!.value)
+
+  let lang = tryParseFileNameToType(kv.key)
+  if (!lang) {
+    lang = tryFileContentToType(versionDiffInfo.B.content)
+  }
+
+  switch (lang) {
+    case 'text':
+      versionDiffInfo.language = 'plaintext'
+      break
+    case 'sql':
+      versionDiffInfo.language = 'SQL'
+      break
+    case 'md':
+      versionDiffInfo.language = 'Markdown'
+      break
+    default:
+      versionDiffInfo.language = lang.substring(0, 1).toUpperCase() + lang.substring(1)
+  }
+
+  _getKVHistoryVersions(
+      props.session?.id,
+      kv.key,
+      kv.createRevision,
+      kv.modRevision
+  ).then(versions => {
+    //  倒序
+    versionDiffInfo.versionHistory = versions
+
+    //  上个版本
+    versionDiffInfo.A.version = versions[1]
+    loadDiff(versionDiffInfo.A)
+  }).catch(e => {
+    console.error(e)
+    _tipError(e)
+  }).finally(() => {
+    loadingStore.diff = false
+  })
+}
+
+const loadDiff = (info: DiffInfo) => {
+  _getKVByVersion(props.session?.id, versionDiffInfo.key, info.version).then(data => {
+    info.content = _decodeBytesToString(data.value)
+  }).catch(e => {
+    _tipWarn(`Failed to load revision ${info.version}: ${e}`)
+    info.content = ''
+  }).finally(() => {
+    if (!versionDiffInfo.show) {
+      versionDiffInfo.show = true
+    }
+  })
+}
+
+const versionSelectItemProps = (version: number) => {
+  let item: Record<string, any> = {
+    title: version,
+    color: 'primary',
+    density: 'compact'
+  }
+
+  if (version == versionDiffInfo.createRevision) {
+    item.subtitle = 'create'
+    item['append-icon'] = 'mdi-creation-outline'
+  }
+  if (version == versionDiffInfo.modRevision) {
+    item.subtitle = 'latest'
+    item['append-icon'] = 'mdi-new-box'
+  }
+  return item
 }
 
 </script>
@@ -273,7 +409,8 @@ const saveKV = (kv: KeyValue) => {
                   color="blue-grey-darken-1"
                   class="font-weight-bold"
                   prepend-icon="mdi-key"
-          >{{session.namespace}}</v-chip>
+          >{{ session.namespace }}
+          </v-chip>
         </template>
       </v-tooltip>
       <v-tooltip v-if="currentKv"
@@ -285,7 +422,8 @@ const saveKV = (kv: KeyValue) => {
                   label
                   color="primary"
                   class="font-weight-bold ml-2"
-          >{{currentKv.key}}</v-chip>
+          >{{ currentKv.key }}
+          </v-chip>
         </template>
       </v-tooltip>
 
@@ -332,24 +470,31 @@ const saveKV = (kv: KeyValue) => {
                     @click="saveKV"
                     :text="`Save${currentKvChanged ? ' *' : ''}`"
                     class="mr-2 text-none"
+                    :loading="loadingStore.save"
+                    prepend-icon="mdi-content-save-outline"
                 ></v-btn>
                 <v-btn
                     color="cyan-darken-1"
                     size="small"
+                    @click="loadVersionDiff"
                     text="Version Diff"
                     class="mr-2 text-none"
+                    :loading="loadingStore.diff"
+                    prepend-icon="mdi-vector-difference"
                 ></v-btn>
                 <v-btn
                     color="light-green-darken-1"
                     size="small"
                     text="Copy And Save"
                     class="mr-2 text-none"
+                    prepend-icon="mdi-content-copy"
                 ></v-btn>
                 <v-btn
                     color="deep-orange-darken-1"
                     size="small"
                     text="Delete"
                     class="mr-2 text-none"
+                    prepend-icon="mdi-trash-can-outline"
                 ></v-btn>
               </div>
             </template>
@@ -358,7 +503,8 @@ const saveKV = (kv: KeyValue) => {
                 <span class="editor-footer-item"><strong>Version</strong>: {{ currentKv.version }}</span>
                 <span class="editor-footer-item"><strong>Create Revision</strong>: {{ currentKv.createRevision }}</span>
                 <span class="editor-footer-item"><strong>Modify Revision</strong>: {{ currentKv.modRevision }}</span>
-                <span class="editor-footer-item" v-if="currentKv.lease != '0'"><strong>Lease</strong>: {{ currentKv.lease }}</span>
+                <span class="editor-footer-item"
+                      v-if="currentKv.lease != '0'"><strong>Lease</strong>: {{ currentKv.lease }}</span>
               </div>
             </template>
           </editor>
@@ -375,6 +521,71 @@ const saveKV = (kv: KeyValue) => {
         </drag-item>
       </drag-box>
     </v-layout>
+
+    <!--    Diff  -->
+    <v-dialog
+        v-model="versionDiffInfo.show"
+        persistent
+        max-width="70vw"
+        min-width="500px"
+    >
+      <v-card
+          :min-width="800"
+          :title="versionDiffInfo.key"
+          :key="versionDiffInfo.key"
+      >
+        <template v-slot:prepend>
+          <v-icon>mdi-vector-difference</v-icon>
+        </template>
+        <template v-slot:append>
+          <v-icon class="cursor-pointer" @click="versionDiffInfo.show = false">mdi-close</v-icon>
+        </template>
+        <v-card-text>
+          <v-layout class="pt-5">
+            <v-select
+                variant="outlined"
+                v-model="versionDiffInfo.A.version"
+                density="compact"
+                :items="versionDiffInfo.versionHistory"
+                :item-props="versionSelectItemProps"
+                :width="10"
+                hide-details
+                persistent-hint
+                class="mr-3"
+                label="Version A"
+                @update:model-value="loadDiff(versionDiffInfo.A)"
+            ></v-select>
+
+            <v-spacer></v-spacer>
+
+            <v-select
+                variant="outlined"
+                v-model="versionDiffInfo.B.version"
+                density="compact"
+                :items="versionDiffInfo.versionHistory"
+                :item-props="versionSelectItemProps"
+                :width="10"
+                hide-details
+                persistent-hint
+                class="mr-3"
+                label="Version B"
+                @update:model-value="loadDiff(versionDiffInfo.B)"
+            ></v-select>
+          </v-layout>
+
+          <code-diff
+              style="max-height: 70vh;min-height:50vh;"
+              :old-string="versionDiffInfo.A.content"
+              :filename="`Revision: ${versionDiffInfo.A.version}`"
+              :new-string="versionDiffInfo.B.content"
+              :new-filename="`Revision: ${versionDiffInfo.B.version}`"
+              :theme="isDarkTheme ? 'dark' : 'light'"
+              :language="versionDiffInfo.language"
+              output-format="side-by-side"/>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+
   </div>
 </template>
 

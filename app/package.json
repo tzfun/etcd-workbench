@@ -23,7 +23,8 @@
     "mitt": "^3.0.1",
     "vue": "^3.3.4",
     "@tauri-apps/api": "^1",
-    "vuetify": "^3.6.14"
+    "vuetify": "^3.6.14",
+    "v-code-diff": "^1.12.1"
   },
   "devDependencies": {
     "@mdi/font": "^7.4.47",
