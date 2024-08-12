@@ -30,6 +30,9 @@ impl Serialize for LogicError {
                     etcd_client::Error::GRpcStatus(status) => {
                         serializer.serialize_str(status.code().description())
                     }
+                    etcd_client::Error::InvalidArgs(status) => {
+                        serializer.serialize_str(status)
+                    }
                     _ => {
                         serializer.serialize_str(&e.to_string())
                     }

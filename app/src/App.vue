@@ -240,9 +240,12 @@ const closeTab = (id: number) => {
       <v-card
           :max-width="item.maxWidth ? item.maxWidth : 500"
           :min-width="item.minWidth ? item.minWidth : 400"
-          :text="item.content"
           :title="item.title"
       >
+        <template v-slot:text>
+          <div v-html="item.content"></div>
+        </template>
+
         <template v-slot:prepend>
           <v-icon :color="item.iconColor">{{ item.icon }}</v-icon>
         </template>

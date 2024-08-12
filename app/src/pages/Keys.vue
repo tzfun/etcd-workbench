@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
-import {_getAllKeys, _getKV, _getKVByVersion, _getKVHistoryVersions, _putKV} from "~/common/services.ts";
-import {_tipError, _tipWarn} from "~/common/events.ts";
+import {_deleteKV, _getAllKeys, _getKV, _getKVByVersion, _getKVHistoryVersions, _putKV} from "~/common/services.ts";
+import {_confirmSystem, _tipError, _tipInfo, _tipWarn} from "~/common/events.ts";
 import {computed, onMounted, PropType, reactive, ref} from "vue";
 import {SessionData} from "~/common/transport/connection.ts";
 import DragBox from "~/components/DragBox.vue";
@@ -67,7 +67,10 @@ const editorConfig = reactive<EditorConfig>({
 
 const loadingStore = reactive({
   save: false,
-  diff: false
+  diff: false,
+  delete: false,
+  deleteBatch: false,
+  loadAllKeys: false
 })
 
 const versionDiffInfo = reactive({
@@ -96,10 +99,13 @@ onMounted(() => {
 })
 
 const loadAllKeys = () => {
+  loadingStore.loadAllKeys = true
   _getAllKeys(props.session?.id).then(data => {
     treeData.value = constructTreeData(data)
   }).catch(e => {
     _tipError(e)
+  }).finally(() => {
+    loadingStore.loadAllKeys = false
   })
 }
 
@@ -165,6 +171,104 @@ const addKvToTree = (kv: KeyValue, root: TreeNode) => {
   node.children?.push(fileNode)
 }
 
+const removeKeyFromTree = (keys: string[]) => {
+  keysLoop:
+      for (let key of keys) {
+        //  为了方便解析为统一的树状结构，如果key不是以分隔符开头，默认补充分隔符
+        if (!key.startsWith(KEY_SPLITTER)) {
+          key = KEY_SPLITTER + key
+        }
+        let pathArr = key.split(KEY_SPLITTER)
+        let stack: TreeNode[] = []
+
+        let nodeArr: TreeNode[] = treeData.value
+
+        //  搜索前缀路径
+        keyPathLoop:
+            for (let i = 1; i < pathArr.length - 1; i++) {
+              let path = pathArr[i]
+              for (let node of nodeArr) {
+                if (node.title === path && !node.file) {
+                  stack.push(node)
+                  nodeArr = node.children ? node.children : []
+                  continue keyPathLoop;
+                }
+              }
+              continue keysLoop
+            }
+
+        let path = pathArr[pathArr.length - 1]
+        //  第一层
+        if (stack.length == 0) {
+          let idx = -1
+          for (let i = 0; i < nodeArr.length; i++) {
+            let node = nodeArr[i]
+            if (node.title === path && node.file) {
+              idx = i
+              break
+            }
+          }
+          if (idx >= 0) {
+            nodeArr.splice(idx, 1)
+          }
+          continue
+        }
+
+        let removedFile = false
+        let needRemoveDirNode: TreeNode | null = null
+        while (true) {
+          let node = stack.pop()
+          if (removedFile) {
+            //  文件已删除，开始清空空目录
+            if (node) {
+              let idx = node.children!.indexOf(needRemoveDirNode)
+              if (idx >= 0) {
+                node.children?.splice(idx, 1)
+              }
+            } else {
+              let idx = treeData.value.indexOf(needRemoveDirNode)
+              if (idx >= 0) {
+                treeData.value.splice(idx, 1)
+              }
+              break
+            }
+          } else {
+            //  删除目标文件
+            let nodeArr: TreeNode[]
+            if (node) {
+              nodeArr = node.children ? node.children : []
+            } else {
+              nodeArr = treeData.value
+            }
+
+            let idx = -1
+            for (let i = 0; i < nodeArr.length; i++) {
+              let node = nodeArr[i]
+              if (node.title === path && node.file) {
+                idx = i
+                break
+              }
+            }
+            if (idx >= 0) {
+              nodeArr.splice(idx, 1)
+              removedFile = true
+              if (nodeArr.length > 0) {
+                break
+              }
+              if (node) {
+                needRemoveDirNode = node
+              } else {
+                break
+              }
+            } else {
+              //  未找到
+              break
+            }
+          }
+        }
+      }
+}
+
 const tryParseFileNameToType = (fileName: string, defaultType?: string): string | undefined => {
   let dotIdx = fileName.lastIndexOf(".")
   if (dotIdx >= 0) {
@@ -221,10 +325,34 @@ const addKey = () => {
 
 }
 
-const deleteKey = () => {
-  for (let value of treeValue.value) {
-    console.log("---> ", JSON.stringify(value))
+const deleteKeyBatch = () => {
+  if (treeValue.value.length == 0) {
+    _tipInfo('Please select at least one key')
+    return
   }
+  let keys = []
+  let containsCurrentKV = false
+  for (let value of treeValue.value) {
+    keys.push(value.key)
+    if (currentKv.value && currentKv.value.key == value.key) {
+      containsCurrentKV = true
+    }
+  }
+
+  _confirmSystem(`Please confirm to permanently delete these keys: <br/><br/><strong>${keys.join('<br/>')}</strong>`).then(() => {
+    loadingStore.deleteBatch = true
+    _deleteKV(props.session?.id, keys).then(() => {
+      if (containsCurrentKV) {
+        currentKv.value = undefined
+      }
+      removeKeyFromTree(keys)
+    }).catch(e => {
+      _tipError(e)
+    }).finally(() => {
+      loadingStore.deleteBatch = false
+    })
+  }).catch(() => {
+  })
 }
 
 const treeSelected = ({id}: any) => {
@@ -320,6 +448,11 @@ const loadVersionDiff = () => {
       kv.createRevision,
       kv.modRevision
   ).then(versions => {
+    if (versions.length < 2) {
+      _tipWarn('No multiple versions, required revision has been compacted')
+      return;
+    }
+
     //  倒序
     versionDiffInfo.versionHistory = versions
 
@@ -337,13 +470,12 @@ const loadVersionDiff = () => {
 const loadDiff = (info: DiffInfo) => {
   _getKVByVersion(props.session?.id, versionDiffInfo.key, info.version).then(data => {
     info.content = _decodeBytesToString(data.value)
-  }).catch(e => {
-    _tipWarn(`Failed to load revision ${info.version}: ${e}`)
-    info.content = ''
-  }).finally(() => {
     if (!versionDiffInfo.show) {
       versionDiffInfo.show = true
     }
+  }).catch(e => {
+    _tipWarn(`Failed to load revision ${info.version}: ${e}`)
+    info.content = ''
   })
 }
 
@@ -365,6 +497,24 @@ const versionSelectItemProps = (version: number) => {
   return item
 }
 
+const deleteKey = () => {
+  if (!currentKv.value) {
+    return
+  }
+  let key = currentKv.value.key
+  _confirmSystem(`Please confirm to permanently delete key: <strong>${key}</strong>`).then(() => {
+    loadingStore.delete = true
+    let keys = [key]
+    _deleteKV(props.session?.id, [key]).then(() => {
+      currentKv.value = undefined
+      removeKeyFromTree(keys)
+    }).finally(() => {
+      loadingStore.delete = false
+    })
+  }).catch(() => {
+  })
+}
+
 </script>
 
 <template>
@@ -374,6 +524,7 @@ const versionSelectItemProps = (version: number) => {
              prepend-icon="mdi-refresh"
              color="primary"
              @click="loadAllKeys"
+             :loading="loadingStore.loadAllKeys"
       >Refresh
       </v-btn>
       <v-btn class="text-none ml-2"
@@ -394,7 +545,8 @@ const versionSelectItemProps = (version: number) => {
              v-show="treeSelectable"
              prepend-icon="mdi-file-document-minus-outline"
              color="red"
-             @click="deleteKey"
+             @click="deleteKeyBatch"
+             :loading="loadingStore.deleteBatch"
       >
         Delete Key
       </v-btn>
@@ -492,6 +644,8 @@ const versionSelectItemProps = (version: number) => {
                 <v-btn
                     color="deep-orange-darken-1"
                     size="small"
+                    @click="deleteKey"
+                    :loading="loadingStore.delete"
                     text="Delete"
                     class="mr-2 text-none"
                     prepend-icon="mdi-trash-can-outline"

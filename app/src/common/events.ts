@@ -45,6 +45,10 @@ export function _confirm(title: string, text: string): Promise<undefined> {
 
 }
 
+export function _confirmSystem(text: string): Promise<undefined> {
+    return _confirm('System', text)
+}
+
 export function _dialogContent(content: string) {
     let dialog: DialogItem = {
         value: true,
@@ -94,7 +98,7 @@ export function _tipWarn(text: string) {
         value: true,
         content: text,
         timeout: 4000,
-        icon: 'mdi-alert',
+        icon: 'mdi-alert-circle',
         class: 'bg-orange-darken-1'
     }
 
@@ -108,6 +112,18 @@ export function _tipSuccess(text: string) {
         timeout: 4000,
         icon: 'mdi-check',
         class: 'bg-green-lighten-1'
+    }
+
+    events.emit('tip', tip)
+}
+
+export function _tipInfo(text: string) {
+    let tip: TipsItem = {
+        value: true,
+        content: text,
+        timeout: 4000,
+        icon: 'mdi-lightbulb-on-40',
+        class: 'bg-secondary'
     }
 
     events.emit('tip', tip)
