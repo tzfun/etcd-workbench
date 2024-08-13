@@ -1,3 +1,5 @@
+import {ErrorPayload, SessionData} from "~/common/transport/connection.ts";
+
 export type DialogButtonFunc = (item: DialogItem, event: PointerEvent) => void;
 
 export type DialogButton = {
@@ -139,4 +141,10 @@ export type EditorConfig = {
     height: string | 'auto'
     language: string
     fontSize: string,
+}
+
+export type LogicErrorInfo = {
+    e: ErrorPayload,
+    prefix?: string,
+    session: SessionData
 }

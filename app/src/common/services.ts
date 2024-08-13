@@ -2,6 +2,16 @@ import {invoke} from "@tauri-apps/api";
 import {Connection, ConnectionInfo, SessionData} from "~/common/transport/connection.ts";
 import {Cluster} from "~/common/transport/maintenance.ts";
 import {KeyValue} from "~/common/transport/kv.ts";
+import {_tipError, events} from "~/common/events.ts";
+import {LogicErrorInfo} from "~/common/types.ts";
+
+export function _handleError(info: LogicErrorInfo) {
+    console.error(info.e)
+    _tipError((info.prefix ? info.prefix : "") + info.e.errMsg)
+    if (info.e.errType == "Unauthenticated" && info.session) {
+        events.emit('closeTab', info.session.id)
+    }
+}
 
 export function _connectTest(connection: Connection): Promise<undefined> {
     return invoke('connect_test', {connection})

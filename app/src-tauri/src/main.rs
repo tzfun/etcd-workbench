@@ -42,9 +42,12 @@ fn main() {
             api::kv::kv_get,
             api::kv::kv_get_by_version,
             api::kv::kv_put,
+            api::kv::kv_put_with_lease,
             api::kv::kv_delete,
             api::kv::kv_get_history_versions,
             api::maintenance::get_cluster,
+            api::lease::leases,
+            api::lease::lease_get,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

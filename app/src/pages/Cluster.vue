@@ -2,7 +2,7 @@
 
 import {onMounted, PropType, ref} from "vue";
 import {SessionData} from "~/common/transport/connection.ts";
-import {_getCluster} from "~/common/services.ts";
+import {_getCluster, _handleError} from "~/common/services.ts";
 import {_tipError} from "~/common/events.ts";
 import {Alarm, Cluster} from "~/common/transport/maintenance.ts";
 import {_byteTextFormat} from "../common/utils.ts";
@@ -40,7 +40,10 @@ const loadCluster = () => {
     cluster.value = c
     console.log(c)
   }).catch(e => {
-    _tipError(e)
+    _handleError({
+      e,
+      session: props.session
+    })
   })
 }
 </script>

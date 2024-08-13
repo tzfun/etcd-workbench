@@ -61,3 +61,8 @@ export interface SessionData {
     root: boolean,
     namespace?: string
 }
+
+export interface ErrorPayload {
+    errType: string,
+    errMsg: string
+}

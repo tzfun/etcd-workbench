@@ -1,14 +1,22 @@
 <script setup lang="ts">
 
-import {_deleteKV, _getAllKeys, _getKV, _getKVByVersion, _getKVHistoryVersions, _putKV} from "~/common/services.ts";
-import {_confirmSystem, _tipError, _tipInfo, _tipWarn} from "~/common/events.ts";
+import {
+  _deleteKV,
+  _getAllKeys,
+  _getKV,
+  _getKVByVersion,
+  _getKVHistoryVersions,
+  _handleError,
+  _putKV
+} from "~/common/services.ts";
+import {_confirmSystem, _tipInfo, _tipWarn} from "~/common/events.ts";
 import {computed, onMounted, PropType, reactive, ref} from "vue";
 import {SessionData} from "~/common/transport/connection.ts";
 import DragBox from "~/components/DragBox.vue";
 import DragItem from "~/components/DragItem.vue";
 import {KeyValue} from "~/common/transport/kv.ts";
 import Editor from "~/components/editor/Editor.vue";
-import {_decodeBytesToString, _encodeStringToBytes, fileTypeIcon} from "~/common/utils.ts";
+import {_decodeBytesToString, fileTypeIcon} from "~/common/utils.ts";
 import {EditorConfig} from "~/common/types.ts";
 import {CodeDiff} from "v-code-diff";
 import {useTheme} from "vuetify";
@@ -62,6 +70,12 @@ const loadingStore = reactive({
   loadAllKeys: false
 })
 
+const newKeyDialog = reactive({
+  show: false,
+  key: '',
+  ttl: ''
+})
+
 const versionDiffInfo = reactive({
   show: false,
   key: '',
@@ -90,9 +104,13 @@ onMounted(() => {
 const loadAllKeys = () => {
   loadingStore.loadAllKeys = true
   _getAllKeys(props.session?.id).then(data => {
+    console.log(data)
     treeData.value = constructTreeData(data)
   }).catch(e => {
-    _tipError(e)
+    _handleError({
+      e,
+      session: props.session
+    })
   }).finally(() => {
     loadingStore.loadAllKeys = false
   })
@@ -123,7 +141,13 @@ const constructTreeData = (data: KeyValue[]): TreeNode[] => {
 }
 
 const addKvToTree = (kv: KeyValue, root: TreeNode) => {
-  let splits = kv.key.split(KEY_SPLITTER)
+  let key = kv.key
+  //  为了方便解析为统一的树状结构，如果key不是以分隔符开头，默认补充分隔符
+  if (!key.startsWith(KEY_SPLITTER)) {
+    key = KEY_SPLITTER + key
+  }
+
+  let splits = key.split(KEY_SPLITTER)
   let node: TreeNode = root
 
   for (let i = 1; i < splits.length - 1; i++) {
@@ -160,7 +184,7 @@ const addKvToTree = (kv: KeyValue, root: TreeNode) => {
   node.children?.push(fileNode)
 }
 
-const removeKeyFromTree = (keys: string[]) => {
+const removeKeyFromTreeData = (keys: string[]) => {
   keysLoop:
       for (let key of keys) {
         //  为了方便解析为统一的树状结构，如果key不是以分隔符开头，默认补充分隔符
@@ -311,7 +335,9 @@ const tryFileContentToType = (content: string): string => {
 }
 
 const addKey = () => {
-
+  newKeyDialog.key = ''
+  newKeyDialog.ttl = ''
+  newKeyDialog.show = true
 }
 
 const deleteKeyBatch = () => {
@@ -334,9 +360,12 @@ const deleteKeyBatch = () => {
       if (containsCurrentKV) {
         currentKv.value = undefined
       }
-      removeKeyFromTree(keys)
+      removeKeyFromTreeData(keys)
     }).catch(e => {
-      _tipError(e)
+      _handleError({
+        e,
+        session: props.session
+      })
     }).finally(() => {
       loadingStore.deleteBatch = false
     })
@@ -356,7 +385,10 @@ const treeSelected = ({id}: any) => {
       currentKv.value = kv
       currentKvChanged.value = false
     }).catch(e => {
-      _tipError(e)
+      _handleError({
+        e,
+        session: props.session
+      })
       currentKv.value = undefined
     })
   }
@@ -382,12 +414,15 @@ const editorSave = () => {
 const saveKV = () => {
   let kv = currentKv.value
   if (editorRef.value && kv) {
-    let value = editorRef.value.readDataString()
+    let value: number[] = editorRef.value.readDataBytes()
     loadingStore.save = true
-    _putKV(props.session?.id, kv.key, _encodeStringToBytes(value)).then(() => {
+    _putKV(props.session?.id, kv.key, value).then(() => {
       currentKvChanged.value = false
     }).catch(e => {
-      _tipError(e)
+      _handleError({
+        e,
+        session: props.session
+      })
     }).finally(() => {
       loadingStore.save = false
     })
@@ -449,8 +484,10 @@ const loadVersionDiff = () => {
     versionDiffInfo.A.version = versions[1]
     loadDiff(versionDiffInfo.A)
   }).catch(e => {
-    console.error(e)
-    _tipError(e)
+    _handleError({
+      e,
+      session: props.session
+    })
   }).finally(() => {
     loadingStore.diff = false
   })
@@ -463,7 +500,11 @@ const loadDiff = (info: DiffInfo) => {
       versionDiffInfo.show = true
     }
   }).catch(e => {
-    _tipWarn(`Failed to load revision ${info.version}: ${e}`)
+    _handleError({
+      e,
+      prefix: `Failed to load revision ${info.version}: `,
+      session: props.session
+    })
     info.content = ''
   })
 }
@@ -496,7 +537,12 @@ const deleteKey = () => {
     let keys = [key]
     _deleteKV(props.session?.id, [key]).then(() => {
       currentKv.value = undefined
-      removeKeyFromTree(keys)
+      removeKeyFromTreeData(keys)
+    }).catch(e => {
+      _handleError({
+        e,
+        session: props.session
+      })
     }).finally(() => {
       loadingStore.delete = false
     })
@@ -596,61 +642,68 @@ const deleteKey = () => {
           </v-treeview>
         </drag-item>
         <drag-item style="width: calc(100% - 300px)" :show-resize-line="false">
-          <editor ref="editorRef"
-                  v-if="currentKv"
-                  :key="currentKv.key"
-                  :value="_decodeBytesToString(currentKv.value)"
-                  :config="editorConfig"
-                  @change="editorChange"
-                  @save="editorSave">
-            <template #headerPrepend>
-              <div>
-                <v-btn
-                    color="primary"
-                    size="small"
-                    @click="saveKV"
-                    :text="`Save${currentKvChanged ? ' *' : ''}`"
-                    class="mr-2 text-none"
-                    :loading="loadingStore.save"
-                    prepend-icon="mdi-content-save-outline"
-                ></v-btn>
-                <v-btn
-                    color="cyan-darken-1"
-                    size="small"
-                    @click="loadVersionDiff"
-                    text="Version Diff"
-                    class="mr-2 text-none"
-                    :loading="loadingStore.diff"
-                    prepend-icon="mdi-vector-difference"
-                ></v-btn>
-                <v-btn
-                    color="light-green-darken-1"
-                    size="small"
-                    text="Copy And Save"
-                    class="mr-2 text-none"
-                    prepend-icon="mdi-content-copy"
-                ></v-btn>
-                <v-btn
-                    color="deep-orange-darken-1"
-                    size="small"
-                    @click="deleteKey"
-                    :loading="loadingStore.delete"
-                    text="Delete"
-                    class="mr-2 text-none"
-                    prepend-icon="mdi-trash-can-outline"
-                ></v-btn>
-              </div>
-            </template>
-            <template #footerPrepend>
-              <div>
-                <span class="editor-footer-item"><strong>Version</strong>: {{ currentKv.version }}</span>
-                <span class="editor-footer-item"><strong>Create Revision</strong>: {{ currentKv.createRevision }}</span>
-                <span class="editor-footer-item"><strong>Modify Revision</strong>: {{ currentKv.modRevision }}</span>
-                <span class="editor-footer-item"
-                      v-if="currentKv.lease != '0'"><strong>Lease</strong>: {{ currentKv.lease }}</span>
-              </div>
-            </template>
-          </editor>
+          <div v-if="currentKv" class="fill-height">
+            <v-layout class="editor-header">
+              <v-spacer></v-spacer>
+              <v-btn
+                  color="primary"
+                  size="small"
+                  @click="saveKV"
+                  :text="`Save${currentKvChanged ? ' *' : ''}`"
+                  class="mr-2 text-none"
+                  :loading="loadingStore.save"
+                  prepend-icon="mdi-content-save-outline"
+              ></v-btn>
+              <v-btn
+                  color="cyan-darken-1"
+                  size="small"
+                  @click="loadVersionDiff"
+                  text="Version Diff"
+                  class="mr-2 text-none"
+                  :loading="loadingStore.diff"
+                  prepend-icon="mdi-vector-difference"
+              ></v-btn>
+              <v-btn
+                  color="light-green-darken-1"
+                  size="small"
+                  text="Copy And Save"
+                  class="mr-2 text-none"
+                  prepend-icon="mdi-content-copy"
+              ></v-btn>
+              <v-btn
+                  color="deep-orange-darken-1"
+                  size="small"
+                  @click="deleteKey"
+                  :loading="loadingStore.delete"
+                  text="Delete"
+                  class="mr-2 text-none"
+                  prepend-icon="mdi-trash-can-outline"
+              ></v-btn>
+            </v-layout>
+            <div class="editor-body">
+              <editor ref="editorRef"
+                      :key="currentKv.key"
+                      :value="_decodeBytesToString(currentKv.value)"
+                      :config="editorConfig"
+                      @change="editorChange"
+                      @save="editorSave">
+                <template #footerPrepend>
+                  <div>
+                    <span class="editor-footer-item"><strong>Version</strong>: {{ currentKv.version }}</span>
+                    <span class="editor-footer-item"><strong>Create Revision</strong>: {{
+                        currentKv.createRevision
+                      }}</span>
+                    <span class="editor-footer-item"><strong>Modify Revision</strong>: {{
+                        currentKv.modRevision
+                      }}</span>
+                    <span class="editor-footer-item"
+                          v-if="currentKv.lease != '0'"><strong>Lease</strong>: {{ currentKv.lease }}</span>
+                  </div>
+                </template>
+              </editor>
+            </div>
+          </div>
+
           <div v-else class="no-key-preview">
             <v-empty-state icon="mdi-text-box-edit-outline"
                            headline="Please select a key"
@@ -665,7 +718,7 @@ const deleteKey = () => {
       </drag-box>
     </v-layout>
 
-    <!--    Diff  -->
+    <!--    Diff弹窗  -->
     <v-dialog
         v-model="versionDiffInfo.show"
         persistent
@@ -729,6 +782,56 @@ const deleteKey = () => {
       </v-card>
     </v-dialog>
 
+    <!--  Add Key弹窗-->
+    <v-dialog
+        v-model="newKeyDialog.show"
+        persistent
+        max-width="70vw"
+        min-width="500px"
+    >
+      <v-card title="New Key">
+        <v-card-text>
+          <v-layout class="mb-5">
+            <span class="new-key-form-label">Key: </span>
+            <v-text-field v-model="newKeyDialog.key"
+                          density="comfortable"
+                          prepend-inner-icon="mdi-key"
+                          :prefix="session.namespace"
+                          hint="The key under namespace (if it exists)"
+                          persistent-hint
+            ></v-text-field>
+          </v-layout>
+          <v-layout class="mb-5">
+            <span class="new-key-form-label">TTL(s): </span>
+            <v-text-field v-model="newKeyDialog.ttl"
+                          type="number"
+                          density="comfortable"
+                          prepend-inner-icon="mdi-clock-time-eight-outline"
+                          hint="The key expiration time in seconds, optional. If left blank, the key will never expire."
+                          persistent-hint
+            ></v-text-field>
+          </v-layout>
+          <div style="height: 50vh;width:100%">
+            <editor :config="editorConfig"
+                    hide-header
+            ></editor>
+          </div>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn text="Cancel"
+                 variant="text"
+                 class="text-none"
+                 @click="newKeyDialog.show = false"
+          ></v-btn>
+
+          <v-btn text="Confirm"
+                 variant="flat"
+                 class="text-none"
+                 color="primary"
+          ></v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -743,6 +846,24 @@ $--action-area-margin-bottom: 10px;
 }
 
 .main-area {
+
   height: calc(100% - $--action-area-height - $--action-area-margin-bottom);
+
+  $--editor-header-height: 40px;
+
+  .editor-header {
+    height: $--editor-header-height;
+  }
+
+  .editor-body {
+    height: calc(100% - $--editor-header-height);
+  }
+
+}
+
+.new-key-form-label {
+  display: inline-block;
+  width: 80px;
+  line-height: 48px;
 }
 </style>

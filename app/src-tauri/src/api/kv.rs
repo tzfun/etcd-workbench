@@ -31,7 +31,7 @@ pub async fn kv_put(session: i32, key: String, value: Vec<u8>, ttl: Option<Strin
     let ttl = if let Some(s) = ttl {
         Some(i64::from_str(&s).map_err(|e| {
             warn!("ttl parse error: {e}");
-            LogicError::ArgError
+            LogicError::ArgumentError
         })?)
     } else {
         None
@@ -40,9 +40,20 @@ pub async fn kv_put(session: i32, key: String, value: Vec<u8>, ttl: Option<Strin
     connector.kv_put(
         key,
         value,
-        ttl
+        ttl,
     ).await?;
 
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn kv_put_with_lease(session: i32, key: String, value: Vec<u8>, lease: String) -> Result<(), LogicError> {
+    let connector = etcd::get_connector(&session)?;
+    let lease = i64::from_str(&lease).map_err(|e| {
+        warn!("ttl parse error: {e}");
+        LogicError::ArgumentError
+    })?;
+    connector.kv_put_with_lease(key, value, lease).await?;
     Ok(())
 }
 

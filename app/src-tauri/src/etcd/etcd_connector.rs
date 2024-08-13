@@ -4,13 +4,13 @@ use std::future::Future;
 use std::pin::Pin;
 use std::time::Duration;
 
-use etcd_client::{AlarmAction, AlarmType, Certificate, Client, ConnectOptions, Error, GetOptions, GetResponse, Identity, PutOptions, RoleRevokePermissionOptions, TlsOptions};
-use log::{debug, info};
+use etcd_client::{AlarmAction, AlarmType, Certificate, Client, ConnectOptions, Error, GetOptions, GetResponse, Identity, LeaseGrantOptions, LeaseTimeToLiveOptions, PutOptions, RoleRevokePermissionOptions, TlsOptions};
+use log::{debug, error, info, warn};
 
 use crate::error::LogicError;
 use crate::ssh::ssh_tunnel::SshTunnel;
 use crate::transport::connection::Connection;
-use crate::transport::kv::SerializableKeyValue;
+use crate::transport::kv::{SerializableKeyValue, SerializableLeaseInfo};
 use crate::transport::maintenance::{SerializableCluster, SerializableClusterMember, SerializableClusterStatus};
 use crate::transport::user::{SerializablePermission, SerializableUser};
 
@@ -99,7 +99,7 @@ impl EtcdConnector {
     /// 获取所有key，不包含value
     pub async fn kv_get_all_keys(&self) -> Result<Vec<SerializableKeyValue>, Error> {
         let mut kv_client = self.get_client().kv_client();
-        let root_path = self.get_full_key("/");
+        let root_path = self.get_full_key("");
         let get_options = GetOptions::new()
             .with_prefix()
             .with_keys_only();
@@ -179,6 +179,14 @@ impl EtcdConnector {
         Ok(())
     }
 
+    /// 将Key绑定到lease中
+    pub async fn kv_put_with_lease(&self, key: impl Into<Vec<u8>>, value: impl Into<Vec<u8>>, lease: i64) -> Result<(), Error> {
+        let final_key = self.get_full_key(key);
+        self.client.kv_client().put(final_key, value, Some(PutOptions::new().with_lease(lease))).await?;
+
+        Ok(())
+    }
+
     /// 删除键值对
     pub async fn kv_delete(&self, keys: Vec<impl Into<Vec<u8>>>) -> Result<usize, Error> {
         let mut client = self.client.kv_client();
@@ -247,6 +255,53 @@ impl EtcdConnector {
         } else {
             key.into()
         }
+    }
+
+    /// 获取所有lease id
+    pub async fn leases(&self) -> Result<Vec<String>, Error> {
+        let response = self.client.lease_client().leases().await?;
+        let mut leases = Vec::new();
+        for lease in response.leases() {
+            leases.push(lease.id().to_string())
+        }
+        Ok(leases)
+    }
+
+    /// 获取lease的详情信息
+    pub async fn lease_get(&self, lease: i64) -> Result<SerializableLeaseInfo, Error> {
+        let options = LeaseTimeToLiveOptions::new().with_keys();
+        let response = self.client.lease_client().time_to_live(lease, Some(options)).await?;
+        let ttl = response.ttl();
+        let granted_ttl = response.granted_ttl();
+        let id = response.id().to_string();
+        let bind_keys = response.keys();
+        let mut keys = Vec::with_capacity(bind_keys.len());
+        for bind_key in bind_keys {
+            let s = String::from_utf8_lossy(bind_key.as_slice()).to_string();
+            keys.push(s);
+        }
+
+        Ok(SerializableLeaseInfo {
+            id,
+            ttl,
+            granted_ttl,
+            keys,
+        })
+    }
+
+    /// 授权新的lease或为已存在的lease续租
+    pub async fn lease_grant(&self, ttl: i64, lease: Option<i64>) -> Result<(), Error> {
+        let options = lease.map(|id| {
+            LeaseGrantOptions::new().with_id(id)
+        });
+        self.client.lease_client().grant(ttl, options).await?;
+        Ok(())
+    }
+
+    /// 回收lease
+    pub async fn lease_revoke(&self, lease: i64) -> Result<(), Error> {
+        self.client.lease_client().revoke(lease).await?;
+        Ok(())
     }
 
     /// 查询所有用户

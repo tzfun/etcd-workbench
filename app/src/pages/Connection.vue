@@ -5,6 +5,7 @@ import Cluster from "~/pages/Cluster.vue";
 import Keys from "~/pages/Keys.vue";
 import Users from "~/pages/Users.vue";
 import Roles from "~/pages/Roles.vue";
+import Leases from "~/pages/Leases.vue";
 
 const props = defineProps({
   session: {
@@ -57,6 +58,11 @@ const clickList = (page: string) => {
                      prepend-icon="mdi-database"
                      @click="clickList('keys')"
         ></v-list-item>
+        <v-list-item title="Leases"
+                     value="leases"
+                     prepend-icon="mdi-clock-time-nine"
+                     @click="clickList('leases')"
+        ></v-list-item>
         <v-list-item title="Manage Users"
                      value="users"
                      prepend-icon="mdi-account-supervisor"
@@ -77,6 +83,9 @@ const clickList = (page: string) => {
       </div>
       <div v-show="activeListItem == 'keys'" class="fill-height">
         <Keys :session="session" v-if="visited['keys']"></Keys>
+      </div>
+      <div v-show="activeListItem == 'leases'" class="fill-height">
+        <Leases :session="session" v-if="visited['leases']"></Leases>
       </div>
       <div v-show="activeListItem == 'users'" class="fill-height">
         <Users :session="session" v-if="visited['users']"></Users>

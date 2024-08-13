@@ -38,3 +38,12 @@ impl SerializableKeyValue {
         self.key = self.key.replace(prefix.as_str(), "")
     }
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all="camelCase")]
+pub struct SerializableLeaseInfo {
+    pub id: String,
+    pub ttl: i64,
+    pub granted_ttl: i64,
+    pub keys: Vec<String>
+}

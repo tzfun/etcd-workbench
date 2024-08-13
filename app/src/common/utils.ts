@@ -111,3 +111,7 @@ export function _decodeBytesToString(bytes: number[]): string {
 export function _encodeStringToBytes(str?: string): number[] {
     return Array.from(TEXT_ENCODER.encode(str))
 }
+
+export function _upperCaseFirst(str: string): string {
+    return str.substring(0, 1).toUpperCase() + str.substring(1)
+}

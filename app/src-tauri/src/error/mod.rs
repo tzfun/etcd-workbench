@@ -2,13 +2,33 @@ use std::io;
 use std::string::FromUtf8Error;
 
 use log::error;
-use serde::{Serialize, Serializer};
+use serde::{Deserialize, Serialize, Serializer};
 use tokio::sync::oneshot;
+
+#[derive(Debug, Serialize, Deserialize)]
+enum ErrorType {
+    /// 身份认证失效，需要重新连接
+    Unauthenticated,
+    /// etcd客户端异常
+    EtcdClientError,
+    /// ssh隧道异常
+    SshClientError,
+    /// 应用异常，一般是代码级的错误
+    AppError,
+    /// 参数错误
+    ArgumentError
+}
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all="camelCase")]
+pub struct ErrorPayload<'a> {
+    err_type: ErrorType,
+    err_msg: &'a str,
+}
 
 #[derive(Debug)]
 pub enum LogicError {
     ConnectionLose,
-    ArgError,
+    ArgumentError,
     EtcdClientError(etcd_client::Error),
     SshError(russh::Error),
     IoError(io::Error),
@@ -28,41 +48,95 @@ impl Serialize for LogicError {
                 error!("[ETCD] {:?}", e);
                 match e {
                     etcd_client::Error::GRpcStatus(status) => {
-                        serializer.serialize_str(status.code().description())
+                        let code = status.code();
+                        let msg = code.description();
+                        let code = code as i32;
+                        //  Unauthenticated
+                        if code == 16 {
+                            ErrorPayload {
+                                err_type: ErrorType::Unauthenticated,
+                                err_msg: msg,
+                            }.serialize(serializer)
+                        } else {
+                            ErrorPayload {
+                                err_type: ErrorType::EtcdClientError,
+                                err_msg: msg,
+                            }.serialize(serializer)
+                        }
                     }
-                    etcd_client::Error::InvalidArgs(status) => {
-                        serializer.serialize_str(status)
+                    etcd_client::Error::InvalidArgs(msg) => {
+                        ErrorPayload {
+                            err_type: ErrorType::EtcdClientError,
+                            err_msg: msg,
+                        }.serialize(serializer)
                     }
                     _ => {
-                        serializer.serialize_str(&e.to_string())
+                        let msg = e.to_string();
+                        ErrorPayload {
+                            err_type: ErrorType::EtcdClientError,
+                            err_msg: msg.as_str(),
+                        }.serialize(serializer)
                     }
                 }
             }
             LogicError::SshError(e) => {
                 error!("[SSH] {:?}", e);
-                serializer.serialize_str(&e.to_string())
+                let msg = e.to_string();
+                ErrorPayload {
+                    err_type: ErrorType::SshClientError,
+                    err_msg: msg.as_str(),
+                }.serialize(serializer)
             }
             LogicError::IoError(e) => {
                 error!("[IO] {:?}", e);
-                serializer.serialize_str(&e.to_string())
+                let msg = e.to_string();
+                ErrorPayload {
+                    err_type: ErrorType::AppError,
+                    err_msg: msg.as_str(),
+                }.serialize(serializer)
             }
             LogicError::SerdeError(e) => {
                 error!("[Serde] {:?}", e);
-                serializer.serialize_str(&e.to_string())
+                let msg = e.to_string();
+                ErrorPayload {
+                    err_type: ErrorType::AppError,
+                    err_msg: msg.as_str(),
+                }.serialize(serializer)
             }
             LogicError::Base64DecodeError(e) => {
                 error!("[Base64Decode] {:?}", e);
-                serializer.serialize_str(&e.to_string())
+                let msg = e.to_string();
+                ErrorPayload {
+                    err_type: ErrorType::AppError,
+                    err_msg: msg.as_str(),
+                }.serialize(serializer)
             }
             LogicError::ChannelRcvError(e) => {
-                serializer.serialize_str(&e.to_string())
+                let msg = e.to_string();
+                ErrorPayload {
+                    err_type: ErrorType::AppError,
+                    err_msg: msg.as_str(),
+                }.serialize(serializer)
             }
             LogicError::StringConvertError(e) => {
                 error!("[StrConvert] {:?}", e);
-                serializer.serialize_str("Can not convert string with utf-8")
+                ErrorPayload {
+                    err_type: ErrorType::AppError,
+                    err_msg: "Can not convert string with utf-8",
+                }.serialize(serializer)
             }
-            LogicError::ConnectionLose => serializer.serialize_str("connection lose"),
-            LogicError::ArgError => serializer.serialize_str("invalid argument"),
+            LogicError::ConnectionLose => {
+                ErrorPayload {
+                    err_type: ErrorType::Unauthenticated,
+                    err_msg: "connection lose",
+                }.serialize(serializer)
+            }
+            LogicError::ArgumentError => {
+                ErrorPayload {
+                    err_type: ErrorType::ArgumentError,
+                    err_msg: "invalid argument",
+                }.serialize(serializer)
+            }
         }
     }
 }

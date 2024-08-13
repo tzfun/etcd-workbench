@@ -70,6 +70,11 @@ onMounted(async () => {
     activeTab.value = tabItem.name
   })
 
+  events.on('closeTab', (sessionId) => {
+    closeTabDirectly(sessionId)
+    activeTab.value = HOME_TAB
+  })
+
   events.on('dialog', (param) => {
     let dialog = param as DialogItem
     let idx = -1;
@@ -128,34 +133,38 @@ const disableWebviewNativeEvents = () => {
 
 const closeTab = (id: number) => {
   _confirm('System', 'Are you sure to close the current connection?').then(() => {
-    let idx = -1;
-    for (let i = 0; i < tabList.length; i++) {
-      let item: TabItem = tabList[i]
-      if (item.session.id == id) {
-        idx = i;
-        break
-      }
-    }
-
-    _disconnect(id)
-
-    if (idx >= 0) {
-      let nextTab = HOME_TAB
-      if (tabList.length > 1) {
-        if (idx == 0) {
-          let next = tabList[idx + 1];
-          nextTab = next.name
-        } else {
-          let next = tabList[idx - 1]
-          nextTab = next.name
-        }
-      }
-      activeTab.value = nextTab
-
-      tabList.splice(idx, 1)
-    }
+    closeTabDirectly(id)
   }).catch(() => {
   })
+}
+
+const closeTabDirectly = (sessionId: number) => {
+  let idx = -1;
+  for (let i = 0; i < tabList.length; i++) {
+    let item: TabItem = tabList[i]
+    if (item.session.id == sessionId) {
+      idx = i;
+      break
+    }
+  }
+
+  _disconnect(sessionId)
+
+  if (idx >= 0) {
+    let nextTab = HOME_TAB
+    if (tabList.length > 1) {
+      if (idx == 0) {
+        let next = tabList[idx + 1];
+        nextTab = next.name
+      } else {
+        let next = tabList[idx - 1]
+        nextTab = next.name
+      }
+    }
+    activeTab.value = nextTab
+
+    tabList.splice(idx, 1)
+  }
 }
 
 </script>

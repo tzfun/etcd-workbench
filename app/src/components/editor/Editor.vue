@@ -15,6 +15,7 @@ import {
   _decodeBytesToString,
   _encodeStringToBytes,
   _strArrToNumArr,
+  _upperCaseFirst,
   fileTypeIcon
 } from "~/common/utils.ts";
 import {Codemirror} from "vue-codemirror";
@@ -32,7 +33,7 @@ const props = defineProps({
   },
   value: {
     type: String,
-    required: true
+    default: () => "",
   }
 })
 
@@ -193,23 +194,24 @@ const changeLanguage = (lang) => {
 }
 
 /**
- * 将当前内容读出为字符串，会根据选择的格式化语言进行转换
+ * 将当前内容读出为 byte 数组
  */
-const readDataString = (): string => {
-  return formatData(content.value, "text", props.config!.language == 'blob' ? 'blob' : 'text')
+const readDataBytes = (): number[] => {
+  if (propsConfig.value.language == 'blob') {
+    _strArrToNumArr(content.value.trim().split(/\s+/))
+  } else {
+    return _encodeStringToBytes(content.value)
+  }
 }
 
 defineExpose({
-  readDataString
+  readDataBytes
 })
 
 </script>
 
 <template>
-  <div class="fill-height">
-    <div class="header">
-      <slot name="headerPrepend"></slot>
-    </div>
+  <div class="fill-height position-relative">
     <div class="editor">
       <codemirror
           v-model="content"
@@ -234,7 +236,7 @@ defineExpose({
               @click="showLanguageSelection = !showLanguageSelection"
         >
           <v-icon>{{ fileTypeIcon[config.language] }}</v-icon>
-          {{ config.language }}
+          {{ _upperCaseFirst(config.language) }}
         </span>
       </span>
 
@@ -246,10 +248,11 @@ defineExpose({
           <v-list-item v-for="item in allLanguages"
                        :key="item"
                        :value="item"
-                       :title="item"
+                       :title="_upperCaseFirst(item)"
                        :active="item == config.language"
                        :prepend-icon="fileTypeIcon[item]"
                        @click="changeLanguage(item)"
+                       color="primary"
           ></v-list-item>
         </v-list>
       </div>
@@ -260,25 +263,10 @@ defineExpose({
 <style scoped lang="scss">
 @import "~/styles/variables";
 
-$--editor-header-height: 50px;
 $--editor-padding: 0 1rem;
 
-.header {
-  height: $--editor-header-height;
-  display: flex;
-  justify-content: right;
-  align-items: center;
-  font-size: 90%;
-
-  .item {
-    margin-left: 1em;
-    display: inline-block;
-    font-feature-settings: 'tnum';
-  }
-}
-
 .editor {
-  height: calc(100% - $--editor-header-height - $--editor-footer-height - 1px);
+  height: calc(100% -  $--editor-footer-height - 1px);
 
   .code {
     width: 30%;

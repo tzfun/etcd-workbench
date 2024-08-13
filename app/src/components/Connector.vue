@@ -3,15 +3,10 @@ import {PropType, reactive, ref, watch} from "vue";
 import {ConnectionForm, ConnectionSshForm, ConnectionTlsForm, DefaultConnection} from "~/common/types.ts";
 import etcdLogo from '~/assets/etcd.png'
 import SingleFileSelector from "~/components/SingleFileSelector.vue";
-import {
-  Connection,
-  ConnectionInfo,
-  SessionData,
-  SshIdentity
-} from "~/common/transport/connection.ts";
+import {Connection, ConnectionInfo, SessionData, SshIdentity} from "~/common/transport/connection.ts";
 import {_decodeBytesToString, _encodeStringToBytes, _isEmpty, _nonEmpty} from "~/common/utils.ts";
-import {_connect, _connectTest, _saveConnection} from "~/common/services.ts";
-import {_loading, _tipError, _tipSuccess, _tipWarn, events} from "~/common/events.ts";
+import {_connect, _connectTest, _handleError, _saveConnection} from "~/common/services.ts";
+import {_loading, _tipSuccess, _tipWarn, events} from "~/common/events.ts";
 import {VForm} from "vuetify/components";
 
 const emits = defineEmits(['on-save'])
@@ -306,7 +301,7 @@ const checkForm = async (): Promise<Connection> => {
 }
 
 const resetFormValidation = () => {
-  if(formRef.value) {
+  if (formRef.value) {
     (formRef.value as VForm).resetValidation()
   }
 }
@@ -318,8 +313,10 @@ const testConnect = () => {
     _connectTest(connection).then(() => {
       _tipSuccess("Succeeded!")
     }).catch(e => {
-      console.error(e)
-      _tipError(`Failed: ${e}`)
+      _handleError({
+        e,
+        prefix: "Failed: "
+      })
     }).finally(() => {
       _loading(false)
     })
@@ -339,8 +336,10 @@ const connect = () => {
     _connect(connection).then((session: SessionData) => {
       events.emit('newConnection', {name, session})
     }).catch(e => {
-      console.error(e)
-      _tipError(`Failed: ${e}`)
+      _handleError({
+        e,
+        prefix:"Failed: "
+      })
     }).finally(() => {
       _loading(false)
     })
@@ -362,7 +361,7 @@ const saveConnection = () => {
     }).then(() => {
       emits('on-save')
     }).catch(e => {
-      _tipWarn(e)
+      _handleError({ e })
     })
   }).catch(() => {
 
