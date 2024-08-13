@@ -106,3 +106,9 @@ export function _getLease(sessionId: number, lease: string): Promise<LeaseInfo> 
         lease,
     })
 }
+
+export function _leases(sessionId: number): Promise<string[]> {
+    return invoke('leases', {
+        session: sessionId
+    })
+}
