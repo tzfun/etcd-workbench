@@ -7,19 +7,21 @@ import {
   _getKVByVersion,
   _getKVHistoryVersions,
   _handleError,
-  _putKV
+  _putKV,
+  _putKVWithLease
 } from "~/common/services.ts";
-import {_confirmSystem, _tipInfo, _tipWarn} from "~/common/events.ts";
-import {computed, onMounted, PropType, reactive, ref} from "vue";
+import {_confirmSystem, _tipInfo, _tipSuccess, _tipWarn} from "~/common/events.ts";
+import {computed, onMounted, onUnmounted, PropType, reactive, ref} from "vue";
 import {SessionData} from "~/common/transport/connection.ts";
 import DragBox from "~/components/DragBox.vue";
 import DragItem from "~/components/DragItem.vue";
 import {KeyValue} from "~/common/transport/kv.ts";
 import Editor from "~/components/editor/Editor.vue";
-import {_decodeBytesToString, fileTypeIcon} from "~/common/utils.ts";
+import {_decodeBytesToString, _isEmpty, fileTypeIcon} from "~/common/utils.ts";
 import {EditorConfig} from "~/common/types.ts";
 import {CodeDiff} from "v-code-diff";
 import {useTheme} from "vuetify";
+import CountDownTimer from "~/components/CountDownTimer.vue";
 
 const theme = useTheme()
 
@@ -50,8 +52,10 @@ const treeData = ref<TreeNode[]>([])
 const treeSelectable = ref(false)
 const currentKv = ref<KeyValue>()
 const currentKvChanged = ref<boolean>(false)
+const keyLeaseListeners = reactive<Set<Number>>(new Set())
 
 const editorRef = ref<InstanceType<typeof Editor>>()
+const newKeyEditorRef = ref<InstanceType<typeof Editor>>()
 const editorConfig = reactive<EditorConfig>({
   disabled: false,
   indentWithTab: true,
@@ -67,13 +71,16 @@ const loadingStore = reactive({
   diff: false,
   delete: false,
   deleteBatch: false,
-  loadAllKeys: false
+  loadAllKeys: false,
+  confirmNewKey: false
 })
 
 const newKeyDialog = reactive({
   show: false,
   key: '',
-  ttl: ''
+  ttl: '',
+  lease: '',
+  model: <'none' | 'ttl' | 'lease'>'none'
 })
 
 const versionDiffInfo = reactive({
@@ -101,11 +108,16 @@ onMounted(() => {
   loadAllKeys()
 })
 
+onUnmounted(() => {
+  clearAllKeyLeaseListener()
+})
+
 const loadAllKeys = () => {
   loadingStore.loadAllKeys = true
   _getAllKeys(props.session?.id).then(data => {
     console.log(data)
     treeData.value = constructTreeData(data)
+    clearAllKeyLeaseListener()
   }).catch(e => {
     _handleError({
       e,
@@ -334,10 +346,60 @@ const tryFileContentToType = (content: string): string => {
   return lang
 }
 
-const addKey = () => {
+const showNewKeyDialog = () => {
   newKeyDialog.key = ''
   newKeyDialog.ttl = ''
+  newKeyDialog.lease = ''
+  newKeyDialog.model = 'none'
   newKeyDialog.show = true
+}
+
+const putKey = () => {
+  if (_isEmpty(newKeyDialog.key)) {
+    _tipWarn("Key can not be empty")
+    return
+  }
+  if (newKeyDialog.model === 'ttl' && _isEmpty(newKeyDialog.ttl)) {
+    _tipWarn("Please input a valid ttl")
+    return
+  }
+  if (newKeyDialog.model === 'lease' && _isEmpty(newKeyDialog.lease)) {
+    _tipWarn("Please input a valid lease id")
+    return
+  }
+  let key = newKeyDialog.key
+  let value: number[] = newKeyEditorRef.value.readDataBytes()
+  let promise: Promise<undefined>
+  if (newKeyDialog.model === 'lease') {
+    promise = _putKVWithLease(props.session?.id, key, value, newKeyDialog.lease)
+  } else {
+    let ttl = newKeyDialog.model === 'none' ? undefined : parseInt(newKeyDialog.ttl)
+    promise = _putKV(props.session?.id, key, value, ttl)
+  }
+
+  loadingStore.confirmNewKey = true
+  promise.then(() => {
+    _tipSuccess("Succeeded!")
+    newKeyDialog.show = false
+    let root: TreeNode = {
+      title: 'root',
+      file: false,
+      iconKey: 'dir',
+      children: treeData.value
+    }
+    let kv: KeyValue = {
+      key: key,
+      value: []
+    }
+    addKvToTree(kv, root)
+  }).catch(e => {
+    _handleError({
+      e,
+      session: props.session
+    })
+  }).finally(() => {
+    loadingStore.confirmNewKey = false
+  })
 }
 
 const deleteKeyBatch = () => {
@@ -384,7 +446,19 @@ const treeSelected = ({id}: any) => {
       editorConfig.language = language
       currentKv.value = kv
       currentKvChanged.value = false
+
+      if (kv.leaseInfo) {
+        let timer = setTimeout(() => {
+          keyLeaseListeners.delete(timer)
+          onKeyTimeOver(kv.key)
+        }, kv.leaseInfo.ttl * 1000)
+        keyLeaseListeners.add(timer)
+      }
+
     }).catch(e => {
+      if (e.errType && e.errType == 'ResourceNotExist') {
+        removeKeyFromTreeData([selectedKv.key])
+      }
       _handleError({
         e,
         session: props.session
@@ -550,6 +624,21 @@ const deleteKey = () => {
   })
 }
 
+const onKeyTimeOver = (key: string) => {
+  if (currentKv.value && currentKv.value.key) {
+    currentKv.value = null
+  }
+  removeKeyFromTreeData([key])
+}
+
+const clearAllKeyLeaseListener = () => {
+  for (let keyLeaseListener of keyLeaseListeners) {
+    clearTimeout(keyLeaseListener)
+  }
+
+  keyLeaseListeners.clear()
+}
+
 </script>
 
 <template>
@@ -565,7 +654,7 @@ const deleteKey = () => {
       <v-btn class="text-none ml-2"
              prepend-icon="mdi-file-document-plus-outline"
              color="green"
-             @click="addKey"
+             @click="showNewKeyDialog"
       >
         Add Key
       </v-btn>
@@ -687,18 +776,27 @@ const deleteKey = () => {
                       :config="editorConfig"
                       @change="editorChange"
                       @save="editorSave">
-                <template #footerPrepend>
-                  <div>
-                    <span class="editor-footer-item"><strong>Version</strong>: {{ currentKv.version }}</span>
-                    <span class="editor-footer-item"><strong>Create Revision</strong>: {{
-                        currentKv.createRevision
-                      }}</span>
-                    <span class="editor-footer-item"><strong>Modify Revision</strong>: {{
-                        currentKv.modRevision
-                      }}</span>
-                    <span class="editor-footer-item"
-                          v-if="currentKv.lease != '0'"><strong>Lease</strong>: {{ currentKv.lease }}</span>
-                  </div>
+                <template #footer>
+                  <span class="editor-footer-item ml-0" v-if="currentKv.leaseInfo">
+                    <v-tooltip location="top"
+                               :text="`Granted TTL: ${currentKv.leaseInfo.grantedTtl} s`">
+                      <template v-slot:activator="{ props }">
+                        <span class="text-secondary user-select-none"
+                              v-bind="props">
+                          <v-icon class="mr-1">mdi-clock-time-eight</v-icon>
+                          <CountDownTimer :value="currentKv.leaseInfo.ttl"></CountDownTimer>
+                        </span>
+                      </template>
+                    </v-tooltip>
+                  </span>
+                  <v-spacer></v-spacer>
+                  <span class="editor-footer-item"><strong>Version</strong>: {{ currentKv.version }}</span>
+                  <span class="editor-footer-item"><strong>Create Revision</strong>: {{
+                      currentKv.createRevision
+                    }}</span>
+                  <span class="editor-footer-item"><strong>Modify Revision</strong>: {{ currentKv.modRevision }}</span>
+                  <span class="editor-footer-item"
+                        v-if="currentKv.lease != '0'"><strong>Lease</strong>: {{ currentKv.lease }}</span>
                 </template>
               </editor>
             </div>
@@ -802,19 +900,48 @@ const deleteKey = () => {
             ></v-text-field>
           </v-layout>
           <v-layout class="mb-5">
+            <span class="new-key-form-label"></span>
+            <v-radio-group
+                v-model="newKeyDialog.model"
+                inline
+                hide-details
+            >
+              <v-radio
+                  label="Never Expire"
+                  value="none"
+              ></v-radio>
+              <v-radio
+                  label="With TTL"
+                  value="ttl"
+              ></v-radio>
+              <v-radio
+                  label="With Lease"
+                  value="lease"
+              ></v-radio>
+            </v-radio-group>
+          </v-layout>
+          <v-layout class="mb-5" v-if="newKeyDialog.model == 'ttl'">
             <span class="new-key-form-label">TTL(s): </span>
             <v-text-field v-model="newKeyDialog.ttl"
                           type="number"
                           density="comfortable"
-                          prepend-inner-icon="mdi-clock-time-eight-outline"
+                          prepend-inner-icon="mdi-clock-time-eight"
                           hint="The key expiration time in seconds, optional. If left blank, the key will never expire."
                           persistent-hint
             ></v-text-field>
           </v-layout>
+          <v-layout class="mb-5" v-if="newKeyDialog.model == 'lease'">
+            <span class="new-key-form-label">Lease: </span>
+            <v-text-field v-model="newKeyDialog.lease"
+                          type="number"
+                          density="comfortable"
+                          prepend-inner-icon="mdi-clock-time-eight"
+                          hint="Bind the key to this lease, they share the same lifecycle. Please make sure the lease already exists, otherwise the operation will fail."
+                          persistent-hint
+            ></v-text-field>
+          </v-layout>
           <div style="height: 50vh;width:100%">
-            <editor :config="editorConfig"
-                    hide-header
-            ></editor>
+            <editor ref="newKeyEditorRef" :config="editorConfig"></editor>
           </div>
         </v-card-text>
         <v-card-actions>
@@ -828,6 +955,8 @@ const deleteKey = () => {
                  variant="flat"
                  class="text-none"
                  color="primary"
+                 @click="putKey"
+                 :loading="loadingStore.confirmNewKey"
           ></v-btn>
         </v-card-actions>
       </v-card>

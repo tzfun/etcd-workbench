@@ -10,6 +10,7 @@ pub struct SerializableKeyValue {
     pub version: i64,
     pub value: Vec<u8>,
     pub lease: String,
+    pub lease_info: Option<SerializableLeaseSimpleInfo>
 }
 
 impl From<KeyValue> for SerializableKeyValue {
@@ -28,6 +29,7 @@ impl From<KeyValue> for SerializableKeyValue {
                 mod_revision,
                 version,
                 lease,
+                lease_info: None
             }
         }
     }
@@ -46,4 +48,11 @@ pub struct SerializableLeaseInfo {
     pub ttl: i64,
     pub granted_ttl: i64,
     pub keys: Vec<String>
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all="camelCase")]
+pub struct SerializableLeaseSimpleInfo {
+    pub ttl: i64,
+    pub granted_ttl: i64
 }

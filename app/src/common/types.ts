@@ -144,7 +144,7 @@ export type EditorConfig = {
 }
 
 export type LogicErrorInfo = {
-    e: ErrorPayload,
+    e: ErrorPayload | string,
     prefix?: string,
     session: SessionData
 }

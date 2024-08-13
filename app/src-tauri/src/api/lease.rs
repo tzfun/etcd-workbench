@@ -1,8 +1,10 @@
 use std::str::FromStr;
+
 use log::warn;
+
 use crate::error::LogicError;
 use crate::etcd;
-use crate::transport::kv::SerializableLeaseInfo;
+use crate::transport::kv::{SerializableLeaseInfo};
 
 #[tauri::command]
 pub async fn leases(session: i32) -> Result<Vec<String>, LogicError> {

@@ -10,7 +10,7 @@ use log::{debug, error, info, warn};
 use crate::error::LogicError;
 use crate::ssh::ssh_tunnel::SshTunnel;
 use crate::transport::connection::Connection;
-use crate::transport::kv::{SerializableKeyValue, SerializableLeaseInfo};
+use crate::transport::kv::{SerializableKeyValue, SerializableLeaseInfo, SerializableLeaseSimpleInfo};
 use crate::transport::maintenance::{SerializableCluster, SerializableClusterMember, SerializableClusterStatus};
 use crate::transport::user::{SerializablePermission, SerializableUser};
 
@@ -117,7 +117,7 @@ impl EtcdConnector {
     }
 
     /// 获取键值对详情
-    pub async fn kv_get(&self, key: impl Into<Vec<u8>>) -> Result<SerializableKeyValue, Error> {
+    pub async fn kv_get(&self, key: impl Into<Vec<u8>>) -> Result<SerializableKeyValue, LogicError> {
         let mut kv_client = self.get_client().kv_client();
         let path = self.get_full_key(key);
         let response = kv_client.get(path, None).await?;
@@ -126,7 +126,7 @@ impl EtcdConnector {
     }
 
     /// 根据历史版本获取键值对详情
-    pub async fn kv_get_by_version(&self, key: impl Into<Vec<u8>>, version: i64) -> Result<SerializableKeyValue, Error> {
+    pub async fn kv_get_by_version(&self, key: impl Into<Vec<u8>>, version: i64) -> Result<SerializableKeyValue, LogicError> {
         let mut kv_client = self.get_client().kv_client();
         let path = self.get_full_key(key);
         let mut response = kv_client.get(path, Some(GetOptions::new().with_revision(version))).await?;
@@ -134,10 +134,10 @@ impl EtcdConnector {
         self.parse_kv_get_response(response)
     }
 
-    fn parse_kv_get_response(&self, mut response: GetResponse) -> Result<SerializableKeyValue, Error> {
+    fn parse_kv_get_response(&self, mut response: GetResponse) -> Result<SerializableKeyValue, LogicError> {
         let kv = response.take_kvs();
         if kv.is_empty() {
-            Err(Error::InvalidArgs(String::from("Key not found")))
+            Err(LogicError::ResourceNotExist("The key does not exist or has expired."))
         } else {
             let mut s_kv = SerializableKeyValue::from(kv.first().unwrap().to_owned());
             if let Some(namespace) = &self.namespace {
@@ -286,6 +286,19 @@ impl EtcdConnector {
             ttl,
             granted_ttl,
             keys,
+        })
+    }
+
+    /// 获取lease的简要详情信息
+    pub async fn lease_get_simple_info(&self, lease: i64) -> Result<SerializableLeaseSimpleInfo, Error> {
+        let options = LeaseTimeToLiveOptions::new().with_keys();
+        let response = self.client.lease_client().time_to_live(lease, Some(options)).await?;
+        let ttl = response.ttl();
+        let granted_ttl = response.granted_ttl();
+
+        Ok(SerializableLeaseSimpleInfo {
+            ttl,
+            granted_ttl,
         })
     }
 

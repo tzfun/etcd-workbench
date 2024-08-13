@@ -1,15 +1,21 @@
 import {invoke} from "@tauri-apps/api";
 import {Connection, ConnectionInfo, SessionData} from "~/common/transport/connection.ts";
 import {Cluster} from "~/common/transport/maintenance.ts";
-import {KeyValue} from "~/common/transport/kv.ts";
+import {KeyValue, LeaseInfo, LeaseSimpleInfo} from "~/common/transport/kv.ts";
 import {_tipError, events} from "~/common/events.ts";
 import {LogicErrorInfo} from "~/common/types.ts";
 
 export function _handleError(info: LogicErrorInfo) {
-    console.error(info.e)
-    _tipError((info.prefix ? info.prefix : "") + info.e.errMsg)
-    if (info.e.errType == "Unauthenticated" && info.session) {
-        events.emit('closeTab', info.session.id)
+    let error = info.e
+    console.error(error)
+
+    if (typeof error === 'string') {
+        _tipError((info.prefix ? info.prefix : "") + info.e)
+    } else {
+        _tipError((info.prefix ? info.prefix : "") + error.errMsg)
+        if (info.e.errType == "Unauthenticated" && info.session) {
+            events.emit('closeTab', info.session.id)
+        }
     }
 }
 
@@ -60,12 +66,21 @@ export function _getKVByVersion(sessionId: number, key: string, version: number)
     })
 }
 
-export function _putKV(sessionId: number, key: string, value: number[], ttl?: string): Promise<undefined> {
+export function _putKV(sessionId: number, key: string, value: number[], ttl?: number): Promise<undefined> {
     return invoke('kv_put', {
         session: sessionId,
         key,
         value,
         ttl
+    })
+}
+
+export function _putKVWithLease(sessionId: number, key: string, value: number[], lease: string): Promise<undefined> {
+    return invoke('kv_put_with_lease', {
+        session: sessionId,
+        key,
+        value,
+        lease
     })
 }
 
@@ -82,5 +97,12 @@ export function _getKVHistoryVersions(sessionId: number, key: string, start: num
         key,
         start,
         end
+    })
+}
+
+export function _getLease(sessionId: number, lease: string): Promise<LeaseInfo> {
+    return invoke('lease_get', {
+        session: sessionId,
+        lease,
     })
 }

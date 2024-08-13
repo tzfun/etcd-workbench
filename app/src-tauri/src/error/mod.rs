@@ -16,7 +16,9 @@ enum ErrorType {
     /// 应用异常，一般是代码级的错误
     AppError,
     /// 参数错误
-    ArgumentError
+    ArgumentError,
+    /// 资源不存在
+    ResourceNotExist
 }
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all="camelCase")]
@@ -26,9 +28,10 @@ pub struct ErrorPayload<'a> {
 }
 
 #[derive(Debug)]
-pub enum LogicError {
+pub enum LogicError<> {
     ConnectionLose,
     ArgumentError,
+    ResourceNotExist(&'static str),
     EtcdClientError(etcd_client::Error),
     SshError(russh::Error),
     IoError(io::Error),
@@ -135,6 +138,12 @@ impl Serialize for LogicError {
                 ErrorPayload {
                     err_type: ErrorType::ArgumentError,
                     err_msg: "invalid argument",
+                }.serialize(serializer)
+            }
+            LogicError::ResourceNotExist(e) => {
+                ErrorPayload {
+                    err_type: ErrorType::ResourceNotExist,
+                    err_msg: e,
                 }.serialize(serializer)
             }
         }

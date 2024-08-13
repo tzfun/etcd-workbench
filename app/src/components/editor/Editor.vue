@@ -229,7 +229,7 @@ defineExpose({
     </div>
     <v-divider></v-divider>
     <div class="footer">
-      <slot name="footerPrepend"></slot>
+      <slot name="footer"></slot>
       <span class="editor-footer-item"><strong>Size</strong>: {{ size }}</span>
       <span class="editor-footer-item">
         <span class="text-primary cursor-pointer user-select-none"
@@ -286,6 +286,7 @@ $--editor-padding: 0 1rem;
   justify-content: right;
   align-items: center;
   font-size: 90%;
+  overflow: auto;
 
   .editor-language-selection {
     position: absolute;

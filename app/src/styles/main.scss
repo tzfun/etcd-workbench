@@ -41,6 +41,10 @@ html,body,#app {
   border-radius: 6px;
 }
 
+::-webkit-scrollbar-corner {
+  background-color: rgba(0,0,0,0);
+}
+
 .user-select-none {
   user-select: none;
   -moz-user-select: none;
@@ -71,6 +75,7 @@ html,body,#app {
   height: $--editor-footer-height;
   line-height: $--editor-footer-height;
   opacity: 0.7;
+  text-wrap: nowrap;
 }
 
 .editor-footer-item:hover {

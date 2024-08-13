@@ -14,7 +14,12 @@ pub async fn kv_get_all_keys(session: i32) -> Result<Vec<SerializableKeyValue>, 
 #[tauri::command]
 pub async fn kv_get(session: i32, key: String) -> Result<SerializableKeyValue, LogicError> {
     let connector = etcd::get_connector(&session)?;
-    let kv = connector.kv_get(key).await?;
+    let mut kv = connector.kv_get(key).await?;
+    if kv.lease.ne("0") {
+        let lease_id = i64::from_str(kv.lease.as_str()).unwrap();
+        let info = connector.lease_get_simple_info(lease_id).await?;
+        kv.lease_info = Some(info)
+    }
     Ok(kv)
 }
 
@@ -26,17 +31,8 @@ pub async fn kv_get_by_version(session: i32, key: String, version: i64) -> Resul
 }
 
 #[tauri::command]
-pub async fn kv_put(session: i32, key: String, value: Vec<u8>, ttl: Option<String>) -> Result<(), LogicError> {
+pub async fn kv_put(session: i32, key: String, value: Vec<u8>, ttl: Option<i64>) -> Result<(), LogicError> {
     let connector = etcd::get_connector(&session)?;
-    let ttl = if let Some(s) = ttl {
-        Some(i64::from_str(&s).map_err(|e| {
-            warn!("ttl parse error: {e}");
-            LogicError::ArgumentError
-        })?)
-    } else {
-        None
-    };
-
     connector.kv_put(
         key,
         value,
