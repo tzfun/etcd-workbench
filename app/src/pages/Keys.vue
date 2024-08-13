@@ -77,6 +77,10 @@ const loadingStore = reactive({
 
 const newKeyDialog = reactive({
   show: false,
+  title: 'New Key',
+  copyAndSave: false,
+  fromKey: '',
+  value: '',
   key: '',
   ttl: '',
   lease: '',
@@ -115,7 +119,6 @@ onUnmounted(() => {
 const loadAllKeys = () => {
   loadingStore.loadAllKeys = true
   _getAllKeys(props.session?.id).then(data => {
-    console.log(data)
     treeData.value = constructTreeData(data)
     clearAllKeyLeaseListener()
   }).catch(e => {
@@ -350,7 +353,23 @@ const showNewKeyDialog = () => {
   newKeyDialog.key = ''
   newKeyDialog.ttl = ''
   newKeyDialog.lease = ''
+  newKeyDialog.value = ''
+  newKeyDialog.fromKey = ''
   newKeyDialog.model = 'none'
+  newKeyDialog.title = 'New Key'
+  newKeyDialog.copyAndSave = false
+  newKeyDialog.show = true
+}
+
+const showCopyAndSaveDialog = (fromKey: string, fromValue: string) => {
+  newKeyDialog.key = ''
+  newKeyDialog.ttl = ''
+  newKeyDialog.lease = ''
+  newKeyDialog.model = 'none'
+  newKeyDialog.fromKey = fromKey
+  newKeyDialog.value = fromValue
+  newKeyDialog.title = 'Copy And Save'
+  newKeyDialog.copyAndSave = true
   newKeyDialog.show = true
 }
 
@@ -735,10 +754,11 @@ const clearAllKeyLeaseListener = () => {
             <v-layout class="editor-header">
               <v-spacer></v-spacer>
               <v-btn
+                  v-show="currentKvChanged"
                   color="primary"
                   size="small"
                   @click="saveKV"
-                  :text="`Save${currentKvChanged ? ' *' : ''}`"
+                  text="Save"
                   class="mr-2 text-none"
                   :loading="loadingStore.save"
                   prepend-icon="mdi-content-save-outline"
@@ -758,6 +778,7 @@ const clearAllKeyLeaseListener = () => {
                   text="Copy And Save"
                   class="mr-2 text-none"
                   prepend-icon="mdi-content-copy"
+                  @click="showCopyAndSaveDialog(currentKv.key, _decodeBytesToString(currentKv.value))"
               ></v-btn>
               <v-btn
                   color="deep-orange-darken-1"
@@ -769,6 +790,7 @@ const clearAllKeyLeaseListener = () => {
                   prepend-icon="mdi-trash-can-outline"
               ></v-btn>
             </v-layout>
+
             <div class="editor-body">
               <editor ref="editorRef"
                       :key="currentKv.key"
@@ -886,9 +908,20 @@ const clearAllKeyLeaseListener = () => {
         persistent
         max-width="70vw"
         min-width="500px"
+        scrollable
     >
-      <v-card title="New Key">
+      <v-card :title="newKeyDialog.title">
         <v-card-text>
+          <v-layout class="mb-5" v-show="newKeyDialog.copyAndSave">
+            <span class="new-key-form-label">From Key: </span>
+            <v-text-field v-model="newKeyDialog.fromKey"
+                          density="comfortable"
+                          prepend-inner-icon="mdi-key"
+                          :prefix="session.namespace"
+                          hide-details
+                          readonly
+            ></v-text-field>
+          </v-layout>
           <v-layout class="mb-5">
             <span class="new-key-form-label">Key: </span>
             <v-text-field v-model="newKeyDialog.key"
@@ -941,7 +974,9 @@ const clearAllKeyLeaseListener = () => {
             ></v-text-field>
           </v-layout>
           <div style="height: 50vh;width:100%">
-            <editor ref="newKeyEditorRef" :config="editorConfig"></editor>
+            <editor ref="newKeyEditorRef"
+                    :value="newKeyDialog.value"
+                    :config="editorConfig"></editor>
           </div>
         </v-card-text>
         <v-card-actions>

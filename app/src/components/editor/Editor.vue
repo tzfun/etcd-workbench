@@ -211,7 +211,7 @@ defineExpose({
 </script>
 
 <template>
-  <div class="fill-height position-relative">
+  <div class="fill-height position-relative border-solid border-sm border-opacity">
     <div class="editor">
       <codemirror
           v-model="content"
@@ -266,7 +266,7 @@ defineExpose({
 $--editor-padding: 0 1rem;
 
 .editor {
-  height: calc(100% -  $--editor-footer-height - 1px);
+  height: calc(100% -  $--editor-footer-height - 2px);
 
   .code {
     width: 30%;

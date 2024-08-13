@@ -24,7 +24,6 @@ onActivated(() => {
 })
 
 const selectList = ({id}: any) => {
-  console.log(id)
   if (!visited.value[id]) {
     visited.value[id] = true
   }

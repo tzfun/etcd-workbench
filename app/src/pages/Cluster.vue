@@ -38,7 +38,6 @@ onMounted(() => {
 const loadCluster = () => {
   _getCluster(props.session?.id).then(c => {
     cluster.value = c
-    console.log(c)
   }).catch(e => {
     _handleError({
       e,
