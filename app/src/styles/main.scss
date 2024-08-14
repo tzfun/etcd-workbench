@@ -1,5 +1,8 @@
+@use 'settings';
 @use 'vuetify';
 @import "variables";
+
+
 html,body,#app {
   overflow: hidden;
   padding: 0;

@@ -135,15 +135,19 @@ const toggleTheme = () => {
 </template>
 
 <style scoped lang="scss">
+@import "~/styles/variables";
+
 .system-extend-btn {
   font-size: 1.1em;
+  opacity: $--system-btn-opacity;
 }
 
 .system-native-btn {
   font-size: 0.9em;
-  opacity: 0.5;
+  opacity: $--system-btn-opacity;
 }
 
+.system-extend-btn:hover,
 .system-native-btn:hover {
   opacity: 1;
 }
@@ -158,7 +162,7 @@ const toggleTheme = () => {
 }
 
 .tab-icon-close:hover {
-  color: #757575
+  color: white;
 }
 
 </style>

@@ -303,12 +303,12 @@ impl EtcdConnector {
     }
 
     /// 授权新的lease或为已存在的lease续租
-    pub async fn lease_grant(&self, ttl: i64, lease: Option<i64>) -> Result<(), Error> {
+    pub async fn lease_grant(&self, ttl: i64, lease: Option<i64>) -> Result<i64, Error> {
         let options = lease.map(|id| {
             LeaseGrantOptions::new().with_id(id)
         });
-        self.client.lease_client().grant(ttl, options).await?;
-        Ok(())
+        let response = self.client.lease_client().grant(ttl, options).await?;
+        Ok(response.id())
     }
 
     /// 回收lease

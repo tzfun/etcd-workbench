@@ -1,7 +1,7 @@
 import {invoke} from "@tauri-apps/api";
 import {Connection, ConnectionInfo, SessionData} from "~/common/transport/connection.ts";
 import {Cluster} from "~/common/transport/maintenance.ts";
-import {KeyValue, LeaseInfo, LeaseSimpleInfo} from "~/common/transport/kv.ts";
+import {KeyValue, LeaseInfo} from "~/common/transport/kv.ts";
 import {_tipError, events} from "~/common/events.ts";
 import {LogicErrorInfo} from "~/common/types.ts";
 
@@ -13,7 +13,7 @@ export function _handleError(info: LogicErrorInfo) {
         _tipError((info.prefix ? info.prefix : "") + info.e)
     } else {
         _tipError((info.prefix ? info.prefix : "") + error.errMsg)
-        if (info.e.errType == "Unauthenticated" && info.session) {
+        if (error.errType == "Unauthenticated" && info.session) {
             events.emit('closeTab', info.session.id)
         }
     }
@@ -110,5 +110,20 @@ export function _getLease(sessionId: number, lease: string): Promise<LeaseInfo> 
 export function _leases(sessionId: number): Promise<string[]> {
     return invoke('leases', {
         session: sessionId
+    })
+}
+
+export function _revokeLeases(sessionId: number, lease: string): Promise<undefined> {
+    return invoke('lease_revoke', {
+        session: sessionId,
+        lease
+    })
+}
+
+export function _grantLease(sessionId: number, ttl: number, lease?: string): Promise<string> {
+    return invoke('lease_grant', {
+        session: sessionId,
+        ttl,
+        lease
     })
 }

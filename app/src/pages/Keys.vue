@@ -52,7 +52,7 @@ const treeData = ref<TreeNode[]>([])
 const treeSelectable = ref(false)
 const currentKv = ref<KeyValue>()
 const currentKvChanged = ref<boolean>(false)
-const keyLeaseListeners = reactive<Set<Number>>(new Set())
+const keyLeaseListeners = reactive<Set>(new Set())
 
 const editorRef = ref<InstanceType<typeof Editor>>()
 const newKeyEditorRef = ref<InstanceType<typeof Editor>>()
@@ -645,7 +645,7 @@ const deleteKey = () => {
 
 const onKeyTimeOver = (key: string) => {
   if (currentKv.value && currentKv.value.key) {
-    currentKv.value = null
+    currentKv.value = undefined
   }
   removeKeyFromTreeData([key])
 }
@@ -968,7 +968,7 @@ const clearAllKeyLeaseListener = () => {
             <v-text-field v-model="newKeyDialog.lease"
                           type="number"
                           density="comfortable"
-                          prepend-inner-icon="mdi-clock-time-eight"
+                          prepend-inner-icon="mdi-identifier"
                           hint="Bind the key to this lease, they share the same lifecycle. Please make sure the lease already exists, otherwise the operation will fail."
                           persistent-hint
             ></v-text-field>

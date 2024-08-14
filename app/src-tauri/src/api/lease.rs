@@ -23,3 +23,31 @@ pub async fn lease_get(session: i32, lease: String) -> Result<SerializableLeaseI
     let info = connector.lease_get(lease).await?;
     Ok(info)
 }
+
+#[tauri::command]
+pub async fn lease_grant(session: i32, ttl: i64, lease: Option<String>) -> Result<String, LogicError> {
+    let connector = etcd::get_connector(&session)?;
+
+    let lease = if let Some(s) = lease {
+        Some(i64::from_str(&s).map_err(|e| {
+            warn!("lease parse error: {e}");
+            LogicError::ArgumentError
+        })?)
+    } else {
+        None
+    };
+
+    let lease_id = connector.lease_grant(ttl, lease).await?;
+    Ok(lease_id.to_string())
+}
+
+#[tauri::command]
+pub async fn lease_revoke(session: i32, lease: String) -> Result<(), LogicError> {
+    let connector = etcd::get_connector(&session)?;
+    let lease = i64::from_str(&lease).map_err(|e| {
+        warn!("lease parse error: {e}");
+        LogicError::ArgumentError
+    })?;
+    connector.lease_revoke(lease).await?;
+    Ok(())
+}

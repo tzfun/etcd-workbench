@@ -166,6 +166,7 @@ const setting = () => {
 </template>
 
 <style scoped lang="scss">
+@import "~/styles/variables";
 
 $--mac-native-btn-width: 12px;
 
@@ -195,5 +196,14 @@ $--mac-native-btn-width: 12px;
   .system-native-icon {
     opacity: 1;
   }
+}
+
+.system-extend-btn {
+  font-size: 1.1em;
+  opacity: $--system-btn-opacity;
+}
+
+.system-extend-btn:hover {
+  opacity: 1;
 }
 </style>

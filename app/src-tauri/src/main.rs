@@ -48,6 +48,8 @@ fn main() {
             api::maintenance::get_cluster,
             api::lease::leases,
             api::lease::lease_get,
+            api::lease::lease_grant,
+            api::lease::lease_revoke,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
