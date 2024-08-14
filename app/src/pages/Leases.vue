@@ -28,7 +28,7 @@ const grantNewDialog = reactive({
   ttl: '',
   lease: ''
 })
-const leaseListeners = reactive<Set>(new Set())
+const leaseListeners = reactive<Set<any>>(new Set())
 
 onMounted(() => {
   loadAllLeases()

@@ -19,7 +19,7 @@ export type TimeUnit =
     | 'minute'
     | 'second'
     | 'millisecond'
-export const fileTypeIcon = {
+export const fileTypeIcon:Record<string, string> = {
     file: 'mdi-file-document-outline',
     text: 'mdi-file-document-outline',
     js: 'mdi-nodejs',

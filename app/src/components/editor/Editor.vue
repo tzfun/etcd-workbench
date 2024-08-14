@@ -188,7 +188,7 @@ const onKeyDown = (event: KeyboardEvent) => {
   }
 }
 
-const changeLanguage = (lang) => {
+const changeLanguage = (lang: string) => {
   propsConfig.value.language = lang
   showLanguageSelection.value = false
 }
@@ -198,7 +198,7 @@ const changeLanguage = (lang) => {
  */
 const readDataBytes = (): number[] => {
   if (propsConfig.value.language == 'blob') {
-    _strArrToNumArr(content.value.trim().split(/\s+/))
+    return _strArrToNumArr(content.value.trim().split(/\s+/))
   } else {
     return _encodeStringToBytes(content.value)
   }

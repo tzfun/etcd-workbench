@@ -146,5 +146,5 @@ export type EditorConfig = {
 export type LogicErrorInfo = {
     e: ErrorPayload | string,
     prefix?: string,
-    session: SessionData
+    session?: SessionData
 }

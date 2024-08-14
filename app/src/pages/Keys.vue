@@ -47,12 +47,12 @@ const props = defineProps({
   }
 })
 
-const treeValue = ref([])
+const treeValue = ref<KeyValue[]>([])
 const treeData = ref<TreeNode[]>([])
 const treeSelectable = ref(false)
 const currentKv = ref<KeyValue>()
 const currentKvChanged = ref<boolean>(false)
-const keyLeaseListeners = reactive<Set>(new Set())
+const keyLeaseListeners = reactive<Set<any>>(new Set())
 
 const editorRef = ref<InstanceType<typeof Editor>>()
 const newKeyEditorRef = ref<InstanceType<typeof Editor>>()
@@ -249,12 +249,12 @@ const removeKeyFromTreeData = (keys: string[]) => {
           if (removedFile) {
             //  文件已删除，开始清空空目录
             if (node) {
-              let idx = node.children!.indexOf(needRemoveDirNode)
+              let idx = node.children!.indexOf(needRemoveDirNode!)
               if (idx >= 0) {
                 node.children?.splice(idx, 1)
               }
             } else {
-              let idx = treeData.value.indexOf(needRemoveDirNode)
+              let idx = treeData.value.indexOf(needRemoveDirNode!)
               if (idx >= 0) {
                 treeData.value.splice(idx, 1)
               }
@@ -387,7 +387,7 @@ const putKey = () => {
     return
   }
   let key = newKeyDialog.key
-  let value: number[] = newKeyEditorRef.value.readDataBytes()
+  let value: number[] = newKeyEditorRef.value!.readDataBytes()
   let promise: Promise<undefined>
   if (newKeyDialog.model === 'lease') {
     promise = _putKVWithLease(props.session?.id, key, value, newKeyDialog.lease)
@@ -406,6 +406,7 @@ const putKey = () => {
       iconKey: 'dir',
       children: treeData.value
     }
+    //  @ts-ignore
     let kv: KeyValue = {
       key: key,
       value: []
@@ -426,7 +427,7 @@ const deleteKeyBatch = () => {
     _tipInfo('Please select at least one key')
     return
   }
-  let keys = []
+  let keys:string[] = []
   let containsCurrentKV = false
   for (let value of treeValue.value) {
     keys.push(value.key)

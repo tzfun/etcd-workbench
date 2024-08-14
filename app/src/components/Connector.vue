@@ -3,7 +3,7 @@ import {PropType, reactive, ref, watch} from "vue";
 import {ConnectionForm, ConnectionSshForm, ConnectionTlsForm, DefaultConnection} from "~/common/types.ts";
 import etcdLogo from '~/assets/etcd.png'
 import SingleFileSelector from "~/components/SingleFileSelector.vue";
-import {Connection, ConnectionInfo, SessionData, SshIdentity} from "~/common/transport/connection.ts";
+import {Connection, ConnectionInfo, ErrorPayload, SessionData, SshIdentity} from "~/common/transport/connection.ts";
 import {_decodeBytesToString, _encodeStringToBytes, _isEmpty, _nonEmpty} from "~/common/utils.ts";
 import {_connect, _connectTest, _handleError, _saveConnection} from "~/common/services.ts";
 import {_loading, _tipSuccess, _tipWarn, events} from "~/common/events.ts";
@@ -312,7 +312,7 @@ const testConnect = () => {
     _loading(true)
     _connectTest(connection).then(() => {
       _tipSuccess("Succeeded!")
-    }).catch(e => {
+    }).catch((e: ErrorPayload | string) => {
       _handleError({
         e,
         prefix: "Failed: "
@@ -335,10 +335,10 @@ const connect = () => {
     _loading(true)
     _connect(connection).then((session: SessionData) => {
       events.emit('newConnection', {name, session})
-    }).catch(e => {
+    }).catch((e: ErrorPayload | string) => {
       _handleError({
         e,
-        prefix:"Failed: "
+        prefix: "Failed: "
       })
     }).finally(() => {
       _loading(false)
@@ -360,8 +360,8 @@ const saveConnection = () => {
       connection
     }).then(() => {
       emits('on-save')
-    }).catch(e => {
-      _handleError({ e })
+    }).catch((e: ErrorPayload | string) => {
+      _handleError({e})
     })
   }).catch(() => {
 

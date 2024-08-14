@@ -4,7 +4,7 @@ import Connector from "~/components/Connector.vue";
 import {_getConnectionList, _handleError, _removeConnection} from "~/common/services.ts";
 import {_alertError, _confirm} from "~/common/events.ts";
 import {onActivated, onMounted, ref} from "vue";
-import {ConnectionInfo, DEFAULT_CONNECTION} from "~/common/transport/connection.ts";
+import {ConnectionInfo, DEFAULT_CONNECTION, ErrorPayload} from "~/common/transport/connection.ts";
 
 const connectionList = ref<ConnectionInfo[]>([])
 const currentConnection = ref<ConnectionInfo>(DEFAULT_CONNECTION)
@@ -21,7 +21,7 @@ const loadConnectionList = () => {
   _getConnectionList().then(list => {
     list.sort((a, b) => a.name.localeCompare(b.name))
     connectionList.value = list
-  }).catch(e => {
+  }).catch((e: ErrorPayload | string) => {
     _handleError({ e })
   })
 }
@@ -51,7 +51,7 @@ const removeConnectionConfig = (name: string) => {
           currentConnection.value = DEFAULT_CONNECTION
         }
       }
-    }).catch(e => {
+    }).catch((e: ErrorPayload | string) => {
       _handleError({ e })
     })
   }).catch(() => {

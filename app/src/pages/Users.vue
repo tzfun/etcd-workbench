@@ -283,7 +283,7 @@ const grantRole = () => {
   })
 }
 
-const roleSelectionProps = (item) => {
+const roleSelectionProps = (item: string) => {
   return {
     title: item,
     value: item,
