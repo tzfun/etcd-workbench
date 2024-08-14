@@ -8,7 +8,7 @@ const props = defineProps({
   }
 })
 
-const timer = ref<number>()
+const timer = ref()
 const countdown = ref<number>(0)
 const splitter = reactive({
   hour: 0,
@@ -30,10 +30,10 @@ onUnmounted(() => {
 
 const onTick = () => {
   let v = --countdown.value;
-  let hour = parseInt(v / 3600)
+  let hour = Math.floor(v / 3600)
   v = v % 3600
-  let minute = parseInt(v / 60)
-  let second = parseInt(v % 60)
+  let minute = Math.floor(v / 60)
+  let second = Math.floor(v % 60)
 
   splitter.hour = hour
   splitter.minute = minute
@@ -47,7 +47,7 @@ const onTick = () => {
 const cleanTimer = () => {
   let t = timer.value
   if (t) {
-    timer.value = null
+    timer.value = undefined
     clearInterval(t)
   }
 }
@@ -55,6 +55,7 @@ const cleanTimer = () => {
 </script>
 
 <template>
+  <v-icon class="mr-1" color="light-blue-accent-3">mdi-clock-time-four-outline</v-icon>
   <span v-show="splitter.hour > 0">{{ splitter.hour }}h / </span>
   <span v-show="splitter.minute > 0">{{ splitter.minute }}m / </span>
   <span v-show="countdown > 0">{{ splitter.second }}s</span>

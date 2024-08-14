@@ -665,34 +665,31 @@ const clearAllKeyLeaseListener = () => {
     <v-layout class="action-area">
       <v-btn class="text-none"
              prepend-icon="mdi-refresh"
-             color="primary"
+             variant="outlined"
              @click="loadAllKeys"
              :loading="loadingStore.loadAllKeys"
-      >Refresh
-      </v-btn>
+             text="Refresh"
+      ></v-btn>
       <v-btn class="text-none ml-2"
              prepend-icon="mdi-file-document-plus-outline"
              color="green"
              @click="showNewKeyDialog"
-      >
-        Add Key
-      </v-btn>
+             text="Add Key"
+      ></v-btn>
       <v-btn class="text-none ml-2"
              :prepend-icon="treeSelectable ? 'mdi-checkbox-outline' : 'mdi-checkbox-blank-outline'"
              color="secondary"
              @click="toggleTreeSelectable"
-      >
-        Select Key
-      </v-btn>
+             text="Select Keys"
+      ></v-btn>
       <v-btn class="text-none ml-2"
              v-show="treeSelectable"
              prepend-icon="mdi-file-document-minus-outline"
              color="red"
              @click="deleteKeyBatch"
              :loading="loadingStore.deleteBatch"
-      >
-        Delete Key
-      </v-btn>
+             text="Delete Keys"
+      ></v-btn>
       <v-spacer></v-spacer>
       <v-tooltip v-if="session.namespace"
                  location="bottom"
@@ -805,7 +802,6 @@ const clearAllKeyLeaseListener = () => {
                       <template v-slot:activator="{ props }">
                         <span class="text-secondary user-select-none"
                               v-bind="props">
-                          <v-icon class="mr-1">mdi-clock-time-eight</v-icon>
                           <CountDownTimer :value="currentKv.leaseInfo.ttl"></CountDownTimer>
                         </span>
                       </template>

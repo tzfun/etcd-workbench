@@ -1,3 +1,4 @@
+use std::string::String;
 use std::io;
 use std::string::FromUtf8Error;
 
@@ -52,10 +53,18 @@ impl Serialize for LogicError {
                 match e {
                     etcd_client::Error::GRpcStatus(status) => {
                         let code = status.code();
-                        let msg = code.description();
+                        let msg = status.message();
                         let code = code as i32;
-                        //  Unauthenticated
-                        if code == 16 {
+
+                        let msg = if msg.starts_with("etcdserver:") {
+                            msg.replace("etcdserver:", "")
+                        } else {
+                            String::from(msg)
+                        };
+
+                        let msg = msg.as_str();
+
+                        if code == 16 { //  Unauthenticated
                             ErrorPayload {
                                 err_type: ErrorType::Unauthenticated,
                                 err_msg: msg,

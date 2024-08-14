@@ -56,9 +56,8 @@ const getLeaseInfo = (leaseId: any) => {
         leaseListeners.delete(timer)
 
         removeLease(info.id)
-      }, kv.leaseInfo.ttl * 1000)
+      }, info.ttl * 1000)
       leaseListeners.add(timer)
-
     }).catch(e => {
       _handleError({
         e,
@@ -149,7 +148,7 @@ const grantLease = () => {
       <v-btn class="text-none"
              prepend-icon="mdi-refresh"
              @click="loadAllLeases"
-             color="primary"
+             variant="outlined"
       >Refresh
       </v-btn>
       <v-btn class="text-none ml-2"
@@ -179,8 +178,11 @@ const grantLease = () => {
               ></v-progress-circular>
             </div>
             <v-container v-else-if="currentLeaseInfo">
-              <v-layout class="justify-center align-content-center w-50 mx-auto my-auto">
-                <v-card class="mx-auto mt-5 mb-5 w-100" border flat>
+              <v-layout class="justify-center align-content-center mx-auto my-auto mt-5 mb-5" style="min-width: 50vw;">
+                <v-card border
+                        flat
+                        min-width="400px"
+                >
                   <v-card-text>
                     <v-table class="text-caption" density="compact">
                       <tbody>
@@ -202,7 +204,6 @@ const grantLease = () => {
                         </th>
 
                         <td class="text-high-emphasis">
-                          <v-icon class="mr-1">mdi-clock-time-four-outline</v-icon>
                           <CountDownTimer :value="currentLeaseInfo.ttl"></CountDownTimer>
                         </td>
                       </tr>
@@ -226,7 +227,7 @@ const grantLease = () => {
                     </v-table>
                   </v-card-text>
                 </v-card>
-                <div class="flex-column align-center mt-auto mb-auto" style="width: 400px;">
+                <div class="flex-column align-center mt-auto mb-auto" style="width: 200px;">
                   <v-btn color="red"
                          text="Delete"
                          class="text-none ml-5"
@@ -270,7 +271,7 @@ const grantLease = () => {
             ></v-text-field>
           </v-layout>
           <v-layout class="mb-5">
-            <span class="grant-form-label">Custom Lease: </span>
+            <span class="grant-form-label">Custom ID: </span>
             <v-text-field v-model="grantNewDialog.lease"
                           type="number"
                           density="comfortable"

@@ -71,7 +71,7 @@ onMounted(async () => {
   })
 
   events.on('closeTab', (sessionId) => {
-    closeTabDirectly(sessionId)
+    closeTabDirectly(sessionId as number)
     activeTab.value = HOME_TAB
   })
 
@@ -186,12 +186,13 @@ const closeTabDirectly = (sessionId: number) => {
                 show-arrows
                 :height="30"
                 density="compact"
-                color="primary"
+                color="basil"
+                selected-class="bg-blue-lighten-1 text-white"
+                hide-slider
         >
           <v-tab icon="mdi-home"
                  :value="HOME_TAB"
                  density="compact"
-                 class="text-grey-lighten-1"
                  :ripple="false"
                  :min-width="50"
           >
@@ -200,9 +201,10 @@ const closeTabDirectly = (sessionId: number) => {
           <v-tab v-for="tab in tabList"
                  :key="tab.name"
                  :value="tab.name"
-                 class="text-grey-lighten-1 text-none"
+                 class="text-none"
                  :ripple="false"
                  @click="activeTab = tab.name"
+                 prepend-icon="mdi-lan-connect"
           >
             {{ tab.name }}
             <template v-slot:append>
@@ -278,9 +280,10 @@ const closeTabDirectly = (sessionId: number) => {
         :key="key"
         v-model="item.value"
         location="top"
+        class="mt-12"
         :content-class="item.class"
     >
-      <v-icon v-if="item.icon">{{ item.icon }}</v-icon>
+      <v-icon v-if="item.icon" class="mr-2">{{ item.icon }}</v-icon>
       {{ item.content }}
 
       <template v-slot:actions v-if="item.close">

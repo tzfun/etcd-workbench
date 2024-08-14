@@ -52,9 +52,9 @@ const loadCluster = () => {
       <v-btn class="text-none"
              prepend-icon="mdi-refresh"
              @click="loadCluster"
-             color="primary"
-      >Refresh
-      </v-btn>
+             variant="outlined"
+             text="Refresh"
+      ></v-btn>
     </div>
 
     <div v-if="cluster" class="d-block">

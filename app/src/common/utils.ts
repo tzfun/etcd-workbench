@@ -4,7 +4,21 @@ import {_alertError} from "~/common/events.ts";
 const TEXT_DECODER = new TextDecoder();
 const TEXT_ENCODER = new TextEncoder();
 
-export type TimeUnit = 'y' | 'm' | 'd' | 'H' | 'M' | 'S' | 's' | 'year' | 'month' | 'day' | 'hour' | 'minute' | 'second' | 'millisecond'
+export type TimeUnit =
+    'y'
+    | 'm'
+    | 'd'
+    | 'H'
+    | 'M'
+    | 'S'
+    | 's'
+    | 'year'
+    | 'month'
+    | 'day'
+    | 'hour'
+    | 'minute'
+    | 'second'
+    | 'millisecond'
 export const fileTypeIcon = {
     file: 'mdi-file-document-outline',
     text: 'mdi-file-document-outline',
@@ -114,4 +128,14 @@ export function _encodeStringToBytes(str?: string): number[] {
 
 export function _upperCaseFirst(str: string): string {
     return str.substring(0, 1).toUpperCase() + str.substring(1)
+}
+
+export function _shuffleArray(arr: any[]) {
+    let len = arr.length;
+    for (let i = len - 1; i >= 0; i--) {
+        let randomIndex = Math.floor(Math.random() * (i + 1));
+        let temp = arr[randomIndex];
+        arr[randomIndex] = arr[i];
+        arr[i] = temp;
+    }
 }

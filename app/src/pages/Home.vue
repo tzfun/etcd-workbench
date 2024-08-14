@@ -81,6 +81,7 @@ const removeConnectionConfig = (name: string) => {
         <v-list-item v-for="item in connectionList"
                      :key="item.name"
                      :value="item"
+                     class="config-close-item"
         >
           {{ item.name }}
           <template v-slot:prepend>
@@ -89,7 +90,7 @@ const removeConnectionConfig = (name: string) => {
             </v-avatar>
           </template>
           <template v-slot:append>
-            <v-icon @click="removeConnectionConfig(item.name)">mdi-close</v-icon>
+            <v-icon class="config-close-icon" @click="removeConnectionConfig(item.name)">mdi-close-circle</v-icon>
           </template>
         </v-list-item>
       </v-list>
@@ -100,6 +101,15 @@ const removeConnectionConfig = (name: string) => {
   </v-layout>
 </template>
 
-<style scoped>
-
+<style scoped lang="scss">
+.config-close-icon {
+  padding: 15px;
+  font-size: 0;
+  transition: all 0.15s ease;
+}
+.config-close-item:hover {
+  .config-close-icon {
+    font-size: 1.5rem;
+  }
+}
 </style>

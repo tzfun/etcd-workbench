@@ -50,6 +50,15 @@ fn main() {
             api::lease::lease_get,
             api::lease::lease_grant,
             api::lease::lease_revoke,
+            api::user::user_list,
+            api::user::user_add,
+            api::user::user_delete,
+            api::user::user_change_password,
+            api::user::user_grant_role,
+            api::user::user_revoke_role,
+            api::user::auth_enable,
+            api::user::auth_disable,
+            api::role::role_list,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

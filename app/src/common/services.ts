@@ -4,6 +4,7 @@ import {Cluster} from "~/common/transport/maintenance.ts";
 import {KeyValue, LeaseInfo} from "~/common/transport/kv.ts";
 import {_tipError, events} from "~/common/events.ts";
 import {LogicErrorInfo} from "~/common/types.ts";
+import {User} from "~/common/transport/user.ts";
 
 export function _handleError(info: LogicErrorInfo) {
     let error = info.e
@@ -125,5 +126,68 @@ export function _grantLease(sessionId: number, ttl: number, lease?: string): Pro
         session: sessionId,
         ttl,
         lease
+    })
+}
+
+export function _getAllUsers(sessionId: number): Promise<User[]> {
+    return invoke('user_list', {
+        session: sessionId,
+    })
+}
+
+export function _addUser(sessionId: number, user: string, password: string): Promise<undefined> {
+    return invoke('user_add', {
+        session: sessionId,
+        user,
+        password
+    })
+}
+
+export function _deleteUser(sessionId: number, user: string): Promise<undefined> {
+    return invoke('user_delete', {
+        session: sessionId,
+        user
+    })
+}
+
+export function _userChangePassword(sessionId: number, user: string, newPassword: string): Promise<undefined> {
+    return invoke('user_change_password', {
+        session: sessionId,
+        user,
+        newPassword
+    })
+}
+
+export function _userGrantRole(sessionId: number, user: string, role: string): Promise<undefined> {
+    return invoke('user_grant_role', {
+        session: sessionId,
+        user,
+        role
+    })
+}
+
+export function _userRevokeRole(sessionId: number, user: string, role: string): Promise<undefined> {
+    return invoke('user_revoke_role', {
+        session: sessionId,
+        user,
+        role
+    })
+}
+
+export function _authEnable(sessionId: number): Promise<undefined> {
+    return invoke('auth_enable', {
+        session: sessionId,
+    })
+}
+
+export function _authDisable(sessionId: number): Promise<undefined> {
+    return invoke('auth_disable', {
+        session: sessionId,
+    })
+}
+
+export function _getAllRoles(sessionId: number): Promise<string[]> {
+    return invoke('role_list', {
+        session: sessionId
     })
 }
