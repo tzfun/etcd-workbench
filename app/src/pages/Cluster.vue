@@ -1,10 +1,11 @@
 <script setup lang="ts">
 
-import {onMounted, PropType, ref} from "vue";
-import {SessionData} from "~/common/transport/connection.ts";
-import {_getCluster, _handleError} from "~/common/services.ts";
+import {onMounted, PropType, reactive, ref} from "vue";
+import {ErrorPayload, SessionData} from "~/common/transport/connection.ts";
+import {_defragment, _getCluster, _handleError} from "~/common/services.ts";
 import {Alarm, Cluster} from "~/common/transport/maintenance.ts";
 import {_byteTextFormat} from "../common/utils.ts";
+import {_confirmSystem, _tipSuccess} from "~/common/events.ts";
 
 const props = defineProps({
   session: {
@@ -30,11 +31,17 @@ const MEMBER_COL = {
   xs: 12
 }
 
+const loadingStore = reactive({
+  loadCluster: false,
+  defragment: false
+})
+
 onMounted(() => {
   loadCluster()
 })
 
 const loadCluster = () => {
+  loadingStore.loadCluster = true
   _getCluster(props.session?.id).then(c => {
     cluster.value = c
   }).catch(e => {
@@ -42,6 +49,25 @@ const loadCluster = () => {
       e,
       session: props.session
     })
+  }).finally(() => {
+    loadingStore.loadCluster = false
+  })
+}
+
+const defragment = () => {
+  _confirmSystem('Confirm to perform defragmentation?').then(() => {
+    loadingStore.defragment = true
+    _defragment(props.session?.id).then(() => {
+      _tipSuccess("Succeeded!")
+    }).catch((e: string | ErrorPayload) => {
+      _handleError({
+        e,
+        session: props.session
+      })
+    }).finally(() => {
+      loadingStore.defragment = false
+    })
+  }).catch(() => {
   })
 }
 </script>
@@ -54,6 +80,15 @@ const loadCluster = () => {
              @click="loadCluster"
              variant="outlined"
              text="Refresh"
+             :loading="loadingStore.loadCluster"
+      ></v-btn>
+      <v-btn class="text-none ml-2"
+             prepend-icon="mdi-database-sync"
+             @click="defragment"
+             color="yellow"
+             text="Defragment"
+             title="Defragment a member's backend database to recover storage space."
+             :loading="loadingStore.defragment"
       ></v-btn>
     </div>
 
@@ -155,6 +190,7 @@ const loadCluster = () => {
                     class="member-item"
                     border
                     flat
+                    hover
             >
               <template v-slot:append>
                 <v-tooltip text="Everything is ok!"

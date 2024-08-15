@@ -47,6 +47,7 @@ fn main() {
             api::kv::kv_delete,
             api::kv::kv_get_history_versions,
             api::maintenance::get_cluster,
+            api::maintenance::maintenance_defragment,
             api::lease::leases,
             api::lease::lease_get,
             api::lease::lease_grant,
@@ -60,6 +61,11 @@ fn main() {
             api::user::auth_enable,
             api::user::auth_disable,
             api::role::role_list,
+            api::role::role_add,
+            api::role::role_delete,
+            api::role::role_get_permissions,
+            api::role::role_grant_permission,
+            api::role::role_revoke_permission,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

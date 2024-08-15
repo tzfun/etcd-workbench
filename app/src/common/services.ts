@@ -4,7 +4,7 @@ import {Cluster} from "~/common/transport/maintenance.ts";
 import {KeyValue, LeaseInfo} from "~/common/transport/kv.ts";
 import {_tipError, events} from "~/common/events.ts";
 import {LogicErrorInfo} from "~/common/types.ts";
-import {User} from "~/common/transport/user.ts";
+import {RolePermission, User} from "~/common/transport/user.ts";
 
 export function _handleError(info: LogicErrorInfo) {
     let error = info.e
@@ -50,6 +50,10 @@ export function _removeConnection(name: string): Promise<undefined> {
 
 export function _getCluster(sessionId: number): Promise<Cluster> {
     return invoke('get_cluster', {session: sessionId})
+}
+
+export function _defragment(sessionId: number): Promise<undefined> {
+    return invoke('maintenance_defragment', {session: sessionId})
 }
 
 export function _getAllKeys(sessionId: number): Promise<KeyValue[]> {
@@ -193,5 +197,42 @@ export function _authDisable(sessionId: number): Promise<undefined> {
 export function _getAllRoles(sessionId: number): Promise<string[]> {
     return invoke('role_list', {
         session: sessionId
+    })
+}
+
+export function _getRolePermissions(sessionId: number, role: string): Promise<RolePermission[]> {
+    return invoke('role_get_permissions', {
+        session: sessionId,
+        role
+    })
+}
+
+export function _deleteRole(sessionId: number, role: string): Promise<undefined> {
+    return invoke('role_delete', {
+        session: sessionId,
+        role
+    })
+}
+
+export function _addRole(sessionId: number, role: string): Promise<undefined> {
+    return invoke('role_add', {
+        session: sessionId,
+        role
+    })
+}
+
+export function _grantRolePermissions(sessionId: number, role: string, permission:  RolePermission): Promise<undefined> {
+    return invoke('role_grant_permission', {
+        session: sessionId,
+        role,
+        permission
+    })
+}
+
+export function _revokeRolePermissions(sessionId: number, role: string, permission:  RolePermission): Promise<undefined> {
+    return invoke('role_revoke_permission', {
+        session: sessionId,
+        role,
+        permission
     })
 }

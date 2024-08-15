@@ -48,6 +48,7 @@ const loadAllLeases = () => {
 
 const getLeaseInfo = (leaseId: any) => {
   currentLeaseId.value = leaseId
+  currentLeaseInfo.value = undefined
   if (leaseId) {
     loadingStore.getInfo = true
     _getLease(props.session?.id, leaseId).then(info => {
@@ -66,8 +67,6 @@ const getLeaseInfo = (leaseId: any) => {
     }).finally(() => {
       loadingStore.getInfo = false
     })
-  } else {
-    currentLeaseInfo.value = undefined
   }
 }
 

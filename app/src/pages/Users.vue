@@ -329,7 +329,7 @@ const roleSelectionProps = (item: string) => {
               border
       >
         <v-card-text>
-          <v-table>
+          <v-table hover>
             <thead>
             <tr>
               <th class="text-left user-col font-weight-bold">

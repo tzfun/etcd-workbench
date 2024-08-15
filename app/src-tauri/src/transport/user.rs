@@ -12,6 +12,7 @@ pub struct SerializableUser {
 #[serde(rename_all="camelCase")]
 pub struct SerializablePermission {
     pub key: String,
+    /// permission::Type
     pub perm_type: i32,
     pub prefix: bool,
     pub all_keys: bool,
