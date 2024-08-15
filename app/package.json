@@ -5,37 +5,37 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc --noEmit && vite build",
+    "build": "vue-tsc --noEmit && vite build && node package.js",
     "preview": "vite preview",
     "tauri": "tauri"
   },
   "dependencies": {
     "@codemirror/lang-json": "^6.x",
+    "@codemirror/lang-sql": "^6.x",
     "@codemirror/lang-xml": "^6.x",
     "@codemirror/lang-yaml": "^6.x",
-    "@codemirror/lang-sql": "^6.x",
     "@codemirror/language": "^6.x",
     "@codemirror/legacy-modes": "^6.x",
     "@codemirror/theme-one-dark": "^6.x",
-    "vue-codemirror": "^6.1.1",
-    "thememirror": "^2.0.1",
+    "@tauri-apps/api": "^1",
     "codemirror": "^6.0.1",
     "mitt": "^3.0.1",
+    "thememirror": "^2.0.1",
+    "v-code-diff": "^1.12.1",
     "vue": "^3.3.4",
-    "@tauri-apps/api": "^1",
-    "vuetify": "3.6.12",
-    "v-code-diff": "^1.12.1"
+    "vue-codemirror": "^6.1.1",
+    "vuetify": "3.6.12"
   },
   "devDependencies": {
     "@mdi/font": "^7.4.47",
-    "@vitejs/plugin-vue": "^5.0.5",
-    "typescript": "^5.2.2",
-    "vite": "^5.3.1",
-    "vue-tsc": "^2.0.22",
     "@tauri-apps/cli": "^1.5.14",
-    "vite-plugin-vuetify": "^2.0.3",
+    "@types/node": "^20.14.10",
+    "@vitejs/plugin-vue": "^5.0.5",
     "sass": "1.59.3",
     "sass-loader": "^14.2.1",
-    "@types/node": "^20.14.10"
+    "typescript": "^5.2.2",
+    "vite": "^5.3.1",
+    "vite-plugin-vuetify": "^2.0.3",
+    "vue-tsc": "^2.0.22"
   }
 }
