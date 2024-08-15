@@ -1,7 +1,7 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use log::{LevelFilter, warn};
+use log::{debug, LevelFilter};
 use tauri::Manager;
 use window_shadows::set_shadow;
 
@@ -23,9 +23,9 @@ fn main() {
 
     tauri::Builder::default()
         .setup(|app| {
-            let window = app.get_window("main").unwrap();
-            if let Err(e) = set_shadow(&window, true) {
-                warn!("Can not set window shadow: {}", e)
+            for (name, window) in app.windows() {
+                debug!("set window shadow: {}", name);
+                set_shadow(&window, true).unwrap()
             }
 
             Ok(())
@@ -34,6 +34,7 @@ fn main() {
             api::connection::connect_test,
             api::connection::connect,
             api::connection::disconnect,
+            api::settings::close_splashscreen,
             api::settings::get_settings,
             api::settings::save_connection,
             api::settings::remove_connection,

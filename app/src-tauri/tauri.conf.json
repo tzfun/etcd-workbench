@@ -29,8 +29,20 @@
         "title": "Etcd Workbench",
         "width": 1400,
         "height": 1000,
+        "center": true,
         "decorations": false,
-        "transparent": true
+        "transparent": true,
+        "visible": false
+      },
+      {
+        "label": "splashscreen",
+        "width": 350,
+        "height": 100,
+        "center": true,
+        "url": "splashscreen.html",
+        "decorations": false,
+        "resizable": false,
+        "transparent": false
       }
     ],
     "macOSPrivateApi": true,

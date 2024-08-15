@@ -6,7 +6,7 @@ import {onMounted, reactive, ref} from "vue";
 import {platform as getPlatform} from "@tauri-apps/api/os";
 import {useTheme} from "vuetify";
 import {SessionData} from "~/common/transport/connection.ts";
-import {_disconnect} from "~/common/services.ts";
+import {_closeSplashscreen, _disconnect} from "~/common/services.ts";
 import Connection from "~/pages/Connection.vue";
 import Home from "~/pages/Home.vue";
 import WindowsSystemBar from "~/components/system-bar/WindowsSystemBar.vue";
@@ -109,6 +109,12 @@ onMounted(async () => {
     } else {
       tips.value[idx] = tip
     }
+  })
+
+  console.log("main window completed")
+  _closeSplashscreen().then(() => {
+  }).catch(e => {
+    console.error(e)
   })
 })
 

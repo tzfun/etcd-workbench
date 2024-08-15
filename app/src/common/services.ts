@@ -20,6 +20,10 @@ export function _handleError(info: LogicErrorInfo) {
     }
 }
 
+export function _closeSplashscreen() {
+    return invoke('close_splashscreen')
+}
+
 export function _connectTest(connection: Connection): Promise<undefined> {
     return invoke('connect_test', {connection})
 }
