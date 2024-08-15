@@ -3,7 +3,7 @@
 import etcdLogo from "~/assets/etcd.png";
 import {_goBrowserPage} from "~/common/utils.ts";
 import {appWindow} from "@tauri-apps/api/window";
-import {_confirm} from "~/common/events.ts";
+import {_confirm, events} from "~/common/events.ts";
 import {onMounted, ref} from "vue";
 import {useTheme} from "vuetify";
 
@@ -33,12 +33,8 @@ const toggleMaximize = async () => {
   maximize.value = !maximize.value
 }
 
-const showAppInfo = () => {
-  emits('show-info')
-}
-
 const setting = () => {
-  emits('show-info')
+  events.emit('toggleSetting')
 }
 
 const toggleTheme = () => {
@@ -63,36 +59,8 @@ const toggleTheme = () => {
     </v-icon>
     <span class="user-select-none">{{ title }}</span>
 
-    <v-btn class="system-extend-btn ms-2"
-           icon="mdi-cog"
-           size="small"
-           variant="text"
-           :rounded="false"
-           density="comfortable"
-           title="Settings"
-           :ripple="false"
-           @click="setting"
-    ></v-btn>
-    <v-btn class="system-extend-btn ms-2"
-           icon="mdi-github"
-           size="small"
-           variant="text"
-           :rounded="false"
-           density="comfortable"
-           title="Fork on GitHub"
-           :ripple="false"
-           @click="_goBrowserPage('https://github.com/tzfun/etcd-workbench')"
-    ></v-btn>
-    <v-btn class="system-extend-btn ms-2"
-           icon="mdi-information-variant-circle"
-           size="small"
-           variant="text"
-           :rounded="false"
-           density="comfortable"
-           title="About"
-           :ripple="false"
-           @click="showAppInfo"
-    ></v-btn>
+    <v-spacer></v-spacer>
+
     <v-btn class="system-extend-btn ms-2"
            icon="mdi-brightness-6"
            size="small"
@@ -103,8 +71,18 @@ const toggleTheme = () => {
            :ripple="false"
            @click="toggleTheme"
     ></v-btn>
+    <v-btn class="system-extend-btn ms-2"
+           icon="mdi-cog"
+           size="small"
+           variant="text"
+           :rounded="false"
+           density="comfortable"
+           title="Settings"
+           :ripple="false"
+           @click="setting"
+    ></v-btn>
 
-    <v-spacer></v-spacer>
+    <v-divider vertical class="mr-2 ml-2" length="80%" style="margin-top: 3px;"></v-divider>
 
     <v-btn class="system-native-btn"
            icon="mdi-minus"
@@ -139,12 +117,10 @@ const toggleTheme = () => {
 
 .system-extend-btn {
   font-size: 1.1em;
-  opacity: $--system-btn-opacity;
 }
 
 .system-native-btn {
   font-size: 0.9em;
-  opacity: $--system-btn-opacity;
 }
 
 .system-extend-btn:hover,

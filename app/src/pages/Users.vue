@@ -372,6 +372,7 @@ const roleSelectionProps = (item: string) => {
                   <template v-slot:append>
                     <v-icon class="role-tag-close-icon"
                             @click="revokeUserRole(user.user, role, idx, i)"
+                            color="secondary"
                     >mdi-close-circle
                     </v-icon>
                   </template>

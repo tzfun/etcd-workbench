@@ -821,12 +821,11 @@ const clearAllKeyLeaseListener = () => {
             </div>
           </div>
 
-          <div v-else class="no-key-preview">
+          <div v-else class="no-key-preview fill-height">
             <v-empty-state icon="mdi-text-box-edit-outline"
                            headline="Please select a key"
-                           title="KV Editor"
-                           text="Select a key to view its details or edit it."
-                           class="pt-12 pb-12"
+                           title="Select a key to view its details or edit it"
+                           class="mx-auto my-auto"
             >
 
             </v-empty-state>

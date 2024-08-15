@@ -379,7 +379,7 @@ const saveConnection = () => {
         <h1 class="pt-0 pb-0 pl-5 header-title">ETCD Connection</h1>
       </div>
       <v-sheet class="justify-center mx-auto mt-5">
-        <v-card width="600" class="connection-card card-box-shadow">
+        <v-card width="600" class="connection-card card-box-shadow" border>
           <v-card-text>
             <v-form ref="formRef">
               <div class="d-flex">

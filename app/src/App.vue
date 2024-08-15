@@ -11,12 +11,15 @@ import Connection from "~/pages/Connection.vue";
 import Home from "~/pages/Home.vue";
 import WindowsSystemBar from "~/components/system-bar/WindowsSystemBar.vue";
 import MacSystemBar from "~/components/system-bar/MacSystemBar.vue";
+import AppSetting from "~/pages/AppSetting.vue";
 
 type TabItem = {
   name: string,
   session: SessionData
 }
-
+const setting = reactive({
+  show: false
+})
 const loading = ref(false)
 const dialogs = ref<DialogItem[]>([])
 const tips = ref<TipsItem[]>([])
@@ -34,7 +37,7 @@ onMounted(async () => {
   }
 
   platform.value = await getPlatform()
-  if(platform.value != 'win32') {
+  if (platform.value != 'win32') {
     document.getElementById("app")!.classList.add("main-window-radius")
   }
 
@@ -93,6 +96,11 @@ onMounted(async () => {
     }
   })
 
+  events.on('toggleSetting', () => {
+    setting.show = !setting.show
+    console.log(setting.show)
+  })
+
   events.on('tip', (param) => {
     let tip = param as TipsItem
     let idx = -1;
@@ -111,7 +119,6 @@ onMounted(async () => {
     }
   })
 
-  console.log("main window completed")
   _closeSplashscreen().then(() => {
   }).catch(e => {
     console.error(e)
@@ -125,7 +132,13 @@ const disableWebviewNativeEvents = () => {
   }
 
   document.addEventListener('keydown', e => {
-    if (e.ctrlKey && e.key.toLowerCase() == 'r') {
+    let key = e.key.toLowerCase()
+    if (e.ctrlKey && key == 'r') {
+      e.preventDefault()
+      return false
+    }
+
+    if (key == 'f5' || key == 'escape') {
       e.preventDefault()
       return false
     }
@@ -187,7 +200,10 @@ const closeTabDirectly = (sessionId: number) => {
                     :height="28"
       ></MacSystemBar>
 
-      <v-main class="fill-height" id="mainBody">
+      <v-main class="fill-height position-relative" id="mainBody">
+
+        <AppSetting class="app-setting" v-show="setting.show"></AppSetting>
+
         <v-tabs v-model="activeTab"
                 show-arrows
                 :height="30"
@@ -305,7 +321,14 @@ const closeTabDirectly = (sessionId: number) => {
 </template>
 
 <style scoped lang="scss">
-
+.app-setting {
+  width: 100%;
+  height: calc(100% - 28px);
+  position: absolute;
+  z-index: 10000;
+  top: 28px;
+  left: 0;
+}
 </style>
 
 <style lang="scss">

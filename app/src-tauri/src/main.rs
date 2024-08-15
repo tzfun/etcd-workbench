@@ -24,8 +24,10 @@ fn main() {
     tauri::Builder::default()
         .setup(|app| {
             for (name, window) in app.windows() {
-                debug!("set window shadow: {}", name);
-                set_shadow(&window, true).unwrap()
+                if name.eq("main") {
+                    debug!("set window shadow: {}", name);
+                    set_shadow(&window, true).unwrap()
+                }
             }
 
             Ok(())

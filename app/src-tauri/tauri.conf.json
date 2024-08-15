@@ -42,7 +42,7 @@
         "url": "splashscreen.html",
         "decorations": false,
         "resizable": false,
-        "transparent": false
+        "transparent": true
       }
     ],
     "macOSPrivateApi": true,

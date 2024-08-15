@@ -90,7 +90,7 @@ const openNewRoleDialog = () => {
   newRoleDialog.show = true
 }
 
-const getRoleInfo = (role: string) => {
+const getRoleInfo = (role: any) => {
   currentRoleId.value = role
   currentRoleInfo.value = undefined
   if (role) {
