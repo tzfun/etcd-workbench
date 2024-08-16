@@ -1,16 +1,36 @@
-import mitt from "mitt";
-import {useTheme} from "vuetify";
 import {DialogItem, TipsItem} from "~/common/types.ts";
+import {appWindow, WebviewWindow} from "@tauri-apps/api/window";
+import {emit} from "@tauri-apps/api/event";
 
-export const events = mitt();
-
-export function _loading(state: boolean) {
-    events.emit('loading', state)
+export function _emitLocal(eventName: string, eventPayload: any) {
+    appWindow.emit(eventName, eventPayload).then(() => {
+    }).catch(e => {
+        console.error(e)
+    })
 }
 
-export function toggleTheme() {
-    const theme = useTheme()
-    theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark'
+export function _emitGlobal(eventName: string, eventPayload: any) {
+    emit(eventName, eventPayload).then(() => {
+    }).catch(e => {
+        console.error(e)
+    })
+}
+
+export function _emitWindow(windowLabel: string, eventName: string, eventPayload: any) {
+    let window = WebviewWindow.getByLabel(windowLabel);
+    if (!window) {
+        window = new WebviewWindow(windowLabel)
+    }
+
+    window.emit(eventName, eventPayload).then(() => {
+    }).catch(e => {
+        console.error(e)
+    })
+}
+
+
+export function _loading(state: boolean) {
+    _emitLocal('loading', state)
 }
 
 export function _confirm(title: string, text: string): Promise<undefined> {
@@ -40,7 +60,7 @@ export function _confirm(title: string, text: string): Promise<undefined> {
             ]
         }
 
-        events.emit('dialog', dialog)
+        _emitLocal('dialog', dialog)
     })
 
 }
@@ -52,13 +72,13 @@ export function _confirmSystem(text: string): Promise<undefined> {
 export function _dialogContent(content: string) {
     let dialog: DialogItem = {
         value: true,
-        title:'Display Content',
+        title: 'Display Content',
         content: content,
         maxWidth: 1200,
         closeBtn: true
     }
 
-    events.emit('dialog', dialog)
+    _emitLocal('dialog', dialog)
 }
 
 export function _alertError(text: string) {
@@ -78,7 +98,7 @@ export function _alertError(text: string) {
         ]
     }
 
-    events.emit('dialog', dialog)
+    _emitLocal('dialog', dialog)
 }
 
 export function _tipError(text: string) {
@@ -90,7 +110,7 @@ export function _tipError(text: string) {
         class: 'bg-red-lighten-1'
     }
 
-    events.emit('tip', tip)
+    _emitLocal('tip', tip)
 }
 
 export function _tipWarn(text: string) {
@@ -102,7 +122,7 @@ export function _tipWarn(text: string) {
         class: 'bg-orange-darken-1'
     }
 
-    events.emit('tip', tip)
+    _emitLocal('tip', tip)
 }
 
 export function _tipSuccess(text: string) {
@@ -114,7 +134,7 @@ export function _tipSuccess(text: string) {
         class: 'bg-green-lighten-1'
     }
 
-    events.emit('tip', tip)
+    _emitLocal('tip', tip)
 }
 
 export function _tipInfo(text: string) {
@@ -126,5 +146,5 @@ export function _tipInfo(text: string) {
         class: 'bg-secondary'
     }
 
-    events.emit('tip', tip)
+    _emitLocal('tip', tip)
 }

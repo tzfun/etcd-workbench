@@ -4,22 +4,11 @@ use std::io::{Read, Write};
 
 use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
-use tauri::Manager;
 
 use crate::error::LogicError;
 use crate::transport::connection::ConnectionInfo;
 use crate::transport::settings::Settings;
 use crate::utils::file_util;
-
-#[tauri::command]
-pub async fn close_splashscreen(window: tauri::Window) {
-    // 关闭初始屏幕
-    if let Some(splashscreen) = window.get_window("splashscreen") {
-        splashscreen.close().unwrap();
-    }
-    // 显示主窗口
-    window.get_window("main").unwrap().show().unwrap();
-}
 
 #[tauri::command]
 pub fn get_settings() -> Result<Settings, LogicError> {

@@ -1,40 +1,44 @@
 <script setup lang="ts">
 import {appWindow} from '@tauri-apps/api/window'
-import {_confirm, events} from "~/common/events.ts";
-import {DialogItem, TipsItem} from "~/common/types.ts";
-import {onMounted, reactive, ref} from "vue";
+import {AppTheme, DialogItem, TipsItem} from "~/common/types.ts";
+import {onMounted, onUnmounted, reactive, ref} from "vue";
 import {platform as getPlatform} from "@tauri-apps/api/os";
 import {useTheme} from "vuetify";
-import {SessionData} from "~/common/transport/connection.ts";
-import {_closeSplashscreen, _disconnect} from "~/common/services.ts";
-import Connection from "~/pages/Connection.vue";
-import Home from "~/pages/Home.vue";
 import WindowsSystemBar from "~/components/system-bar/WindowsSystemBar.vue";
 import MacSystemBar from "~/components/system-bar/MacSystemBar.vue";
-import AppSetting from "~/pages/AppSetting.vue";
+import AppSetting from "~/pages/setting/AppSetting.vue";
+import AppMain from "~/pages/main/AppMain.vue";
+import {listen} from "@tauri-apps/api/event";
 
-type TabItem = {
-  name: string,
-  session: SessionData
-}
-const setting = reactive({
-  show: false
-})
+const windowLabel = ref<string>('main')
 const loading = ref(false)
 const dialogs = ref<DialogItem[]>([])
 const tips = ref<TipsItem[]>([])
 const platform = ref<string>('win32')
-const HOME_TAB = "___home"
-const activeTab = ref<string>(HOME_TAB)
-const tabList = reactive<TabItem[]>([])
 
 const theme = useTheme()
 
+const eventUnListens = reactive<Function[]>([])
+
 onMounted(async () => {
-  let systemTheme = await appWindow.theme()
-  if (systemTheme) {
-    theme.global.name.value = systemTheme
+  let searchParams = new URLSearchParams(location.search)
+  let page = searchParams.get('page')
+  if (page) {
+    windowLabel.value = page
   }
+
+  setAppTheme('auto')
+
+  eventUnListens.push(await appWindow.listen('tauri://theme-changed', (e) => {
+    let systemTheme = e.payload as string
+    if (systemTheme) {
+      theme.global.name.value = systemTheme
+    }
+  }))
+
+  eventUnListens.push(await appWindow.listen('tauri://menu', (e) => {
+    console.log('menu', e.payload)
+  }))
 
   platform.value = await getPlatform()
   if (platform.value != 'win32') {
@@ -44,42 +48,16 @@ onMounted(async () => {
   //  频闭Webview原生事件
   disableWebviewNativeEvents()
 
-  events.on('loading', (state) => {
-    loading.value = !!state;
-  })
+  eventUnListens.push(await listen('loading', (e) => {
+    loading.value = e.payload as boolean
+  }))
 
-  events.on('newConnection', (e: any) => {
-    let name = e.name as string
-    let session = e.session as SessionData
+  eventUnListens.push(await listen('loading', (e) => {
+    setAppTheme(e.payload as AppTheme)
+  }))
 
-    for (let i = tabList.length - 1; i >= 0; i--) {
-      let tab = tabList[i]
-      if (tab.name == name) {
-        name += '(1)'
-        break
-      }
-      if (tab.name.startsWith(name) && tab.name.endsWith(")")) {
-        let num = parseInt(tab.name.substring(tab.name.lastIndexOf("(") + 1, tab.name.length))
-        name += `(${num + 1})`
-        break
-      }
-    }
-    let tabItem = {
-      name,
-      session
-    }
-    tabList.push(tabItem)
-
-    activeTab.value = tabItem.name
-  })
-
-  events.on('closeTab', (sessionId) => {
-    closeTabDirectly(sessionId as number)
-    activeTab.value = HOME_TAB
-  })
-
-  events.on('dialog', (param) => {
-    let dialog = param as DialogItem
+  eventUnListens.push(await listen('dialog', (e) => {
+    let dialog = e.payload as DialogItem
     let idx = -1;
     for (let i = 0; i < dialogs.value.length; i++) {
       if (!dialogs.value[i].value) {
@@ -94,15 +72,10 @@ onMounted(async () => {
     } else {
       dialogs.value[idx] = dialog
     }
-  })
+  }))
 
-  events.on('toggleSetting', () => {
-    setting.show = !setting.show
-    console.log(setting.show)
-  })
-
-  events.on('tip', (param) => {
-    let tip = param as TipsItem
+  eventUnListens.push(await listen('tip', (e) => {
+    let tip = e.payload as TipsItem
     let idx = -1;
     for (let i = 0; i < tips.value.length; i++) {
       if (!tips.value[i].value) {
@@ -117,13 +90,27 @@ onMounted(async () => {
     } else {
       tips.value[idx] = tip
     }
-  })
+  }))
 
-  _closeSplashscreen().then(() => {
-  }).catch(e => {
-    console.error(e)
-  })
 })
+
+onUnmounted(() => {
+  for (let eventUnListen of eventUnListens) {
+    eventUnListen()
+  }
+})
+
+const setAppTheme = (appTheme: AppTheme) => {
+  if (appTheme == 'auto') {
+    appWindow.theme().then(systemTheme => {
+      if (systemTheme) {
+        theme.global.name.value = systemTheme
+      }
+    })
+  } else {
+    theme.global.name.value = appTheme
+  }
+}
 
 const disableWebviewNativeEvents = () => {
 
@@ -150,41 +137,6 @@ const disableWebviewNativeEvents = () => {
   }, {capture: true})
 }
 
-const closeTab = (id: number) => {
-  _confirm('System', 'Are you sure to close the current connection?').then(() => {
-    closeTabDirectly(id)
-  }).catch(() => {
-  })
-}
-
-const closeTabDirectly = (sessionId: number) => {
-  let idx = -1;
-  for (let i = 0; i < tabList.length; i++) {
-    let item: TabItem = tabList[i]
-    if (item.session.id == sessionId) {
-      idx = i;
-      break
-    }
-  }
-
-  _disconnect(sessionId)
-
-  if (idx >= 0) {
-    let nextTab = HOME_TAB
-    if (tabList.length > 1) {
-      if (idx == 0) {
-        let next = tabList[idx + 1];
-        nextTab = next.name
-      } else {
-        let next = tabList[idx - 1]
-        nextTab = next.name
-      }
-    }
-    activeTab.value = nextTab
-
-    tabList.splice(idx, 1)
-  }
-}
 
 </script>
 
@@ -194,55 +146,19 @@ const closeTabDirectly = (sessionId: number) => {
       <WindowsSystemBar v-if="platform == 'win32'"
                         title="ETCD Workbench"
                         :height="28"
+                        :window-label="windowLabel"
       ></WindowsSystemBar>
       <MacSystemBar v-if="platform == 'darwin'"
                     title="ETCD Workbench"
                     :height="28"
+                    :window-label="windowLabel"
       ></MacSystemBar>
 
       <v-main class="fill-height position-relative" id="mainBody">
 
-        <AppSetting class="app-setting" v-show="setting.show"></AppSetting>
+        <AppSetting v-if="windowLabel === 'setting'" class="app-setting"></AppSetting>
+        <AppMain v-else-if="windowLabel === 'main'"></AppMain>
 
-        <v-tabs v-model="activeTab"
-                show-arrows
-                :height="30"
-                density="compact"
-                color="basil"
-                selected-class="bg-blue-lighten-1 text-white"
-                hide-slider
-        >
-          <v-tab icon="mdi-home"
-                 :value="HOME_TAB"
-                 density="compact"
-                 :ripple="false"
-                 :min-width="50"
-          >
-            <v-icon>mdi-home</v-icon>
-          </v-tab>
-          <v-tab v-for="tab in tabList"
-                 :key="tab.name"
-                 :value="tab.name"
-                 class="text-none"
-                 :ripple="false"
-                 @click="activeTab = tab.name"
-                 prepend-icon="mdi-lan-connect"
-          >
-            {{ tab.name }}
-            <template v-slot:append>
-              <v-icon class="tab-icon-close" @click="closeTab(tab.session.id)">mdi-close</v-icon>
-            </template>
-          </v-tab>
-        </v-tabs>
-        <v-divider></v-divider>
-        <div style="height: calc(100% - 30px);">
-          <Home v-show="activeTab == HOME_TAB"></Home>
-          <Connection :session="tab.session"
-                      v-for="tab in tabList"
-                      :key="tab.name"
-                      v-show="activeTab == tab.name"
-          ></Connection>
-        </div>
       </v-main>
     </v-layout>
 

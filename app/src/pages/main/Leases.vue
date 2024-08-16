@@ -161,7 +161,9 @@ const grantLease = () => {
     <div>
       <v-expansion-panels class="mt-5"
                           v-model="expendPanel"
-                          @update:model-value="getLeaseInfo">
+                          @update:model-value="getLeaseInfo"
+                          v-if="leases.length > 0"
+      >
         <v-expansion-panel v-for="(lease, idx) in leases"
                            :key="idx"
                            :title="lease"
@@ -246,6 +248,10 @@ const grantLease = () => {
           </v-expansion-panel-text>
         </v-expansion-panel>
       </v-expansion-panels>
+      <v-empty-state v-else
+                     icon="mdi-package-variant"
+                     headline="No Leases"
+      ></v-empty-state>
     </div>
 
     <!--  Grant弹窗-->

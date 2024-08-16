@@ -1,21 +1,18 @@
 <script setup lang="ts">
 
-import etcdLogo from "~/assets/etcd.png";
-import {_goBrowserPage} from "~/common/utils.ts";
 import {appWindow} from "@tauri-apps/api/window";
 import {onMounted, ref} from "vue";
-import {useTheme} from "vuetify";
 import {_confirm} from "~/common/events.ts";
+import {_openSettingWindow} from "~/common/windows.ts";
 
 const maximize = ref(false)
-const theme = useTheme()
 
 defineProps({
   title: String,
-  height: Number
+  height: Number,
+  windowLabel: String
 })
 
-const emits = defineEmits(['setting', 'show-info'])
 
 onMounted(async () => {
   maximize.value = await appWindow.isMaximized() || await appWindow.isFullscreen()
@@ -26,10 +23,6 @@ const toggleMaximize = async () => {
   maximize.value = !maximize.value
 }
 
-const toggleTheme = () => {
-  theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark'
-}
-
 const closeApp = () => {
   _confirm("Exist Workbench", "Are you sure you want to close the app?").then(() => {
     appWindow.close()
@@ -37,12 +30,8 @@ const closeApp = () => {
   })
 }
 
-const showAppInfo = () => {
-  emits('show-info')
-}
-
-const setting = () => {
-  emits('show-info')
+const setting = async () => {
+  await _openSettingWindow()
 }
 
 </script>
@@ -112,15 +101,6 @@ const setting = () => {
 
     <v-spacer></v-spacer>
 
-    <v-icon class="me-2">
-      <v-img :src="etcdLogo"
-             cover
-             :width="30"
-             :height="30"
-      ></v-img>
-    </v-icon>
-    <span class="user-select-none">{{ title }}</span>
-
     <v-btn class="system-extend-btn ms-2"
            icon="mdi-cog"
            size="small"
@@ -131,37 +111,6 @@ const setting = () => {
            :ripple="false"
            @click="setting"
     ></v-btn>
-    <v-btn class="system-extend-btn ms-2"
-           icon="mdi-github"
-           size="small"
-           variant="text"
-           :rounded="false"
-           density="comfortable"
-           title="Fork on GitHub"
-           :ripple="false"
-           @click="_goBrowserPage('https://github.com/tzfun/etcd-workbench')"
-    ></v-btn>
-    <v-btn class="system-extend-btn ms-2"
-           icon="mdi-information-variant-circle"
-           size="small"
-           variant="text"
-           :rounded="false"
-           density="comfortable"
-           title="About"
-           :ripple="false"
-           @click="showAppInfo"
-    ></v-btn>
-    <v-btn class="system-extend-btn ms-2"
-           icon="mdi-brightness-6"
-           size="small"
-           variant="text"
-           :rounded="false"
-           density="comfortable"
-           title="About"
-           :ripple="false"
-           @click="toggleTheme"
-    ></v-btn>
-
   </v-system-bar>
 </template>
 

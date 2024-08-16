@@ -148,3 +148,5 @@ export type LogicErrorInfo = {
     prefix?: string,
     session?: SessionData
 }
+
+export type AppTheme = 'light' | 'dark' | 'auto'

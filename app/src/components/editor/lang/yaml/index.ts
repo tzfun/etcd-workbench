@@ -1,3 +1,5 @@
-import {yaml} from "@codemirror/lang-yaml";
+import { StreamLanguage } from '@codemirror/language'
+import { yaml } from '@codemirror/legacy-modes/mode/yaml'
 
-export default yaml
+const yamlLanguage = () => StreamLanguage.define(yaml)
+export default yamlLanguage

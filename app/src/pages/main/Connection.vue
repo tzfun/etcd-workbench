@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import {onActivated, PropType, ref} from "vue";
 import {SessionData} from "~/common/transport/connection.ts";
-import Cluster from "~/pages/Cluster.vue";
-import Keys from "~/pages/Keys.vue";
-import Users from "~/pages/Users.vue";
-import Roles from "~/pages/Roles.vue";
-import Leases from "~/pages/Leases.vue";
+import Cluster from "~/pages/main/Cluster.vue";
+import Keys from "~/pages/main/Keys.vue";
+import Users from "~/pages/main/Users.vue";
+import Roles from "~/pages/main/Roles.vue";
+import Leases from "~/pages/main/Leases.vue";
 
 const props = defineProps({
   session: {
@@ -46,6 +46,8 @@ const clickList = (page: string) => {
               :activated="activeListItem"
               color="primary"
               @click:activate="selectList"
+              mandatory
+              nav
       >
         <v-list-item title="Cluster"
                      value="cluster"
@@ -62,13 +64,13 @@ const clickList = (page: string) => {
                      prepend-icon="mdi-clock-time-nine"
                      @click="clickList('leases')"
         ></v-list-item>
-        <v-list-item title="Manage Users"
+        <v-list-item title="Users"
                      value="users"
                      prepend-icon="mdi-account-supervisor"
                      @click="clickList('users')"
                      :disabled="!session.root"
         ></v-list-item>
-        <v-list-item title="Manage Roles"
+        <v-list-item title="Roles"
                      value="roles"
                      prepend-icon="mdi-lock"
                      @click="clickList('roles')"

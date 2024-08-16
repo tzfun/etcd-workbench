@@ -413,7 +413,7 @@ impl EtcdConnector {
             let key_bytes_len = key_bytes.len();
             let range_end_len = range_end.len();
             //  为兼容老版本的etcd，空字符串是一个长度为1且内容为0的byte数组
-            let all_keys = (key_bytes_len == 0 && range_end_len == 0)
+            let all_keys = (key_bytes_len == 0 && (range_end_len == 0 || (range_end_len == 1 && range_end[0] == 0)))
                 || (key_bytes_len == 1 && range_end_len == 1 && key_bytes[0] == 0 && range_end[0] == 0);
 
             result.push(SerializablePermission {

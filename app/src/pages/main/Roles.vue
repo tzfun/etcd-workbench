@@ -97,6 +97,7 @@ const getRoleInfo = (role: any) => {
     loadingStore.getInfo = true
     _getRolePermissions(props.session?.id, role).then((permissions) => {
       currentRoleInfo.value = permissions
+      console.log(permissions)
     }).catch(e => {
       _handleError({
         e,

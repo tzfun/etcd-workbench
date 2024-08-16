@@ -35,6 +35,17 @@
         "visible": false
       },
       {
+        "label": "setting",
+        "title": "Etcd Workbench",
+        "width": 1400,
+        "height": 1000,
+        "center": true,
+        "url": "/?page=setting",
+        "decorations": false,
+        "transparent": true,
+        "visible": false
+      },
+      {
         "label": "splashscreen",
         "width": 350,
         "height": 100,

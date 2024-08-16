@@ -2,16 +2,19 @@
 import {onMounted, PropType, reactive, ref} from "vue";
 import {SessionData} from "~/common/transport/connection.ts";
 import {
-  _addUser, _authDisable,
+  _addUser,
+  _authDisable,
   _authEnable,
-  _deleteUser, _getAllRoles,
+  _deleteUser,
+  _getAllRoles,
   _getAllUsers,
   _handleError,
-  _userChangePassword, _userGrantRole,
+  _userChangePassword,
+  _userGrantRole,
   _userRevokeRole
 } from "~/common/services.ts";
 import {User} from "~/common/transport/user.ts";
-import {_confirmSystem, _tipWarn, events} from "~/common/events.ts";
+import {_confirmSystem, _emitLocal, _tipWarn} from "~/common/events.ts";
 import {_isEmpty, _shuffleArray} from "~/common/utils.ts";
 
 const colorList = [
@@ -117,7 +120,7 @@ const authEnable = () => {
   _confirmSystem('Are you sure you want to turn on the authentication function? You will need to reconnect after executing.').then(() => {
     loadingStore.authEnable = true
     _authEnable(props.session?.id).then(() => {
-      events.emit('closeTab', props.session!.id)
+      _emitLocal('closeTab', props.session!.id)
     }).catch(e => {
       _handleError({
         e,
@@ -133,7 +136,7 @@ const authDisable = () => {
   _confirmSystem('Are you sure you want to turn off authentication? You will need to reconnect after executing this command.').then(() => {
     loadingStore.authDisable = true
     _authDisable(props.session?.id).then(() => {
-      events.emit('closeTab', props.session!.id)
+      _emitLocal('closeTab', props.session!.id)
     }).catch(e => {
       _handleError({
         e,
@@ -175,7 +178,7 @@ const changePassword = () => {
   loadingStore.editUser = true
   _userChangePassword(props.session?.id, editUserDialog.user, editUserDialog.password).then(() => {
     if (props.session.user == editUserDialog.user) {
-      events.emit('closeTab', props.session!.id)
+      _emitLocal('closeTab', props.session!.id)
     }
     editUserDialog.show = false
   }).catch(e => {

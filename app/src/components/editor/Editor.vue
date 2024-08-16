@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
 import {barf as darkTheme, smoothy as lightTheme} from "./themes";
-import {computed, onMounted, PropType, reactive, ref, shallowRef, watch} from "vue";
+import {computed, onMounted, onUnmounted, PropType, reactive, ref, shallowRef, watch} from "vue";
 import {useTheme} from "vuetify";
 import {EditorConfig} from "~/common/types.ts";
 import jsonLanguage from "./lang/json";
@@ -19,6 +19,7 @@ import {
   fileTypeIcon
 } from "~/common/utils.ts";
 import {Codemirror} from "vue-codemirror";
+import {appWindow} from "@tauri-apps/api/window";
 
 type ContentFormatType = 'text' | 'blob'
 
@@ -53,6 +54,20 @@ const showLanguageSelection = ref<boolean>(false)
 
 const content = ref(props.value)
 const propsConfig = ref(props.config!)
+
+const tauriBlurUnListen = ref<Function>()
+
+onMounted(async () => {
+  tauriBlurUnListen.value = await appWindow.listen('tauri://blur', () => {
+    showLanguageSelection.value = false
+  })
+})
+
+onUnmounted(() => {
+  if (tauriBlurUnListen.value) {
+    tauriBlurUnListen.value()
+  }
+})
 
 /**
  * 格式化数据
@@ -208,6 +223,10 @@ defineExpose({
   readDataBytes
 })
 
+const onfocusout = (e) => {
+  console.log(e)
+}
+
 </script>
 
 <template>
@@ -253,6 +272,7 @@ defineExpose({
                        :prepend-icon="fileTypeIcon[item]"
                        @click="changeLanguage(item)"
                        color="primary"
+                       onfocusout="onfocusout"
           ></v-list-item>
         </v-list>
       </div>
@@ -266,7 +286,7 @@ defineExpose({
 $--editor-padding: 0 1rem;
 
 .editor {
-  height: calc(100% -  $--editor-footer-height - 2px);
+  height: calc(100% - $--editor-footer-height - 2px);
 
   .code {
     width: 30%;

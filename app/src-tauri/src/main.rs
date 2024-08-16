@@ -24,7 +24,7 @@ fn main() {
     tauri::Builder::default()
         .setup(|app| {
             for (name, window) in app.windows() {
-                if name.eq("main") {
+                if name.ne("splashscreen") {
                     debug!("set window shadow: {}", name);
                     set_shadow(&window, true).unwrap()
                 }
@@ -36,7 +36,6 @@ fn main() {
             api::connection::connect_test,
             api::connection::connect,
             api::connection::disconnect,
-            api::settings::close_splashscreen,
             api::settings::get_settings,
             api::settings::save_connection,
             api::settings::remove_connection,

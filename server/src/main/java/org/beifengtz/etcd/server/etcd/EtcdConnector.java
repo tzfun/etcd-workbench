@@ -534,7 +534,7 @@ public class EtcdConnector {
 
                             PermissionBOBuilder<?, ?> builder = PermissionBO.builder().type(permission.getPermType());
                             //  为兼容老版本的etcd，空字符串是一个长度为1且内容为0的byte数组
-                            boolean allKeys = (keyBytes.length == 0 && rangeEndBytes.length == 0) ||
+                            boolean allKeys = (keyBytes.length == 0 && (rangeEndBytes.length == 0 || (rangeEndBytes.length == 1 && rangeEndBytes[0] == 0))) ||
                                     (keyBytes.length == 1 && rangeEndBytes.length == 1 && keyBytes[0] == 0 && rangeEndBytes[0] == 0);
                             if (allKeys) {
                                 builder.allKeys(true);

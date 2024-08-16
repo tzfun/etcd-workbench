@@ -1,21 +1,18 @@
 <script setup lang="ts">
 
 import etcdLogo from "~/assets/etcd.png";
-import {_goBrowserPage} from "~/common/utils.ts";
 import {appWindow} from "@tauri-apps/api/window";
-import {_confirm, events} from "~/common/events.ts";
+import {_confirm} from "~/common/events.ts";
 import {onMounted, ref} from "vue";
-import {useTheme} from "vuetify";
+import {_openSettingWindow} from "~/common/windows.ts";
 
 const maximize = ref(false)
-const theme = useTheme()
 
 defineProps({
   title: String,
-  height: Number
+  height: Number,
+  windowLabel: String
 })
-
-const emits = defineEmits(['setting', 'show-info'])
 
 onMounted(async () => {
   maximize.value = await appWindow.isMaximized()
@@ -33,12 +30,8 @@ const toggleMaximize = async () => {
   maximize.value = !maximize.value
 }
 
-const setting = () => {
-  events.emit('toggleSetting')
-}
-
-const toggleTheme = () => {
-  theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark'
+const setting = async () => {
+  await _openSettingWindow()
 }
 
 </script>
@@ -62,16 +55,6 @@ const toggleTheme = () => {
     <v-spacer></v-spacer>
 
     <v-btn class="system-extend-btn ms-2"
-           icon="mdi-brightness-6"
-           size="small"
-           variant="text"
-           :rounded="false"
-           density="comfortable"
-           title="About"
-           :ripple="false"
-           @click="toggleTheme"
-    ></v-btn>
-    <v-btn class="system-extend-btn ms-2"
            icon="mdi-cog"
            size="small"
            variant="text"
@@ -80,6 +63,7 @@ const toggleTheme = () => {
            title="Settings"
            :ripple="false"
            @click="setting"
+           v-if="windowLabel == 'main'"
     ></v-btn>
 
     <v-divider vertical class="mr-2 ml-2" length="80%" style="margin-top: 3px;"></v-divider>
