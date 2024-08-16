@@ -2,9 +2,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use log::{debug, LevelFilter};
-use tauri::{CustomMenuItem, Manager, SystemTray, SystemTrayMenuItem};
-use window_shadows::set_shadow;
-use crate::api::windows::tray_menu_handle;
+use tauri::{Manager, WindowEvent};
+// use crate::api::windows::tray_menu_handle;
 use crate::utils::file_util;
 
 mod api;
@@ -21,19 +20,30 @@ fn main() {
 
     file_util::init().unwrap();
 
-    let quit = CustomMenuItem::new("quit".to_string(), "Quit");
-    let hide = CustomMenuItem::new("hide".to_string(), "Hide Window");
-    let tray_menu = tauri::SystemTrayMenu::new()
-        .add_item(quit)
-        .add_native_item(SystemTrayMenuItem::Separator)
-        .add_item(hide);
-
     tauri::Builder::default()
         .setup(|app| {
             for (name, window) in app.windows() {
                 if name.ne("splashscreen") {
                     debug!("set window shadow: {}", name);
-                    set_shadow(&window, true).unwrap()
+                    #[cfg(target_os = "windows")]
+                    window_shadows::set_shadow(&window, true).unwrap()
+                }
+                if name.eq("main") {
+                    window.on_window_event(|e| {
+                        match e {
+                            WindowEvent::Resized(_) => {}
+                            WindowEvent::Moved(_) => {}
+                            WindowEvent::CloseRequested { .. } => {
+                                std::process::exit(0);
+                            }
+                            WindowEvent::Destroyed => {}
+                            WindowEvent::Focused(_) => {}
+                            WindowEvent::ScaleFactorChanged { .. } => {}
+                            WindowEvent::FileDrop(_) => {}
+                            WindowEvent::ThemeChanged(_) => {},
+                            _=>{}
+                        }
+                    })
                 }
             }
 
@@ -42,7 +52,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             api::windows::open_main_window,
             api::windows::open_setting_window,
-            api::windows::close_all_window,
+            api::windows::exit_app,
             api::connection::connect_test,
             api::connection::connect,
             api::connection::disconnect,
@@ -78,8 +88,6 @@ fn main() {
             api::role::role_grant_permission,
             api::role::role_revoke_permission,
         ])
-        .system_tray(SystemTray::new().with_menu(tray_menu))
-        .on_system_tray_event(|app, event| tray_menu_handle(app, event))
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

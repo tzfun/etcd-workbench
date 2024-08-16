@@ -1,5 +1,3 @@
-import { StreamLanguage } from '@codemirror/language'
-import { xml } from '@codemirror/legacy-modes/mode/xml'
+import {xml} from "@codemirror/lang-xml";
 
-const xmlLanguage = () => StreamLanguage.define(xml)
-export default xmlLanguage
+export default xml

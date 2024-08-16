@@ -13,8 +13,8 @@ export function _openSettingWindow() {
     })
 }
 
-export function _closeAllWindow() {
-    invoke('close_all_window').catch(e => {
+export function _exitApp() {
+    invoke('exit_app').catch(e => {
         console.error(e)
     })
 }

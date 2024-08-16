@@ -2,7 +2,7 @@
 
 import Home from "~/pages/main/Home.vue";
 import Connection from "~/pages/main/Connection.vue";
-import {_confirm, localEvents} from "~/common/localEvents.ts";
+import {_confirm, _confirmSystem, localEvents} from "~/common/localEvents.ts";
 import {_disconnect} from "~/common/services.ts";
 import {onMounted, onUnmounted, reactive, ref} from "vue";
 import {SessionData} from "~/common/transport/connection.ts";
@@ -109,9 +109,7 @@ const closeTabDirectly = (sessionId: number) => {
             show-arrows
             :height="30"
             density="compact"
-            color="basil"
-            selected-class="bg-blue-lighten-1 text-white"
-            hide-slider
+            color="primary"
     >
       <v-tab icon="mdi-home"
              :value="HOME_TAB"

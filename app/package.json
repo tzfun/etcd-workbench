@@ -12,6 +12,7 @@
   "dependencies": {
     "@codemirror/lang-json": "^6.x",
     "@codemirror/lang-sql": "^6.x",
+    "@codemirror/lang-xml": "^6.x",
     "@codemirror/language": "^6.x",
     "@codemirror/legacy-modes": "^6.x",
     "@codemirror/theme-one-dark": "^6.x",

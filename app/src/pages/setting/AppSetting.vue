@@ -77,14 +77,15 @@ const editorTheme = reactive({
   ]
 })
 
-const exampleCode = `
-server:
-  # Configure the port the service will run on.
+const exampleCode = `server:
+  # Workbench running port
   port: 8002
   etcdExecuteTimeoutMillis: 3000
+  dataPath: "./data"
 auth:
   enable: false
-`
+  - user: user1:password1
+  - user: user2:password2`
 const exampleCodeLang = "yaml"
 
 const appThemeForm = ref<AppTheme>('auto')
@@ -204,6 +205,7 @@ const setAppTheme = (theme: AppTheme) => {
                     <v-card hover :title="theme.label"
                             @click="editorThemeForm.light = theme.value"
                             :ripple="false"
+                            class="cursor-pointer"
                     >
                       <template #append>
                         <v-radio :value="theme.value"
@@ -235,6 +237,7 @@ const setAppTheme = (theme: AppTheme) => {
                     <v-card hover :title="theme.label"
                             @click="editorThemeForm.dark = theme.value"
                             :ripple="false"
+                            class="cursor-pointer"
                     >
                       <template #append>
                         <v-radio :value="theme.value"

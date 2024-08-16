@@ -4,7 +4,7 @@ import etcdLogo from "~/assets/etcd.png";
 import {appWindow} from "@tauri-apps/api/window";
 import {_confirm} from "~/common/localEvents.ts";
 import {onMounted, ref} from "vue";
-import {_closeAllWindow, _openSettingWindow} from "~/common/windows.ts";
+import {_exitApp, _openSettingWindow} from "~/common/windows.ts";
 
 const maximize = ref(false)
 
@@ -35,7 +35,7 @@ onMounted(async () => {
 const closeApp = () => {
   if (props.windowLabel === 'main') {
     _confirm("Exist Workbench", "Are you sure you want to close the app?").then(() => {
-      _closeAllWindow()
+      _exitApp()
     }).catch(() => {
     })
   } else {

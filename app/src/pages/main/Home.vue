@@ -68,6 +68,8 @@ const removeConnectionConfig = (name: string) => {
               activated="new"
               color="primary"
               @click:activate="selectConnection"
+              mandatory
+              nav
       >
         <v-list-item value="new">
           New Connection

@@ -1,40 +1,7 @@
 use std::path::PathBuf;
 
-use tauri::{Manager, SystemTrayEvent, WindowBuilder, WindowUrl};
+use tauri::{Manager, WindowBuilder, WindowUrl};
 use tauri::utils::config::WindowConfig;
-use window_shadows::set_shadow;
-
-pub fn tray_menu_handle(app_handle: &tauri::AppHandle, event: SystemTrayEvent) {
-    match event {
-        SystemTrayEvent::MenuItemClick { id, .. } => {
-            match id.as_str() {
-                "quit" => {
-                    std::process::exit(0)
-                },
-                "hide" => {
-                    let item_handle = app_handle.tray_handle().get_item(&id);
-
-                    if let Some(window) = app_handle.get_window("main") {
-                        if window.is_visible().unwrap() {
-                            window.hide().unwrap();
-                            item_handle.set_title("Show Workbench").unwrap();
-                        } else {
-                            window.show().unwrap();
-                            item_handle.set_title("Hide Workbench").unwrap();
-                        }
-                    }
-                },
-                _=>{}
-            }
-        }
-        SystemTrayEvent::LeftClick { .. } => {
-            open_main_window0(app_handle)
-        }
-        SystemTrayEvent::RightClick { .. } => {}
-        SystemTrayEvent::DoubleClick { .. } => {},
-        _ => {}
-    }
-}
 
 pub fn open_main_window0(app_handle: &tauri::AppHandle) {
     // 关闭初始屏幕
@@ -59,7 +26,8 @@ pub fn open_main_window0(app_handle: &tauri::AppHandle) {
         };
         let main = WindowBuilder::from_config(app_handle, config).build().unwrap();
         main.show().unwrap();
-        set_shadow(&main, true).unwrap();
+        #[cfg(target_os = "windows")]
+        window_shadows::set_shadow(&main, true).unwrap();
         main.set_focus().unwrap();
     }
 }
@@ -91,13 +59,12 @@ pub async fn open_setting_window(app_handle: tauri::AppHandle, window: tauri::Wi
         };
         let setting = WindowBuilder::from_config(&app_handle, config).build().unwrap();
         setting.show().unwrap();
-        set_shadow(&setting, true).unwrap();
+        #[cfg(target_os = "windows")]
+        window_shadows::set_shadow(&setting, true).unwrap();
     }
 }
 
 #[tauri::command]
-pub async fn close_all_window(window: tauri::Window) {
-    for (_, window) in window.windows() {
-        window.close().unwrap()
-    }
+pub fn exit_app() {
+    std::process::exit(0);
 }

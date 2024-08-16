@@ -230,7 +230,9 @@ const grantPerm = () => {
     <div>
       <v-expansion-panels class="mt-5"
                           v-model="expendPanel"
-                          @update:model-value="getRoleInfo">
+                          @update:model-value="getRoleInfo"
+                          v-if="roles.length > 0"
+      >
         <v-expansion-panel v-for="(role, idx) in roles"
                            :key="idx"
                            :value="role"
@@ -334,6 +336,10 @@ const grantPerm = () => {
           </v-expansion-panel-text>
         </v-expansion-panel>
       </v-expansion-panels>
+      <v-empty-state v-else
+                     icon="mdi-package-variant"
+                     headline="No Roles"
+      ></v-empty-state>
     </div>
 
 

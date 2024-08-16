@@ -3,7 +3,7 @@
 import {appWindow} from "@tauri-apps/api/window";
 import {onMounted, ref} from "vue";
 import {_confirm} from "~/common/localEvents.ts";
-import {_closeAllWindow, _openSettingWindow} from "~/common/windows.ts";
+import {_exitApp, _openSettingWindow} from "~/common/windows.ts";
 
 const maximize = ref(false)
 
@@ -37,7 +37,7 @@ const toggleMaximize = async () => {
 const closeApp = () => {
   if (props.windowLabel === 'main') {
     _confirm("Exist Workbench", "Are you sure you want to close the app?").then(() => {
-      _closeAllWindow()
+      _exitApp()
     }).catch(() => {
     })
   } else {
@@ -117,7 +117,7 @@ const setting = async () => {
 
     <v-spacer></v-spacer>
 
-    <v-btn class="system-extend-btn ms-2"
+    <v-btn class="system-extend-btn me-2"
            icon="mdi-cog"
            size="small"
            variant="text"
@@ -126,6 +126,7 @@ const setting = async () => {
            title="Settings"
            :ripple="false"
            @click="setting"
+           v-if="windowLabel == 'main'"
     ></v-btn>
   </v-system-bar>
 </template>
