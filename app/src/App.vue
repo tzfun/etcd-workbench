@@ -8,7 +8,7 @@ import WindowsSystemBar from "~/components/system-bar/WindowsSystemBar.vue";
 import MacSystemBar from "~/components/system-bar/MacSystemBar.vue";
 import AppSetting from "~/pages/setting/AppSetting.vue";
 import AppMain from "~/pages/main/AppMain.vue";
-import {listen} from "@tauri-apps/api/event";
+import {localEvents} from "~/common/localEvents.ts";
 
 const windowLabel = ref<string>('main')
 const loading = ref(false)
@@ -48,16 +48,16 @@ onMounted(async () => {
   //  频闭Webview原生事件
   disableWebviewNativeEvents()
 
-  eventUnListens.push(await listen('loading', (e) => {
-    loading.value = e.payload as boolean
-  }))
+  localEvents.on('loading', (e) => {
+    loading.value = e as boolean
+  })
 
-  eventUnListens.push(await listen('loading', (e) => {
+  eventUnListens.push(await appWindow.listen('setAppTheme', (e) => {
     setAppTheme(e.payload as AppTheme)
   }))
 
-  eventUnListens.push(await listen('dialog', (e) => {
-    let dialog = e.payload as DialogItem
+  localEvents.on('dialog', (e) => {
+    let dialog = e as DialogItem
     let idx = -1;
     for (let i = 0; i < dialogs.value.length; i++) {
       if (!dialogs.value[i].value) {
@@ -72,10 +72,10 @@ onMounted(async () => {
     } else {
       dialogs.value[idx] = dialog
     }
-  }))
+  })
 
-  eventUnListens.push(await listen('tip', (e) => {
-    let tip = e.payload as TipsItem
+  localEvents.on('tip', (e) => {
+    let tip = e as TipsItem
     let idx = -1;
     for (let i = 0; i < tips.value.length; i++) {
       if (!tips.value[i].value) {
@@ -90,8 +90,7 @@ onMounted(async () => {
     } else {
       tips.value[idx] = tip
     }
-  }))
-
+  })
 })
 
 onUnmounted(() => {

@@ -2,13 +2,12 @@
 
 import Home from "~/pages/main/Home.vue";
 import Connection from "~/pages/main/Connection.vue";
-import {_confirm} from "~/common/events.ts";
+import {_confirm, localEvents} from "~/common/localEvents.ts";
 import {_disconnect} from "~/common/services.ts";
 import {onMounted, onUnmounted, reactive, ref} from "vue";
 import {SessionData} from "~/common/transport/connection.ts";
 import {appWindow} from "@tauri-apps/api/window";
 import {_openMainWindow} from "~/common/windows.ts";
-import {listen} from "@tauri-apps/api/event";
 
 type TabItem = {
   name: string,
@@ -27,10 +26,9 @@ onMounted(async () => {
     console.log("resize", height, width)
   }))
 
-  eventUnListens.push(await listen('newConnection', (e) => {
-    let o: any = e.payload as any
-    let name = o.name as string
-    let session = o.session as SessionData
+  localEvents.on('newConnection', (e: any) => {
+    let name = e.name as string
+    let session = e.session as SessionData
 
     for (let i = tabList.length - 1; i >= 0; i--) {
       let tab = tabList[i]
@@ -51,16 +49,14 @@ onMounted(async () => {
     tabList.push(tabItem)
 
     activeTab.value = tabItem.name
-  }))
+  })
 
-
-  eventUnListens.push(await listen('closeTab', (e) => {
-    let sessionId = e.payload as number
-    closeTabDirectly(sessionId as number)
+  localEvents.on('closeTab', e => {
+    closeTabDirectly(e as number)
     activeTab.value = HOME_TAB
-  }))
+  })
 
-  await _openMainWindow()
+  _openMainWindow()
 })
 
 onUnmounted(() => {

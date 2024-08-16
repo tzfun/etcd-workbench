@@ -2,7 +2,7 @@
 import {onMounted, PropType, ref} from "vue";
 import {FileForm} from "~/common/types.ts";
 import {_byteTextFormat, _timeFormat} from "~/common/utils.ts";
-import {_dialogContent, _tipError} from "~/common/events.ts";
+import {_dialogContent, _tipError} from "~/common/localEvents.ts";
 
 const props = defineProps({
   modelValue: {

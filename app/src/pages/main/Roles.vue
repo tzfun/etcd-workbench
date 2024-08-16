@@ -11,7 +11,7 @@ import {
   _revokeRolePermissions
 } from "~/common/services.ts";
 import {RolePermission, RolePermType} from "~/common/transport/user.ts";
-import {_confirmSystem, _tipWarn} from "~/common/events.ts";
+import {_confirmSystem, _tipWarn} from "~/common/localEvents.ts";
 import {_isEmpty} from "~/common/utils.ts";
 
 const permissionSelections = [

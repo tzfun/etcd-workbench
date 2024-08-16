@@ -2,15 +2,18 @@
 
 import {appWindow} from "@tauri-apps/api/window";
 import {onMounted, ref} from "vue";
-import {_confirm} from "~/common/events.ts";
+import {_confirm} from "~/common/localEvents.ts";
 import {_openSettingWindow} from "~/common/windows.ts";
 
 const maximize = ref(false)
 
-defineProps({
+const props = defineProps({
   title: String,
   height: Number,
-  windowLabel: String
+  windowLabel: {
+    type: String,
+    required: true
+  }
 })
 
 
@@ -24,14 +27,18 @@ const toggleMaximize = async () => {
 }
 
 const closeApp = () => {
-  _confirm("Exist Workbench", "Are you sure you want to close the app?").then(() => {
+  if (props.windowLabel === 'main') {
+    _confirm("Exist Workbench", "Are you sure you want to close the app?").then(() => {
+      appWindow.close()
+    }).catch(() => {
+    })
+  } else {
     appWindow.close()
-  }).catch(() => {
-  })
+  }
 }
 
 const setting = async () => {
-  await _openSettingWindow()
+  _openSettingWindow()
 }
 
 </script>

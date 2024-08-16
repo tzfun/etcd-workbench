@@ -37,8 +37,8 @@
       {
         "label": "setting",
         "title": "Etcd Workbench",
-        "width": 1400,
-        "height": 1000,
+        "width": 1200,
+        "height": 800,
         "center": true,
         "url": "/?page=setting",
         "decorations": false,

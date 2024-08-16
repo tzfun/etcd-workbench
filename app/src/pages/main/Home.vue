@@ -2,7 +2,7 @@
 
 import Connector from "~/components/Connector.vue";
 import {_getConnectionList, _handleError, _removeConnection} from "~/common/services.ts";
-import {_alertError, _confirm} from "~/common/events.ts";
+import {_alertError, _confirm} from "~/common/localEvents.ts";
 import {onActivated, onMounted, ref} from "vue";
 import {ConnectionInfo, DEFAULT_CONNECTION, ErrorPayload} from "~/common/transport/connection.ts";
 

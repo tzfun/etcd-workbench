@@ -10,7 +10,7 @@ import {
   _putKV,
   _putKVWithLease
 } from "~/common/services.ts";
-import {_confirmSystem, _tipInfo, _tipSuccess, _tipWarn} from "~/common/events.ts";
+import {_confirmSystem, _tipInfo, _tipSuccess, _tipWarn} from "~/common/localEvents.ts";
 import {computed, onMounted, onUnmounted, PropType, reactive, ref} from "vue";
 import {SessionData} from "~/common/transport/connection.ts";
 import DragBox from "~/components/DragBox.vue";

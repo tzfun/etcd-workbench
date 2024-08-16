@@ -2,7 +2,7 @@ import {invoke} from "@tauri-apps/api";
 import {Connection, ConnectionInfo, SessionData} from "~/common/transport/connection.ts";
 import {Cluster} from "~/common/transport/maintenance.ts";
 import {KeyValue, LeaseInfo} from "~/common/transport/kv.ts";
-import {_emitLocal, _tipError} from "~/common/events.ts";
+import {_emitLocal, _tipError} from "~/common/localEvents.ts";
 import {LogicErrorInfo} from "~/common/types.ts";
 import {RolePermission, User} from "~/common/transport/user.ts";
 

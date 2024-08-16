@@ -1,12 +1,12 @@
 import {DialogItem, TipsItem} from "~/common/types.ts";
-import {appWindow, WebviewWindow} from "@tauri-apps/api/window";
+import { WebviewWindow} from "@tauri-apps/api/window";
 import {emit} from "@tauri-apps/api/event";
+import mitt from "mitt";
+
+export const localEvents = mitt();
 
 export function _emitLocal(eventName: string, eventPayload: any) {
-    appWindow.emit(eventName, eventPayload).then(() => {
-    }).catch(e => {
-        console.error(e)
-    })
+    localEvents.emit(eventName, eventPayload)
 }
 
 export function _emitGlobal(eventName: string, eventPayload: any) {

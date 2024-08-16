@@ -4,7 +4,7 @@ import Skeleton from "~/components/Skeleton.vue";
 import {reactive, ref} from "vue";
 import EditorExample from "~/components/editor/EditorExample.vue";
 import {AppTheme} from "~/common/types.ts";
-import {_emitGlobal} from "~/common/events.ts";
+import {_emitGlobal} from "~/common/localEvents.ts";
 
 const editorTheme = reactive({
   light: [

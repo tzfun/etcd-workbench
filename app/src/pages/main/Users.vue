@@ -14,7 +14,7 @@ import {
   _userRevokeRole
 } from "~/common/services.ts";
 import {User} from "~/common/transport/user.ts";
-import {_confirmSystem, _emitLocal, _tipWarn} from "~/common/events.ts";
+import {_confirmSystem, _emitLocal, _tipWarn} from "~/common/localEvents.ts";
 import {_isEmpty, _shuffleArray} from "~/common/utils.ts";
 
 const colorList = [

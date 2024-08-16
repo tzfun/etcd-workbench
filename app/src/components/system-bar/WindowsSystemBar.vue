@@ -2,16 +2,19 @@
 
 import etcdLogo from "~/assets/etcd.png";
 import {appWindow} from "@tauri-apps/api/window";
-import {_confirm} from "~/common/events.ts";
+import {_confirm} from "~/common/localEvents.ts";
 import {onMounted, ref} from "vue";
 import {_openSettingWindow} from "~/common/windows.ts";
 
 const maximize = ref(false)
 
-defineProps({
+const props = defineProps({
   title: String,
   height: Number,
-  windowLabel: String
+  windowLabel: {
+    type: String,
+    required: true
+  }
 })
 
 onMounted(async () => {
@@ -19,10 +22,14 @@ onMounted(async () => {
 })
 
 const closeApp = () => {
-  _confirm("Exist Workbench", "Are you sure you want to close the app?").then(() => {
+  if (props.windowLabel === 'main') {
+    _confirm("Exist Workbench", "Are you sure you want to close the app?").then(() => {
+      appWindow.close()
+    }).catch(() => {
+    })
+  } else {
     appWindow.close()
-  }).catch(() => {
-  })
+  }
 }
 
 const toggleMaximize = async () => {
@@ -31,7 +38,7 @@ const toggleMaximize = async () => {
 }
 
 const setting = async () => {
-  await _openSettingWindow()
+  _openSettingWindow()
 }
 
 </script>
@@ -66,7 +73,12 @@ const setting = async () => {
            v-if="windowLabel == 'main'"
     ></v-btn>
 
-    <v-divider vertical class="mr-2 ml-2" length="80%" style="margin-top: 3px;"></v-divider>
+    <v-divider vertical
+               class="mr-2 ml-2"
+               length="80%"
+               style="margin-top: 3px;"
+               v-if="windowLabel == 'main'"
+    ></v-divider>
 
     <v-btn class="system-native-btn"
            icon="mdi-minus"

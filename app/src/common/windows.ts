@@ -1,25 +1,14 @@
-import {WebviewWindow} from "@tauri-apps/api/window";
+import {invoke} from "@tauri-apps/api";
 
 
-export async function _openMainWindow() {
-    let splashscreenWindow = WebviewWindow.getByLabel('splashscreen')
-    if(splashscreenWindow) {
-        await splashscreenWindow.close()
-    }
-    let mainWindow = WebviewWindow.getByLabel('main')
-    if (mainWindow) {
-        await mainWindow.show()
-    }
+export function _openMainWindow() {
+    invoke('open_main_window').catch(e => {
+        console.error(e)
+    })
 }
 
-
-export async function _openSettingWindow() {
-    let settingWindow = WebviewWindow.getByLabel('setting')
-    if (settingWindow) {
-        if (await settingWindow.isVisible()) {
-            await settingWindow.setFocus()
-        } else {
-            await settingWindow.show()
-        }
-    }
+export function _openSettingWindow() {
+    invoke('open_setting_window').catch(e => {
+        console.error(e)
+    })
 }

@@ -33,6 +33,8 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            api::windows::open_main_window,
+            api::windows::open_setting_window,
             api::connection::connect_test,
             api::connection::connect,
             api::connection::disconnect,

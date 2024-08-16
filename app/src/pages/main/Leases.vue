@@ -4,7 +4,7 @@ import {_getLease, _grantLease, _handleError, _leases, _revokeLeases} from "~/co
 import {SessionData} from "~/common/transport/connection.ts";
 import {LeaseInfo} from "~/common/transport/kv.ts";
 import CountDownTimer from "~/components/CountDownTimer.vue";
-import {_confirmSystem, _tipWarn} from "~/common/events.ts";
+import {_confirmSystem, _tipWarn} from "~/common/localEvents.ts";
 import {_isEmpty} from "~/common/utils.ts";
 
 const props = defineProps({
