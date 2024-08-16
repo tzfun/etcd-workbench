@@ -3,12 +3,11 @@
 import {appWindow} from "@tauri-apps/api/window";
 import {onMounted, ref} from "vue";
 import {_confirm} from "~/common/localEvents.ts";
-import {_openSettingWindow} from "~/common/windows.ts";
+import {_closeAllWindow, _openSettingWindow} from "~/common/windows.ts";
 
 const maximize = ref(false)
 
 const props = defineProps({
-  title: String,
   height: Number,
   windowLabel: {
     type: String,
@@ -16,8 +15,17 @@ const props = defineProps({
   }
 })
 
+const title = ref<string>('Etcd Workbench')
 
 onMounted(async () => {
+  switch (props.windowLabel) {
+    case 'main':
+      title.value = 'Etcd Workbench'
+      break
+    case 'setting':
+      title.value = 'Settings'
+      break
+  }
   maximize.value = await appWindow.isMaximized() || await appWindow.isFullscreen()
 })
 
@@ -29,7 +37,7 @@ const toggleMaximize = async () => {
 const closeApp = () => {
   if (props.windowLabel === 'main') {
     _confirm("Exist Workbench", "Are you sure you want to close the app?").then(() => {
-      appWindow.close()
+      _closeAllWindow()
     }).catch(() => {
     })
   } else {
@@ -98,8 +106,9 @@ const setting = async () => {
              xmlns="http://www.w3.org/2000/svg"
              width="8"
              height="8">
-          <path d="M903.68 120.32l30.72 578.048c1.024 22.016-26.624 37.376-40.448 24.064L284.672 141.312c-14.848-13.824 0-41.984 20.992-42.496l578.048 3.072c11.264-0.512 18.944 6.656 19.968 18.432z m0 0M139.776 920.576l578.048 4.608c22.016 0 35.84-28.16 22.016-41.472L131.072 302.592c-14.848-13.824-41.984 2.048-41.472 23.04l31.232 576.512c0 10.752 7.68 17.92 18.944 18.432z m0 0"
-                fill="#760E0E">
+          <path
+              d="M903.68 120.32l30.72 578.048c1.024 22.016-26.624 37.376-40.448 24.064L284.672 141.312c-14.848-13.824 0-41.984 20.992-42.496l578.048 3.072c11.264-0.512 18.944 6.656 19.968 18.432z m0 0M139.776 920.576l578.048 4.608c22.016 0 35.84-28.16 22.016-41.472L131.072 302.592c-14.848-13.824-41.984 2.048-41.472 23.04l31.232 576.512c0 10.752 7.68 17.92 18.944 18.432z m0 0"
+              fill="#760E0E">
           </path>
         </svg>
       </span>

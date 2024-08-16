@@ -12,3 +12,9 @@ export function _openSettingWindow() {
         console.error(e)
     })
 }
+
+export function _closeAllWindow() {
+    invoke('close_all_window').catch(e => {
+        console.error(e)
+    })
+}

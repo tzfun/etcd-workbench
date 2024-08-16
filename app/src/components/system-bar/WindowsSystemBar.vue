@@ -4,12 +4,11 @@ import etcdLogo from "~/assets/etcd.png";
 import {appWindow} from "@tauri-apps/api/window";
 import {_confirm} from "~/common/localEvents.ts";
 import {onMounted, ref} from "vue";
-import {_openSettingWindow} from "~/common/windows.ts";
+import {_closeAllWindow, _openSettingWindow} from "~/common/windows.ts";
 
 const maximize = ref(false)
 
 const props = defineProps({
-  title: String,
   height: Number,
   windowLabel: {
     type: String,
@@ -17,18 +16,30 @@ const props = defineProps({
   }
 })
 
+const title = ref<string>('Etcd Workbench')
+
 onMounted(async () => {
+
+  switch (props.windowLabel) {
+    case 'main':
+      title.value = 'Etcd Workbench'
+      break
+    case 'setting':
+      title.value = 'Settings'
+      break
+  }
+
   maximize.value = await appWindow.isMaximized()
 })
 
 const closeApp = () => {
   if (props.windowLabel === 'main') {
     _confirm("Exist Workbench", "Are you sure you want to close the app?").then(() => {
-      appWindow.close()
+      _closeAllWindow()
     }).catch(() => {
     })
   } else {
-    appWindow.close()
+    appWindow.hide()
   }
 }
 

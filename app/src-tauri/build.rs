@@ -1,4 +1,5 @@
 fn main() {
+    println!("xx");
     // icon expand:
     //
     // Square30x30Logo.png

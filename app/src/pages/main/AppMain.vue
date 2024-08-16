@@ -104,7 +104,7 @@ const closeTabDirectly = (sessionId: number) => {
 </script>
 
 <template>
-  <div>
+  <div class="fill-height">
     <v-tabs v-model="activeTab"
             show-arrows
             :height="30"

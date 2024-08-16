@@ -32,11 +32,12 @@
         "center": true,
         "decorations": false,
         "transparent": true,
-        "visible": false
+        "visible": false,
+        "closable": false
       },
       {
         "label": "setting",
-        "title": "Etcd Workbench",
+        "title": "Settings",
         "width": 1200,
         "height": 800,
         "center": true,
@@ -47,6 +48,7 @@
       },
       {
         "label": "splashscreen",
+        "title": "Etcd Workbench",
         "width": 350,
         "height": 100,
         "center": true,
@@ -71,6 +73,10 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ]
+    },
+    "systemTray": {
+      "iconPath": "icons/icon.ico",
+      "iconAsTemplate": true
     }
   }
 }

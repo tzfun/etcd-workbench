@@ -2,9 +2,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use log::{debug, LevelFilter};
-use tauri::Manager;
+use tauri::{CustomMenuItem, Manager, SystemTray, SystemTrayMenuItem};
 use window_shadows::set_shadow;
-
+use crate::api::windows::tray_menu_handle;
 use crate::utils::file_util;
 
 mod api;
@@ -21,6 +21,13 @@ fn main() {
 
     file_util::init().unwrap();
 
+    let quit = CustomMenuItem::new("quit".to_string(), "Quit");
+    let hide = CustomMenuItem::new("hide".to_string(), "Hide Window");
+    let tray_menu = tauri::SystemTrayMenu::new()
+        .add_item(quit)
+        .add_native_item(SystemTrayMenuItem::Separator)
+        .add_item(hide);
+
     tauri::Builder::default()
         .setup(|app| {
             for (name, window) in app.windows() {
@@ -35,6 +42,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             api::windows::open_main_window,
             api::windows::open_setting_window,
+            api::windows::close_all_window,
             api::connection::connect_test,
             api::connection::connect,
             api::connection::disconnect,
@@ -70,6 +78,8 @@ fn main() {
             api::role::role_grant_permission,
             api::role::role_revoke_permission,
         ])
+        .system_tray(SystemTray::new().with_menu(tray_menu))
+        .on_system_tray_event(|app, event| tray_menu_handle(app, event))
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

@@ -9,6 +9,7 @@ import MacSystemBar from "~/components/system-bar/MacSystemBar.vue";
 import AppSetting from "~/pages/setting/AppSetting.vue";
 import AppMain from "~/pages/main/AppMain.vue";
 import {localEvents} from "~/common/localEvents.ts";
+import {listen} from "@tauri-apps/api/event";
 
 const windowLabel = ref<string>('main')
 const loading = ref(false)
@@ -52,7 +53,7 @@ onMounted(async () => {
     loading.value = e as boolean
   })
 
-  eventUnListens.push(await appWindow.listen('setAppTheme', (e) => {
+  eventUnListens.push(await listen('setAppTheme', (e) => {
     setAppTheme(e.payload as AppTheme)
   }))
 
@@ -143,12 +144,10 @@ const disableWebviewNativeEvents = () => {
   <v-app id="vuetify-app">
     <v-layout>
       <WindowsSystemBar v-if="platform == 'win32'"
-                        title="ETCD Workbench"
                         :height="28"
                         :window-label="windowLabel"
       ></WindowsSystemBar>
       <MacSystemBar v-if="platform == 'darwin'"
-                    title="ETCD Workbench"
                     :height="28"
                     :window-label="windowLabel"
       ></MacSystemBar>
