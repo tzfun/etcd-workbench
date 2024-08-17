@@ -1,17 +1,22 @@
 #![allow(unused)]
 use std::collections::HashMap;
+use std::fs;
 use std::future::Future;
+use std::path::PathBuf;
 use std::pin::Pin;
 use std::time::Duration;
 
 use etcd_client::{AlarmAction, AlarmType, Certificate, Client, ConnectOptions, Error, GetOptions, GetResponse, Identity, LeaseGrantOptions, LeaseTimeToLiveOptions, PutOptions, RoleRevokePermissionOptions, TlsOptions};
 use log::{debug, error, info, warn};
-
+use tokio::fs::{File, OpenOptions};
+use tokio::io::AsyncWriteExt;
+use tokio::sync::watch;
+use tokio::sync::watch::Receiver;
 use crate::error::LogicError;
 use crate::ssh::ssh_tunnel::SshTunnel;
 use crate::transport::connection::Connection;
 use crate::transport::kv::{SerializableKeyValue, SerializableLeaseInfo, SerializableLeaseSimpleInfo};
-use crate::transport::maintenance::{SerializableCluster, SerializableClusterMember, SerializableClusterStatus};
+use crate::transport::maintenance::{SerializableCluster, SerializableClusterMember, SerializableClusterStatus, SnapshotState};
 use crate::transport::user::{SerializablePermission, SerializableUser};
 
 pub struct EtcdConnector {
@@ -544,5 +549,49 @@ impl EtcdConnector {
     pub async fn maintenance_defragment(&self) -> Result<(), Error> {
         self.client.maintenance_client().defragment().await?;
         Ok(())
+    }
+
+    /// 保存数据快照
+    pub async fn maintenance_snapshot(&self, file_path: PathBuf) -> Result<Receiver<SnapshotState>, Error> {
+        let mut stream = self.client.maintenance_client().snapshot().await?;
+        let (sender, receiver) = watch::channel(SnapshotState::default());
+        if let Some(parent) = file_path.parent() {
+            fs::create_dir_all(parent)?;
+        }
+        if file_path.exists() {
+            fs::remove_file(&file_path)?;
+        }
+
+        File::create(&file_path).await?;
+        let mut file = OpenOptions::new()
+            .write(true)
+            .append(true)
+            .open(file_path)
+            .await?;
+
+        tokio::spawn(async move {
+            loop {
+                let slip_result = stream.message().await;
+                match slip_result {
+                    Ok(slip) => {
+                        if let Some(response) = slip {
+                            let blob = response.blob();
+                            let remain = response.remaining_bytes();
+                            file.write_all(blob).await;
+                            sender.send(SnapshotState::success(remain)).unwrap();
+                        } else {
+                            sender.send(SnapshotState::success(064)).unwrap();
+                            break
+                        }
+                    }
+                    Err(e) => {
+                        sender.send(SnapshotState::failed(e.to_string())).unwrap();
+                        break
+                    }
+                }
+            }
+        });
+
+        Ok(receiver)
     }
 }

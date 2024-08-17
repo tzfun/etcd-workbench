@@ -69,6 +69,7 @@ fn main() {
             api::kv::kv_get_history_versions,
             api::maintenance::get_cluster,
             api::maintenance::maintenance_defragment,
+            api::maintenance::maintenance_create_snapshot_task,
             api::lease::leases,
             api::lease::lease_get,
             api::lease::lease_grant,
