@@ -43,7 +43,10 @@ const extensions = computed(() => {
       result.push(propertiesLanguage())
       break
   }
-  result.push(getThemeByName(props.theme))
+  let theme = getThemeByName(props.theme)
+  if (theme) {
+    result.push(theme)
+  }
   return result
 })
 

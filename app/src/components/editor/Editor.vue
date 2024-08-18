@@ -223,10 +223,6 @@ defineExpose({
   readDataBytes
 })
 
-const onfocusout = (e) => {
-  console.log(e)
-}
-
 </script>
 
 <template>
@@ -235,7 +231,6 @@ const onfocusout = (e) => {
       <codemirror
           v-model="content"
           style="width: 100%;height: 100%;"
-          placeholder="Please enter the content."
           :extensions="extensions"
           :autofocus="config.autofocus"
           :disabled="config.disabled"
@@ -272,7 +267,6 @@ const onfocusout = (e) => {
                        :prepend-icon="fileTypeIcon[item]"
                        @click="changeLanguage(item)"
                        color="primary"
-                       onfocusout="onfocusout"
           ></v-list-item>
         </v-list>
       </div>

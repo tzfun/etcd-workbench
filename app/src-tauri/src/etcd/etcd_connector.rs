@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use std::pin::Pin;
 use std::time::Duration;
 
-use etcd_client::{AlarmAction, AlarmType, Certificate, Client, ConnectOptions, Error, GetOptions, GetResponse, Identity, LeaseGrantOptions, LeaseTimeToLiveOptions, PutOptions, RoleRevokePermissionOptions, TlsOptions};
+use etcd_client::{AlarmAction, AlarmType, Certificate, Client, ConnectOptions, Error, GetOptions, GetResponse, Identity, LeaseGrantOptions, LeaseTimeToLiveOptions, PutOptions, RoleRevokePermissionOptions, SortOrder, SortTarget, TlsOptions};
 use log::{debug, error, info, warn};
 use tokio::fs::{File, OpenOptions};
 use tokio::io::AsyncWriteExt;
@@ -103,12 +103,28 @@ impl EtcdConnector {
 
     /// 获取所有key，不包含value
     pub async fn kv_get_all_keys(&self) -> Result<Vec<SerializableKeyValue>, Error> {
-        let mut kv_client = self.get_client().kv_client();
+        let mut kv_client = self.client.kv_client();
         let root_path = self.get_full_key("");
         let get_options = GetOptions::new()
             .with_prefix()
             .with_keys_only();
-        let mut response = kv_client.get(root_path, Some(get_options)).await?;
+        self.kv_get_by_option(root_path, get_options).await
+    }
+
+    /// 分页获取所有key，不包含value
+    pub async fn kv_get_all_keys_paging(&self, cursor_key: impl Into<Vec<u8>>, limit: i64) -> Result<Vec<SerializableKeyValue>, Error> {
+        let mut kv_client = self.client.kv_client();
+        let key = self.get_full_key(cursor_key);
+        let get_options = GetOptions::new()
+            .with_from_key()
+            .with_keys_only()
+            .with_limit(limit)
+            .with_sort(SortTarget::Key, SortOrder::Ascend);
+        self.kv_get_by_option(key, get_options).await
+    }
+
+    async fn kv_get_by_option(&self, key: Vec<u8>, option: GetOptions) -> Result<Vec<SerializableKeyValue>, Error> {
+        let mut response = self.client.kv_client().get(key, Some(option)).await?;
         let kvs = response.take_kvs();
         let mut arr = Vec::with_capacity(kvs.len());
         for kv in kvs {
@@ -581,12 +597,12 @@ impl EtcdConnector {
                             sender.send(SnapshotState::success(remain)).unwrap();
                         } else {
                             sender.send(SnapshotState::success(064)).unwrap();
-                            break
+                            break;
                         }
                     }
                     Err(e) => {
                         sender.send(SnapshotState::failed(e.to_string())).unwrap();
-                        break
+                        break;
                     }
                 }
             }
