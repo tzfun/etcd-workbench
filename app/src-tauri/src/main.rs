@@ -61,6 +61,7 @@ fn main() {
             api::settings::remove_connection,
             api::settings::get_connection_list,
             api::kv::kv_get_all_keys,
+            api::kv::kv_get_all_keys_paging,
             api::kv::kv_get,
             api::kv::kv_get_by_version,
             api::kv::kv_put,

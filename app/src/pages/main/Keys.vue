@@ -2,7 +2,7 @@
 
 import {
   _deleteKV,
-  _getAllKeys,
+  _getAllKeysPaging,
   _getKV,
   _getKVByVersion,
   _getKVHistoryVersions,
@@ -39,6 +39,7 @@ type DiffInfo = {
 }
 
 const KEY_SPLITTER = '/'
+const LIMIT_PER_PAGE = 2
 
 const props = defineProps({
   session: {
@@ -48,11 +49,17 @@ const props = defineProps({
 })
 
 const treeValue = ref<KeyValue[]>([])
-const treeData = ref<TreeNode[]>([])
+const treeData = reactive<TreeNode>({
+  title: 'root',
+  file: false,
+  iconKey: 'dir',
+  children: []
+})
 const treeSelectable = ref(false)
 const currentKv = ref<KeyValue>()
 const currentKvChanged = ref<boolean>(false)
 const keyLeaseListeners = reactive<Set<any>>(new Set())
+const paginationKeyCursor = ref<string | undefined>("")
 
 const editorRef = ref<InstanceType<typeof Editor>>()
 const newKeyEditorRef = ref<InstanceType<typeof Editor>>()
@@ -71,8 +78,8 @@ const loadingStore = reactive({
   diff: false,
   delete: false,
   deleteBatch: false,
-  loadAllKeys: false,
-  confirmNewKey: false
+  confirmNewKey: false,
+  loadMore: false
 })
 
 const newKeyDialog = reactive({
@@ -117,45 +124,43 @@ onUnmounted(() => {
 })
 
 const loadAllKeys = () => {
-  loadingStore.loadAllKeys = true
-  _getAllKeys(props.session?.id).then(data => {
-    treeData.value = constructTreeData(data)
-    clearAllKeyLeaseListener()
-  }).catch(e => {
-    _handleError({
-      e,
-      session: props.session
+  paginationKeyCursor.value = ""
+  treeData.children = []
+  clearAllKeyLeaseListener()
+
+  loadNextPage()
+}
+
+const loadNextPage = () => {
+  let cursor = paginationKeyCursor.value
+  if (cursor != undefined) {
+    loadingStore.loadMore = true
+    _getAllKeysPaging(props.session?.id, cursor, LIMIT_PER_PAGE).then(data => {
+      if (data.length == 0) {
+        paginationKeyCursor.value = undefined
+      } else {
+        paginationKeyCursor.value = data[data.length - 1].key
+        addKvListToTree(data)
+      }
+      console.log(data)
+    }).catch(e => {
+      _handleError({
+        e,
+        session: props.session
+      })
+    }).finally(() => {
+      loadingStore.loadMore = false
     })
-  }).finally(() => {
-    loadingStore.loadAllKeys = false
-  })
+  }
 }
 
-const constructTreeData = (data: KeyValue[]): TreeNode[] => {
-  data.sort((o1, o2) => {
-    if (o1.key > o2.key) {
-      return 1
-    } else if (o1.key < o2.key) {
-      return -1
-    } else {
-      return 0
-    }
-  })
-
-  let root: TreeNode = {
-    title: 'root',
-    file: false,
-    iconKey: 'dir',
-    children: []
-  }
-
+const addKvListToTree = (data: KeyValue[]) => {
   for (let kv of data) {
-    addKvToTree(kv, root)
+    addKvToTree(kv)
   }
-  return root.children!
 }
 
-const addKvToTree = (kv: KeyValue, root: TreeNode) => {
+const addKvToTree = (kv: KeyValue) => {
   let key = kv.key
   //  为了方便解析为统一的树状结构，如果key不是以分隔符开头，默认补充分隔符
   if (!key.startsWith(KEY_SPLITTER)) {
@@ -163,7 +168,7 @@ const addKvToTree = (kv: KeyValue, root: TreeNode) => {
   }
 
   let splits = key.split(KEY_SPLITTER)
-  let node: TreeNode = root
+  let node: TreeNode = treeData
 
   for (let i = 1; i < splits.length - 1; i++) {
     const floorName = splits[i]
@@ -209,7 +214,7 @@ const removeKeyFromTreeData = (keys: string[]) => {
         let pathArr = key.split(KEY_SPLITTER)
         let stack: TreeNode[] = []
 
-        let nodeArr: TreeNode[] = treeData.value
+        let nodeArr: TreeNode[] = treeData.children!
 
         //  搜索前缀路径
         keyPathLoop:
@@ -254,9 +259,9 @@ const removeKeyFromTreeData = (keys: string[]) => {
                 node.children?.splice(idx, 1)
               }
             } else {
-              let idx = treeData.value.indexOf(needRemoveDirNode!)
+              let idx = treeData.children!.indexOf(needRemoveDirNode!)
               if (idx >= 0) {
-                treeData.value.splice(idx, 1)
+                treeData.children!.splice(idx, 1)
               }
               break
             }
@@ -266,7 +271,7 @@ const removeKeyFromTreeData = (keys: string[]) => {
             if (node) {
               nodeArr = node.children ? node.children : []
             } else {
-              nodeArr = treeData.value
+              nodeArr = treeData.children!
             }
 
             let idx = -1
@@ -400,18 +405,13 @@ const putKey = () => {
   promise.then(() => {
     _tipSuccess("Succeeded!")
     newKeyDialog.show = false
-    let root: TreeNode = {
-      title: 'root',
-      file: false,
-      iconKey: 'dir',
-      children: treeData.value
-    }
+
     //  @ts-ignore
     let kv: KeyValue = {
       key: key,
       value: []
     }
-    addKvToTree(kv, root)
+    addKvToTree(kv)
   }).catch(e => {
     _handleError({
       e,
@@ -427,7 +427,7 @@ const deleteKeyBatch = () => {
     _tipInfo('Please select at least one key')
     return
   }
-  let keys:string[] = []
+  let keys: string[] = []
   let containsCurrentKV = false
   for (let value of treeValue.value) {
     keys.push(value.key)
@@ -668,7 +668,7 @@ const clearAllKeyLeaseListener = () => {
              prepend-icon="mdi-refresh"
              variant="outlined"
              @click="loadAllKeys"
-             :loading="loadingStore.loadAllKeys"
+             :loading="loadingStore.loadMore"
              text="Refresh"
       ></v-btn>
       <v-btn class="text-none ml-2"
@@ -726,7 +726,7 @@ const clearAllKeyLeaseListener = () => {
         <drag-item class="overflow-y-auto" style="min-width: 300px">
           <v-treeview
               v-model:selected="treeValue"
-              :items="treeData"
+              :items="treeData.children"
               open-strategy="multiple"
               item-value="data"
               :selectable="treeSelectable"
@@ -737,7 +737,7 @@ const clearAllKeyLeaseListener = () => {
               slim
               density="compact"
               class="user-select-none"
-              height="100%"
+              height="calc(100% - 30px)"
           >
             <template v-slot:prepend="{ item }">
               <v-icon v-if="!item.file">mdi-folder</v-icon>
@@ -746,6 +746,20 @@ const clearAllKeyLeaseListener = () => {
               </v-icon>
             </template>
           </v-treeview>
+          <v-sheet height="30px"
+                   class="d-flex align-center justify-center"
+          >
+            <v-btn
+                v-if="paginationKeyCursor != undefined"
+                block
+                density="compact"
+                color="secondary"
+                class="text-none border-none"
+                style="border-radius: 0;"
+                text="Load More"
+                @click="loadNextPage"
+            ></v-btn>
+          </v-sheet>
         </drag-item>
         <drag-item style="width: calc(100% - 300px)" :show-resize-line="false">
           <div v-if="currentKv" class="fill-height">

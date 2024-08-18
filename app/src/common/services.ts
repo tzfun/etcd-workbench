@@ -56,6 +56,14 @@ export function _getAllKeys(sessionId: number): Promise<KeyValue[]> {
     return invoke('kv_get_all_keys', {session: sessionId})
 }
 
+export function _getAllKeysPaging(sessionId: number, cursorKey: string, limit: number): Promise<KeyValue[]> {
+    return invoke('kv_get_all_keys_paging', {
+        session: sessionId,
+        cursorKey,
+        limit
+    })
+}
+
 export function _getKV(sessionId: number, key: string): Promise<KeyValue> {
     return invoke('kv_get', {
         session: sessionId,
