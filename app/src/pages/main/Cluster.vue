@@ -5,7 +5,7 @@ import {ErrorPayload, SessionData} from "~/common/transport/connection.ts";
 import {_defragment, _getCluster, _handleError} from "~/common/services.ts";
 import {Alarm, Cluster} from "~/common/transport/maintenance.ts";
 import {_byteTextFormat} from "../../common/utils.ts";
-import {_confirmSystem, _tipSuccess} from "~/common/localEvents.ts";
+import {_confirmSystem, _tipSuccess} from "~/common/events.ts";
 
 const props = defineProps({
   session: {

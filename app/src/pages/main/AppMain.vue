@@ -2,7 +2,7 @@
 
 import Home from "~/pages/main/Home.vue";
 import Connection from "~/pages/main/Connection.vue";
-import {_confirm, localEvents} from "~/common/localEvents.ts";
+import {_confirm, localEvents} from "~/common/events.ts";
 import {_disconnect} from "~/common/services.ts";
 import {onMounted, onUnmounted, reactive, ref} from "vue";
 import {SessionData} from "~/common/transport/connection.ts";

@@ -12,6 +12,7 @@ use tokio::fs::{File, OpenOptions};
 use tokio::io::AsyncWriteExt;
 use tokio::sync::watch;
 use tokio::sync::watch::Receiver;
+use crate::api::settings::get_settings;
 use crate::error::LogicError;
 use crate::ssh::ssh_tunnel::SshTunnel;
 use crate::transport::connection::Connection;
@@ -27,11 +28,14 @@ pub struct EtcdConnector {
 
 impl EtcdConnector {
     pub async fn new(connection: Connection) -> Result<Self, LogicError> {
+
+        let settings = get_settings().await?;
+
         let mut option = ConnectOptions::new()
             .with_keep_alive_while_idle(true)
             .with_tcp_keepalive(Duration::from_secs(5))
-            .with_connect_timeout(Duration::from_secs(5))
-            .with_timeout(Duration::from_secs(15));
+            .with_connect_timeout(Duration::from_secs(settings.connect_timeout_seconds))
+            .with_timeout(Duration::from_secs(settings.request_timeout_seconds));
 
         if let Some(user) = connection.user {
             option = option.with_user(user.username, user.password)

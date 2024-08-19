@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import {appWindow} from '@tauri-apps/api/window'
 import {AppTheme, DialogItem, TipsItem} from "~/common/types.ts";
-import {onMounted, onUnmounted, reactive, ref} from "vue";
+import {onBeforeMount, onMounted, onUnmounted, reactive, ref} from "vue";
 import {platform as getPlatform} from "@tauri-apps/api/os";
 import {useTheme} from "vuetify";
 import WindowsSystemBar from "~/components/system-bar/WindowsSystemBar.vue";
 import MacSystemBar from "~/components/system-bar/MacSystemBar.vue";
 import AppSetting from "~/pages/setting/AppSetting.vue";
 import AppMain from "~/pages/main/AppMain.vue";
-import {localEvents} from "~/common/localEvents.ts";
+import {localEvents} from "~/common/events.ts";
 import {listen} from "@tauri-apps/api/event";
+import {_loadSettings} from "~/common/store.ts";
 
 const windowLabel = ref<string>('main')
 const loading = ref(false)
@@ -21,12 +22,17 @@ const theme = useTheme()
 
 const eventUnListens = reactive<Function[]>([])
 
+onBeforeMount( async () => {
+  await _loadSettings()
+})
+
 onMounted(async () => {
   let searchParams = new URLSearchParams(location.search)
   let page = searchParams.get('page')
   if (page) {
     windowLabel.value = page
   }
+
 
   setAppTheme('auto')
 
@@ -137,7 +143,6 @@ const disableWebviewNativeEvents = () => {
   }, {capture: true})
 }
 
-
 </script>
 
 <template>
@@ -154,7 +159,10 @@ const disableWebviewNativeEvents = () => {
 
       <v-main class="fill-height position-relative" id="mainBody">
 
-        <AppSetting v-if="windowLabel === 'setting'" class="app-setting"></AppSetting>
+        <AppSetting v-if="windowLabel === 'setting'"
+                    class="app-setting"
+                    :platform="platform"
+        ></AppSetting>
         <AppMain v-else-if="windowLabel === 'main'"></AppMain>
 
       </v-main>

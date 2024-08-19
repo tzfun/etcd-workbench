@@ -2,7 +2,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use log::{debug, LevelFilter};
-use tauri::{Manager, WindowEvent};
+use tauri::{LogicalSize, Manager, Size, WindowEvent};
+
+use crate::api::settings::get_setting_from_file;
 // use crate::api::windows::tray_menu_handle;
 use crate::utils::file_util;
 
@@ -22,6 +24,8 @@ fn main() {
 
     tauri::Builder::default()
         .setup(|app| {
+            let setting = get_setting_from_file().unwrap();
+            let window_init_state = setting.window_init_state;
             for (name, window) in app.windows() {
                 if name.ne("splashscreen") {
                     debug!("set window shadow: {}", name);
@@ -29,6 +33,18 @@ fn main() {
                     window_shadows::set_shadow(&window, true).unwrap()
                 }
                 if name.eq("main") {
+                    if let Some(state) = &window_init_state {
+                        if state.main_window_fullscreen {
+                            window.set_fullscreen(true).unwrap();
+                        } else if state.main_window_maximize {
+                            window.set_maximizable(true).unwrap();
+                        } else if state.main_window_width > 0f64 && state.main_window_height > 0f64 {
+                            window.set_size(Size::from(LogicalSize {
+                                width: state.main_window_width,
+                                height: state.main_window_height,
+                            })).unwrap();
+                        }
+                    }
                     window.on_window_event(|e| {
                         match e {
                             WindowEvent::Resized(_) => {}
@@ -40,8 +56,8 @@ fn main() {
                             WindowEvent::Focused(_) => {}
                             WindowEvent::ScaleFactorChanged { .. } => {}
                             WindowEvent::FileDrop(_) => {}
-                            WindowEvent::ThemeChanged(_) => {},
-                            _=>{}
+                            WindowEvent::ThemeChanged(_) => {}
+                            _ => {}
                         }
                     })
                 }
@@ -57,6 +73,7 @@ fn main() {
             api::connection::connect,
             api::connection::disconnect,
             api::settings::get_settings,
+            api::settings::save_settings,
             api::settings::save_connection,
             api::settings::remove_connection,
             api::settings::get_connection_list,

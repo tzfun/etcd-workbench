@@ -1,5 +1,5 @@
 import {open} from '@tauri-apps/api/shell'
-import {_alertError} from "~/common/localEvents.ts";
+import {_alertError} from "~/common/events.ts";
 
 const TEXT_DECODER = new TextDecoder();
 const TEXT_ENCODER = new TextEncoder();

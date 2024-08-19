@@ -1,6 +1,5 @@
 import {invoke} from "@tauri-apps/api";
 
-
 export function _openMainWindow() {
     invoke('open_main_window').catch(e => {
         console.error(e)

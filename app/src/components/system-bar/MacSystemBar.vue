@@ -2,7 +2,7 @@
 
 import {appWindow} from "@tauri-apps/api/window";
 import {onMounted, ref} from "vue";
-import {_confirm} from "~/common/localEvents.ts";
+import {_confirm} from "~/common/events.ts";
 import {_exitApp, _openSettingWindow} from "~/common/windows.ts";
 
 const maximize = ref(false)

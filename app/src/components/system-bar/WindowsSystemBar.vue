@@ -2,7 +2,7 @@
 
 import etcdLogo from "~/assets/etcd.png";
 import {appWindow} from "@tauri-apps/api/window";
-import {_confirm} from "~/common/localEvents.ts";
+import {_confirm} from "~/common/events.ts";
 import {onMounted, ref} from "vue";
 import {_exitApp, _openSettingWindow} from "~/common/windows.ts";
 

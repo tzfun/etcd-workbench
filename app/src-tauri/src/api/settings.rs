@@ -4,27 +4,71 @@ use std::io::{Read, Write};
 
 use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
-
+use lazy_static::lazy_static;
+use log::debug;
+use tokio::sync::RwLock;
 use crate::error::LogicError;
 use crate::transport::connection::ConnectionInfo;
-use crate::transport::settings::Settings;
+use crate::transport::settings::SettingConfig;
 use crate::utils::file_util;
 
-#[tauri::command]
-pub fn get_settings() -> Result<Settings, LogicError> {
-    let path = file_util::get_setting_file_path();
+lazy_static! {
+    static ref SETTING_CONFIG: RwLock<Option<SettingConfig>> = RwLock::new(None);
+}
 
+pub fn get_setting_from_file() -> Result<SettingConfig, LogicError> {
+    let path = file_util::get_setting_file_path();
     let settings = if path.exists() {
         let mut file = File::open(path.display().to_string())?;
         let mut content = String::new();
         file.read_to_string(&mut content)?;
 
-        serde_json::from_str::<Settings>(content.leak())?
+        serde_json::from_str::<SettingConfig>(content.leak())?
     } else {
-        Settings::default()
+        SettingConfig::default()
     };
 
     Ok(settings)
+}
+
+#[tauri::command]
+pub async fn get_settings() -> Result<SettingConfig, LogicError> {
+    let lock = SETTING_CONFIG.read().await;
+    let settings = if lock.is_none() {
+        drop(lock);
+
+        let settings = get_setting_from_file()?;
+        let mut write_lock = SETTING_CONFIG.write().await;
+
+        let cloned = settings.clone();
+        *write_lock = Some(settings);
+
+        cloned
+    } else {
+        lock.as_ref().unwrap().clone()
+    };
+
+    Ok(settings)
+}
+
+#[tauri::command]
+pub async fn save_settings(setting_config: SettingConfig) -> Result<(), LogicError> {
+    let path = file_util::get_setting_file_path();
+    let s = serde_json::to_string(&setting_config)?;
+    if !path.exists() {
+        File::create(path.clone())?;
+    }
+
+    fs::write(path, s)?;
+
+    {
+        let mut write_lock = SETTING_CONFIG.write().await;
+        *write_lock = Some(setting_config);
+    }
+
+    debug!("Save settings");
+
+    Ok(())
 }
 
 #[tauri::command]

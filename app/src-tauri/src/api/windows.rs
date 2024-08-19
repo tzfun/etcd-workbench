@@ -51,6 +51,7 @@ pub async fn open_setting_window(app_handle: tauri::AppHandle, window: tauri::Wi
             title: String::from("Settings"),
             width: 1200f64,
             height: 800f64,
+            resizable: false,
             center: true,
             url: WindowUrl::App(PathBuf::from("/?page=setting")),
             decorations: false,

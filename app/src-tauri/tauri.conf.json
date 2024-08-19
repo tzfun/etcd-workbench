@@ -40,6 +40,7 @@
         "title": "Settings",
         "width": 1200,
         "height": 800,
+        "resizable": false,
         "center": true,
         "url": "/?page=setting",
         "decorations": false,
