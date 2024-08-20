@@ -71,5 +71,7 @@ export function getThemeByName(name: string) {
             return coolGlow
         case 'dracula':
             return dracula
+        default:
+            return smoothy
     }
 }

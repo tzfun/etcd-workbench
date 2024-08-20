@@ -1,12 +1,14 @@
 use std::fs;
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
+use std::path::Path;
 
 use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
 use lazy_static::lazy_static;
 use log::debug;
 use tokio::sync::RwLock;
+
 use crate::error::LogicError;
 use crate::transport::connection::ConnectionInfo;
 use crate::transport::settings::SettingConfig;
@@ -124,4 +126,45 @@ pub fn get_connection_list() -> Result<Vec<ConnectionInfo>, LogicError> {
     }
 
     Ok(result)
+}
+
+#[tauri::command]
+pub fn export_connection(filepath: String) -> Result<(), LogicError> {
+    let list = get_connection_list()?;
+
+    let s = serde_json::to_string(&list)?;
+    let content = BASE64_STANDARD.encode(s.as_bytes());
+
+    let path = Path::new(&filepath);
+    let mut file = if !path.exists() {
+        File::create(path)?
+    } else {
+        File::options()
+            .write(true)
+            .open(path)?
+    };
+
+    file.write_all(content.as_bytes())?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn import_connection(filepath: String) -> Result<(), LogicError> {
+    let path = Path::new(&filepath);
+    if !path.exists() {
+        return Err(LogicError::ResourceNotExist("File not exists"))
+    }
+
+    let mut file = File::open(path)?;
+    let mut content = String::new();
+    file.read_to_string(&mut content)?;
+
+    let s = BASE64_STANDARD.decode(content)?;
+    let list = serde_json::from_slice::<Vec<ConnectionInfo>>(s.as_slice())?;
+
+    for info in list {
+        save_connection(info)?;
+    }
+
+    Ok(())
 }

@@ -77,6 +77,8 @@ fn main() {
             api::settings::save_connection,
             api::settings::remove_connection,
             api::settings::get_connection_list,
+            api::settings::export_connection,
+            api::settings::import_connection,
             api::kv::kv_get_all_keys,
             api::kv::kv_get_all_keys_paging,
             api::kv::kv_get,

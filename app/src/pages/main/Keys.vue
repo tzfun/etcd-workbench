@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
 import {
-  _deleteKV,
+  _deleteKV, _getAllKeys,
   _getAllKeysPaging,
   _getKV,
   _getKVByVersion,
@@ -11,7 +11,7 @@ import {
   _putKVWithLease
 } from "~/common/services.ts";
 import {_confirmSystem, _tipInfo, _tipSuccess, _tipWarn} from "~/common/events.ts";
-import {computed, onMounted, onUnmounted, PropType, reactive, ref} from "vue";
+import {computed, onMounted, onUnmounted, PropType, reactive, ref, watch} from "vue";
 import {SessionData} from "~/common/transport/connection.ts";
 import DragBox from "~/components/DragBox.vue";
 import DragItem from "~/components/DragItem.vue";
@@ -22,6 +22,7 @@ import {EditorConfig} from "~/common/types.ts";
 import {CodeDiff} from "v-code-diff";
 import {useTheme} from "vuetify";
 import CountDownTimer from "~/components/CountDownTimer.vue";
+import {_useSettings} from "~/common/store.ts";
 
 const theme = useTheme()
 
@@ -38,8 +39,13 @@ type DiffInfo = {
   content: string
 }
 
-const KEY_SPLITTER = '/'
-const LIMIT_PER_PAGE = 2
+const KEY_SPLITTER = computed<string>(() => {
+  return _useSettings().value.kvPathSplitter
+})
+
+const LIMIT_PER_PAGE = computed<number>(() => {
+  return _useSettings().value.kvLimitPerPage
+})
 
 const props = defineProps({
   session: {
@@ -124,18 +130,33 @@ onUnmounted(() => {
 })
 
 const loadAllKeys = () => {
-  paginationKeyCursor.value = ""
   treeData.children = []
   clearAllKeyLeaseListener()
 
-  loadNextPage()
+  if (_useSettings().value.kvPaginationQuery) {
+    paginationKeyCursor.value = ""
+    loadNextPage()
+  } else {
+    paginationKeyCursor.value = undefined
+    loadingStore.loadMore = true
+    _getAllKeys(props.session?.id).then(data => {
+      addKvListToTree(data)
+    }).catch(e => {
+      _handleError({
+        e,
+        session: props.session
+      })
+    }).finally(() => {
+      loadingStore.loadMore = false
+    })
+  }
 }
 
 const loadNextPage = () => {
   let cursor = paginationKeyCursor.value
   if (cursor != undefined) {
     loadingStore.loadMore = true
-    _getAllKeysPaging(props.session?.id, cursor, LIMIT_PER_PAGE).then(data => {
+    _getAllKeysPaging(props.session?.id, cursor, LIMIT_PER_PAGE.value).then(data => {
       if (data.length == 0) {
         paginationKeyCursor.value = undefined
       } else {
@@ -163,11 +184,11 @@ const addKvListToTree = (data: KeyValue[]) => {
 const addKvToTree = (kv: KeyValue) => {
   let key = kv.key
   //  为了方便解析为统一的树状结构，如果key不是以分隔符开头，默认补充分隔符
-  if (!key.startsWith(KEY_SPLITTER)) {
-    key = KEY_SPLITTER + key
+  if (!key.startsWith(KEY_SPLITTER.value)) {
+    key = KEY_SPLITTER.value + key
   }
 
-  let splits = key.split(KEY_SPLITTER)
+  let splits = key.split(KEY_SPLITTER.value)
   let node: TreeNode = treeData
 
   for (let i = 1; i < splits.length - 1; i++) {
@@ -208,10 +229,10 @@ const removeKeyFromTreeData = (keys: string[]) => {
   keysLoop:
       for (let key of keys) {
         //  为了方便解析为统一的树状结构，如果key不是以分隔符开头，默认补充分隔符
-        if (!key.startsWith(KEY_SPLITTER)) {
-          key = KEY_SPLITTER + key
+        if (!key.startsWith(KEY_SPLITTER.value)) {
+          key = KEY_SPLITTER.value + key
         }
-        let pathArr = key.split(KEY_SPLITTER)
+        let pathArr = key.split(KEY_SPLITTER.value)
         let stack: TreeNode[] = []
 
         let nodeArr: TreeNode[] = treeData.children!

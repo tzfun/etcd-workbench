@@ -6,19 +6,19 @@ export interface SettingConfig {
     //  编辑器白色主题
     editorLightTheme: string,
     //  KV路径分割符号，用于树状展示
-    kvPathSplitter:string,
+    kvPathSplitter: string,
     //  KV分页查询
     kvPaginationQuery: true,
     //  KV分页获取每页大小
-    kvLimitPerPage: number,
+    kvLimitPerPage: number | string,
     //  自动下载更新
     autoDownloadUpdate: true,
     //  使用 ctrl + w 关闭连接tab
     closeTabUseCtrlW: true,
     //  连接超时秒数
-    connectTimeoutSeconds: number,
+    connectTimeoutSeconds: number | string,
     //  请求超时秒数
-    requestTimeoutSeconds: number,
+    requestTimeoutSeconds: number | string,
     //  窗口初始化状态
     windowInitState?: SettingWindowState,
 }

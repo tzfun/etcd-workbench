@@ -6,8 +6,12 @@ import {_confirm, localEvents} from "~/common/events.ts";
 import {_disconnect} from "~/common/services.ts";
 import {onMounted, onUnmounted, reactive, ref} from "vue";
 import {SessionData} from "~/common/transport/connection.ts";
-import {appWindow} from "@tauri-apps/api/window";
+import {appWindow, PhysicalSize} from "@tauri-apps/api/window";
 import {_openMainWindow} from "~/common/windows.ts";
+import {_debounce, fileTypeIcon} from "~/common/utils.ts";
+import {_saveSettings, _useSettings} from "~/common/store.ts";
+import {listen} from "@tauri-apps/api/event";
+import {SettingConfig} from "~/common/transport/setting.ts";
 
 type TabItem = {
   name: string,
@@ -21,11 +25,49 @@ const tabList = reactive<TabItem[]>([])
 const eventUnListens = reactive<Function[]>([])
 
 onMounted(async () => {
-  eventUnListens.push(await appWindow.listen('tauri://resize', (e) => {
+  eventUnListens.push(await appWindow.listen('tauri://resize', _debounce((e) => {
     let payload = e.payload as Record<string, number>
     let height = payload.height
     let width = payload.width
-    console.log("resize", height, width)
+
+    let setting = _useSettings().value
+    let p1 = appWindow.isFullscreen()
+    let p2 = appWindow.isMaximized()
+    Promise.all([p1, p2]).then(res => {
+      setting.windowInitState = {
+        mainWindowWidth: width,
+        mainWindowHeight: height,
+        mainWindowFullscreen: res[0],
+        mainWindowMaximize: res[1]
+      }
+
+      _saveSettings(setting)
+    }).catch(e => {
+      console.error(e)
+    })
+  }), 1000))
+
+  eventUnListens.push(await listen('settingUpdate', (e) => {
+    let setting = JSON.parse(e.payload as string) as SettingConfig
+
+    let p1 = appWindow.isFullscreen()
+    let p2 = appWindow.isMaximized()
+    let p3 = appWindow.innerSize()
+
+    Promise.all([p1, p2, p3]).then(res => {
+      let size = res[2] as PhysicalSize
+      setting.windowInitState = {
+        mainWindowWidth: size.width,
+        mainWindowHeight: size.height,
+        mainWindowFullscreen: res[0],
+        mainWindowMaximize: res[1]
+      }
+
+      console.log("save setting", setting)
+      _saveSettings(setting)
+    }).catch(e => {
+      console.error(e)
+    })
   }))
 
   localEvents.on('newConnection', (e: any) => {
@@ -53,6 +95,18 @@ onMounted(async () => {
     activeTab.value = tabItem.name
   })
 
+  document.addEventListener('keydown', e => {
+    let key = e.key.toLowerCase()
+    //  ctrl+w
+    if (e.ctrlKey && key == 'w') {
+
+      if (_useSettings().value.closeTabUseCtrlW) {
+        closeTabDirectly()
+      }
+
+    }
+  }, {capture: true})
+
   localEvents.on('closeTab', e => {
     closeTabDirectly(e as number)
     activeTab.value = HOME_TAB
@@ -74,10 +128,23 @@ const closeTab = (id: number) => {
   })
 }
 
-const closeTabDirectly = (sessionId: number) => {
+/**
+ * 不许确认关闭连接
+ * @param sessionId 连接ID，如果为 undefined 则表示关闭当前tab
+ */
+const closeTabDirectly = (sessionId: number | undefined) => {
+  let currentTab = activeTab.value
+  if (sessionId == undefined && currentTab == HOME_TAB) {
+    return
+  }
   let idx = -1;
   for (let i = 0; i < tabList.length; i++) {
     let item: TabItem = tabList[i]
+    if (sessionId == undefined && item.name == currentTab) {
+      sessionId = item.session.id
+      idx = i;
+      break
+    }
     if (item.session.id == sessionId) {
       idx = i;
       break

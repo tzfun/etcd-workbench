@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {appWindow} from '@tauri-apps/api/window'
 import {AppTheme, DialogItem, TipsItem} from "~/common/types.ts";
-import {onBeforeMount, onMounted, onUnmounted, reactive, ref} from "vue";
+import {computed, onMounted, onUnmounted, reactive, ref, watch} from "vue";
 import {platform as getPlatform} from "@tauri-apps/api/os";
 import {useTheme} from "vuetify";
 import WindowsSystemBar from "~/components/system-bar/WindowsSystemBar.vue";
@@ -9,10 +9,9 @@ import MacSystemBar from "~/components/system-bar/MacSystemBar.vue";
 import AppSetting from "~/pages/setting/AppSetting.vue";
 import AppMain from "~/pages/main/AppMain.vue";
 import {localEvents} from "~/common/events.ts";
-import {listen} from "@tauri-apps/api/event";
-import {_loadSettings} from "~/common/store.ts";
+import {_loadSettings, _useSettings} from "~/common/store.ts";
+import {DEFAULT_SETTING_CONFIG} from "~/common/transport/setting.ts";
 
-const windowLabel = ref<string>('main')
 const loading = ref(false)
 const dialogs = ref<DialogItem[]>([])
 const tips = ref<TipsItem[]>([])
@@ -22,19 +21,17 @@ const theme = useTheme()
 
 const eventUnListens = reactive<Function[]>([])
 
-onBeforeMount( async () => {
-  await _loadSettings()
+const windowLabel = computed<string>(() => {
+  return appWindow.label
 })
 
 onMounted(async () => {
-  let searchParams = new URLSearchParams(location.search)
-  let page = searchParams.get('page')
-  if (page) {
-    windowLabel.value = page
-  }
+  let settings = await _loadSettings()
 
+  //  频闭Webview原生事件
+  disableWebviewNativeEvents()
 
-  setAppTheme('auto')
+  setAppTheme(settings.theme)
 
   eventUnListens.push(await appWindow.listen('tauri://theme-changed', (e) => {
     let systemTheme = e.payload as string
@@ -52,16 +49,9 @@ onMounted(async () => {
     document.getElementById("app")!.classList.add("main-window-radius")
   }
 
-  //  频闭Webview原生事件
-  disableWebviewNativeEvents()
-
   localEvents.on('loading', (e) => {
     loading.value = e as boolean
   })
-
-  eventUnListens.push(await listen('setAppTheme', (e) => {
-    setAppTheme(e.payload as AppTheme)
-  }))
 
   localEvents.on('dialog', (e) => {
     let dialog = e as DialogItem
@@ -98,6 +88,17 @@ onMounted(async () => {
       tips.value[idx] = tip
     }
   })
+
+  if (windowLabel.value == 'main') {
+    watch(() => _useSettings().value, (newVal, oldVal) => {
+      if (oldVal == DEFAULT_SETTING_CONFIG) {
+        return
+      }
+      if (newVal.theme !== oldVal.theme) {
+        setAppTheme(newVal.theme)
+      }
+    })
+  }
 })
 
 onUnmounted(() => {

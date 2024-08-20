@@ -1,6 +1,5 @@
 <script setup lang="ts">
 
-import {barf as darkTheme, smoothy as lightTheme} from "./themes";
 import {computed, onMounted, onUnmounted, PropType, reactive, ref, shallowRef, watch} from "vue";
 import {useTheme} from "vuetify";
 import {EditorConfig} from "~/common/types.ts";
@@ -20,12 +19,10 @@ import {
 } from "~/common/utils.ts";
 import {Codemirror} from "vue-codemirror";
 import {appWindow} from "@tauri-apps/api/window";
+import {_useSettings} from "~/common/store.ts";
+import {getThemeByName} from "~/components/editor/themes.ts";
 
 type ContentFormatType = 'text' | 'blob'
-
-const theme = useTheme()
-
-const editorTheme = ref<any>(darkTheme)
 
 const props = defineProps({
   config: {
@@ -108,7 +105,6 @@ const formatData = (content: string, fromFormat: ContentFormatType, toFormat: Co
   return content
 }
 
-
 const extensions = computed(() => {
   const result = []
   switch (props.config.language) {
@@ -128,26 +124,23 @@ const extensions = computed(() => {
       result.push(propertiesLanguage())
       break
   }
-  result.push(editorTheme.value)
+
+  let appTheme = useTheme().global.name.value
+  let setting = _useSettings().value;
+  let themeName
+  if (appTheme == 'dark') {
+    themeName = setting.editorDarkTheme
+  } else {
+    themeName = setting.editorLightTheme
+  }
+
+  result.push(getThemeByName(themeName))
   return result
 })
 const cmView = shallowRef<EditorView>()
 const size = computed(() => {
   return _byteTextFormat(_encodeStringToBytes(content.value).length)
 })
-
-watch(
-    () => theme,
-    (newTheme) => {
-      if (newTheme.global.name.value == 'dark') {
-        editorTheme.value = darkTheme
-      } else {
-        editorTheme.value = lightTheme
-      }
-    }, {
-      deep: true
-    }
-)
 
 watch(
     () => props.value,
@@ -170,14 +163,6 @@ watch(
       deep: true
     }
 )
-
-onMounted(() => {
-  if (theme.global.name.value == 'dark') {
-    editorTheme.value = darkTheme
-  } else {
-    editorTheme.value = lightTheme
-  }
-})
 
 const handleReady = ({view}: any) => {
   const cm = view as EditorView

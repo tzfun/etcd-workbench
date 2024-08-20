@@ -44,6 +44,14 @@ export function _removeConnection(name: string): Promise<undefined> {
     return invoke("remove_connection", {name: name})
 }
 
+export function _exportConnection(filepath: string): Promise<undefined> {
+    return invoke('export_connection', {filepath: filepath})
+}
+
+export function _importConnection(filepath: string): Promise<undefined> {
+    return invoke('import_connection', {filepath: filepath})
+}
+
 export function _getCluster(sessionId: number): Promise<Cluster> {
     return invoke('get_cluster', {session: sessionId})
 }
@@ -225,7 +233,7 @@ export function _addRole(sessionId: number, role: string): Promise<undefined> {
     })
 }
 
-export function _grantRolePermissions(sessionId: number, role: string, permission:  RolePermission): Promise<undefined> {
+export function _grantRolePermissions(sessionId: number, role: string, permission: RolePermission): Promise<undefined> {
     return invoke('role_grant_permission', {
         session: sessionId,
         role,
@@ -233,7 +241,7 @@ export function _grantRolePermissions(sessionId: number, role: string, permissio
     })
 }
 
-export function _revokeRolePermissions(sessionId: number, role: string, permission:  RolePermission): Promise<undefined> {
+export function _revokeRolePermissions(sessionId: number, role: string, permission: RolePermission): Promise<undefined> {
     return invoke('role_revoke_permission', {
         session: sessionId,
         role,

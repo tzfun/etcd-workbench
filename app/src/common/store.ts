@@ -1,18 +1,25 @@
 import {DEFAULT_SETTING_CONFIG, SettingConfig} from "~/common/transport/setting.ts";
-import {ref} from "vue";
+import {Ref, ref, UnwrapRef} from "vue";
 import {invoke} from "@tauri-apps/api";
 
 const settings = ref<SettingConfig>(DEFAULT_SETTING_CONFIG)
 
-export function _getSettings(): SettingConfig {
-    return settings.value
+export function _useSettings(): Ref<UnwrapRef<SettingConfig>> {
+    return settings
 }
 
-export function _loadSettings(): Promise<undefined> {
-    return invoke('get_settings').then(data => {
-        settings.value = data as SettingConfig
-    }).catch(e => {
-        console.log(e)
+export function _setLocalSettings(settingConfig: SettingConfig) {
+    settings.value = settingConfig
+}
+
+export function _loadSettings(): Promise<SettingConfig> {
+    return new Promise((resolve, reject) => {
+        invoke('get_settings').then(data => {
+            settings.value = data as SettingConfig
+            resolve(settings.value)
+        }).catch(e => {
+            reject(e)
+        })
     })
 }
 

@@ -1,14 +1,20 @@
 <script setup lang="ts">
 import etcdLogo from "~/assets/etcd.png";
 import Skeleton from "~/components/Skeleton.vue";
-import {computed, onBeforeMount, onMounted, reactive, ref} from "vue";
+import {computed, onMounted, reactive, ref, watch} from "vue";
 import EditorExample from "~/components/editor/EditorExample.vue";
 import {AppTheme} from "~/common/types.ts";
-import {_confirmSystem, _emitGlobal} from "~/common/events.ts";
-import {SettingConfig} from "~/common/transport/setting.ts";
+import {_confirmSystem, _emitGlobal, _tipSuccess} from "~/common/events.ts";
+import {DEFAULT_SETTING_CONFIG, SettingConfig} from "~/common/transport/setting.ts";
 import {_goBrowserPage} from "~/common/utils.ts";
 import WorkbenchLogo from "~/design/WorkbenchLogo.vue";
-import {_getSettings, _loadSettings} from "~/common/store.ts";
+import {_loadSettings, _setLocalSettings, _useSettings} from "~/common/store.ts";
+import {appWindow} from "@tauri-apps/api/window";
+import {useTheme} from "vuetify";
+import {save, open} from "@tauri-apps/api/dialog";
+import {_exportConnection, _handleError, _importConnection} from "~/common/services.ts";
+
+const theme = useTheme()
 
 const props = defineProps({
   platform: {
@@ -113,6 +119,10 @@ const settingForm = ref<SettingConfig>({
 })
 const appVersion = ref<string>('1.2.0')
 const buildHash = ref<string>('04139fc')
+const loadingStore = reactive({
+  exportConnection: false,
+  importConnection: false,
+})
 
 const isWindows = computed<boolean>(() => {
   return props.platform == 'win32'
@@ -122,32 +132,105 @@ const isMac = computed<boolean>(() => {
   return props.platform == 'darwin'
 })
 
-onMounted(async () => {
-  await _loadSettings()
-  settingForm.value = JSON.parse(JSON.stringify(_getSettings()))
+watch(() => settingForm.value, (v) => {
+  let setting = {...v}
+  if (typeof setting.kvLimitPerPage === 'string') {
+    setting.kvLimitPerPage = parseInt(setting.kvLimitPerPage)
+  }
+  if (typeof setting.connectTimeoutSeconds === 'string') {
+    setting.connectTimeoutSeconds = parseInt(setting.connectTimeoutSeconds)
+  }
+  if (typeof setting.requestTimeoutSeconds === 'string') {
+    setting.requestTimeoutSeconds = parseInt(setting.requestTimeoutSeconds)
+  }
+  _setLocalSettings(setting)
+  _emitGlobal('settingUpdate', setting)
+}, {
+  deep: true
 })
 
-const setAppTheme = (theme: AppTheme) => {
-  settingForm.theme = theme
-  _emitGlobal('setAppTheme', theme)
+onMounted(async () => {
+  await _loadSettings()
+  settingForm.value = JSON.parse(JSON.stringify(_useSettings().value))
+})
+
+const setAppTheme = (appTheme: AppTheme) => {
+  settingForm.value.theme = appTheme
+
+  if (appTheme == 'auto') {
+    appWindow.theme().then(systemTheme => {
+      if (systemTheme) {
+        console.log("set system theme", systemTheme)
+        theme.global.name.value = systemTheme
+      }
+    })
+  } else {
+    theme.global.name.value = appTheme
+  }
 }
 
 const resetSettingConfig = () => {
   _confirmSystem('Are you sure you want to reset all settings?').then(() => {
-
+    settingForm.value = DEFAULT_SETTING_CONFIG
   }).catch(() => {
-
   })
 }
 
 const selectGroup = ({id}: any) => {
   let dom = document.getElementById(`setting-${id}`)
-  if(dom) {
+  if (dom) {
     dom.scrollIntoView({
       behavior: 'smooth',
       block: 'center'
     })
   }
+}
+
+const exportConnectionConfig = () => {
+  save({
+    filters: [{
+      name: 'Etcd Workbench Config',
+      extensions: ['wbc']
+    }]
+  }).then(filepath => {
+    loadingStore.exportConnection = true
+    _exportConnection(filepath).then(() => {
+      _tipSuccess("Successfully exported")
+    }).catch(e => {
+      _handleError({e})
+    }).finally(() => {
+      loadingStore.exportConnection = false
+    })
+  }).catch(e => {
+    console.error(e)
+  })
+}
+
+const importConnectionConfig = () => {
+  open({
+    multiple: false,
+    filters: [{
+      name: 'Etcd Workbench Config',
+      extensions: ['wbc']
+    }]
+  }).then(data => {
+    if (data) {
+      console.log(data)
+
+      loadingStore.importConnection = true
+      _importConnection(data).then(() => {
+        _tipSuccess("Successfully imported")
+        _emitGlobal('connectionImported')
+      }).catch(e => {
+        _handleError({e})
+      }).finally(() => {
+        loadingStore.importConnection = false
+      })
+
+    }
+  }).catch(e => {
+    console.error(e)
+  })
 }
 
 </script>
@@ -180,6 +263,7 @@ const selectGroup = ({id}: any) => {
                   nav
                   density="compact"
                   @click:activate="selectGroup"
+                  color="primary"
           >
             <v-list-item title="App Theme"
                          value="theme"
@@ -309,7 +393,8 @@ const selectGroup = ({id}: any) => {
                     Use the
                     <i v-if="isWindows">ctrl + w</i>
                     <i v-else-if="isMac">command + w</i>
-                    shortcut key to close the current connection.</div>
+                    shortcut key to close the current connection.
+                  </div>
                 </div>
                 <v-spacer></v-spacer>
                 <div>
@@ -327,11 +412,15 @@ const selectGroup = ({id}: any) => {
                 <v-btn class="text-none"
                        text="Export Connections Configuration"
                        color="green-darken-3"
+                       @click="exportConnectionConfig"
+                       :loading="loadingStore.exportConnection"
                 ></v-btn>
 
                 <v-btn class="text-none ml-2"
                        text="Import Connections Configuration"
                        color="light-green-darken-1"
+                       @click="importConnectionConfig"
+                       :loading="loadingStore.importConnection"
                 ></v-btn>
               </v-layout>
             </v-sheet>
@@ -357,7 +446,9 @@ const selectGroup = ({id}: any) => {
               <v-layout>
                 <div>
                   <div class="form-label text-high-emphasis">Pagination Query</div>
-                  <div class="v-messages">When the number of keys is large, you can enable paging query to optimize the experience.</div>
+                  <div class="v-messages">When the number of keys is large, you can enable paging query to optimize the
+                    experience.
+                  </div>
                 </div>
                 <v-spacer></v-spacer>
                 <div>
@@ -520,7 +611,9 @@ const selectGroup = ({id}: any) => {
                 <WorkbenchLogo class="my-5"></WorkbenchLogo>
                 <p class="description my-3">A beautiful and lightweight ETCD V3 client</p>
                 <p class="copyright">
-                  Copyright &copy; 2024 <span class="link cursor-pointer" @click="_goBrowserPage('https://github.com/tzfun')">beifengtz</span>. All rights reserved.
+                  Copyright &copy; 2024 <span class="link cursor-pointer"
+                                              @click="_goBrowserPage('https://github.com/tzfun')">beifengtz</span>. All
+                  rights reserved.
                 </p>
               </div>
 
@@ -541,11 +634,16 @@ const selectGroup = ({id}: any) => {
                   <v-icon class="mr-2"
                           @click="_goBrowserPage('https://github.com/tzfun/etcd-workbench/')"
                           title="GitHub"
-                  >mdi-github</v-icon>
+                  >mdi-github
+                  </v-icon>
                   <v-icon @click="_goBrowserPage('https://gitee.com/tzfun/etcd-workbench/')"
                           title="Gitee"
                   >
-                    <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="20" height="20"><path d="M512 1024C229.2224 1024 0 794.7776 0 512S229.2224 0 512 0s512 229.2224 512 512-229.2224 512-512 512z m259.1488-568.8832H480.4096a25.2928 25.2928 0 0 0-25.2928 25.2928l-0.0256 63.2064c0 13.952 11.3152 25.2928 25.2672 25.2928h177.024c13.9776 0 25.2928 11.3152 25.2928 25.2672v12.6464a75.8528 75.8528 0 0 1-75.8528 75.8528H366.592a25.2928 25.2928 0 0 1-25.2672-25.2928v-240.1792a75.8528 75.8528 0 0 1 75.8272-75.8528h353.9456a25.2928 25.2928 0 0 0 25.2672-25.2928l0.0768-63.2064a25.2928 25.2928 0 0 0-25.2672-25.2928H417.152a189.6192 189.6192 0 0 0-189.6192 189.6448v353.9456c0 13.9776 11.3152 25.2928 25.2928 25.2928h372.9408a170.6496 170.6496 0 0 0 170.6496-170.6496v-145.408a25.2928 25.2928 0 0 0-25.2928-25.2672z" fill="#C71D23"></path></svg>
+                    <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="20" height="20">
+                      <path
+                          d="M512 1024C229.2224 1024 0 794.7776 0 512S229.2224 0 512 0s512 229.2224 512 512-229.2224 512-512 512z m259.1488-568.8832H480.4096a25.2928 25.2928 0 0 0-25.2928 25.2928l-0.0256 63.2064c0 13.952 11.3152 25.2928 25.2672 25.2928h177.024c13.9776 0 25.2928 11.3152 25.2928 25.2672v12.6464a75.8528 75.8528 0 0 1-75.8528 75.8528H366.592a25.2928 25.2928 0 0 1-25.2672-25.2928v-240.1792a75.8528 75.8528 0 0 1 75.8272-75.8528h353.9456a25.2928 25.2928 0 0 0 25.2672-25.2928l0.0768-63.2064a25.2928 25.2928 0 0 0-25.2672-25.2928H417.152a189.6192 189.6192 0 0 0-189.6192 189.6448v353.9456c0 13.9776 11.3152 25.2928 25.2928 25.2928h372.9408a170.6496 170.6496 0 0 0 170.6496-170.6496v-145.408a25.2928 25.2928 0 0 0-25.2928-25.2672z"
+                          fill="#C71D23"></path>
+                    </svg>
                   </v-icon>
                 </div>
               </v-layout>
@@ -589,13 +687,15 @@ const selectGroup = ({id}: any) => {
                           @click="_goBrowserPage('mailto:beifengtz@qq.com')"
                           title="Email me"
                           color="blue"
-                  >mdi-email-outline</v-icon>
+                  >mdi-email-outline
+                  </v-icon>
 
                   <v-icon class="mr-2"
                           @click="_goBrowserPage('https://github.com/tzfun/etcd-workbench/')"
                           title="Contact me on github"
 
-                  >mdi-github</v-icon>
+                  >mdi-github
+                  </v-icon>
 
                   <v-tooltip text="beifeng-tz"
                              location="top"
@@ -605,7 +705,8 @@ const selectGroup = ({id}: any) => {
                               v-bind="props"
                               title="Contact me on wechat"
                               color="green"
-                      >mdi-wechat</v-icon>
+                      >mdi-wechat
+                      </v-icon>
                     </template>
 
                   </v-tooltip>
@@ -632,6 +733,7 @@ const selectGroup = ({id}: any) => {
     display: flex;
     align-items: center;
   }
+
   .form-input {
     width: 120px;
   }
@@ -670,6 +772,7 @@ const selectGroup = ({id}: any) => {
   text-align: center;
   font-size: 20px;
 }
+
 .copyright {
   color: #9f9b9b;
   text-align: center;

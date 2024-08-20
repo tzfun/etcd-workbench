@@ -19,7 +19,7 @@ export type TimeUnit =
     | 'minute'
     | 'second'
     | 'millisecond'
-export const fileTypeIcon:Record<string, string> = {
+export const fileTypeIcon: Record<string, string> = {
     file: 'mdi-file-document-outline',
     text: 'mdi-file-document-outline',
     js: 'mdi-nodejs',
@@ -138,4 +138,33 @@ export function _shuffleArray(arr: any[]) {
         arr[randomIndex] = arr[i];
         arr[i] = temp;
     }
+}
+
+/**
+ *
+ * <pre>
+ *     methods: {
+ *          _someMethod: _debounce(function () {
+ *              //  ...
+ *          }, 100)
+ *     }
+ * </pre>
+ *
+ * @param fn
+ * @param delay
+ * @return {(function(): void)|*}
+ * @private
+ */
+export function _debounce(fn: Function, delay: number = 200) {
+    let timer = null;
+    return function () {
+        let _this = this
+        let args = arguments
+        if (timer) {
+            clearTimeout(timer)
+        }
+        timer = setTimeout(function () {
+            fn.apply(_this, args);
+        }, delay);
+    };
 }
