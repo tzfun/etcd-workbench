@@ -30,3 +30,15 @@ export interface ClusterStatus {
     raftAppliedIndex: string,
     errors: string[]
 }
+
+export interface SnapshotState {
+    success: boolean,
+    remain: string,
+    msg?: string
+}
+
+export interface SnapshotStateInfo {
+    name: string,
+    id: number,
+    state: SnapshotState
+}

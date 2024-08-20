@@ -1,5 +1,6 @@
 #![allow(unused)]
 use std::collections::HashMap;
+use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::future::Future;
 use std::path::PathBuf;
@@ -8,16 +9,19 @@ use std::time::Duration;
 
 use etcd_client::{AlarmAction, AlarmType, Certificate, Client, ConnectOptions, Error, GetOptions, GetResponse, Identity, LeaseGrantOptions, LeaseTimeToLiveOptions, PutOptions, RoleRevokePermissionOptions, SortOrder, SortTarget, TlsOptions};
 use log::{debug, error, info, warn};
+use serde::{Deserialize, Serialize};
 use tokio::fs::{File, OpenOptions};
 use tokio::io::AsyncWriteExt;
-use tokio::sync::watch;
+use tokio::select;
+use tokio::sync::{oneshot, watch};
 use tokio::sync::watch::Receiver;
+use tokio::task::JoinHandle;
 use crate::api::settings::get_settings;
 use crate::error::LogicError;
 use crate::ssh::ssh_tunnel::SshTunnel;
 use crate::transport::connection::Connection;
 use crate::transport::kv::{SerializableKeyValue, SerializableLeaseInfo, SerializableLeaseSimpleInfo};
-use crate::transport::maintenance::{SerializableCluster, SerializableClusterMember, SerializableClusterStatus, SnapshotState};
+use crate::transport::maintenance::{SerializableCluster, SerializableClusterMember, SerializableClusterStatus, SnapshotState, SnapshotStateInfo};
 use crate::transport::user::{SerializablePermission, SerializableUser};
 
 pub struct EtcdConnector {
@@ -573,15 +577,20 @@ impl EtcdConnector {
     }
 
     /// 保存数据快照
-    pub async fn maintenance_snapshot(&self, file_path: PathBuf) -> Result<Receiver<SnapshotState>, Error> {
+    pub async fn maintenance_snapshot(&self, file_path: PathBuf, watch_sender: watch::Sender<SnapshotState>) -> Result<SnapshotTask, LogicError> {
         let mut stream = self.client.maintenance_client().snapshot().await?;
-        let (sender, receiver) = watch::channel(SnapshotState::default());
         if let Some(parent) = file_path.parent() {
             fs::create_dir_all(parent)?;
         }
         if file_path.exists() {
             fs::remove_file(&file_path)?;
         }
+
+        let file_name = if let Some(name) = file_path.file_name() {
+            String::from_utf8_lossy(name.as_encoded_bytes()).to_string()
+        } else {
+            String::from("Snapshot Task")
+        };
 
         File::create(&file_path).await?;
         let mut file = OpenOptions::new()
@@ -590,7 +599,9 @@ impl EtcdConnector {
             .open(file_path)
             .await?;
 
-        tokio::spawn(async move {
+        let (stop_sender, stop_receiver) = oneshot::channel();
+
+        let watch_task = async move {
             loop {
                 let slip_result = stream.message().await;
                 match slip_result {
@@ -599,20 +610,50 @@ impl EtcdConnector {
                             let blob = response.blob();
                             let remain = response.remaining_bytes();
                             file.write_all(blob).await;
-                            sender.send(SnapshotState::success(remain)).unwrap();
+                            watch_sender.send(SnapshotState::success(remain)).unwrap_or_else(|e| {
+                                error!("watch send error[remain]: {e}")
+                            });
+                            debug!("snapshot [remain]");
                         } else {
-                            sender.send(SnapshotState::success(064)).unwrap();
+                            watch_sender.send(SnapshotState::success(064)).unwrap_or_else(|e| {
+                                error!("watch send error[finish]: {e}")
+                            });
+                            debug!("snapshot [finish]");
                             break;
                         }
                     }
                     Err(e) => {
-                        sender.send(SnapshotState::failed(e.to_string())).unwrap();
+                        watch_sender.send(SnapshotState::failed(e.to_string())).unwrap_or_else(|e| {
+                            error!("watch send error[failed]: {e}")
+                        });
+                        debug!("snapshot [failed]: {e}");
                         break;
                     }
                 }
             }
+        };
+
+        let task = tokio::spawn(async {
+            select! {
+                _ = watch_task => {
+                    info!("Snapshot task finished")
+                },
+                _ = stop_receiver => {
+                    info!("Snapshot task stopped")
+                }
+            }
         });
 
-        Ok(receiver)
+        Ok(SnapshotTask {
+            name: file_name,
+            state: None,
+            stop_notifier: Some(stop_sender)
+        })
     }
+}
+
+pub struct SnapshotTask {
+    pub name: String,
+    pub state: Option<SnapshotState>,
+    pub stop_notifier: Option<oneshot::Sender<()>>,
 }

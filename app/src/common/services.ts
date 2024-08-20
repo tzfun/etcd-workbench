@@ -1,6 +1,6 @@
 import {invoke} from "@tauri-apps/api";
 import {Connection, ConnectionInfo, SessionData} from "~/common/transport/connection.ts";
-import {Cluster} from "~/common/transport/maintenance.ts";
+import {Cluster, SnapshotState, SnapshotStateInfo} from "~/common/transport/maintenance.ts";
 import {KeyValue, LeaseInfo} from "~/common/transport/kv.ts";
 import {_emitLocal, _tipError} from "~/common/events.ts";
 import {LogicErrorInfo} from "~/common/types.ts";
@@ -18,6 +18,10 @@ export function _handleError(info: LogicErrorInfo) {
             _emitLocal('closeTab', info.session.id)
         }
     }
+}
+
+export function _getAppVersion(): Promise<String> {
+    return invoke('get_app_version')
 }
 
 export function _connectTest(connection: Connection): Promise<undefined> {
@@ -247,4 +251,27 @@ export function _revokeRolePermissions(sessionId: number, role: string, permissi
         role,
         permission
     })
+}
+
+export function _maintenanceCreateSnapshotTask(sessionId: number, filepath: string):Promise<SnapshotStateInfo> {
+    return invoke('maintenance_create_snapshot_task', {
+        session: sessionId,
+        filepath
+    })
+}
+
+export function _maintenanceStopSnapshotTask(taskId: number):Promise<undefined> {
+    return invoke('maintenance_stop_snapshot_task', {
+        taskId
+    })
+}
+
+export function _maintenanceRemoveSnapshotTask(taskId: number):Promise<undefined> {
+    return invoke('maintenance_remove_snapshot_task', {
+        taskId
+    })
+}
+
+export function _maintenanceListSnapshotTask():Promise<SnapshotStateInfo[]> {
+    return invoke('maintenance_list_snapshot_task')
 }

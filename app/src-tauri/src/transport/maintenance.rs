@@ -1,3 +1,4 @@
+use std::str::FromStr;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -37,7 +38,7 @@ pub struct SerializableClusterStatus {
 #[serde(rename_all="camelCase")]
 pub struct SnapshotState {
     pub success: bool,
-    pub remain: u64,
+    pub remain: String,
     pub msg: Option<String>
 }
 
@@ -45,7 +46,7 @@ impl SnapshotState {
     pub fn success(remain: u64) -> Self {
         Self {
             success: true,
-            remain,
+            remain: remain.to_string(),
             msg: None
         }
     }
@@ -53,9 +54,17 @@ impl SnapshotState {
     pub fn failed(msg: String) -> Self {
         Self {
             success: false,
-            remain: 064,
+            remain: String::from("0"),
             msg: Some(msg)
         }
+    }
+
+    pub fn get_remain(&self) -> u64 {
+        u64::from_str(&self.remain.as_str()).unwrap()
+    }
+
+    pub fn is_finished(&self) -> bool {
+        !self.success || self.get_remain() == 0
     }
 }
 
@@ -63,7 +72,7 @@ impl Clone for SnapshotState {
     fn clone(&self) -> Self {
         Self {
             success: self.success,
-            remain: self.remain,
+            remain: self.remain.clone(),
             msg: self.msg.clone()
         }
     }
@@ -71,7 +80,8 @@ impl Clone for SnapshotState {
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 #[serde(rename_all="camelCase")]
-pub struct SnapshotStateEvent {
+pub struct SnapshotStateInfo {
+    pub name: String,
     pub id: i32,
     pub state: SnapshotState
 }

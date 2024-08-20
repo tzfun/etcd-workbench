@@ -7,6 +7,7 @@ use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
 use lazy_static::lazy_static;
 use log::debug;
+use tauri::AppHandle;
 use tokio::sync::RwLock;
 
 use crate::error::LogicError;
@@ -167,4 +168,11 @@ pub fn import_connection(filepath: String) -> Result<(), LogicError> {
     }
 
     Ok(())
+}
+
+#[tauri::command]
+pub fn get_app_version(app: AppHandle) -> String {
+    let conf = app.package_info();
+    let version = conf.version.clone();
+    version.to_string()
 }

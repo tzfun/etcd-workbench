@@ -2,10 +2,11 @@
 
 import {onMounted, PropType, reactive, ref} from "vue";
 import {ErrorPayload, SessionData} from "~/common/transport/connection.ts";
-import {_defragment, _getCluster, _handleError} from "~/common/services.ts";
+import {_defragment, _getCluster, _handleError, _maintenanceCreateSnapshotTask} from "~/common/services.ts";
 import {Alarm, Cluster} from "~/common/transport/maintenance.ts";
-import {_byteTextFormat} from "../../common/utils.ts";
-import {_confirmSystem, _tipSuccess} from "~/common/events.ts";
+import {_byteTextFormat} from "~/common/utils.ts";
+import {_alertError, _confirmSystem, _emitLocal, _tipSuccess} from "~/common/events.ts";
+import {save} from "@tauri-apps/api/dialog";
 
 const props = defineProps({
   session: {
@@ -33,7 +34,8 @@ const MEMBER_COL = {
 
 const loadingStore = reactive({
   loadCluster: false,
-  defragment: false
+  defragment: false,
+  snapshot: false,
 })
 
 onMounted(() => {
@@ -70,6 +72,30 @@ const defragment = () => {
   }).catch(() => {
   })
 }
+
+const snapshot = () => {
+  _confirmSystem('Are you sure you want to start a snapshot task? Download time depends on the size of the data.').then(() => {
+    save().then(filepath => {
+      if (filepath) {
+        loadingStore.snapshot = true
+        _maintenanceCreateSnapshotTask(props.session?.id, filepath).then(info => {
+          _emitLocal('newSnapshot', info)
+        }).catch(e => {
+          _handleError({
+            e,
+            session: props.session
+          })
+        }).finally(() => {
+          loadingStore.snapshot = false
+        })
+      }
+    }).catch(e => {
+      _alertError(e)
+    })
+  }).catch(() => {
+  })
+}
+
 </script>
 
 <template>
@@ -90,6 +116,14 @@ const defragment = () => {
              title="Defragment a member's backend database to recover storage space."
              :loading="loadingStore.defragment"
       ></v-btn>
+      <v-btn class="text-none ml-2"
+             prepend-icon="mdi-cloud-arrow-down"
+             @click="snapshot"
+             color="brown-darken-1"
+             text="Snapshot"
+             title="Save snapshot from etcd server to local file"
+             :loading="loadingStore.snapshot"
+      ></v-btn>
     </div>
 
     <div v-if="cluster" class="d-block">
@@ -100,60 +134,70 @@ const defragment = () => {
               <v-avatar color="surface-light" size="32">🎯</v-avatar>
             </template>
 
-            <template v-slot:title> Cluster Information </template>
+            <template v-slot:title> Cluster Information</template>
           </v-list-item>
           <v-divider></v-divider>
           <v-card-text class=" pa-6">
             <v-row>
-              <v-col :xxl="INFO_COL.xxl" :xl="INFO_COL.xl" :lg="INFO_COL.lg" :md="INFO_COL.md" :sm="INFO_COL.sm" :xs="INFO_COL.xs" class="d-flex info-item">
+              <v-col :xxl="INFO_COL.xxl" :xl="INFO_COL.xl" :lg="INFO_COL.lg" :md="INFO_COL.md" :sm="INFO_COL.sm"
+                     :xs="INFO_COL.xs" class="d-flex info-item">
                 <div class="info-label text-medium-emphasis">Cluster ID</div>
-                <div class="info-value text-high-emphasis">{{cluster.id}}</div>
+                <div class="info-value text-high-emphasis">{{ cluster.id }}</div>
               </v-col>
-              <v-col :xxl="INFO_COL.xxl" :xl="INFO_COL.xl" :lg="INFO_COL.lg" :md="INFO_COL.md" :sm="INFO_COL.sm" :xs="INFO_COL.xs" class="d-flex info-item">
+              <v-col :xxl="INFO_COL.xxl" :xl="INFO_COL.xl" :lg="INFO_COL.lg" :md="INFO_COL.md" :sm="INFO_COL.sm"
+                     :xs="INFO_COL.xs" class="d-flex info-item">
                 <div class="info-label text-medium-emphasis">Member ID</div>
-                <div class="info-value text-high-emphasis">{{cluster.memberId}}</div>
+                <div class="info-value text-high-emphasis">{{ cluster.memberId }}</div>
               </v-col>
-              <v-col :xxl="INFO_COL.xxl" :xl="INFO_COL.xl" :lg="INFO_COL.lg" :md="INFO_COL.md" :sm="INFO_COL.sm" :xs="INFO_COL.xs" class="d-flex info-item">
+              <v-col :xxl="INFO_COL.xxl" :xl="INFO_COL.xl" :lg="INFO_COL.lg" :md="INFO_COL.md" :sm="INFO_COL.sm"
+                     :xs="INFO_COL.xs" class="d-flex info-item">
                 <div class="info-label text-medium-emphasis">Revision</div>
-                <div class="info-value text-high-emphasis">{{cluster.revision}}</div>
+                <div class="info-value text-high-emphasis">{{ cluster.revision }}</div>
               </v-col>
             </v-row>
 
             <v-divider class="mt-5 mb-5"></v-divider>
 
             <v-row>
-              <v-col :xxl="INFO_COL.xxl" :xl="INFO_COL.xl" :lg="INFO_COL.lg" :md="INFO_COL.md" :sm="INFO_COL.sm" :xs="INFO_COL.xs" class="d-flex info-item">
+              <v-col :xxl="INFO_COL.xxl" :xl="INFO_COL.xl" :lg="INFO_COL.lg" :md="INFO_COL.md" :sm="INFO_COL.sm"
+                     :xs="INFO_COL.xs" class="d-flex info-item">
                 <div class="info-label text-medium-emphasis">Etcd Version</div>
-                <div class="info-value text-high-emphasis">{{cluster.status.version}}</div>
+                <div class="info-value text-high-emphasis">{{ cluster.status.version }}</div>
               </v-col>
-              <v-col :xxl="INFO_COL.xxl" :xl="INFO_COL.xl" :lg="INFO_COL.lg" :md="INFO_COL.md" :sm="INFO_COL.sm" :xs="INFO_COL.xs" class="d-flex info-item">
+              <v-col :xxl="INFO_COL.xxl" :xl="INFO_COL.xl" :lg="INFO_COL.lg" :md="INFO_COL.md" :sm="INFO_COL.sm"
+                     :xs="INFO_COL.xs" class="d-flex info-item">
                 <div class="info-label text-medium-emphasis">Leader</div>
-                <div class="info-value text-high-emphasis">{{cluster.status.leader}}</div>
+                <div class="info-value text-high-emphasis">{{ cluster.status.leader }}</div>
               </v-col>
-              <v-col :xxl="INFO_COL.xxl" :xl="INFO_COL.xl" :lg="INFO_COL.lg" :md="INFO_COL.md" :sm="INFO_COL.sm" :xs="INFO_COL.xs" class="d-flex info-item">
+              <v-col :xxl="INFO_COL.xxl" :xl="INFO_COL.xl" :lg="INFO_COL.lg" :md="INFO_COL.md" :sm="INFO_COL.sm"
+                     :xs="INFO_COL.xs" class="d-flex info-item">
                 <div class="info-label text-medium-emphasis">DB Size Allocated</div>
-                <div class="info-value text-high-emphasis">{{_byteTextFormat(cluster.status.dbSizeAllocated)}}</div>
+                <div class="info-value text-high-emphasis">{{ _byteTextFormat(cluster.status.dbSizeAllocated) }}</div>
               </v-col>
-              <v-col :xxl="INFO_COL.xxl" :xl="INFO_COL.xl" :lg="INFO_COL.lg" :md="INFO_COL.md" :sm="INFO_COL.sm" :xs="INFO_COL.xs" class="d-flex info-item">
+              <v-col :xxl="INFO_COL.xxl" :xl="INFO_COL.xl" :lg="INFO_COL.lg" :md="INFO_COL.md" :sm="INFO_COL.sm"
+                     :xs="INFO_COL.xs" class="d-flex info-item">
                 <div class="info-label text-medium-emphasis">DB Size Used</div>
-                <div class="info-value text-high-emphasis">{{_byteTextFormat(cluster.status.dbSizeUsed)}}</div>
+                <div class="info-value text-high-emphasis">{{ _byteTextFormat(cluster.status.dbSizeUsed) }}</div>
               </v-col>
             </v-row>
 
             <v-divider class="mt-5 mb-5"></v-divider>
 
             <v-row>
-              <v-col :xxl="INFO_COL.xxl" :xl="INFO_COL.xl" :lg="INFO_COL.lg" :md="INFO_COL.md" :sm="INFO_COL.sm" :xs="INFO_COL.xs" class="d-flex info-item">
+              <v-col :xxl="INFO_COL.xxl" :xl="INFO_COL.xl" :lg="INFO_COL.lg" :md="INFO_COL.md" :sm="INFO_COL.sm"
+                     :xs="INFO_COL.xs" class="d-flex info-item">
                 <div class="info-label text-medium-emphasis">Raft Index</div>
-                <div class="info-value text-high-emphasis">{{cluster.status.raftIndex}}</div>
+                <div class="info-value text-high-emphasis">{{ cluster.status.raftIndex }}</div>
               </v-col>
-              <v-col :xxl="INFO_COL.xxl" :xl="INFO_COL.xl" :lg="INFO_COL.lg" :md="INFO_COL.md" :sm="INFO_COL.sm" :xs="INFO_COL.xs" class="d-flex info-item">
+              <v-col :xxl="INFO_COL.xxl" :xl="INFO_COL.xl" :lg="INFO_COL.lg" :md="INFO_COL.md" :sm="INFO_COL.sm"
+                     :xs="INFO_COL.xs" class="d-flex info-item">
                 <div class="info-label text-medium-emphasis">Raft Applied Index</div>
-                <div class="info-value text-high-emphasis">{{cluster.status.raftAppliedIndex}}</div>
+                <div class="info-value text-high-emphasis">{{ cluster.status.raftAppliedIndex }}</div>
               </v-col>
-              <v-col :xxl="INFO_COL.xxl" :xl="INFO_COL.xl" :lg="INFO_COL.lg" :md="INFO_COL.md" :sm="INFO_COL.sm" :xs="INFO_COL.xs" class="d-flex info-item">
+              <v-col :xxl="INFO_COL.xxl" :xl="INFO_COL.xl" :lg="INFO_COL.lg" :md="INFO_COL.md" :sm="INFO_COL.sm"
+                     :xs="INFO_COL.xs" class="d-flex info-item">
                 <div class="info-label text-medium-emphasis">Raft Term</div>
-                <div class="info-value text-high-emphasis">{{cluster.status.raftTerm}}</div>
+                <div class="info-value text-high-emphasis">{{ cluster.status.raftTerm }}</div>
               </v-col>
             </v-row>
 
@@ -166,7 +210,7 @@ const defragment = () => {
                 <template v-slot:text>
                   <v-list>
                     <v-list-item v-for="(err, idx) in cluster.status.errors" :key="idx">
-                      {{err}}
+                      {{ err }}
                     </v-list-item>
                   </v-list>
                 </template>
@@ -198,7 +242,8 @@ const defragment = () => {
                            v-if="member.alarmType == Alarm.None">
                   <template v-slot:activator="{ props }">
                     <v-icon v-bind="props"
-                            color="green-lighten-1">mdi-heart</v-icon>
+                            color="green-lighten-1">mdi-heart
+                    </v-icon>
                   </template>
                 </v-tooltip>
                 <v-tooltip text="Alarm: space quota is exhausted!"
@@ -206,7 +251,8 @@ const defragment = () => {
                            v-else-if="member.alarmType == Alarm.Nospace">
                   <template v-slot:activator="{ props }">
                     <v-icon v-bind="props"
-                            color="red-accent-3">mdi-database-alert</v-icon>
+                            color="red-accent-3">mdi-database-alert
+                    </v-icon>
                   </template>
                 </v-tooltip>
                 <v-tooltip text="Alarm: kv store corruption detected!"
@@ -214,7 +260,8 @@ const defragment = () => {
                            v-else-if="member.alarmType == Alarm.Corrupt">
                   <template v-slot:activator="{ props }">
                     <v-icon v-bind="props"
-                            color="red-accent-2">mdi-file-document-alert</v-icon>
+                            color="red-accent-2">mdi-file-document-alert
+                    </v-icon>
                   </template>
                 </v-tooltip>
               </template>
@@ -243,14 +290,16 @@ const defragment = () => {
                           size="small"
                           density="comfortable"
                           class="ml-2"
-                  >leader</v-chip>
+                  >leader
+                  </v-chip>
                   <v-chip v-if="member.id == cluster.memberId"
                           color="primary"
                           variant="elevated"
                           size="small"
                           density="comfortable"
                           class="ml-2"
-                  >current</v-chip>
+                  >current
+                  </v-chip>
                 </p>
 
                 <v-table class="text-caption" density="compact">
@@ -263,17 +312,20 @@ const defragment = () => {
 
                     <td class="text-high-emphasis">
                       <div v-for="uri in member.peerUri" :key="uri">
-                        {{uri}}
+                        {{ uri }}
                       </div>
                     </td>
                   </tr>
 
                   <tr align="right">
-                    <th><v-icon class="mr-2">mdi-link-variant</v-icon>Client Uri:</th>
+                    <th>
+                      <v-icon class="mr-2">mdi-link-variant</v-icon>
+                      Client Uri:
+                    </th>
 
                     <td class="text-high-emphasis">
                       <div v-for="uri in member.clientUri" :key="uri">
-                        {{uri}}
+                        {{ uri }}
                       </div>
                     </td>
                   </tr>

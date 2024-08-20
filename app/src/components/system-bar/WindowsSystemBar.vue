@@ -5,6 +5,7 @@ import {appWindow} from "@tauri-apps/api/window";
 import {_confirm} from "~/common/events.ts";
 import {onMounted, ref} from "vue";
 import {_exitApp, _openSettingWindow} from "~/common/windows.ts";
+import SnapshotList from "~/components/SnapshotList.vue";
 
 const maximize = ref(false)
 
@@ -71,6 +72,8 @@ const setting = async () => {
     <span class="user-select-none">{{ title }}</span>
 
     <v-spacer></v-spacer>
+
+    <SnapshotList v-if="windowLabel == 'main'"></SnapshotList>
 
     <v-btn class="system-extend-btn ms-2"
            icon="mdi-cog"

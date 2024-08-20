@@ -4,15 +4,15 @@ import Skeleton from "~/components/Skeleton.vue";
 import {computed, onMounted, reactive, ref, watch} from "vue";
 import EditorExample from "~/components/editor/EditorExample.vue";
 import {AppTheme} from "~/common/types.ts";
-import {_confirmSystem, _emitGlobal, _tipSuccess} from "~/common/events.ts";
+import {_alertError, _confirmSystem, _emitGlobal, _tipSuccess} from "~/common/events.ts";
 import {DEFAULT_SETTING_CONFIG, SettingConfig} from "~/common/transport/setting.ts";
-import {_goBrowserPage} from "~/common/utils.ts";
+import {_debounce, _goBrowserPage} from "~/common/utils.ts";
 import WorkbenchLogo from "~/design/WorkbenchLogo.vue";
 import {_loadSettings, _setLocalSettings, _useSettings} from "~/common/store.ts";
 import {appWindow} from "@tauri-apps/api/window";
 import {useTheme} from "vuetify";
 import {save, open} from "@tauri-apps/api/dialog";
-import {_exportConnection, _handleError, _importConnection} from "~/common/services.ts";
+import {_exportConnection, _getAppVersion, _handleError, _importConnection} from "~/common/services.ts";
 
 const theme = useTheme()
 
@@ -23,6 +23,8 @@ const props = defineProps({
   }
 })
 
+const groups = ['theme', 'connection', 'keys', 'update', 'about']
+const activatedGroup = ref<string>('theme')
 const editorTheme = reactive({
   light: [
     {
@@ -106,7 +108,7 @@ auth:
 const exampleCodeLang = "yaml"
 
 const settingForm = ref<SettingConfig>(JSON.parse(JSON.stringify(DEFAULT_SETTING_CONFIG)))
-const appVersion = ref<string>('1.2.0')
+const appVersion = ref<string>('0.0.0')
 const buildHash = ref<string>('04139fc')
 const loadingStore = reactive({
   exportConnection: false,
@@ -121,26 +123,33 @@ const isMac = computed<boolean>(() => {
   return props.platform == 'darwin'
 })
 
-watch(() => settingForm.value, (v) => {
-  let setting = {...v}
-  if (typeof setting.kvLimitPerPage === 'string') {
-    setting.kvLimitPerPage = parseInt(setting.kvLimitPerPage)
-  }
-  if (typeof setting.connectTimeoutSeconds === 'string') {
-    setting.connectTimeoutSeconds = parseInt(setting.connectTimeoutSeconds)
-  }
-  if (typeof setting.requestTimeoutSeconds === 'string') {
-    setting.requestTimeoutSeconds = parseInt(setting.requestTimeoutSeconds)
-  }
-  _setLocalSettings(setting)
-  _emitGlobal('settingUpdate', setting)
-}, {
-  deep: true
-})
-
 onMounted(async () => {
   await _loadSettings()
   settingForm.value = JSON.parse(JSON.stringify(_useSettings().value))
+
+  _getAppVersion().then(version => {
+    appVersion.value = version
+  }).catch(e => {
+    console.error(e)
+  })
+
+  watch(() => settingForm.value, (v) => {
+    let setting = {...v}
+    if (typeof setting.kvLimitPerPage === 'string') {
+      setting.kvLimitPerPage = parseInt(setting.kvLimitPerPage)
+    }
+    if (typeof setting.connectTimeoutSeconds === 'string') {
+      setting.connectTimeoutSeconds = parseInt(setting.connectTimeoutSeconds)
+    }
+    if (typeof setting.requestTimeoutSeconds === 'string') {
+      setting.requestTimeoutSeconds = parseInt(setting.requestTimeoutSeconds)
+    }
+    _setLocalSettings(setting)
+    _emitGlobal('settingUpdate', setting)
+  }, {
+    deep: true
+  })
+
 })
 
 const setAppTheme = (appTheme: AppTheme) => {
@@ -196,6 +205,7 @@ const exportConnectionConfig = () => {
     }
   }).catch(e => {
     console.error(e)
+    _alertError(e)
   })
 }
 
@@ -223,15 +233,29 @@ const importConnectionConfig = () => {
     }
   }).catch(e => {
     console.error(e)
+    _alertError(e)
   })
 }
+
+const onScroll = _debounce(e => {
+  for (let group of groups) {
+    let dom = document.getElementById(`setting-${group}`)
+    if (dom) {
+      let rect = dom.getBoundingClientRect()
+      if (rect.top <= window.innerHeight && rect.bottom >= 0) {
+        activatedGroup.value = group
+        break
+      }
+    }
+  }
+},200)
 
 </script>
 
 <template>
   <v-sheet class="app-setting">
     <v-container class="fill-height pa-0" style="max-width: 1200px;">
-      <v-layout class="fill-height overflow-y-auto  position-relative">
+      <v-layout class="fill-height overflow-y-auto position-relative">
 
         <v-navigation-drawer permanent>
           <v-list-item class="ma-5"
@@ -251,7 +275,7 @@ const importConnectionConfig = () => {
           <v-divider class="mb-5"></v-divider>
           <v-list lines="one"
                   activatable
-                  activated="theme"
+                  :activated="activatedGroup"
                   mandatory
                   nav
                   density="compact"
@@ -268,7 +292,7 @@ const importConnectionConfig = () => {
             ></v-list-item>
             <v-list-item title="Keys"
                          value="keys"
-                         prepend-icon="mdi-file-key"
+                         prepend-icon="mdi-file-document-multiple"
             ></v-list-item>
             <v-list-item title="Update"
                          value="update"
@@ -280,7 +304,7 @@ const importConnectionConfig = () => {
             ></v-list-item>
           </v-list>
         </v-navigation-drawer>
-        <v-main class="overflow-y-auto">
+        <v-main class="overflow-y-auto" v-scroll.self="onScroll">
           <v-sheet class="pa-5">
             <v-layout>
               <v-spacer></v-spacer>

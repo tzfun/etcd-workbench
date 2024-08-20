@@ -54,6 +54,8 @@ const props = defineProps({
   }
 })
 
+const enforceLoadAllKey = ref<boolean>(false)
+
 const treeValue = ref<KeyValue[]>([])
 const treeData = reactive<TreeNode>({
   title: 'root',
@@ -133,7 +135,7 @@ const refreshAllKeys = () => {
   treeData.children = []
   clearAllKeyLeaseListener()
 
-  if (_useSettings().value.kvPaginationQuery) {
+  if (_useSettings().value.kvPaginationQuery && !enforceLoadAllKey.value) {
     paginationKeyCursor.value = ""
     loadNextPage()
   } else {
@@ -170,6 +172,7 @@ const loadNextPage = () => {
     }).catch((e: ErrorPayload | string) => {
       if (e.errType && e.errType === 'PermissionDenied') {
         if (_useSettings().value.kvReadAllWhenPagingFailed) {
+          enforceLoadAllKey.value = true
           loadAllKeys()
           return
         }
@@ -729,9 +732,9 @@ const clearAllKeyLeaseListener = () => {
         <template v-slot:activator="{ props }">
           <v-chip v-bind="props"
                   label
-                  color="blue-grey-darken-1"
+                  color="brown-lighten-2"
                   class="font-weight-bold"
-                  prepend-icon="mdi-key"
+                  prepend-icon="mdi-view-headline"
           >{{ session.namespace }}
           </v-chip>
         </template>
@@ -743,7 +746,7 @@ const clearAllKeyLeaseListener = () => {
         <template v-slot:activator="{ props }">
           <v-chip v-bind="props"
                   label
-                  color="primary"
+                  color="light-blue-accent-4"
                   class="font-weight-bold ml-2"
           >{{ currentKv.key }}
           </v-chip>
