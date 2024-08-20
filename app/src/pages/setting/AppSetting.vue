@@ -105,18 +105,7 @@ auth:
   - user: user2:password2`
 const exampleCodeLang = "yaml"
 
-const settingForm = ref<SettingConfig>({
-  theme: 'auto',
-  editorDarkTheme: 'barf',
-  editorLightTheme: 'smoothy',
-  kvPathSplitter: '/',
-  kvPaginationQuery: true,
-  kvLimitPerPage: 5000,
-  closeTabUseCtrlW: true,
-  autoDownloadUpdate: true,
-  connectTimeoutSeconds: 5,
-  requestTimeoutSeconds: 15
-})
+const settingForm = ref<SettingConfig>(JSON.parse(JSON.stringify(DEFAULT_SETTING_CONFIG)))
 const appVersion = ref<string>('1.2.0')
 const buildHash = ref<string>('04139fc')
 const loadingStore = reactive({
@@ -160,7 +149,6 @@ const setAppTheme = (appTheme: AppTheme) => {
   if (appTheme == 'auto') {
     appWindow.theme().then(systemTheme => {
       if (systemTheme) {
-        console.log("set system theme", systemTheme)
         theme.global.name.value = systemTheme
       }
     })
@@ -171,7 +159,10 @@ const setAppTheme = (appTheme: AppTheme) => {
 
 const resetSettingConfig = () => {
   _confirmSystem('Are you sure you want to reset all settings?').then(() => {
-    settingForm.value = DEFAULT_SETTING_CONFIG
+    settingForm.value = JSON.parse(JSON.stringify(DEFAULT_SETTING_CONFIG))
+
+    setAppTheme(settingForm.value.theme)
+
   }).catch(() => {
   })
 }
@@ -193,14 +184,16 @@ const exportConnectionConfig = () => {
       extensions: ['wbc']
     }]
   }).then(filepath => {
-    loadingStore.exportConnection = true
-    _exportConnection(filepath).then(() => {
-      _tipSuccess("Successfully exported")
-    }).catch(e => {
-      _handleError({e})
-    }).finally(() => {
-      loadingStore.exportConnection = false
-    })
+    if (filepath) {
+      loadingStore.exportConnection = true
+      _exportConnection(filepath).then(() => {
+        _tipSuccess("Successfully exported")
+      }).catch(e => {
+        _handleError({e})
+      }).finally(() => {
+        loadingStore.exportConnection = false
+      })
+    }
   }).catch(e => {
     console.error(e)
   })
@@ -466,6 +459,34 @@ const importConnectionConfig = () => {
                 <v-divider class="mt-5 mb-5"></v-divider>
                 <v-layout>
                   <div>
+                    <div class="form-label text-high-emphasis my-auto">Read All When Paging Failed
+                      <v-tooltip location="top"
+                                 text="The paging function requires the connection account to have at least read permission for all keys, otherwise it may not be able to read."
+                      >
+                        <template #activator="{props}">
+                          <v-icon v-bind="props"
+                                  class="ml-2"
+                          >mdi-alert-circle-outline</v-icon>
+                        </template>
+                      </v-tooltip>
+                    </div>
+                    <div class="v-messages">If paging fails due to permission reasons, all keys will be read. This is a compatibility option.</div>
+                  </div>
+                  <v-spacer></v-spacer>
+                  <div>
+                    <v-switch v-model="settingForm.kvReadAllWhenPagingFailed"
+                              inset
+                              density="compact"
+                              color="primary"
+                              hide-details
+                              true-icon="mdi-check"
+                    ></v-switch>
+                  </div>
+                </v-layout>
+
+                <v-divider class="mt-5 mb-5"></v-divider>
+                <v-layout>
+                  <div>
                     <div class="form-label text-high-emphasis">Pagination Limit</div>
                     <div class="v-messages">Number of queries per page when querying all keys in pagination.</div>
                   </div>
@@ -609,7 +630,7 @@ const importConnectionConfig = () => {
             <v-sheet class="mt-2 form-area pa-3">
               <div class="mb-5">
                 <WorkbenchLogo class="my-5"></WorkbenchLogo>
-                <p class="description my-3">A beautiful and lightweight ETCD V3 client</p>
+                <p class="description my-3">A beautiful and lightweight gui client for ETCD V3</p>
                 <p class="copyright">
                   Copyright &copy; 2024 <span class="link cursor-pointer"
                                               @click="_goBrowserPage('https://github.com/tzfun')">beifengtz</span>. All
@@ -667,7 +688,7 @@ const importConnectionConfig = () => {
                 <div class="form-label text-high-emphasis">Report Bug</div>
                 <v-spacer></v-spacer>
                 <v-btn class="text-none"
-                       color="primary"
+                       color="blue-grey-lighten-2"
                        variant="text"
                        @click="_goBrowserPage('https://github.com/tzfun/etcd-workbench/issues/new')"
                        title="Go to submit"

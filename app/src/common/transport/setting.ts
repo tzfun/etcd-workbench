@@ -8,13 +8,15 @@ export interface SettingConfig {
     //  KV路径分割符号，用于树状展示
     kvPathSplitter: string,
     //  KV分页查询
-    kvPaginationQuery: true,
+    kvPaginationQuery: boolean,
+    //  KV分页失败时读取所有key
+    kvReadAllWhenPagingFailed: boolean,
     //  KV分页获取每页大小
     kvLimitPerPage: number | string,
     //  自动下载更新
-    autoDownloadUpdate: true,
+    autoDownloadUpdate: boolean,
     //  使用 ctrl + w 关闭连接tab
-    closeTabUseCtrlW: true,
+    closeTabUseCtrlW: boolean,
     //  连接超时秒数
     connectTimeoutSeconds: number | string,
     //  请求超时秒数
@@ -36,6 +38,7 @@ export const DEFAULT_SETTING_CONFIG: SettingConfig = {
     editorLightTheme: 'smoothy',
     kvPathSplitter: '/',
     kvPaginationQuery: true,
+    kvReadAllWhenPagingFailed: true,
     kvLimitPerPage: 5000,
     closeTabUseCtrlW: true,
     autoDownloadUpdate: true,

@@ -119,6 +119,7 @@ impl EtcdConnector {
     pub async fn kv_get_all_keys_paging(&self, cursor_key: impl Into<Vec<u8>>, limit: i64) -> Result<Vec<SerializableKeyValue>, Error> {
         let mut kv_client = self.client.kv_client();
         let key = self.get_full_key(cursor_key);
+        println!("{}", String::from_utf8(key.clone()).unwrap());
         let get_options = GetOptions::new()
             .with_from_key()
             .with_keys_only()

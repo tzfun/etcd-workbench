@@ -164,7 +164,9 @@ const disableWebviewNativeEvents = () => {
                     class="app-setting"
                     :platform="platform"
         ></AppSetting>
-        <AppMain v-else-if="windowLabel === 'main'"></AppMain>
+        <AppMain v-else-if="windowLabel === 'main'"
+                 :platform="platform"
+        ></AppMain>
 
       </v-main>
     </v-layout>

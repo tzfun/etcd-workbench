@@ -4,7 +4,7 @@ import Home from "~/pages/main/Home.vue";
 import Connection from "~/pages/main/Connection.vue";
 import {_confirm, localEvents} from "~/common/events.ts";
 import {_disconnect} from "~/common/services.ts";
-import {onMounted, onUnmounted, reactive, ref} from "vue";
+import {computed, onMounted, onUnmounted, reactive, ref} from "vue";
 import {SessionData} from "~/common/transport/connection.ts";
 import {appWindow, PhysicalSize} from "@tauri-apps/api/window";
 import {_openMainWindow} from "~/common/windows.ts";
@@ -23,6 +23,21 @@ const activeTab = ref<string>(HOME_TAB)
 const tabList = reactive<TabItem[]>([])
 
 const eventUnListens = reactive<Function[]>([])
+
+const props = defineProps({
+  platform: {
+    type: String,
+    required: true
+  }
+})
+
+const isWindows = computed<boolean>(() => {
+  return props.platform == 'win32'
+})
+
+const isMac = computed<boolean>(() => {
+  return props.platform == 'darwin'
+})
 
 onMounted(async () => {
   eventUnListens.push(await appWindow.listen('tauri://resize', _debounce((e) => {
@@ -97,8 +112,11 @@ onMounted(async () => {
 
   document.addEventListener('keydown', e => {
     let key = e.key.toLowerCase()
+
+    let ctrlKey = (isWindows.value && e.ctrlKey) || (isMac.value && e.metaKey)
+
     //  ctrl+w
-    if (e.ctrlKey && key == 'w') {
+    if (ctrlKey && key == 'w') {
 
       if (_useSettings().value.closeTabUseCtrlW) {
         closeTabDirectly()

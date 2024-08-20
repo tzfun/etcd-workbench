@@ -19,7 +19,9 @@ enum ErrorType {
     /// 参数错误
     ArgumentError,
     /// 资源不存在
-    ResourceNotExist
+    ResourceNotExist,
+    /// 权限被拒绝
+    PermissionDenied,
 }
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all="camelCase")]
@@ -67,6 +69,11 @@ impl Serialize for LogicError {
                         if code == 16 { //  Unauthenticated
                             ErrorPayload {
                                 err_type: ErrorType::Unauthenticated,
+                                err_msg: msg,
+                            }.serialize(serializer)
+                        } else if code == 7 {   //  PermissionDenied
+                            ErrorPayload {
+                                err_type: ErrorType::PermissionDenied,
                                 err_msg: msg,
                             }.serialize(serializer)
                         } else {

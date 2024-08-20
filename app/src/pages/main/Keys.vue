@@ -12,7 +12,7 @@ import {
 } from "~/common/services.ts";
 import {_confirmSystem, _tipInfo, _tipSuccess, _tipWarn} from "~/common/events.ts";
 import {computed, onMounted, onUnmounted, PropType, reactive, ref, watch} from "vue";
-import {SessionData} from "~/common/transport/connection.ts";
+import {ErrorPayload, SessionData} from "~/common/transport/connection.ts";
 import DragBox from "~/components/DragBox.vue";
 import DragItem from "~/components/DragItem.vue";
 import {KeyValue} from "~/common/transport/kv.ts";
@@ -122,14 +122,14 @@ const isDarkTheme = computed<boolean>(() => {
 })
 
 onMounted(() => {
-  loadAllKeys()
+  refreshAllKeys()
 })
 
 onUnmounted(() => {
   clearAllKeyLeaseListener()
 })
 
-const loadAllKeys = () => {
+const refreshAllKeys = () => {
   treeData.children = []
   clearAllKeyLeaseListener()
 
@@ -137,19 +137,23 @@ const loadAllKeys = () => {
     paginationKeyCursor.value = ""
     loadNextPage()
   } else {
-    paginationKeyCursor.value = undefined
-    loadingStore.loadMore = true
-    _getAllKeys(props.session?.id).then(data => {
-      addKvListToTree(data)
-    }).catch(e => {
-      _handleError({
-        e,
-        session: props.session
-      })
-    }).finally(() => {
-      loadingStore.loadMore = false
-    })
+    loadAllKeys()
   }
+}
+
+const loadAllKeys = () => {
+  paginationKeyCursor.value = undefined
+  loadingStore.loadMore = true
+  _getAllKeys(props.session?.id).then(data => {
+    addKvListToTree(data)
+  }).catch(e => {
+    _handleError({
+      e,
+      session: props.session
+    })
+  }).finally(() => {
+    loadingStore.loadMore = false
+  })
 }
 
 const loadNextPage = () => {
@@ -163,8 +167,13 @@ const loadNextPage = () => {
         paginationKeyCursor.value = data[data.length - 1].key
         addKvListToTree(data)
       }
-      console.log(data)
-    }).catch(e => {
+    }).catch((e: ErrorPayload | string) => {
+      if (e.errType && e.errType === 'PermissionDenied') {
+        if (_useSettings().value.kvReadAllWhenPagingFailed) {
+          loadAllKeys()
+          return
+        }
+      }
       _handleError({
         e,
         session: props.session
@@ -688,7 +697,7 @@ const clearAllKeyLeaseListener = () => {
       <v-btn class="text-none"
              prepend-icon="mdi-refresh"
              variant="outlined"
-             @click="loadAllKeys"
+             @click="refreshAllKeys"
              :loading="loadingStore.loadMore"
              text="Refresh"
       ></v-btn>
