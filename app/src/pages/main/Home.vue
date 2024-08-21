@@ -2,7 +2,7 @@
 
 import Connector from "~/components/Connector.vue";
 import {_getConnectionList, _handleError, _removeConnection} from "~/common/services.ts";
-import {_alertError, _confirm} from "~/common/events.ts";
+import {_alertError, _confirm, EventName} from "~/common/events.ts";
 import {onActivated, onMounted, onUnmounted, reactive, ref} from "vue";
 import {ConnectionInfo, DEFAULT_CONNECTION, ErrorPayload} from "~/common/transport/connection.ts";
 import {listen} from "@tauri-apps/api/event";
@@ -17,7 +17,7 @@ onActivated(() => {
 
 onMounted(async () => {
   loadConnectionList()
-  eventUnListens.push(await listen('connectionImported', () => {
+  eventUnListens.push(await listen(EventName.CONNECTION_IMPORTED, () => {
     loadConnectionList()
   }))
 })

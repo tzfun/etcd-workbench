@@ -1,22 +1,37 @@
 import {DialogItem, TipsItem} from "~/common/types.ts";
-import { WebviewWindow} from "@tauri-apps/api/window";
+import {WebviewWindow} from "@tauri-apps/api/window";
 import {emit} from "@tauri-apps/api/event";
-import mitt from "mitt";
+import mitt, {Handler} from "mitt";
 
-export const localEvents = mitt();
+const localEvents = mitt();
 
-export function _emitLocal(eventName: string, eventPayload: any) {
+export enum EventName {
+    LOADING = 'loading',
+    DIALOG = 'dialog',
+    TIP = 'tip',
+    CLOSE_TAB = 'closeTab',
+    NEW_CONNECTION = 'newConnection',
+    SETTING_UPDATE = 'settingUpdate',
+    CONNECTION_IMPORTED = 'connectionImported',
+    SNAPSHOT_STATE = 'snapshot_state',
+}
+
+export function _listenLocal(type: EventName, handler: Handler<any>) {
+    localEvents.on(type, handler)
+}
+
+export function _emitLocal(eventName: EventName, eventPayload: any) {
     localEvents.emit(eventName, eventPayload)
 }
 
-export function _emitGlobal(eventName: string, eventPayload: any) {
+export function _emitGlobal(eventName: EventName, eventPayload: any) {
     emit(eventName, eventPayload).then(() => {
     }).catch(e => {
         console.error(e)
     })
 }
 
-export function _emitWindow(windowLabel: string, eventName: string, eventPayload: any) {
+export function _emitWindow(windowLabel: EventName, eventName: string, eventPayload: any) {
     let window = WebviewWindow.getByLabel(windowLabel);
     if (!window) {
         window = new WebviewWindow(windowLabel)
@@ -30,7 +45,7 @@ export function _emitWindow(windowLabel: string, eventName: string, eventPayload
 
 
 export function _loading(state: boolean) {
-    _emitLocal('loading', state)
+    _emitLocal(EventName.LOADING, state)
 }
 
 export function _confirm(title: string, text: string): Promise<undefined> {
@@ -60,7 +75,7 @@ export function _confirm(title: string, text: string): Promise<undefined> {
             ]
         }
 
-        _emitLocal('dialog', dialog)
+        _emitLocal(EventName.DIALOG, dialog)
     })
 
 }
@@ -78,7 +93,7 @@ export function _dialogContent(content: string) {
         closeBtn: true
     }
 
-    _emitLocal('dialog', dialog)
+    _emitLocal(EventName.DIALOG, dialog)
 }
 
 export function _alertError(text: string) {
@@ -98,7 +113,7 @@ export function _alertError(text: string) {
         ]
     }
 
-    _emitLocal('dialog', dialog)
+    _emitLocal(EventName.DIALOG, dialog)
 }
 
 export function _tipError(text: string) {
@@ -110,7 +125,7 @@ export function _tipError(text: string) {
         class: 'bg-red-lighten-1'
     }
 
-    _emitLocal('tip', tip)
+    _emitLocal(EventName.TIP, tip)
 }
 
 export function _tipWarn(text: string) {
@@ -122,7 +137,7 @@ export function _tipWarn(text: string) {
         class: 'bg-orange-darken-1'
     }
 
-    _emitLocal('tip', tip)
+    _emitLocal(EventName.TIP, tip)
 }
 
 export function _tipSuccess(text: string) {
@@ -134,7 +149,7 @@ export function _tipSuccess(text: string) {
         class: 'bg-green-lighten-1'
     }
 
-    _emitLocal('tip', tip)
+    _emitLocal(EventName.TIP, tip)
 }
 
 export function _tipInfo(text: string) {
@@ -146,5 +161,5 @@ export function _tipInfo(text: string) {
         class: 'bg-secondary'
     }
 
-    _emitLocal('tip', tip)
+    _emitLocal(EventName.TIP, tip)
 }

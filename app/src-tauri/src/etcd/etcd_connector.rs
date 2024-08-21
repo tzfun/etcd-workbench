@@ -7,22 +7,30 @@ use std::path::PathBuf;
 use std::pin::Pin;
 use std::time::Duration;
 
-use etcd_client::{AlarmAction, AlarmType, Certificate, Client, ConnectOptions, Error, GetOptions, GetResponse, Identity, LeaseGrantOptions, LeaseTimeToLiveOptions, PutOptions, RoleRevokePermissionOptions, SortOrder, SortTarget, TlsOptions};
-use log::{debug, error, info, warn};
-use serde::{Deserialize, Serialize};
-use tokio::fs::{File, OpenOptions};
-use tokio::io::AsyncWriteExt;
-use tokio::select;
-use tokio::sync::{oneshot, watch};
-use tokio::sync::watch::Receiver;
-use tokio::task::JoinHandle;
 use crate::api::settings::get_settings;
 use crate::error::LogicError;
 use crate::ssh::ssh_tunnel::SshTunnel;
 use crate::transport::connection::Connection;
-use crate::transport::kv::{SerializableKeyValue, SerializableLeaseInfo, SerializableLeaseSimpleInfo};
-use crate::transport::maintenance::{SerializableCluster, SerializableClusterMember, SerializableClusterStatus, SnapshotState, SnapshotStateInfo};
+use crate::transport::kv::{
+    SerializableKeyValue, SerializableLeaseInfo, SerializableLeaseSimpleInfo,
+};
+use crate::transport::maintenance::{
+    SerializableCluster, SerializableClusterMember, SerializableClusterStatus, SnapshotState,
+    SnapshotStateInfo,
+};
 use crate::transport::user::{SerializablePermission, SerializableUser};
+use etcd_client::{
+    AlarmAction, AlarmType, Certificate, Client, ConnectOptions, Error, GetOptions, GetResponse,
+    Identity, LeaseGrantOptions, LeaseTimeToLiveOptions, PutOptions, RoleRevokePermissionOptions,
+    SortOrder, SortTarget, TlsOptions,
+};
+use log::{debug, error, info, warn};
+use serde::{Deserialize, Serialize};
+use tokio::fs::{File, OpenOptions};
+use tokio::io::AsyncWriteExt;
+use tokio::sync::{mpsc, oneshot};
+use tokio::task::JoinHandle;
+use tokio::{select, time};
 
 pub struct EtcdConnector {
     namespace: Option<String>,
@@ -32,7 +40,6 @@ pub struct EtcdConnector {
 
 impl EtcdConnector {
     pub async fn new(connection: Connection) -> Result<Self, LogicError> {
-
         let settings = get_settings().await?;
 
         let mut option = ConnectOptions::new()
@@ -67,7 +74,8 @@ impl EtcdConnector {
         let namespace = connection.namespace.clone();
 
         let ssh = if let Some(ssh) = connection.ssh {
-            let ssh_context = SshTunnel::new(ssh, Box::leak(host.clone().into_boxed_str()), port).await?;
+            let ssh_context =
+                SshTunnel::new(ssh, Box::leak(host.clone().into_boxed_str()), port).await?;
             port = ssh_context.get_proxy_port();
             host.clear();
             host.push_str("127.0.0.1");
@@ -104,7 +112,11 @@ impl EtcdConnector {
 
     pub async fn test_connection(&self) -> Result<(), Error> {
         let key = self.get_full_key("/");
-        let response = self.client.kv_client().get(key, Some(GetOptions::new().with_keys_only())).await?;
+        let response = self
+            .client
+            .kv_client()
+            .get(key, Some(GetOptions::new().with_keys_only()))
+            .await?;
         debug!("test connection, kv length: {}", response.kvs().len());
         Ok(())
     }
@@ -113,14 +125,16 @@ impl EtcdConnector {
     pub async fn kv_get_all_keys(&self) -> Result<Vec<SerializableKeyValue>, Error> {
         let mut kv_client = self.client.kv_client();
         let root_path = self.get_full_key("");
-        let get_options = GetOptions::new()
-            .with_prefix()
-            .with_keys_only();
+        let get_options = GetOptions::new().with_prefix().with_keys_only();
         self.kv_get_by_option(root_path, get_options).await
     }
 
     /// 分页获取所有key，不包含value
-    pub async fn kv_get_all_keys_paging(&self, cursor_key: impl Into<Vec<u8>>, limit: i64) -> Result<Vec<SerializableKeyValue>, Error> {
+    pub async fn kv_get_all_keys_paging(
+        &self,
+        cursor_key: impl Into<Vec<u8>>,
+        limit: i64,
+    ) -> Result<Vec<SerializableKeyValue>, Error> {
         let mut kv_client = self.client.kv_client();
         let key = self.get_full_key(cursor_key);
         println!("{}", String::from_utf8(key.clone()).unwrap());
@@ -132,7 +146,11 @@ impl EtcdConnector {
         self.kv_get_by_option(key, get_options).await
     }
 
-    async fn kv_get_by_option(&self, key: Vec<u8>, option: GetOptions) -> Result<Vec<SerializableKeyValue>, Error> {
+    async fn kv_get_by_option(
+        &self,
+        key: Vec<u8>,
+        option: GetOptions,
+    ) -> Result<Vec<SerializableKeyValue>, Error> {
         let mut response = self.client.kv_client().get(key, Some(option)).await?;
         let kvs = response.take_kvs();
         let mut arr = Vec::with_capacity(kvs.len());
@@ -147,7 +165,10 @@ impl EtcdConnector {
     }
 
     /// 获取键值对详情
-    pub async fn kv_get(&self, key: impl Into<Vec<u8>>) -> Result<SerializableKeyValue, LogicError> {
+    pub async fn kv_get(
+        &self,
+        key: impl Into<Vec<u8>>,
+    ) -> Result<SerializableKeyValue, LogicError> {
         let mut kv_client = self.get_client().kv_client();
         let path = self.get_full_key(key);
         let response = kv_client.get(path, None).await?;
@@ -156,18 +177,29 @@ impl EtcdConnector {
     }
 
     /// 根据历史版本获取键值对详情
-    pub async fn kv_get_by_version(&self, key: impl Into<Vec<u8>>, version: i64) -> Result<SerializableKeyValue, LogicError> {
+    pub async fn kv_get_by_version(
+        &self,
+        key: impl Into<Vec<u8>>,
+        version: i64,
+    ) -> Result<SerializableKeyValue, LogicError> {
         let mut kv_client = self.get_client().kv_client();
         let path = self.get_full_key(key);
-        let mut response = kv_client.get(path, Some(GetOptions::new().with_revision(version))).await?;
+        let mut response = kv_client
+            .get(path, Some(GetOptions::new().with_revision(version)))
+            .await?;
 
         self.parse_kv_get_response(response)
     }
 
-    fn parse_kv_get_response(&self, mut response: GetResponse) -> Result<SerializableKeyValue, LogicError> {
+    fn parse_kv_get_response(
+        &self,
+        mut response: GetResponse,
+    ) -> Result<SerializableKeyValue, LogicError> {
         let kv = response.take_kvs();
         if kv.is_empty() {
-            Err(LogicError::ResourceNotExist("The key does not exist or has expired."))
+            Err(LogicError::ResourceNotExist(
+                "The key does not exist or has expired.",
+            ))
         } else {
             let mut s_kv = SerializableKeyValue::from(kv.first().unwrap().to_owned());
             if let Some(namespace) = &self.namespace {
@@ -180,19 +212,32 @@ impl EtcdConnector {
     /// 获取Key的数量
     pub async fn kv_count(&self) -> Result<i64, Error> {
         let key = self.get_full_key("/");
-        let response = self.client.kv_client().get(key, Some(GetOptions::new().with_count_only())).await?;
+        let response = self
+            .client
+            .kv_client()
+            .get(key, Some(GetOptions::new().with_count_only()))
+            .await?;
         Ok(response.count())
     }
 
     /// 更新键值对
-    pub async fn kv_put(&self, key: impl Into<Vec<u8>>, value: impl Into<Vec<u8>>, ttl: Option<i64>) -> Result<(), Error> {
+    pub async fn kv_put(
+        &self,
+        key: impl Into<Vec<u8>>,
+        value: impl Into<Vec<u8>>,
+        ttl: Option<i64>,
+    ) -> Result<(), Error> {
         let mut lease_id = 0;
         let final_key = self.get_full_key(key);
         if let Some(ttl_param) = ttl {
             let response = self.client.lease_client().grant(ttl_param, None).await?;
             lease_id = response.id()
         } else {
-            let response = self.client.kv_client().get(final_key.clone(), Some(GetOptions::new().with_keys_only())).await?;
+            let response = self
+                .client
+                .kv_client()
+                .get(final_key.clone(), Some(GetOptions::new().with_keys_only()))
+                .await?;
             let kvs = response.kvs();
             if !kvs.is_empty() {
                 lease_id = kvs[0].lease();
@@ -204,15 +249,26 @@ impl EtcdConnector {
             Some(PutOptions::new().with_lease(lease_id))
         };
 
-        self.client.kv_client().put(final_key, value, option).await?;
+        self.client
+            .kv_client()
+            .put(final_key, value, option)
+            .await?;
 
         Ok(())
     }
 
     /// 将Key绑定到lease中
-    pub async fn kv_put_with_lease(&self, key: impl Into<Vec<u8>>, value: impl Into<Vec<u8>>, lease: i64) -> Result<(), Error> {
+    pub async fn kv_put_with_lease(
+        &self,
+        key: impl Into<Vec<u8>>,
+        value: impl Into<Vec<u8>>,
+        lease: i64,
+    ) -> Result<(), Error> {
         let final_key = self.get_full_key(key);
-        self.client.kv_client().put(final_key, value, Some(PutOptions::new().with_lease(lease))).await?;
+        self.client
+            .kv_client()
+            .put(final_key, value, Some(PutOptions::new().with_lease(lease)))
+            .await?;
 
         Ok(())
     }
@@ -232,10 +288,16 @@ impl EtcdConnector {
     }
 
     /// 获取某一个key的历史版本，如果中间某个版本以及被删除或压缩，将终止搜索
-    pub async fn kv_get_history_versions(&self, key: impl Into<Vec<u8>>, start: i64, end: i64) -> Result<Vec<i64>, Error> {
+    pub async fn kv_get_history_versions(
+        &self,
+        key: impl Into<Vec<u8>>,
+        start: i64,
+        end: i64,
+    ) -> Result<Vec<i64>, Error> {
         let mut history = Vec::new();
         let final_key = self.get_full_key(key);
-        self.kv_get_history_versions0(final_key, end, start, end, &mut history).await;
+        self.kv_get_history_versions0(final_key, end, start, end, &mut history)
+            .await;
         Ok(history)
     }
 
@@ -246,10 +308,17 @@ impl EtcdConnector {
         start: i64,
         end: i64,
         history: &'a mut Vec<i64>,
-    ) -> Pin<Box<dyn Future<Output=()> + Send + 'a>> {
+    ) -> Pin<Box<dyn Future<Output = ()> + Send + 'a>> {
         Box::pin(async move {
             if revision >= start && revision <= end {
-                let result = self.client.kv_client().get(key.clone(), Some(GetOptions::new().with_keys_only().with_revision(revision))).await;
+                let result = self
+                    .client
+                    .kv_client()
+                    .get(
+                        key.clone(),
+                        Some(GetOptions::new().with_keys_only().with_revision(revision)),
+                    )
+                    .await;
                 match result {
                     Ok(response) => {
                         let kvs = response.kvs();
@@ -257,13 +326,15 @@ impl EtcdConnector {
                             return ();
                         }
                         let kv = &kvs[0];
-                        let next_revision = if revision >= kv.create_revision() && revision <= kv.mod_revision() {
-                            history.push(revision);
-                            revision - 1
-                        } else {
-                            kv.mod_revision()
-                        };
-                        self.kv_get_history_versions0(key, next_revision, start, end, history).await;
+                        let next_revision =
+                            if revision >= kv.create_revision() && revision <= kv.mod_revision() {
+                                history.push(revision);
+                                revision - 1
+                            } else {
+                                kv.mod_revision()
+                            };
+                        self.kv_get_history_versions0(key, next_revision, start, end, history)
+                            .await;
                         ()
                     }
                     Err(e) => {
@@ -300,7 +371,11 @@ impl EtcdConnector {
     /// 获取lease的详情信息
     pub async fn lease_get(&self, lease: i64) -> Result<SerializableLeaseInfo, Error> {
         let options = LeaseTimeToLiveOptions::new().with_keys();
-        let response = self.client.lease_client().time_to_live(lease, Some(options)).await?;
+        let response = self
+            .client
+            .lease_client()
+            .time_to_live(lease, Some(options))
+            .await?;
         let ttl = response.ttl();
         let granted_ttl = response.granted_ttl();
         let id = response.id().to_string();
@@ -320,23 +395,25 @@ impl EtcdConnector {
     }
 
     /// 获取lease的简要详情信息
-    pub async fn lease_get_simple_info(&self, lease: i64) -> Result<SerializableLeaseSimpleInfo, Error> {
+    pub async fn lease_get_simple_info(
+        &self,
+        lease: i64,
+    ) -> Result<SerializableLeaseSimpleInfo, Error> {
         let options = LeaseTimeToLiveOptions::new().with_keys();
-        let response = self.client.lease_client().time_to_live(lease, Some(options)).await?;
+        let response = self
+            .client
+            .lease_client()
+            .time_to_live(lease, Some(options))
+            .await?;
         let ttl = response.ttl();
         let granted_ttl = response.granted_ttl();
 
-        Ok(SerializableLeaseSimpleInfo {
-            ttl,
-            granted_ttl,
-        })
+        Ok(SerializableLeaseSimpleInfo { ttl, granted_ttl })
     }
 
     /// 授权新的lease或为已存在的lease续租
     pub async fn lease_grant(&self, ttl: i64, lease: Option<i64>) -> Result<i64, Error> {
-        let options = lease.map(|id| {
-            LeaseGrantOptions::new().with_id(id)
-        });
+        let options = lease.map(|id| LeaseGrantOptions::new().with_id(id));
         let response = self.client.lease_client().grant(ttl, options).await?;
         Ok(response.id())
     }
@@ -365,7 +442,10 @@ impl EtcdConnector {
 
     /// 新增用户并设置密码
     pub async fn user_add(&self, user: String, password: String) -> Result<(), Error> {
-        self.client.auth_client().user_add(user, password, None).await?;
+        self.client
+            .auth_client()
+            .user_add(user, password, None)
+            .await?;
         Ok(())
     }
 
@@ -377,19 +457,28 @@ impl EtcdConnector {
 
     /// 修改用户密码
     pub async fn user_change_password(&self, user: String, password: String) -> Result<(), Error> {
-        self.client.auth_client().user_change_password(user, password).await?;
+        self.client
+            .auth_client()
+            .user_change_password(user, password)
+            .await?;
         Ok(())
     }
 
     /// 给用户授权角色
     pub async fn user_grant_role(&self, user: String, role: String) -> Result<(), Error> {
-        self.client.auth_client().user_grant_role(user, role).await?;
+        self.client
+            .auth_client()
+            .user_grant_role(user, role)
+            .await?;
         Ok(())
     }
 
     /// 回收用户的角色
     pub async fn user_revoke_role(&self, user: String, role: String) -> Result<(), Error> {
-        self.client.auth_client().user_revoke_role(user, role).await?;
+        self.client
+            .auth_client()
+            .user_revoke_role(user, role)
+            .await?;
         Ok(())
     }
 
@@ -427,7 +516,10 @@ impl EtcdConnector {
     }
 
     /// 获取角色的权限信息
-    pub async fn role_get_permissions(&self, role: String) -> Result<Vec<SerializablePermission>, Error> {
+    pub async fn role_get_permissions(
+        &self,
+        role: String,
+    ) -> Result<Vec<SerializablePermission>, Error> {
         let response = self.client.auth_client().role_get(role).await?;
         let permissions = response.permissions();
         let mut result = Vec::with_capacity(permissions.len());
@@ -443,8 +535,12 @@ impl EtcdConnector {
             let key_bytes_len = key_bytes.len();
             let range_end_len = range_end.len();
             //  为兼容老版本的etcd，空字符串是一个长度为1且内容为0的byte数组
-            let all_keys = (key_bytes_len == 0 && (range_end_len == 0 || (range_end_len == 1 && range_end[0] == 0)))
-                || (key_bytes_len == 1 && range_end_len == 1 && key_bytes[0] == 0 && range_end[0] == 0);
+            let all_keys = (key_bytes_len == 0
+                && (range_end_len == 0 || (range_end_len == 1 && range_end[0] == 0)))
+                || (key_bytes_len == 1
+                    && range_end_len == 1
+                    && key_bytes[0] == 0
+                    && range_end[0] == 0);
 
             result.push(SerializablePermission {
                 key,
@@ -475,15 +571,27 @@ impl EtcdConnector {
         role: String,
         permission: SerializablePermission,
     ) -> Result<(), Error> {
-        self.client.auth_client().role_grant_permission(role, permission.into()).await?;
+        self.client
+            .auth_client()
+            .role_grant_permission(role, permission.into())
+            .await?;
         Ok(())
     }
 
     /// 回收角色的权限
-    pub async fn role_revoke_permission(&self, role: String, permission: SerializablePermission) -> Result<(), Error> {
+    pub async fn role_revoke_permission(
+        &self,
+        role: String,
+        permission: SerializablePermission,
+    ) -> Result<(), Error> {
         let range_ned = permission.parse_range_end();
-        self.client.auth_client()
-            .role_revoke_permission(role, permission.key, Some(RoleRevokePermissionOptions::new().with_range_end(range_ned)))
+        self.client
+            .auth_client()
+            .role_revoke_permission(
+                role,
+                permission.key,
+                Some(RoleRevokePermissionOptions::new().with_range_end(range_ned)),
+            )
             .await?;
 
         Ok(())
@@ -504,7 +612,11 @@ impl EtcdConnector {
             raft_applied_index: status.raft_applied_index().to_string(),
             errors: Vec::from(status.errors()),
         };
-        let alarm_response = self.client.maintenance_client().alarm(AlarmAction::Get, AlarmType::None, None).await?;
+        let alarm_response = self
+            .client
+            .maintenance_client()
+            .alarm(AlarmAction::Get, AlarmType::None, None)
+            .await?;
         let alarms = alarm_response.alarms();
 
         let mut alarms_map = HashMap::with_capacity(alarms.len());
@@ -523,7 +635,9 @@ impl EtcdConnector {
                 name,
                 peer_uri: member.peer_urls().to_vec(),
                 client_uri: member.client_urls().to_vec(),
-                alarm_type: *alarms_map.get(&member.id()).unwrap_or_else(|| &AlarmType::None) as i32,
+                alarm_type: *alarms_map
+                    .get(&member.id())
+                    .unwrap_or_else(|| &AlarmType::None) as i32,
             })
         }
 
@@ -551,22 +665,22 @@ impl EtcdConnector {
                 self.client.cluster_client().member_remove(id).await?;
                 Ok(())
             }
-            Err(e) => {
-                Err(Error::InvalidArgs(e.to_string()))
-            }
+            Err(e) => Err(Error::InvalidArgs(e.to_string())),
         }
     }
 
     /// 集群更新成员节点
-    pub async fn cluster_update_member(&self, id: String, urls: impl Into<Vec<String>>) -> Result<(), Error> {
+    pub async fn cluster_update_member(
+        &self,
+        id: String,
+        urls: impl Into<Vec<String>>,
+    ) -> Result<(), Error> {
         match id.parse::<u64>() {
             Ok(id) => {
                 self.client.cluster_client().member_update(id, urls).await?;
                 Ok(())
             }
-            Err(e) => {
-                Err(Error::InvalidArgs(e.to_string()))
-            }
+            Err(e) => Err(Error::InvalidArgs(e.to_string())),
         }
     }
 
@@ -577,7 +691,12 @@ impl EtcdConnector {
     }
 
     /// 保存数据快照
-    pub async fn maintenance_snapshot(&self, file_path: PathBuf, watch_sender: watch::Sender<SnapshotState>) -> Result<SnapshotTask, LogicError> {
+    pub async fn maintenance_snapshot(
+        &self,
+        file_path: PathBuf,
+        watch_sender: mpsc::Sender<(u64, u64, Option<String>)>,
+        stop_receiver: oneshot::Receiver<()>
+    ) -> Result<(), LogicError> {
         let mut stream = self.client.maintenance_client().snapshot().await?;
         if let Some(parent) = file_path.parent() {
             fs::create_dir_all(parent)?;
@@ -586,20 +705,12 @@ impl EtcdConnector {
             fs::remove_file(&file_path)?;
         }
 
-        let file_name = if let Some(name) = file_path.file_name() {
-            String::from_utf8_lossy(name.as_encoded_bytes()).to_string()
-        } else {
-            String::from("Snapshot Task")
-        };
-
         File::create(&file_path).await?;
         let mut file = OpenOptions::new()
             .write(true)
             .append(true)
             .open(file_path)
             .await?;
-
-        let (stop_sender, stop_receiver) = oneshot::channel();
 
         let watch_task = async move {
             loop {
@@ -609,23 +720,32 @@ impl EtcdConnector {
                         if let Some(response) = slip {
                             let blob = response.blob();
                             let remain = response.remaining_bytes();
+
+                            let received = blob.len() as u64;
+
                             file.write_all(blob).await;
-                            watch_sender.send(SnapshotState::success(remain)).unwrap_or_else(|e| {
-                                error!("watch send error[remain]: {e}")
-                            });
-                            debug!("snapshot [remain]");
+
+                            debug!("snapshot [remain] {}-{}", received, remain);
+                            watch_sender
+                                .send((received, remain, None))
+                                .await
+                                .unwrap_or_else(|e| error!("watch send error[remain]: {e}"));
+                            if remain == 0 {
+                                break;
+                            }
                         } else {
-                            watch_sender.send(SnapshotState::success(064)).unwrap_or_else(|e| {
-                                error!("watch send error[finish]: {e}")
-                            });
-                            debug!("snapshot [finish]");
+                            watch_sender
+                                .send((0, 0, None))
+                                .await
+                                .unwrap_or_else(|e| error!("watch send error[finish]: {e}"));
                             break;
                         }
                     }
                     Err(e) => {
-                        watch_sender.send(SnapshotState::failed(e.to_string())).unwrap_or_else(|e| {
-                            error!("watch send error[failed]: {e}")
-                        });
+                        watch_sender
+                            .send((0, 0, Some(e.to_string())))
+                            .await
+                            .unwrap_or_else(|e| error!("watch send error[failed]: {e}"));
                         debug!("snapshot [failed]: {e}");
                         break;
                     }
@@ -644,16 +764,12 @@ impl EtcdConnector {
             }
         });
 
-        Ok(SnapshotTask {
-            name: file_name,
-            state: None,
-            stop_notifier: Some(stop_sender)
-        })
+        Ok(())
     }
 }
 
 pub struct SnapshotTask {
     pub name: String,
-    pub state: Option<SnapshotState>,
+    pub state: SnapshotState,
     pub stop_notifier: Option<oneshot::Sender<()>>,
 }

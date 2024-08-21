@@ -4,7 +4,7 @@ import Skeleton from "~/components/Skeleton.vue";
 import {computed, onMounted, reactive, ref, watch} from "vue";
 import EditorExample from "~/components/editor/EditorExample.vue";
 import {AppTheme} from "~/common/types.ts";
-import {_alertError, _confirmSystem, _emitGlobal, _tipSuccess} from "~/common/events.ts";
+import {_alertError, _confirmSystem, _emitGlobal, _tipSuccess, EventName} from "~/common/events.ts";
 import {DEFAULT_SETTING_CONFIG, SettingConfig} from "~/common/transport/setting.ts";
 import {_debounce, _goBrowserPage} from "~/common/utils.ts";
 import WorkbenchLogo from "~/design/WorkbenchLogo.vue";
@@ -145,7 +145,7 @@ onMounted(async () => {
       setting.requestTimeoutSeconds = parseInt(setting.requestTimeoutSeconds)
     }
     _setLocalSettings(setting)
-    _emitGlobal('settingUpdate', setting)
+    _emitGlobal(EventName.SETTING_UPDATE, setting)
   }, {
     deep: true
   })
@@ -223,7 +223,7 @@ const importConnectionConfig = () => {
       loadingStore.importConnection = true
       _importConnection(data).then(() => {
         _tipSuccess("Successfully imported")
-        _emitGlobal('connectionImported')
+        _emitGlobal(EventName.CONNECTION_IMPORTED)
       }).catch(e => {
         _handleError({e})
       }).finally(() => {

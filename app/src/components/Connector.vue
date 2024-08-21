@@ -6,7 +6,7 @@ import SingleFileSelector from "~/components/SingleFileSelector.vue";
 import {Connection, ConnectionInfo, ErrorPayload, SessionData, SshIdentity} from "~/common/transport/connection.ts";
 import {_decodeBytesToString, _encodeStringToBytes, _isEmpty, _nonEmpty} from "~/common/utils.ts";
 import {_connect, _connectTest, _handleError, _saveConnection} from "~/common/services.ts";
-import {_emitLocal, _loading, _tipSuccess, _tipWarn} from "~/common/events.ts";
+import {_emitLocal, _loading, _tipSuccess, _tipWarn, EventName} from "~/common/events.ts";
 import {VForm} from "vuetify/components";
 
 const emits = defineEmits(['on-save'])
@@ -334,7 +334,7 @@ const connect = () => {
     }
     _loading(true)
     _connect(connection).then((session: SessionData) => {
-      _emitLocal('newConnection', {name, session})
+      _emitLocal(EventName.NEW_CONNECTION, {name, session})
     }).catch((e: ErrorPayload | string) => {
       _handleError({
         e,

@@ -1,10 +1,16 @@
 <script setup lang="ts">
 
 import {onMounted, onUnmounted, reactive, ref} from "vue";
-import {_maintenanceListSnapshotTask} from "~/common/services.ts";
+import {
+  _handleError,
+  _maintenanceListSnapshotTask,
+  _maintenanceRemoveSnapshotTask,
+  _maintenanceStopSnapshotTask
+} from "~/common/services.ts";
 import {SnapshotStateInfo} from "~/common/transport/maintenance.ts";
-import {localEvents} from "~/common/events.ts";
 import {listen} from "@tauri-apps/api/event";
+import {_confirm, EventName} from "~/common/events.ts";
+import {info} from "sass";
 
 const snapshotList = ref<SnapshotStateInfo[]>([])
 const showList = ref<boolean>(false)
@@ -14,14 +20,16 @@ const eventUnListens = reactive<Function[]>([])
 onMounted(async () => {
   _maintenanceListSnapshotTask().then((list) => {
     snapshotList.value = list
+    console.log(list)
+  }).catch(e => {
+    _handleError({
+      e
+    })
   })
 
-  localEvents.on('newSnapshot', data => {
-    console.log(data)
-  })
-
-  eventUnListens.push(await listen('snapshot_state', e => {
+  eventUnListens.push(await listen(EventName.SNAPSHOT_STATE, e => {
     let info = e.payload as SnapshotStateInfo
+    console.log(info)
     for (let i = 0; i < snapshotList.value.length; i++) {
       let item = snapshotList.value[i];
       if (info.id == item.id) {
@@ -29,7 +37,6 @@ onMounted(async () => {
         return
       }
     }
-
     snapshotList.value.push(info)
   }))
 })
@@ -40,12 +47,28 @@ onUnmounted(() => {
   }
 })
 
-const isFinished = (info: SnapshotStateInfo): boolean => {
-  let state = info.state
-  if (state.success && state.remain == '0') {
-    return true
-  }
-  return !state.success;
+const stopTask = (info: SnapshotStateInfo) => {
+  _confirm('Are you sure you want to stop data backup?').then(() => {
+    _maintenanceStopSnapshotTask(info.id).then(() => {
+      info.state.finished = true
+      info.state.error_msg = "Stopped"
+    }).catch(e => {
+      _handleError({
+        e
+      })
+    })
+  }).catch(() => {
+  })
+}
+
+const removeTask = (info: SnapshotStateInfo, idx: number) => {
+  _maintenanceRemoveSnapshotTask(info.id).then(() => {
+    snapshotList.value.splice(idx, 1)
+  }).catch(e => {
+    _handleError({
+      e
+    })
+  })
 }
 
 </script>
@@ -64,11 +87,24 @@ const isFinished = (info: SnapshotStateInfo): boolean => {
     ></v-btn>
     <v-sheet class="list-box" v-show="showList">
       <v-list v-if="snapshotList.length > 0">
-        <v-list-item v-for="info in snapshotList"
+        <v-list-item v-for="(info,idx) in snapshotList"
+                     :key="idx"
                      :title="info.name"
                      :value="info.id"
+                     :prepend-icon="info.state.finished ? 'mdi-check-circle-outline' : 'mdi-download'"
         >
-
+          <template #append>
+            <v-btn v-if="info.state.finished"
+                   @click="removeTask(info, idx)"
+                   icon="mdi-close"
+                   rounded
+            ></v-btn>
+            <v-btn v-else
+                   @click="stopTask(info)"
+                   icon="mdi-pause"
+                   rounded
+            ></v-btn>
+          </template>
         </v-list-item>
       </v-list>
       <v-empty-state v-else
@@ -94,8 +130,8 @@ const isFinished = (info: SnapshotStateInfo): boolean => {
 .v-theme--dark {
   .list-box {
     background-color: #637475;
-    box-shadow: 5px 5px 150px rgba(255,255,255,.2);
-    border: solid rgba(33,33,33,0.12) 1px;
+    box-shadow: 5px 5px 150px rgba(255, 255, 255, .2);
+    border: solid rgba(33, 33, 33, 0.12) 1px;
   }
 }
 

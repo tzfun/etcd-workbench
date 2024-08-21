@@ -2,16 +2,16 @@
 
 import Home from "~/pages/main/Home.vue";
 import Connection from "~/pages/main/Connection.vue";
-import {_confirm, localEvents} from "~/common/events.ts";
+import {_confirm, _listenLocal, EventName} from "~/common/events.ts";
 import {_disconnect} from "~/common/services.ts";
 import {computed, onMounted, onUnmounted, reactive, ref} from "vue";
 import {SessionData} from "~/common/transport/connection.ts";
 import {appWindow, PhysicalSize} from "@tauri-apps/api/window";
 import {_openMainWindow} from "~/common/windows.ts";
-import {_debounce, fileTypeIcon} from "~/common/utils.ts";
+import {_debounce} from "~/common/utils.ts";
 import {_saveSettings, _useSettings} from "~/common/store.ts";
 import {listen} from "@tauri-apps/api/event";
-import {SettingConfig} from "~/common/transport/setting.ts";
+import {MAIN_WINDOW_MIN_HEIGHT, MAIN_WINDOW_MIN_WIDTH, SettingConfig} from "~/common/transport/setting.ts";
 
 type TabItem = {
   name: string,
@@ -39,11 +39,29 @@ const isMac = computed<boolean>(() => {
   return props.platform == 'darwin'
 })
 
+const lastWindowSize = reactive({
+  width: 0,
+  height: 0
+})
+
 onMounted(async () => {
+
+  let size = await appWindow.innerSize() as PhysicalSize
+  lastWindowSize.width = size.width
+  lastWindowSize.height = size.height
+
   eventUnListens.push(await appWindow.listen('tauri://resize', _debounce((e) => {
     let payload = e.payload as Record<string, number>
     let height = payload.height
     let width = payload.width
+
+    if (width < MAIN_WINDOW_MIN_WIDTH || height < MAIN_WINDOW_MIN_HEIGHT) {
+      return
+    }
+
+    if (width == lastWindowSize.width && height == lastWindowSize.height) {
+      return
+    }
 
     let setting = _useSettings().value
     let p1 = appWindow.isFullscreen()
@@ -57,12 +75,14 @@ onMounted(async () => {
       }
 
       _saveSettings(setting)
+      lastWindowSize.width = width
+      lastWindowSize.height = height
     }).catch(e => {
       console.error(e)
     })
   }), 1000))
 
-  eventUnListens.push(await listen('settingUpdate', (e) => {
+  eventUnListens.push(await listen(EventName.SETTING_UPDATE, (e) => {
     let setting = JSON.parse(e.payload as string) as SettingConfig
 
     let p1 = appWindow.isFullscreen()
@@ -85,7 +105,7 @@ onMounted(async () => {
     })
   }))
 
-  localEvents.on('newConnection', (e: any) => {
+  _listenLocal(EventName.NEW_CONNECTION, (e: any) => {
     let name = e.name as string
     let session = e.session as SessionData
 
@@ -125,7 +145,7 @@ onMounted(async () => {
     }
   }, {capture: true})
 
-  localEvents.on('closeTab', e => {
+  _listenLocal(EventName.CLOSE_TAB, e => {
     closeTabDirectly(e as number)
     activeTab.value = HOME_TAB
   })

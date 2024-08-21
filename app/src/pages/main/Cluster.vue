@@ -78,8 +78,7 @@ const snapshot = () => {
     save().then(filepath => {
       if (filepath) {
         loadingStore.snapshot = true
-        _maintenanceCreateSnapshotTask(props.session?.id, filepath).then(info => {
-          _emitLocal('newSnapshot', info)
+        _maintenanceCreateSnapshotTask(props.session?.id, filepath).then(() => {
         }).catch(e => {
           _handleError({
             e,

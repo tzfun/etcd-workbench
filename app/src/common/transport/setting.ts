@@ -1,3 +1,6 @@
+export const MAIN_WINDOW_MIN_HEIGHT = 500;
+export const MAIN_WINDOW_MIN_WIDTH = 900;
+
 export interface SettingConfig {
     //  应用主题
     theme: 'dark' | 'light' | 'auto',

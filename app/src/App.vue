@@ -8,7 +8,7 @@ import WindowsSystemBar from "~/components/system-bar/WindowsSystemBar.vue";
 import MacSystemBar from "~/components/system-bar/MacSystemBar.vue";
 import AppSetting from "~/pages/setting/AppSetting.vue";
 import AppMain from "~/pages/main/AppMain.vue";
-import {localEvents} from "~/common/events.ts";
+import {_listenLocal, EventName} from "~/common/events.ts";
 import {_loadSettings, _useSettings} from "~/common/store.ts";
 import {DEFAULT_SETTING_CONFIG} from "~/common/transport/setting.ts";
 
@@ -49,11 +49,11 @@ onMounted(async () => {
     document.getElementById("app")!.classList.add("main-window-radius")
   }
 
-  localEvents.on('loading', (e) => {
+  _listenLocal(EventName.LOADING, (e) => {
     loading.value = e as boolean
   })
 
-  localEvents.on('dialog', (e) => {
+  _listenLocal(EventName.DIALOG, (e) => {
     let dialog = e as DialogItem
     let idx = -1;
     for (let i = 0; i < dialogs.value.length; i++) {
@@ -71,7 +71,7 @@ onMounted(async () => {
     }
   })
 
-  localEvents.on('tip', (e) => {
+  _listenLocal(EventName.TIP, (e) => {
     let tip = e as TipsItem
     let idx = -1;
     for (let i = 0; i < tips.value.length; i++) {

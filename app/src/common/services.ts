@@ -2,7 +2,7 @@ import {invoke} from "@tauri-apps/api";
 import {Connection, ConnectionInfo, SessionData} from "~/common/transport/connection.ts";
 import {Cluster, SnapshotState, SnapshotStateInfo} from "~/common/transport/maintenance.ts";
 import {KeyValue, LeaseInfo} from "~/common/transport/kv.ts";
-import {_emitLocal, _tipError} from "~/common/events.ts";
+import {_emitLocal, _tipError, EventName} from "~/common/events.ts";
 import {LogicErrorInfo} from "~/common/types.ts";
 import {RolePermission, User} from "~/common/transport/user.ts";
 
@@ -15,7 +15,7 @@ export function _handleError(info: LogicErrorInfo) {
     } else {
         _tipError((info.prefix ? info.prefix : "") + error.errMsg)
         if (error.errType == "Unauthenticated" && info.session) {
-            _emitLocal('closeTab', info.session.id)
+            _emitLocal(EventName.CLOSE_TAB, info.session.id)
         }
     }
 }

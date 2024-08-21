@@ -32,9 +32,10 @@ export interface ClusterStatus {
 }
 
 export interface SnapshotState {
-    success: boolean,
-    remain: string,
-    msg?: string
+    finished: boolean,
+    received: number,
+    remain: number,
+    error_msg?: string
 }
 
 export interface SnapshotStateInfo {

@@ -1,12 +1,10 @@
-use log::error;
 use std::path::PathBuf;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicI32, Ordering};
 
 use dashmap::DashMap;
 use lazy_static::lazy_static;
 use tauri::Manager;
-use tokio::sync::watch;
+use tokio::sync::{mpsc, oneshot};
 use crate::error::LogicError;
 use crate::etcd;
 use crate::etcd::etcd_connector::SnapshotTask;
@@ -43,49 +41,49 @@ pub async fn maintenance_create_snapshot_task(
     let id = SNAPSHOT_TASK_ID_COUNTER.fetch_add(1, Ordering::SeqCst);
 
     let task_id = id.clone();
+    let (watch_sender, mut receiver) = mpsc::channel::<(u64, u64, Option<String>)>(128);
+
     tokio::spawn(async move {
-        let (watch_sender, mut receiver) = watch::channel(SnapshotState::default());
-        let app = Arc::new(app);
-        let app_copy = Arc::clone(&app);
-        tokio::spawn(async move {
-            loop {
-                {
-                    let state = receiver.borrow_and_update();
 
-                    let task = SNAPSHOT_TASK_POOL.get_mut(&task_id);
-                    if let Some(mut t) = task {
-                        t.state.replace(state.clone());
-
-                        app.emit_all("snapshot_state", SnapshotStateInfo {
-                            name: t.value().name.clone(),
-                            id: task_id,
-                            state: state.clone(),
-                        }).unwrap();
-                    }
-
-                    if state.is_finished() {
-                        print!("finished {:?}", state);
-                        break;
-                    }
+        while let Some(state) = receiver.recv().await {
+            let task = SNAPSHOT_TASK_POOL.get_mut(&task_id);
+            if let Some(mut t) = task {
+                if let Some(err_msg) = &state.2 {
+                    t.state.error_msg = Some(err_msg.clone())
+                } else {
+                    t.state.received += state.0;
+                    t.state.remain = state.1;
                 }
 
-                if receiver.changed().await.is_err() {
-                    error!("watch error");
-                    break;
-                }
-            }
-        });
-        let res = connector.maintenance_snapshot(PathBuf::from(filepath), watch_sender).await;
-        match res {
-            Ok(task) => {
-                SNAPSHOT_TASK_POOL.insert(id, task);
-            }
-            Err(e) => {
-                error!("{:?}", e);
-                app_copy.emit_all("notify_error", "").unwrap();
+                let state = t.state.clone();
+
+                app.emit_all("snapshot_state", SnapshotStateInfo {
+                    name: t.value().name.clone(),
+                    id: task_id,
+                    state: state,
+                }).unwrap();
             }
         }
     });
+    let file_path = PathBuf::from(filepath);
+
+    let file_name = if let Some(name) = file_path.file_name() {
+        String::from_utf8_lossy(name.as_encoded_bytes()).to_string()
+    } else {
+        String::from("Snapshot Task")
+    };
+
+    let (stop_sender, stop_receiver) = oneshot::channel();
+
+    let task = SnapshotTask {
+        name: file_name,
+        state: SnapshotState::default(),
+        stop_notifier: Some(stop_sender),
+    };
+    SNAPSHOT_TASK_POOL.insert(id, task);
+
+    connector.maintenance_snapshot(file_path, watch_sender, stop_receiver).await?;
+    
     Ok(())
 }
 
@@ -97,6 +95,8 @@ pub fn maintenance_stop_snapshot_task(task_id: i32) -> Result<(), LogicError> {
         if let Some(sender) = stop_notifier {
             sender.send(()).unwrap();
         }
+        t.state.finished = true;
+        t.state.error_msg = Some(String::from("Stopped"));
     }
     Ok(())
 }
@@ -111,13 +111,11 @@ pub fn maintenance_remove_snapshot_task(task_id: i32) -> Result<(), LogicError> 
 pub fn maintenance_list_snapshot_task() -> Result<Vec<SnapshotStateInfo>, LogicError> {
     let mut list = Vec::new();
     for entry in SNAPSHOT_TASK_POOL.iter() {
-        if let Some(state) = &entry.state {
-            list.push(SnapshotStateInfo {
-                name: entry.value().name.clone(),
-                id: entry.key().clone(),
-                state: state.clone(),
-            });
-        }
+        list.push(SnapshotStateInfo {
+            name: entry.value().name.clone(),
+            id: entry.key().clone(),
+            state: entry.state.clone(),
+        });
     }
     Ok(list)
 }
