@@ -36,7 +36,6 @@ pub struct SerializableClusterStatus {
 #[derive(Debug, Serialize, Deserialize, Default)]
 #[serde(rename_all="camelCase")]
 pub struct SnapshotState {
-    pub finished: bool,
     pub received: u64,
     pub remain: u64,
     pub error_msg: Option<String>
@@ -45,7 +44,6 @@ pub struct SnapshotState {
 impl Clone for SnapshotState {
     fn clone(&self) -> Self {
         Self {
-            finished: self.finished,
             received: self.received,
             remain: self.remain,
             error_msg: self.error_msg.clone()
@@ -55,8 +53,16 @@ impl Clone for SnapshotState {
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 #[serde(rename_all="camelCase")]
-pub struct SnapshotStateInfo {
+pub struct SnapshotInfo {
     pub name: String,
+    pub folder: String,
+    pub id: i32,
+    pub state: SnapshotState
+}
+
+#[derive(Debug, Serialize, Deserialize, Default, Clone)]
+#[serde(rename_all="camelCase")]
+pub struct SnapshotStateEvent {
     pub id: i32,
     pub state: SnapshotState
 }

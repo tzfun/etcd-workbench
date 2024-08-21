@@ -17,3 +17,10 @@ export function _exitApp() {
         console.error(e)
     })
 }
+
+export function _openFolder(path: string, selectFile?: string): Promise<undefined> {
+    return invoke('open_folder', {
+        path,
+        selectFile
+    })
+}

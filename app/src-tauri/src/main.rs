@@ -69,6 +69,7 @@ fn main() {
             api::windows::open_main_window,
             api::windows::open_setting_window,
             api::windows::exit_app,
+            api::windows::open_folder,
             api::connection::connect_test,
             api::connection::connect,
             api::connection::disconnect,

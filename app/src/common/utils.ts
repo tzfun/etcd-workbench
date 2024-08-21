@@ -168,3 +168,9 @@ export function _debounce(fn: Function, delay: number = 200) {
         }, delay);
     };
 }
+
+export function _pointInRect(point: { x: number, y: number }, rect: DOMRect) {
+    const {x, y} = point;
+    const dx = rect.x, dy = rect.y, width = rect.width, height = rect.height;
+    return x >= dx && x <= dx + width && y >= dy && y <= dy + height;
+}

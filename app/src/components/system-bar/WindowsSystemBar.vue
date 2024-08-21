@@ -58,7 +58,7 @@ const setting = async () => {
 <template>
   <v-system-bar window
                 :height="height"
-                @dblclick="appWindow.toggleMaximize()"
+                @dblclick.self="appWindow.toggleMaximize()"
                 data-tauri-drag-region
                 class="pr-0"
   >

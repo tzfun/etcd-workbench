@@ -12,7 +12,7 @@ import {EditorView} from "codemirror";
 import {
   _byteTextFormat,
   _decodeBytesToString,
-  _encodeStringToBytes,
+  _encodeStringToBytes, _pointInRect,
   _strArrToNumArr,
   _upperCaseFirst,
   fileTypeIcon
@@ -21,6 +21,7 @@ import {Codemirror} from "vue-codemirror";
 import {appWindow} from "@tauri-apps/api/window";
 import {_useSettings} from "~/common/store.ts";
 import {getThemeByName} from "~/components/editor/themes.ts";
+import {VSheet} from "vuetify/components";
 
 type ContentFormatType = 'text' | 'blob'
 
@@ -47,7 +48,7 @@ const allLanguages = reactive([
   'properties'
 ])
 const showLanguageSelection = ref<boolean>(false)
-
+const languageSelectionBoxRef = ref()
 
 const content = ref(props.value)
 const propsConfig = ref(props.config!)
@@ -57,6 +58,19 @@ const tauriBlurUnListen = ref<Function>()
 onMounted(async () => {
   tauriBlurUnListen.value = await appWindow.listen('tauri://blur', () => {
     showLanguageSelection.value = false
+  })
+
+  document.addEventListener('mousedown', (e: MouseEvent) => {
+    if (showLanguageSelection.value) {
+      if (languageSelectionBoxRef.value) {
+        let rect = ((languageSelectionBoxRef.value as VSheet).$el as HTMLElement).getBoundingClientRect()
+        if (rect) {
+          if (!_pointInRect(e, rect)) {
+            showLanguageSelection.value = false
+          }
+        }
+      }
+    }
   })
 })
 
@@ -81,7 +95,6 @@ const formatData = (content: string, fromFormat: ContentFormatType, toFormat: Co
   //  blob to text
   if (fromFormat == 'blob') {
     let uint8Array = _strArrToNumArr(content.trim().split(/\s+/))
-    console.log('blob to text', content.split(/\s+/), uint8Array, content)
     return _decodeBytesToString(uint8Array)
   }
 
@@ -97,7 +110,6 @@ const formatData = (content: string, fromFormat: ContentFormatType, toFormat: Co
       }
       newContent += '\n'
     }
-    console.log('text to blob', content, newContent)
 
     return newContent
   }
@@ -239,8 +251,9 @@ defineExpose({
         </span>
       </span>
 
-      <div class="editor-language-selection card-box-shadow"
+      <v-sheet class="editor-language-selection card-box-shadow"
            v-show="showLanguageSelection"
+           ref="languageSelectionBoxRef"
       >
         <v-list density="compact"
         >
@@ -254,7 +267,7 @@ defineExpose({
                        color="primary"
           ></v-list-item>
         </v-list>
-      </div>
+      </v-sheet>
     </div>
   </div>
 </template>

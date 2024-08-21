@@ -1,5 +1,4 @@
 <script setup lang="ts">
-
 import {onMounted, onUnmounted, reactive, ref} from "vue";
 import {
   _handleError,
@@ -7,38 +6,72 @@ import {
   _maintenanceRemoveSnapshotTask,
   _maintenanceStopSnapshotTask
 } from "~/common/services.ts";
-import {SnapshotStateInfo} from "~/common/transport/maintenance.ts";
+import {SnapshotInfo, SnapshotState, SnapshotStateEvent} from "~/common/transport/maintenance.ts";
 import {listen} from "@tauri-apps/api/event";
-import {_confirm, EventName} from "~/common/events.ts";
-import {info} from "sass";
+import {_confirm, _listenLocal, EventName} from "~/common/events.ts";
+import {_openFolder} from "~/common/windows.ts";
+import {_byteTextFormat, _nonEmpty, _pointInRect} from "~/common/utils.ts";
+import {appWindow} from "@tauri-apps/api/window";
+import {VSheet} from "vuetify/components";
 
-const snapshotList = ref<SnapshotStateInfo[]>([])
+const snapshotList = ref<SnapshotInfo[]>([])
 const showList = ref<boolean>(false)
 
 const eventUnListens = reactive<Function[]>([])
+const listBoxRef = ref()
 
 onMounted(async () => {
   _maintenanceListSnapshotTask().then((list) => {
+    for (let info of list) {
+      info.state.finished = isFinished(info.state)
+    }
+    list.sort((a, b) => a.id - b.id)
     snapshotList.value = list
-    console.log(list)
   }).catch(e => {
     _handleError({
       e
     })
   })
 
+  _listenLocal(EventName.SNAPSHOT_CREATE, e => {
+    snapshotList.value.push(e as SnapshotInfo)
+    showList.value = true
+  })
+
   eventUnListens.push(await listen(EventName.SNAPSHOT_STATE, e => {
-    let info = e.payload as SnapshotStateInfo
-    console.log(info)
+    let stateEvent = e.payload as SnapshotStateEvent
+    let info: SnapshotInfo
     for (let i = 0; i < snapshotList.value.length; i++) {
       let item = snapshotList.value[i];
-      if (info.id == item.id) {
-        snapshotList.value[i] = info
-        return
+      if (stateEvent.id == item.id) {
+        info = item
+        break
       }
     }
-    snapshotList.value.push(info)
+    if (info) {
+      info.state = stateEvent.state
+
+      info.state.finished = isFinished(info.state)
+    }
   }))
+
+  eventUnListens.push(await appWindow.listen('tauri://blur', () => {
+    showList.value = false
+  }))
+
+  document.addEventListener('mousedown', (e: MouseEvent) => {
+    if (showList.value) {
+      if (listBoxRef.value) {
+        let rect = ((listBoxRef.value as VSheet).$el as HTMLElement).getBoundingClientRect()
+        if (rect) {
+          if (!_pointInRect(e, rect)) {
+            showList.value = false
+          }
+        }
+      }
+    }
+  })
+
 })
 
 onUnmounted(() => {
@@ -47,11 +80,11 @@ onUnmounted(() => {
   }
 })
 
-const stopTask = (info: SnapshotStateInfo) => {
+const stopTask = (info: SnapshotInfo) => {
   _confirm('Are you sure you want to stop data backup?').then(() => {
     _maintenanceStopSnapshotTask(info.id).then(() => {
       info.state.finished = true
-      info.state.error_msg = "Stopped"
+      info.state.errorMsg = "Stopped"
     }).catch(e => {
       _handleError({
         e
@@ -61,10 +94,30 @@ const stopTask = (info: SnapshotStateInfo) => {
   })
 }
 
-const removeTask = (info: SnapshotStateInfo, idx: number) => {
+const removeTask = (info: SnapshotInfo, idx: number) => {
   _maintenanceRemoveSnapshotTask(info.id).then(() => {
     snapshotList.value.splice(idx, 1)
   }).catch(e => {
+    _handleError({
+      e
+    })
+  })
+}
+
+const isFinished = (state: SnapshotState): boolean => {
+  return _nonEmpty(state.errorMsg) || state.remain == 0
+}
+
+const getProgress = (state: SnapshotState): number => {
+  let sum = state.remain + state.received
+  if (sum <= 0) {
+    return 0
+  }
+  return 100 * state.received / sum
+}
+
+const openFolder = (info: SnapshotInfo) => {
+  _openFolder(info.folder, info.name).catch(e => {
     _handleError({
       e
     })
@@ -85,32 +138,84 @@ const removeTask = (info: SnapshotStateInfo, idx: number) => {
            :ripple="false"
            @click="showList = !showList"
     ></v-btn>
-    <v-sheet class="list-box" v-show="showList">
-      <v-list v-if="snapshotList.length > 0">
-        <v-list-item v-for="(info,idx) in snapshotList"
-                     :key="idx"
-                     :title="info.name"
-                     :value="info.id"
-                     :prepend-icon="info.state.finished ? 'mdi-check-circle-outline' : 'mdi-download'"
-        >
-          <template #append>
-            <v-btn v-if="info.state.finished"
-                   @click="removeTask(info, idx)"
-                   icon="mdi-close"
-                   rounded
-            ></v-btn>
-            <v-btn v-else
-                   @click="stopTask(info)"
-                   icon="mdi-pause"
-                   rounded
-            ></v-btn>
-          </template>
-        </v-list-item>
-      </v-list>
+    <v-sheet class="list-box" v-show="showList" ref="listBoxRef">
+
+      <v-card v-if="snapshotList.length > 0"
+              title="Recent snapshot records"
+              border
+              flat
+      >
+        <v-card-text>
+          <div v-for="(info,idx) in snapshotList"
+               :key="idx"
+               class="list-item"
+          >
+            <div class="list-item-info">
+              <div class="list-item-prepend-icon">
+                <v-icon v-if="info.state.errorMsg != undefined"
+                        color="red"
+                >mdi-lightbulb-alert-outline
+                </v-icon>
+                <v-icon v-else-if="info.state.remain == 0"
+                        color="green"
+                >mdi-check-circle-outline
+                </v-icon>
+                <v-icon v-else
+                        color="secondary"
+                >mdi-download
+                </v-icon>
+              </div>
+
+              <div class="list-item-title"
+
+              >
+                <p @click="openFolder(info)"
+                   :class="info.state.finished ? 'list-item-title-success' : ''"
+                >{{ info.name }}</p>
+                <p class="v-messages">{{ _byteTextFormat(info.state.received) }}</p>
+              </div>
+              <div class="list-item-append-icon">
+                <v-icon v-if="info.state.finished"
+                        @click="removeTask(info, idx)"
+                >mdi-close
+                </v-icon>
+                <v-icon v-else
+                        @click="stopTask(info)"
+                >mdi-stop
+                </v-icon>
+              </div>
+            </div>
+            <v-sheet
+                v-if="!info.state.finished"
+                class="d-flex align-center mx-auto"
+                max-width="250"
+            >
+              <v-progress-linear
+                  :location="null"
+                  :model-value="getProgress(info.state)"
+                  color="secondary"
+              ></v-progress-linear>
+
+              <strong class="ml-2">{{ Math.ceil(getProgress(info.state)) }}%</strong>
+            </v-sheet>
+            <v-sheet v-if="info.state.errorMsg"
+                     class="d-flex align-center mx-auto"
+                     max-width="250"
+            >
+              <p class="text-red">{{ info.state.errorMsg }}</p>
+            </v-sheet>
+
+            <v-divider class="mt-2 mb-2"></v-divider>
+          </div>
+        </v-card-text>
+      </v-card>
+
       <v-empty-state v-else
                      icon="mdi-package-variant"
                      :size="50"
-                     title="No Task"></v-empty-state>
+                     title="No Task"
+                     class="list-empty-box"
+      ></v-empty-state>
     </v-sheet>
 
   </div>
@@ -119,25 +224,74 @@ const removeTask = (info: SnapshotStateInfo, idx: number) => {
 <style scoped lang="scss">
 
 .list-box {
-  min-width: 200px;
-  min-height: 120px;
+  width: 400px;
   position: absolute;
   z-index: 1000;
   top: 28px;
   right: 0;
+  text-align: start;
+
+  .list-item {
+    $--item-icon-width: 40px;
+
+    .list-item-info {
+      display: flex;
+      overflow: hidden;
+      text-wrap: nowrap;
+      text-overflow: ellipsis;
+
+      .list-item-prepend-icon,
+      .list-item-append-icon,
+      {
+        width: $--item-icon-width;
+        text-align: center;
+        font-size: 1rem;
+        padding-top: 5px;
+      }
+
+      .list-item-append-icon:hover {
+        opacity: 0.6;
+      }
+
+      .list-item-title {
+        width: calc(100% - $--item-icon-width * 2);
+        text-align: start;
+        padding: 5px 15px;
+        vertical-align: middle;
+        font-size: 1rem;
+        cursor: pointer;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+
+      .list-item-title-success:hover {
+        opacity: 0.7;
+      }
+    }
+
+  }
 }
 
 .v-theme--dark {
   .list-box {
-    background-color: #637475;
-    box-shadow: 5px 5px 150px rgba(255, 255, 255, .2);
+    box-shadow: 5px 5px 30px rgba(0, 0, 0, .7);
     border: solid rgba(33, 33, 33, 0.12) 1px;
+  }
+
+  .list-empty-box {
+    background-color: #637475;
   }
 }
 
 .v-theme--light {
   .list-box {
-    background-color: #484f50;
+    box-shadow: 5px 5px 20px rgba(0, 0, 0, .2);
+  }
+
+  .list-empty-box {
+    background-color: #f5f5f6;
+    border: solid rgba(33, 33, 33, 0.12) 1px;
   }
 }
 </style>

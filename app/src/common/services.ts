@@ -1,6 +1,6 @@
 import {invoke} from "@tauri-apps/api";
 import {Connection, ConnectionInfo, SessionData} from "~/common/transport/connection.ts";
-import {Cluster, SnapshotState, SnapshotStateInfo} from "~/common/transport/maintenance.ts";
+import {Cluster, SnapshotState, SnapshotInfo} from "~/common/transport/maintenance.ts";
 import {KeyValue, LeaseInfo} from "~/common/transport/kv.ts";
 import {_emitLocal, _tipError, EventName} from "~/common/events.ts";
 import {LogicErrorInfo} from "~/common/types.ts";
@@ -253,7 +253,7 @@ export function _revokeRolePermissions(sessionId: number, role: string, permissi
     })
 }
 
-export function _maintenanceCreateSnapshotTask(sessionId: number, filepath: string):Promise<SnapshotStateInfo> {
+export function _maintenanceCreateSnapshotTask(sessionId: number, filepath: string):Promise<SnapshotInfo> {
     return invoke('maintenance_create_snapshot_task', {
         session: sessionId,
         filepath
@@ -272,6 +272,6 @@ export function _maintenanceRemoveSnapshotTask(taskId: number):Promise<undefined
     })
 }
 
-export function _maintenanceListSnapshotTask():Promise<SnapshotStateInfo[]> {
+export function _maintenanceListSnapshotTask():Promise<SnapshotInfo[]> {
     return invoke('maintenance_list_snapshot_task')
 }

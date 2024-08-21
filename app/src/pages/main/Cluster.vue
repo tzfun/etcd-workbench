@@ -5,7 +5,7 @@ import {ErrorPayload, SessionData} from "~/common/transport/connection.ts";
 import {_defragment, _getCluster, _handleError, _maintenanceCreateSnapshotTask} from "~/common/services.ts";
 import {Alarm, Cluster} from "~/common/transport/maintenance.ts";
 import {_byteTextFormat} from "~/common/utils.ts";
-import {_alertError, _confirmSystem, _emitLocal, _tipSuccess} from "~/common/events.ts";
+import {_alertError, _confirmSystem, _emitLocal, _tipSuccess, EventName} from "~/common/events.ts";
 import {save} from "@tauri-apps/api/dialog";
 
 const props = defineProps({
@@ -78,7 +78,8 @@ const snapshot = () => {
     save().then(filepath => {
       if (filepath) {
         loadingStore.snapshot = true
-        _maintenanceCreateSnapshotTask(props.session?.id, filepath).then(() => {
+        _maintenanceCreateSnapshotTask(props.session?.id, filepath).then(info => {
+          _emitLocal(EventName.SNAPSHOT_CREATE, info)
         }).catch(e => {
           _handleError({
             e,

@@ -14,6 +14,7 @@ export enum EventName {
     SETTING_UPDATE = 'settingUpdate',
     CONNECTION_IMPORTED = 'connectionImported',
     SNAPSHOT_STATE = 'snapshot_state',
+    SNAPSHOT_CREATE = 'snapshotCreate',
 }
 
 export function _listenLocal(type: EventName, handler: Handler<any>) {

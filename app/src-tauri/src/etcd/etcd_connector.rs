@@ -16,7 +16,7 @@ use crate::transport::kv::{
 };
 use crate::transport::maintenance::{
     SerializableCluster, SerializableClusterMember, SerializableClusterStatus, SnapshotState,
-    SnapshotStateInfo,
+    SnapshotInfo,
 };
 use crate::transport::user::{SerializablePermission, SerializableUser};
 use etcd_client::{
@@ -30,7 +30,7 @@ use tokio::fs::{File, OpenOptions};
 use tokio::io::AsyncWriteExt;
 use tokio::sync::{mpsc, oneshot};
 use tokio::task::JoinHandle;
-use tokio::{select, time};
+use tokio::select;
 
 pub struct EtcdConnector {
     namespace: Option<String>,
@@ -137,7 +137,6 @@ impl EtcdConnector {
     ) -> Result<Vec<SerializableKeyValue>, Error> {
         let mut kv_client = self.client.kv_client();
         let key = self.get_full_key(cursor_key);
-        println!("{}", String::from_utf8(key.clone()).unwrap());
         let get_options = GetOptions::new()
             .with_from_key()
             .with_keys_only()
@@ -770,6 +769,7 @@ impl EtcdConnector {
 
 pub struct SnapshotTask {
     pub name: String,
+    pub folder: String,
     pub state: SnapshotState,
     pub stop_notifier: Option<oneshot::Sender<()>>,
 }

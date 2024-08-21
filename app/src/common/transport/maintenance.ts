@@ -32,14 +32,20 @@ export interface ClusterStatus {
 }
 
 export interface SnapshotState {
-    finished: boolean,
     received: number,
     remain: number,
-    error_msg?: string
+    errorMsg?: string,
+    finished: boolean
 }
 
-export interface SnapshotStateInfo {
+export interface SnapshotInfo {
     name: string,
+    folder: string,
+    id: number,
+    state: SnapshotState
+}
+
+export interface SnapshotStateEvent {
     id: number,
     state: SnapshotState
 }
