@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {onMounted, onUnmounted, reactive, ref} from "vue";
+import {onMounted, onUnmounted, reactive, ref, watch} from "vue";
 import {
   _handleError,
   _maintenanceListSnapshotTask,
@@ -19,6 +19,12 @@ const showList = ref<boolean>(false)
 
 const eventUnListens = reactive<Function[]>([])
 const listBoxRef = ref()
+
+const emits = defineEmits(['length-changed'])
+
+watch(() => snapshotList.value, (v) => {
+  emits('length-changed', v.length)
+})
 
 onMounted(async () => {
   _maintenanceListSnapshotTask().then((list) => {
