@@ -25,6 +25,8 @@ fn main() {
     tauri::Builder::default()
         .setup(|app| {
             let setting = get_setting_from_file().unwrap();
+
+
             let window_init_state = setting.window_init_state;
             for (name, window) in app.windows() {
                 if name.ne("splashscreen") {

@@ -4,7 +4,8 @@ use std::env::temp_dir;
 use std::fs::File;
 use std::io::Write;
 use std::path::{PathBuf};
-
+use log::info;
+use tauri::api::path::{BaseDirectory, local_data_dir};
 use uuid::Uuid;
 
 static BASE_DIR: &'static str = "Etcd Workbench";
@@ -24,6 +25,7 @@ pub fn create_temp_file(data: &[u8]) -> io::Result<String> {
 
 pub fn init() -> io::Result<()> {
     let path = get_storage_path();
+    info!("initialized local path: {}", path.to_str().unwrap_or(""));
     if !path.exists() {
         fs::create_dir_all(path)?;
     }
@@ -37,27 +39,19 @@ pub fn init() -> io::Result<()> {
 }
 
 pub fn get_config_dir_path() -> PathBuf {
-    let mut path = PathBuf::from(get_storage_dir());
+    let mut path = get_storage_path();
     path.push(CONFIG_DIR);
     path
 }
 
 pub fn get_setting_file_path() -> PathBuf {
-    let mut path = PathBuf::from(get_storage_dir());
+    let mut path = get_storage_path();
     path.push(SETTINGS_FILE);
     path
 }
 
 pub fn get_storage_path() -> PathBuf {
-    PathBuf::from(get_storage_dir())
-}
-
-#[cfg(windows)]
-pub fn get_storage_dir() -> String {
-    format!("C:\\ProgramData\\{}", BASE_DIR)
-}
-
-#[cfg(unix)]
-pub fn get_storage_dir() -> String {
-    format!("~/{}", BASE_DIR)
+    let mut path = local_data_dir().unwrap();
+    path.push(BASE_DIR);
+    path
 }
