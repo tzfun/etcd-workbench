@@ -2,7 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use log::{debug, LevelFilter};
-use tauri::{LogicalSize, Manager, Size, WindowEvent};
+use tauri::{Manager, PhysicalSize, Size, WindowEvent};
 
 use crate::api::settings::get_setting_from_file;
 // use crate::api::windows::tray_menu_handle;
@@ -39,7 +39,7 @@ fn main() {
                         } else if state.main_window_maximize {
                             window.set_maximizable(true).unwrap();
                         } else if state.main_window_width > 0f64 && state.main_window_height > 0f64 {
-                            window.set_size(Size::from(LogicalSize {
+                            window.set_size(Size::from(PhysicalSize {
                                 width: state.main_window_width,
                                 height: state.main_window_height,
                             })).unwrap();

@@ -1,6 +1,6 @@
 import {invoke} from "@tauri-apps/api";
 import {Connection, ConnectionInfo, SessionData} from "~/common/transport/connection.ts";
-import {Cluster, SnapshotState, SnapshotInfo} from "~/common/transport/maintenance.ts";
+import {Cluster, SnapshotInfo} from "~/common/transport/maintenance.ts";
 import {KeyValue, LeaseInfo} from "~/common/transport/kv.ts";
 import {_emitLocal, _tipError, EventName} from "~/common/events.ts";
 import {LogicErrorInfo} from "~/common/types.ts";
@@ -20,7 +20,7 @@ export function _handleError(info: LogicErrorInfo) {
     }
 }
 
-export function _getAppVersion(): Promise<String> {
+export function _getAppVersion(): Promise<string> {
     return invoke('get_app_version')
 }
 

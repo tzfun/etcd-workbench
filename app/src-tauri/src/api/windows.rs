@@ -14,7 +14,6 @@ pub fn open_main_window0(app_handle: &tauri::AppHandle) {
     // 显示主窗口
     if let Some(main) = app_handle.get_window("main") {
         main.show().unwrap();
-        main.set_focus().unwrap();
     } else {
         let config = WindowConfig {
             label: String::from("main"),
@@ -32,8 +31,10 @@ pub fn open_main_window0(app_handle: &tauri::AppHandle) {
             .unwrap();
         main.show().unwrap();
         #[cfg(target_os = "windows")]
-        window_shadows::set_shadow(&main, true).unwrap();
-        main.set_focus().unwrap();
+        {
+            window_shadows::set_shadow(&main, true).unwrap();
+            main.set_focus().unwrap();
+        }
     }
 }
 

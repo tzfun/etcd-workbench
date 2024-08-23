@@ -11,7 +11,7 @@ import {
   _putKVWithLease
 } from "~/common/services.ts";
 import {_confirmSystem, _tipInfo, _tipSuccess, _tipWarn} from "~/common/events.ts";
-import {computed, onMounted, onUnmounted, PropType, reactive, ref, watch} from "vue";
+import {computed, onMounted, onUnmounted, PropType, reactive, ref} from "vue";
 import {ErrorPayload, SessionData} from "~/common/transport/connection.ts";
 import DragBox from "~/components/DragBox.vue";
 import DragItem from "~/components/DragItem.vue";
@@ -43,7 +43,7 @@ const KEY_SPLITTER = computed<string>(() => {
   return _useSettings().value.kvPathSplitter
 })
 
-const LIMIT_PER_PAGE = computed<number>(() => {
+const LIMIT_PER_PAGE = computed(() => {
   return _useSettings().value.kvLimitPerPage
 })
 
@@ -162,7 +162,7 @@ const loadNextPage = () => {
   let cursor = paginationKeyCursor.value
   if (cursor != undefined) {
     loadingStore.loadMore = true
-    _getAllKeysPaging(props.session?.id, cursor, LIMIT_PER_PAGE.value).then(data => {
+    _getAllKeysPaging(props.session?.id, cursor, LIMIT_PER_PAGE.value as number).then(data => {
       if (data.length == 0) {
         paginationKeyCursor.value = undefined
       } else {
@@ -170,13 +170,16 @@ const loadNextPage = () => {
         addKvListToTree(data)
       }
     }).catch((e: ErrorPayload | string) => {
-      if (e.errType && e.errType === 'PermissionDenied') {
-        if (_useSettings().value.kvReadAllWhenPagingFailed) {
-          enforceLoadAllKey.value = true
-          loadAllKeys()
-          return
+      if (typeof e == 'object') {
+        if (e.errType && e.errType === 'PermissionDenied') {
+          if (_useSettings().value.kvReadAllWhenPagingFailed) {
+            enforceLoadAllKey.value = true
+            loadAllKeys()
+            return
+          }
         }
       }
+
       _handleError({
         e,
         session: props.session

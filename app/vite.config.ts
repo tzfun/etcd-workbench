@@ -30,5 +30,13 @@ export default defineConfig(async () => ({
     alias: {
       '~': join(__dirname, "src")
     },
+  },
+  build: {
+    rollupOptions: {
+      input: {
+        index: "./index.html",
+        splashscreen: "./splashscreen.html",
+      },
+    }
   }
 }));

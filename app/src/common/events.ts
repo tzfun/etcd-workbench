@@ -21,18 +21,18 @@ export function _listenLocal(type: EventName, handler: Handler<any>) {
     localEvents.on(type, handler)
 }
 
-export function _emitLocal(eventName: EventName, eventPayload: any) {
+export function _emitLocal(eventName: EventName, eventPayload?: any) {
     localEvents.emit(eventName, eventPayload)
 }
 
-export function _emitGlobal(eventName: EventName, eventPayload: any) {
+export function _emitGlobal(eventName: EventName, eventPayload?: any) {
     emit(eventName, eventPayload).then(() => {
     }).catch(e => {
         console.error(e)
     })
 }
 
-export function _emitWindow(windowLabel: EventName, eventName: string, eventPayload: any) {
+export function _emitWindow(windowLabel: EventName, eventName: string, eventPayload?: any) {
     let window = WebviewWindow.getByLabel(windowLabel);
     if (!window) {
         window = new WebviewWindow(windowLabel)

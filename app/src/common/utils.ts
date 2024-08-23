@@ -156,9 +156,10 @@ export function _shuffleArray(arr: any[]) {
  * @private
  */
 export function _debounce(fn: Function, delay: number = 200) {
-    let timer = null;
+    let timer: NodeJS.Timeout | null = null;
     return function () {
-        let _this = this
+        //  @ts-ignore
+        let _this: any = this
         let args = arguments
         if (timer) {
             clearTimeout(timer)

@@ -33,8 +33,8 @@
         "title": "Etcd Workbench",
         "width": 1400,
         "height": 1000,
-        "minHeight": 900,
-        "minWidth": 500,
+        "minWidth": 900,
+        "minHeight": 500,
         "center": true,
         "decorations": false,
         "transparent": true,
@@ -62,7 +62,8 @@
         "url": "splashscreen.html",
         "decorations": false,
         "resizable": false,
-        "transparent": true
+        "transparent": true,
+        "visible": true
       }
     ],
     "macOSPrivateApi": true,
@@ -80,10 +81,6 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ]
-    },
-    "systemTray": {
-      "iconPath": "icons/icon.ico",
-      "iconAsTemplate": true
     }
   }
 }

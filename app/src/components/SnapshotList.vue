@@ -8,7 +8,7 @@ import {
 } from "~/common/services.ts";
 import {SnapshotInfo, SnapshotState, SnapshotStateEvent} from "~/common/transport/maintenance.ts";
 import {listen} from "@tauri-apps/api/event";
-import {_confirm, _listenLocal, EventName} from "~/common/events.ts";
+import {_confirmSystem, _listenLocal, EventName} from "~/common/events.ts";
 import {_openFolder} from "~/common/windows.ts";
 import {_byteTextFormat, _nonEmpty, _pointInRect} from "~/common/utils.ts";
 import {appWindow} from "@tauri-apps/api/window";
@@ -46,7 +46,7 @@ onMounted(async () => {
 
   eventUnListens.push(await listen(EventName.SNAPSHOT_STATE, e => {
     let stateEvent = e.payload as SnapshotStateEvent
-    let info: SnapshotInfo
+    let info: SnapshotInfo | undefined
     for (let i = 0; i < snapshotList.value.length; i++) {
       let item = snapshotList.value[i];
       if (stateEvent.id == item.id) {
@@ -87,7 +87,7 @@ onUnmounted(() => {
 })
 
 const stopTask = (info: SnapshotInfo) => {
-  _confirm('Are you sure you want to stop data backup?').then(() => {
+  _confirmSystem('Are you sure you want to stop data backup?').then(() => {
     _maintenanceStopSnapshotTask(info.id).then(() => {
       info.state.finished = true
       info.state.errorMsg = "Stopped"
@@ -197,7 +197,6 @@ const openFolder = (info: SnapshotInfo) => {
                 max-width="250"
             >
               <v-progress-linear
-                  :location="null"
                   :model-value="getProgress(info.state)"
                   color="secondary"
               ></v-progress-linear>

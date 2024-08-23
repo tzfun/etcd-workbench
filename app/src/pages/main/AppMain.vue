@@ -50,7 +50,7 @@ onMounted(async () => {
   lastWindowSize.width = size.width
   lastWindowSize.height = size.height
 
-  eventUnListens.push(await appWindow.listen('tauri://resize', _debounce((e) => {
+  eventUnListens.push(await appWindow.listen('tauri://resize', _debounce((e: any) => {
     let payload = e.payload as Record<string, number>
     let height = payload.height
     let width = payload.width
@@ -80,7 +80,7 @@ onMounted(async () => {
     }).catch(e => {
       console.error(e)
     })
-  }), 1000))
+  }, 1000)))
 
   eventUnListens.push(await listen(EventName.SETTING_UPDATE, (e) => {
     let setting = JSON.parse(e.payload as string) as SettingConfig
@@ -170,7 +170,7 @@ const closeTab = (id: number) => {
  * 不许确认关闭连接
  * @param sessionId 连接ID，如果为 undefined 则表示关闭当前tab
  */
-const closeTabDirectly = (sessionId: number | undefined) => {
+const closeTabDirectly = (sessionId?: number) => {
   let currentTab = activeTab.value
   if (sessionId == undefined && currentTab == HOME_TAB) {
     return
@@ -188,8 +188,9 @@ const closeTabDirectly = (sessionId: number | undefined) => {
       break
     }
   }
-
-  _disconnect(sessionId)
+  if (sessionId) {
+    _disconnect(sessionId)
+  }
 
   if (idx >= 0) {
     let nextTab = HOME_TAB

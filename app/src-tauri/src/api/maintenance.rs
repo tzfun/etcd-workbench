@@ -74,7 +74,7 @@ pub async fn maintenance_create_snapshot_task(
             String::from("C:\\")
         }
 
-        #[cfg(target_os="unix")]
+        #[cfg(target_family = "unix")]
         {
             String::from("/")
         }

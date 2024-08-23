@@ -127,7 +127,7 @@ onMounted(async () => {
   await _loadSettings()
   settingForm.value = JSON.parse(JSON.stringify(_useSettings().value))
 
-  _getAppVersion().then(version => {
+  _getAppVersion().then((version:string) => {
     appVersion.value = version
   }).catch(e => {
     console.error(e)
@@ -218,14 +218,14 @@ const importConnectionConfig = () => {
     }]
   }).then(data => {
     if (data) {
-      console.log(data)
-
       loadingStore.importConnection = true
-      _importConnection(data).then(() => {
+      _importConnection(data as string).then(() => {
         _tipSuccess("Successfully imported")
         _emitGlobal(EventName.CONNECTION_IMPORTED)
       }).catch(e => {
-        _handleError({e})
+        _handleError({
+          e
+        })
       }).finally(() => {
         loadingStore.importConnection = false
       })
@@ -237,7 +237,7 @@ const importConnectionConfig = () => {
   })
 }
 
-const onScroll = _debounce(e => {
+const onScroll = _debounce(() => {
   for (let group of groups) {
     let dom = document.getElementById(`setting-${group}`)
     if (dom) {
