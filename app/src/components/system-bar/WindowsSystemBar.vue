@@ -2,9 +2,8 @@
 
 import etcdLogo from "~/assets/etcd.png";
 import {appWindow} from "@tauri-apps/api/window";
-import {_confirm} from "~/common/events.ts";
 import {onMounted, ref} from "vue";
-import {_exitApp, _openSettingWindow} from "~/common/windows.ts";
+import {_openSettingWindow} from "~/common/windows.ts";
 import SnapshotList from "~/components/SnapshotList.vue";
 
 const maximize = ref(false)
@@ -34,14 +33,7 @@ onMounted(async () => {
 })
 
 const closeApp = () => {
-  if (props.windowLabel === 'main') {
-    _confirm("Exist Workbench", "Are you sure you want to close the app?").then(() => {
-      _exitApp()
-    }).catch(() => {
-    })
-  } else {
-    appWindow.hide()
-  }
+  appWindow.hide()
 }
 
 const toggleMaximize = async () => {

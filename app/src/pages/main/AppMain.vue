@@ -7,7 +7,7 @@ import {_disconnect} from "~/common/services.ts";
 import {computed, onMounted, onUnmounted, reactive, ref} from "vue";
 import {SessionData} from "~/common/transport/connection.ts";
 import {appWindow, PhysicalSize} from "@tauri-apps/api/window";
-import {_openMainWindow} from "~/common/windows.ts";
+import {_exitApp, _openMainWindow} from "~/common/windows.ts";
 import {_debounce} from "~/common/utils.ts";
 import {_saveSettings, _useSettings} from "~/common/store.ts";
 import {listen} from "@tauri-apps/api/event";
@@ -102,6 +102,13 @@ onMounted(async () => {
       _saveSettings(setting)
     }).catch(e => {
       console.error(e)
+    })
+  }))
+
+  eventUnListens.push(await listen(EventName.CONFIRM_EXIT, () => {
+    _confirm("Exist Workbench", "Are you sure you want to close the app?").then(() => {
+      _exitApp()
+    }).catch(() => {
     })
   }))
 

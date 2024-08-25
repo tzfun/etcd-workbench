@@ -1,8 +1,8 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use log::{debug, LevelFilter};
-use tauri::{Manager, PhysicalSize, Size, WindowEvent};
+use log::{debug, info, LevelFilter};
+use tauri::{Manager, PhysicalSize, RunEvent, Size, WindowEvent};
 
 use crate::api::settings::get_setting_from_file;
 // use crate::api::windows::tray_menu_handle;
@@ -19,22 +19,26 @@ fn main() {
     env_logger::Builder::from_default_env()
         .filter_level(LevelFilter::Debug)
         .init();
+    info!("env logger initialized");
 
     file_util::init().unwrap();
+    info!("file util initialized");
 
     tauri::Builder::default()
         .setup(|app| {
+            debug!("loading window size from user setting file");
             let setting = get_setting_from_file().unwrap();
-
+            debug!("loading user setting success");
 
             let window_init_state = setting.window_init_state;
             for (name, window) in app.windows() {
+                #[cfg(target_os = "windows")]
                 if name.ne("splashscreen") {
-                    debug!("set window shadow: {}", name);
-                    #[cfg(target_os = "windows")]
-                    window_shadows::set_shadow(&window, true).unwrap()
+                    log::debug!("set window shadow: {}", name);
+                    window_shadows::set_shadow(&window, true).unwrap();
                 }
                 if name.eq("main") {
+                    debug!("try to set physical size of main window");
                     if let Some(state) = &window_init_state {
                         if state.main_window_fullscreen {
                             window.set_fullscreen(true).unwrap();
@@ -46,22 +50,10 @@ fn main() {
                                 height: state.main_window_height,
                             })).unwrap();
                         }
+                        debug!("main window size initialized");
+                    } else {
+                        debug!("no setting of physical size");
                     }
-                    window.on_window_event(|e| {
-                        match e {
-                            WindowEvent::Resized(_) => {}
-                            WindowEvent::Moved(_) => {}
-                            WindowEvent::CloseRequested { .. } => {
-                                std::process::exit(0);
-                            }
-                            WindowEvent::Destroyed => {}
-                            WindowEvent::Focused(_) => {}
-                            WindowEvent::ScaleFactorChanged { .. } => {}
-                            WindowEvent::FileDrop(_) => {}
-                            WindowEvent::ThemeChanged(_) => {}
-                            _ => {}
-                        }
-                    })
                 }
             }
 
@@ -116,6 +108,44 @@ fn main() {
             api::role::role_grant_permission,
             api::role::role_revoke_permission,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while running tauri application")
+        .run(|app, event| {
+            match event {
+                RunEvent::Exit => {}
+                RunEvent::ExitRequested { .. } => {}
+                RunEvent::WindowEvent {
+                    label,
+                    event: win_event,
+                    ..
+                } => {
+                    match win_event {
+                        WindowEvent::Resized(_) => {}
+                        WindowEvent::Moved(_) => {}
+                        WindowEvent::CloseRequested { api, .. } => {
+                            if label.eq("main") {
+                                app.emit_all("confirm_exit", ()).unwrap();
+                                api.prevent_close();
+                            } else if label.eq("splashscreen") {
+
+                            } else {
+                                let win = app.get_window(label.as_str()).unwrap();
+                                win.hide().unwrap();
+                                api.prevent_close();
+                            }
+                        }
+                        WindowEvent::Destroyed => {}
+                        WindowEvent::Focused(_) => {}
+                        WindowEvent::ScaleFactorChanged { .. } => {}
+                        WindowEvent::FileDrop(_) => {}
+                        WindowEvent::ThemeChanged(_) => {},
+                        _=>{}
+                    }
+                }
+                RunEvent::Ready => {}
+                RunEvent::Resumed => {}
+                RunEvent::MainEventsCleared => {}
+                _=>{}
+            }
+        });
 }

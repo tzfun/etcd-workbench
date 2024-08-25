@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 use std::process::Command;
 
+use tauri::{Manager, WindowBuilder};
 use tauri::utils::config::WindowConfig;
-use tauri::{Manager, WindowBuilder, WindowUrl};
 
 use crate::error::LogicError;
 
@@ -52,24 +52,7 @@ pub async fn open_setting_window(app_handle: tauri::AppHandle, window: tauri::Wi
             setting.show().unwrap();
         }
     } else {
-        let config = WindowConfig {
-            label: String::from("setting"),
-            title: String::from("Settings"),
-            width: 1200f64,
-            height: 800f64,
-            resizable: false,
-            center: true,
-            url: WindowUrl::App(PathBuf::from("/?page=setting")),
-            decorations: false,
-            transparent: true,
-            ..<_>::default()
-        };
-        let setting = WindowBuilder::from_config(&app_handle, config)
-            .build()
-            .unwrap();
-        setting.show().unwrap();
-        #[cfg(target_os = "windows")]
-        window_shadows::set_shadow(&setting, true).unwrap();
+        create_configured_window(&app_handle, "setting");
     }
 }
 
@@ -109,4 +92,27 @@ pub fn open_folder(path: String, select_file: Option<String>) -> Result<(), Logi
             .unwrap();
     }
     Ok(())
+}
+
+
+pub fn create_configured_window(app_handle: &tauri::AppHandle, name: &'static str) {
+    let window_config_arr = &app_handle.config().tauri.windows;
+    for window_config in window_config_arr {
+        if window_config.label == name {
+            let config = window_config.clone();
+
+            let w = WindowBuilder::from_config(app_handle, config)
+                .build()
+                .unwrap();
+
+            #[cfg(target_os = "windows")]
+            if name.ne("splashscreen") {
+                log::debug!("set window shadow: {}", name);
+                window_shadows::set_shadow(&w, true).unwrap();
+            }
+
+            w.show().unwrap();
+            break;
+        }
+    }
 }
