@@ -1,14 +1,4 @@
 {
-  "build": {
-    "beforeDevCommand": "pnpm dev",
-    "beforeBuildCommand": "pnpm build",
-    "devPath": "http://localhost:1420",
-    "distDir": "../dist"
-  },
-  "package": {
-    "productName": "etcd-workbench",
-    "version": "0.0.1"
-  },
   "tauri": {
     "allowlist": {
       "all": false,

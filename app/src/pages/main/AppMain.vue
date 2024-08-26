@@ -2,16 +2,17 @@
 
 import Home from "~/pages/main/Home.vue";
 import Connection from "~/pages/main/Connection.vue";
-import {_confirm, _listenLocal, EventName} from "~/common/events.ts";
+import {_checkUpdate, _confirm, _listenLocal, EventName} from "~/common/events.ts";
 import {_disconnect} from "~/common/services.ts";
 import {computed, onMounted, onUnmounted, reactive, ref} from "vue";
 import {SessionData} from "~/common/transport/connection.ts";
 import {appWindow, PhysicalSize} from "@tauri-apps/api/window";
 import {_exitApp, _openMainWindow} from "~/common/windows.ts";
 import {_debounce} from "~/common/utils.ts";
-import {_saveSettings, _useSettings} from "~/common/store.ts";
+import {_saveSettings, _useSettings, _useUpdateInfo} from "~/common/store.ts";
 import {listen} from "@tauri-apps/api/event";
 import {MAIN_WINDOW_MIN_HEIGHT, MAIN_WINDOW_MIN_WIDTH, SettingConfig} from "~/common/transport/setting.ts";
+import {checkUpdate, installUpdate} from "@tauri-apps/api/updater";
 
 type TabItem = {
   name: string,
@@ -158,6 +159,33 @@ onMounted(async () => {
   })
 
   _openMainWindow()
+
+  // 检查更新
+  _checkUpdate().then((manifest) => {
+    let updateInfo = _useUpdateInfo().value
+
+    let setting = _useSettings().value
+    updateInfo.valid = true
+    updateInfo.latestVersion = manifest
+    updateInfo.downloadedVersion = setting.downloadedUpdateVersion
+
+    if (setting.downloadedUpdateVersion != manifest.version) {
+      if (setting.autoDownloadUpdate) {
+        installUpdate().then(() => {
+          setting.downloadedUpdateVersion = manifest.version
+          _saveSettings(setting)
+          console.log("Downloaded update")
+        }).catch(e => {
+          console.error(e)
+        })
+      }
+    } else {
+      setting.downloadedUpdateVersion = undefined
+      _saveSettings(setting)
+    }
+  }).catch(() => {
+    updateInfo.valid = false
+  })
 })
 
 onUnmounted(() => {

@@ -38,7 +38,10 @@ pub struct SettingConfig {
     pub request_timeout_seconds: u64,
     /// 窗口初始化状态
     #[serde(default)]
-    pub window_init_state: Option<SettingWindowState>
+    pub window_init_state: Option<SettingWindowState>,
+    /// 已下载的更新版本
+    #[serde(default)]
+    pub downloaded_update_version: Option<String>
 }
 
 fn default_theme() -> String {
@@ -83,6 +86,7 @@ impl Default for SettingConfig {
             connect_timeout_seconds: 5,
             request_timeout_seconds: 15,
             window_init_state: None,
+            downloaded_update_version: None
         }
     }
 }

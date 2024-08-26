@@ -4,7 +4,14 @@ import Skeleton from "~/components/Skeleton.vue";
 import {computed, onMounted, reactive, ref, watch} from "vue";
 import EditorExample from "~/components/editor/EditorExample.vue";
 import {AppTheme} from "~/common/types.ts";
-import {_alertError, _confirmSystem, _emitGlobal, _tipSuccess, EventName} from "~/common/events.ts";
+import {
+  _alertError,
+  _checkUpdateAndInstall,
+  _confirmSystem,
+  _emitGlobal,
+  _tipSuccess,
+  EventName
+} from "~/common/events.ts";
 import {DEFAULT_SETTING_CONFIG, SettingConfig} from "~/common/transport/setting.ts";
 import {_debounce, _goBrowserPage} from "~/common/utils.ts";
 import WorkbenchLogo from "~/design/WorkbenchLogo.vue";
@@ -618,6 +625,7 @@ const onScroll = _debounce(() => {
                          text="Check Update"
                          color="blue-lighten-1"
                          prepend-icon="mdi-arrow-up-bold-circle-outline"
+                         @click="_checkUpdateAndInstall"
                   ></v-btn>
                   Or
                   <v-btn class="text-none ml-2"

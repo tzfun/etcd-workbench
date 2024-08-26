@@ -5,7 +5,8 @@ import {appWindow} from "@tauri-apps/api/window";
 import {onMounted, ref} from "vue";
 import {_openSettingWindow} from "~/common/windows.ts";
 import SnapshotList from "~/components/SnapshotList.vue";
-import {_emitGlobal, EventName} from "~/common/events.ts";
+import {_checkUpdateAndInstall, _emitGlobal, EventName} from "~/common/events.ts";
+import {_useSettings, _useUpdateInfo} from "~/common/store.ts";
 
 const maximize = ref(false)
 
@@ -16,6 +17,8 @@ const props = defineProps({
     required: true
   }
 })
+
+const updateInfo = _useUpdateInfo();
 
 const title = ref<string>('Etcd Workbench')
 
@@ -46,10 +49,6 @@ const toggleMaximize = async () => {
   maximize.value = !maximize.value
 }
 
-const setting = async () => {
-  _openSettingWindow()
-}
-
 </script>
 
 <template>
@@ -70,26 +69,39 @@ const setting = async () => {
 
     <v-spacer></v-spacer>
 
-    <SnapshotList v-if="windowLabel == 'main'"></SnapshotList>
+    <div v-if="windowLabel == 'main'">
 
-    <v-btn class="system-extend-btn ms-2"
-           icon="mdi-cog"
-           size="small"
-           variant="text"
-           :rounded="false"
-           density="comfortable"
-           title="Settings"
-           :ripple="false"
-           @click="setting"
-           v-if="windowLabel == 'main'"
-    ></v-btn>
+      <v-btn v-if="updateInfo.valid"
+             class="system-extend-btn text-none ms-2 pl-2 pr-2"
+             color="green"
+             text="New Version"
+             variant="outlined"
+             rounded
+             prepend-icon="mdi-update"
+             density="comfortable"
+             size="small"
+             @click="_checkUpdateAndInstall"
+      ></v-btn>
 
-    <v-divider vertical
-               class="mr-2 ml-2"
-               length="80%"
-               style="margin-top: 3px;"
-               v-if="windowLabel == 'main'"
-    ></v-divider>
+      <SnapshotList></SnapshotList>
+
+      <v-btn class="system-extend-btn ms-2"
+             icon="mdi-cog"
+             size="small"
+             variant="text"
+             :rounded="false"
+             density="comfortable"
+             title="Settings"
+             :ripple="false"
+             @click="_openSettingWindow"
+      ></v-btn>
+
+      <v-divider vertical
+                 class="mr-2 ml-2"
+                 length="80%"
+                 style="margin-top: 3px;"
+      ></v-divider>
+    </div>
 
     <v-btn class="system-native-btn"
            icon="mdi-minus"

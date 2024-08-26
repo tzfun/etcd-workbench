@@ -2,6 +2,9 @@ import {DialogItem, TipsItem} from "~/common/types.ts";
 import {WebviewWindow} from "@tauri-apps/api/window";
 import {emit} from "@tauri-apps/api/event";
 import mitt, {Handler} from "mitt";
+import {checkUpdate, installUpdate, UpdateManifest, UpdateResult} from "@tauri-apps/api/updater";
+import {_useSettings} from "~/common/store.ts";
+import {relaunch} from "@tauri-apps/api/process";
 
 const localEvents = mitt();
 
@@ -86,6 +89,38 @@ export function _confirmSystem(text: string): Promise<undefined> {
     return _confirm('System', text)
 }
 
+export function _confirmUpdate(title: string, text: string): Promise<undefined> {
+    return new Promise((resolve, reject) => {
+        let dialog: DialogItem = {
+            value: true,
+            content: text,
+            title,
+            icon: 'mdi-update',
+            iconColor: 'green',
+            buttons: [
+                {
+                    text: "Cancel",
+                    callback: (item: DialogItem) => {
+                        item.value = false
+                        reject()
+                    }
+                },
+                {
+                    text: "Install",
+                    variant: "elevated",
+                    color: 'primary',
+                    callback: (item: DialogItem) => {
+                        item.value = false
+                        resolve(undefined)
+                    }
+                }
+            ]
+        }
+
+        _emitLocal(EventName.DIALOG, dialog)
+    })
+}
+
 export function _dialogContent(content: string) {
     let dialog: DialogItem = {
         value: true,
@@ -164,4 +199,63 @@ export function _tipInfo(text: string) {
     }
 
     _emitLocal(EventName.TIP, tip)
+}
+
+
+export function _checkUpdate(): Promise<UpdateManifest> {
+    return new Promise((resolve, reject) => {
+        checkUpdate().then((res: UpdateResult) => {
+            const {shouldUpdate, manifest} = res;
+            if (shouldUpdate) {
+                resolve(manifest!)
+            } else {
+                reject()
+            }
+        }).catch(e => {
+            reject(e)
+        })
+    })
+}
+
+export function _checkUpdateAndInstall() {
+    _loading(true)
+    _checkUpdate().then(manifest => {
+        _loading(false)
+        let downloaded = _useSettings().value.downloadedUpdateVersion;
+        if (downloaded == manifest.version) {
+            //  直接安装
+            _confirmUpdate(
+                'Install Update',
+                `Etcd workbench <span class="text-green font-weight-bold">${manifest.version}</span> is now available(auto downloaded). </br></br>Do you want to install it now?`,
+            ).then(async () => {
+                await relaunch()
+            }).catch(() => {
+            })
+        } else {
+            //  开始下载
+            _confirmUpdate(
+                'Download Update',
+                `Etcd workbench <span class="text-green font-weight-bold">${manifest.version}</span> is now available.</br></br>Do you want to download and install it now?`,
+            ).then(() => {
+                _loading(true)
+                installUpdate().then(async () => {
+                    await relaunch()
+                }).catch(e => {
+                    console.error(e)
+                    _alertError("Download failed: " + e)
+                }).finally(() => {
+                    _loading(false)
+                })
+            }).catch(() => {
+
+            })
+        }
+    }).catch((e) => {
+        _loading(false)
+        if (e == undefined) {
+            _tipSuccess('You are already the latest version')
+        } else {
+            _tipError(e)
+        }
+    })
 }

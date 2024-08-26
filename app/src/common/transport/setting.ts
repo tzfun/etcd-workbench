@@ -1,3 +1,5 @@
+import {UpdateManifest} from "@tauri-apps/api/updater";
+
 export const MAIN_WINDOW_MIN_HEIGHT = 500;
 export const MAIN_WINDOW_MIN_WIDTH = 900;
 
@@ -26,6 +28,8 @@ export interface SettingConfig {
     requestTimeoutSeconds: number | string,
     //  窗口初始化状态
     windowInitState?: SettingWindowState,
+    //  已下载的更新版本
+    downloadedUpdateVersion?: string
 }
 
 export interface SettingWindowState {
@@ -47,4 +51,10 @@ export const DEFAULT_SETTING_CONFIG: SettingConfig = {
     autoDownloadUpdate: true,
     connectTimeoutSeconds: 5,
     requestTimeoutSeconds: 15
+}
+
+export interface UpdateInfo {
+    valid: boolean,
+    latestVersion?: UpdateManifest,
+    downloadedVersion?: string,
 }

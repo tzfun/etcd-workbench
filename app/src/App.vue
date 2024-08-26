@@ -214,8 +214,10 @@ const disableWebviewNativeEvents = () => {
           <v-btn
               v-for="(btn,k ) in item.buttons"
               :key="k"
-              :class="btn.class + ' text-none'"
+              :class="(btn.class ? btn.class : '') + ' text-none'"
               :text="btn.text"
+              :variant="btn.variant ? btn.variant : 'text'"
+              :color="btn.color"
               @click="btn.callback(item, $event)"
           ></v-btn>
         </template>

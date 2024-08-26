@@ -85,6 +85,17 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ]
+    },
+    "updater": {
+      "active": true,
+      "dialog": false,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IENERjhCMzI5MTU4OTQ4RkYKUldUL1NJa1ZLYlA0elg5dkp4SndsMTVIYXhxbEI0c2FtU20zMFQ5endaQVF2SkNQcWN6WEdwczEK",
+      "endpoints": [
+        "https://vr360-beifengtz.oss-cn-beijing.aliyuncs.com/etcd-workbench/etcd-workbench-update.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
     }
   }
 }

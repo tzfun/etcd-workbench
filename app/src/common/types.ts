@@ -6,6 +6,8 @@ export type DialogButton = {
     text: string,
     class?: string,
     icon?: string,
+    variant?: "flat" | "text" | "elevated" | "tonal" | "outlined" | "plain",
+    color?: string,
     callback: DialogButtonFunc
 }
 
