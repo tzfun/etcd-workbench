@@ -8,9 +8,10 @@ import WindowsSystemBar from "~/components/system-bar/WindowsSystemBar.vue";
 import MacSystemBar from "~/components/system-bar/MacSystemBar.vue";
 import AppSetting from "~/pages/setting/AppSetting.vue";
 import AppMain from "~/pages/main/AppMain.vue";
-import {_listenLocal, EventName} from "~/common/events.ts";
-import {_loadSettings, _useSettings} from "~/common/store.ts";
+import {_checkUpdate, _listenLocal, EventName} from "~/common/events.ts";
+import {_loadSettings, _useSettings, _useUpdateInfo} from "~/common/store.ts";
 import {DEFAULT_SETTING_CONFIG} from "~/common/transport/setting.ts";
+import {installUpdate} from "@tauri-apps/api/updater";
 
 const loading = ref(false)
 const dialogs = ref<DialogItem[]>([])
@@ -97,6 +98,20 @@ onMounted(async () => {
       if (newVal.theme !== oldVal.theme) {
         setAppTheme(newVal.theme)
       }
+    })
+
+    let updateInfo = _useUpdateInfo().value
+    // 检查更新
+    _checkUpdate().then(async (manifest) => {
+      console.log(manifest,settings.autoUpdate)
+      updateInfo.valid = true
+      updateInfo.latestVersion = manifest
+
+      if (settings.autoUpdate) {
+        await installUpdate()
+      }
+    }).catch(() => {
+      updateInfo.valid = false
     })
   }
 })

@@ -642,12 +642,12 @@ const onScroll = _debounce(() => {
               <v-divider class="mt-5 mb-5"></v-divider>
               <v-layout>
                 <div>
-                  <div class="form-label text-high-emphasis">Auto Download Update</div>
-                  <div class="v-messages">Automatically download updates when they are available.</div>
+                  <div class="form-label text-high-emphasis">Auto Update</div>
+                  <div class="v-messages">Automatically update when a new version is available.</div>
                 </div>
                 <v-spacer></v-spacer>
                 <div>
-                  <v-switch v-model="settingForm.autoDownloadUpdate"
+                  <v-switch v-model="settingForm.autoUpdate"
                             inset
                             density="compact"
                             color="primary"
@@ -669,16 +669,6 @@ const onScroll = _debounce(() => {
                   rights reserved.
                 </p>
               </div>
-
-              <v-layout>
-                <div class="form-label text-high-emphasis">Build Hash</div>
-                <v-spacer></v-spacer>
-                <div class="font-weight-bold">
-                  {{ buildHash }}
-                </div>
-              </v-layout>
-
-              <v-divider class="mt-5 mb-5"></v-divider>
 
               <v-layout>
                 <div class="form-label text-high-emphasis">Open Source</div>

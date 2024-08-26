@@ -24,9 +24,9 @@ pub struct SettingConfig {
     /// KV分页获取每页大小
     #[serde(default = "default_kv_limit_per_page")]
     pub kv_limit_per_page: u32,
-    /// 自动下载更新
-    #[serde(default)]
-    pub auto_download_update: bool,
+    /// 自动更新
+    #[serde(default = "default_auto_update")]
+    pub auto_update: bool,
     /// 使用 ctrl + w 关闭连接tab
     #[serde(default)]
     pub close_tab_use_ctrl_w: bool,
@@ -39,9 +39,6 @@ pub struct SettingConfig {
     /// 窗口初始化状态
     #[serde(default)]
     pub window_init_state: Option<SettingWindowState>,
-    /// 已下载的更新版本
-    #[serde(default)]
-    pub downloaded_update_version: Option<String>
 }
 
 fn default_theme() -> String {
@@ -67,8 +64,13 @@ fn default_kv_limit_per_page() -> u32 {
 fn default_connect_timeout_seconds() -> u64 {
     5
 }
+
 fn default_request_timeout_seconds() -> u64 {
     15
+}
+
+fn default_auto_update() -> bool {
+    true
 }
 
 impl Default for SettingConfig {
@@ -81,12 +83,11 @@ impl Default for SettingConfig {
             kv_pagination_query: true,
             kv_read_all_when_paging_failed: true,
             kv_limit_per_page: default_kv_limit_per_page(),
-            auto_download_update: true,
+            auto_update: true,
             close_tab_use_ctrl_w: true,
             connect_timeout_seconds: 5,
             request_timeout_seconds: 15,
             window_init_state: None,
-            downloaded_update_version: None
         }
     }
 }

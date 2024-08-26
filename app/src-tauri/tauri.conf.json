@@ -6,8 +6,8 @@
     "distDir": "../dist"
   },
   "package": {
-    "productName": "etcd-workbench",
-    "version": "0.0.1"
+    "productName": "Etcd Workbench",
+    "version": "0.0.0"
   },
   "tauri": {
     "allowlist": {
@@ -89,7 +89,7 @@
     "updater": {
       "active": true,
       "dialog": false,
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IENERjhCMzI5MTU4OTQ4RkYKUldUL1NJa1ZLYlA0elg5dkp4SndsMTVIYXhxbEI0c2FtU20zMFQ5endaQVF2SkNQcWN6WEdwczEK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEY4QUQ5NEE1MERGMjQ5NDAKUldSQVNmSU5wWlN0K0dNZDlnTlBqQzZObzBNTUxwZnFLaEhKRTBZNTFWa1piYnpvVHVmYTVIZG4K",
       "endpoints": [
         "https://vr360-beifengtz.oss-cn-beijing.aliyuncs.com/etcd-workbench/etcd-workbench-update.json"
       ],

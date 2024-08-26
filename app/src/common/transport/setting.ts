@@ -19,7 +19,7 @@ export interface SettingConfig {
     //  KV分页获取每页大小
     kvLimitPerPage: number | string,
     //  自动下载更新
-    autoDownloadUpdate: boolean,
+    autoUpdate: boolean,
     //  使用 ctrl + w 关闭连接tab
     closeTabUseCtrlW: boolean,
     //  连接超时秒数
@@ -28,8 +28,6 @@ export interface SettingConfig {
     requestTimeoutSeconds: number | string,
     //  窗口初始化状态
     windowInitState?: SettingWindowState,
-    //  已下载的更新版本
-    downloadedUpdateVersion?: string
 }
 
 export interface SettingWindowState {
@@ -48,7 +46,7 @@ export const DEFAULT_SETTING_CONFIG: SettingConfig = {
     kvReadAllWhenPagingFailed: true,
     kvLimitPerPage: 5000,
     closeTabUseCtrlW: true,
-    autoDownloadUpdate: true,
+    autoUpdate: true,
     connectTimeoutSeconds: 5,
     requestTimeoutSeconds: 15
 }
@@ -56,5 +54,4 @@ export const DEFAULT_SETTING_CONFIG: SettingConfig = {
 export interface UpdateInfo {
     valid: boolean,
     latestVersion?: UpdateManifest,
-    downloadedVersion?: string,
 }

@@ -89,12 +89,12 @@ export function _confirmSystem(text: string): Promise<undefined> {
     return _confirm('System', text)
 }
 
-export function _confirmUpdate(title: string, text: string): Promise<undefined> {
+export function _confirmUpdateApp(text: string): Promise<undefined> {
     return new Promise((resolve, reject) => {
         let dialog: DialogItem = {
             value: true,
             content: text,
-            title,
+            title: "Install Update",
             icon: 'mdi-update',
             iconColor: 'green',
             buttons: [
@@ -221,35 +221,21 @@ export function _checkUpdateAndInstall() {
     _loading(true)
     _checkUpdate().then(manifest => {
         _loading(false)
-        let downloaded = _useSettings().value.downloadedUpdateVersion;
-        if (downloaded == manifest.version) {
-            //  直接安装
-            _confirmUpdate(
-                'Install Update',
-                `Etcd workbench <span class="text-green font-weight-bold">${manifest.version}</span> is now available(auto downloaded). </br></br>Do you want to install it now?`,
-            ).then(async () => {
+        _confirmUpdateApp(
+            `Etcd workbench <span class="text-green font-weight-bold">${manifest.version}</span> is now available.</br></br>Do you want to download and install it now?`,
+        ).then(() => {
+            _loading(true)
+            installUpdate().then(async () => {
                 await relaunch()
-            }).catch(() => {
+            }).catch(e => {
+                console.error(e)
+                _alertError("Download failed: " + e)
+            }).finally(() => {
+                _loading(false)
             })
-        } else {
-            //  开始下载
-            _confirmUpdate(
-                'Download Update',
-                `Etcd workbench <span class="text-green font-weight-bold">${manifest.version}</span> is now available.</br></br>Do you want to download and install it now?`,
-            ).then(() => {
-                _loading(true)
-                installUpdate().then(async () => {
-                    await relaunch()
-                }).catch(e => {
-                    console.error(e)
-                    _alertError("Download failed: " + e)
-                }).finally(() => {
-                    _loading(false)
-                })
-            }).catch(() => {
+        }).catch(() => {
 
-            })
-        }
+        })
     }).catch((e) => {
         _loading(false)
         if (e == undefined) {
