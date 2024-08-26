@@ -5,6 +5,7 @@ import {appWindow} from "@tauri-apps/api/window";
 import {onMounted, ref} from "vue";
 import {_openSettingWindow} from "~/common/windows.ts";
 import SnapshotList from "~/components/SnapshotList.vue";
+import {_emitGlobal, EventName} from "~/common/events.ts";
 
 const maximize = ref(false)
 
@@ -33,7 +34,11 @@ onMounted(async () => {
 })
 
 const closeApp = () => {
-  appWindow.hide()
+  if (props.windowLabel === 'main') {
+    _emitGlobal(EventName.CONFIRM_EXIT, null);
+  } else {
+    appWindow.hide()
+  }
 }
 
 const toggleMaximize = async () => {

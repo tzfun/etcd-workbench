@@ -145,82 +145,85 @@ const openFolder = (info: SnapshotInfo) => {
            @click="showList = !showList"
     ></v-btn>
     <v-sheet class="list-box" v-show="showList" ref="listBoxRef">
-
-      <v-card v-if="snapshotList.length > 0"
-              title="Recent snapshot records"
+      <v-card title="Recent Snapshot"
               border
               flat
       >
+        <v-divider></v-divider>
         <v-card-text>
-          <div v-for="(info,idx) in snapshotList"
-               :key="idx"
-               class="list-item"
-          >
-            <div class="list-item-info">
-              <div class="list-item-prepend-icon">
-                <v-icon v-if="info.state.errorMsg != undefined"
-                        color="red"
-                >mdi-lightbulb-alert-outline
-                </v-icon>
-                <v-icon v-else-if="info.state.remain == 0"
-                        color="green"
-                >mdi-check-circle-outline
-                </v-icon>
-                <v-icon v-else
-                        color="secondary"
-                >mdi-download
-                </v-icon>
+          <div v-if="snapshotList.length > 0">
+            <div v-for="(info,idx) in snapshotList"
+                 :key="idx"
+                 class="list-item"
+            >
+              <div class="list-item-info">
+                <div class="list-item-prepend-icon">
+                  <v-icon v-if="info.state.errorMsg != undefined"
+                          color="red"
+                  >mdi-lightbulb-alert-outline
+                  </v-icon>
+                  <v-icon v-else-if="info.state.remain == 0"
+                          color="green"
+                  >mdi-check-circle-outline
+                  </v-icon>
+                  <v-icon v-else
+                          color="secondary"
+                  >mdi-download
+                  </v-icon>
+                </div>
+
+                <div class="list-item-title"
+
+                >
+                  <p @click="openFolder(info)"
+                     :class="info.state.finished ? 'list-item-title-success' : ''"
+                     title="Open the file directory"
+                  >{{ info.name }}</p>
+                  <p class="v-messages">{{ _byteTextFormat(info.state.received) }}</p>
+                </div>
+                <div class="list-item-append-icon">
+                  <v-icon v-if="info.state.finished"
+                          @click="removeTask(info, idx)"
+                          title="Delete"
+                  >mdi-close
+                  </v-icon>
+                  <v-icon v-else
+                          @click="stopTask(info)"
+                          title="Stop"
+                  >mdi-stop
+                  </v-icon>
+                </div>
               </div>
-
-              <div class="list-item-title"
-
+              <v-sheet
+                  v-if="!info.state.finished"
+                  class="d-flex align-center mx-auto"
+                  max-width="250"
               >
-                <p @click="openFolder(info)"
-                   :class="info.state.finished ? 'list-item-title-success' : ''"
-                >{{ info.name }}</p>
-                <p class="v-messages">{{ _byteTextFormat(info.state.received) }}</p>
-              </div>
-              <div class="list-item-append-icon">
-                <v-icon v-if="info.state.finished"
-                        @click="removeTask(info, idx)"
-                >mdi-close
-                </v-icon>
-                <v-icon v-else
-                        @click="stopTask(info)"
-                >mdi-stop
-                </v-icon>
-              </div>
+                <v-progress-linear
+                    :model-value="getProgress(info.state)"
+                    color="secondary"
+                ></v-progress-linear>
+
+                <strong class="ml-2">{{ Math.ceil(getProgress(info.state)) }}%</strong>
+              </v-sheet>
+              <v-sheet v-if="info.state.errorMsg"
+                       class="d-flex align-center mx-auto"
+                       max-width="250"
+              >
+                <p class="text-red">{{ info.state.errorMsg }}</p>
+              </v-sheet>
+
+              <v-divider class="mt-2 mb-2"></v-divider>
             </div>
-            <v-sheet
-                v-if="!info.state.finished"
-                class="d-flex align-center mx-auto"
-                max-width="250"
-            >
-              <v-progress-linear
-                  :model-value="getProgress(info.state)"
-                  color="secondary"
-              ></v-progress-linear>
-
-              <strong class="ml-2">{{ Math.ceil(getProgress(info.state)) }}%</strong>
-            </v-sheet>
-            <v-sheet v-if="info.state.errorMsg"
-                     class="d-flex align-center mx-auto"
-                     max-width="250"
-            >
-              <p class="text-red">{{ info.state.errorMsg }}</p>
-            </v-sheet>
-
-            <v-divider class="mt-2 mb-2"></v-divider>
           </div>
+          <v-empty-state v-else
+                         icon="mdi-package-variant"
+                         :size="40"
+                         title="No Records"
+          ></v-empty-state>
         </v-card-text>
       </v-card>
 
-      <v-empty-state v-else
-                     icon="mdi-package-variant"
-                     :size="50"
-                     title="No Task"
-                     class="list-empty-box"
-      ></v-empty-state>
     </v-sheet>
 
   </div>
@@ -264,12 +267,13 @@ const openFolder = (info: SnapshotInfo) => {
         padding: 5px 15px;
         vertical-align: middle;
         font-size: 1rem;
-        cursor: pointer;
         text-overflow: ellipsis;
         white-space: nowrap;
         overflow: hidden;
       }
-
+      .list-item-title-success {
+        cursor: pointer;
+      }
       .list-item-title-success:hover {
         opacity: 0.7;
       }
@@ -283,20 +287,11 @@ const openFolder = (info: SnapshotInfo) => {
     box-shadow: 5px 5px 30px rgba(0, 0, 0, .7);
     border: solid rgba(33, 33, 33, 0.12) 1px;
   }
-
-  .list-empty-box {
-    background-color: #637475;
-  }
 }
 
 .v-theme--light {
   .list-box {
     box-shadow: 5px 5px 20px rgba(0, 0, 0, .2);
-  }
-
-  .list-empty-box {
-    background-color: #f5f5f6;
-    border: solid rgba(33, 33, 33, 0.12) 1px;
   }
 }
 </style>

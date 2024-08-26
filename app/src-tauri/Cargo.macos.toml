@@ -11,7 +11,7 @@ edition = "2021"
 tauri-build = { version = "1", features = [] }
 
 [dependencies]
-tauri = { version = "1", features = [ "os-all", "shell-open", "window-all", "dialog-open", "dialog-save"] }
+tauri = { version = "1", features = [ "os-all", "shell-open", "window-all", "macos-private-api", "dialog-open", "dialog-save"] }
 #fix-path-env = { git = "https://github.com/tauri-apps/fix-path-env-rs" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
