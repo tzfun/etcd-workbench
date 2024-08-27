@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import etcdLogo from "~/assets/etcd.png";
+import logo from "~/assets/logo.png";
 import {appWindow} from "@tauri-apps/api/window";
 import {computed, onMounted, reactive, ref} from "vue";
 import {_openSettingWindow} from "~/common/windows.ts";
@@ -77,7 +77,7 @@ const snapshotListShowChanged = (show: boolean) => {
                 class="pr-0"
   >
     <v-icon class="me-2">
-      <v-img :src="etcdLogo"
+      <v-img :src="logo"
              cover
              :width="30"
              :height="30"

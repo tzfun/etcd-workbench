@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>vue-web-terminal design</title>
+    <style>
+        :root {
+            --icon-bg-color: #ffffff;
+            --icon-width: 220px;
+            --etcd-logo-width: 120px;
+            --fragments-width: 180px;
+            --fragments-border-width: 10px;
+            --fragments-overlay-width: 30px;
+        }
+        #logo {
+            margin: 100px;
+            overflow: hidden;
+            padding: 15px;
+            width: var(--icon-width);
+            height: var(--icon-width);
+            background-color: var(--icon-bg-color);
+            border-radius: 15px;
+            //box-shadow: 0 0 15px rgba(0,0,0,.5);
+            position: relative;
+            filter: drop-shadow(0 0 5px #000);
+        }
+
+        .etcd-icon {
+            width: var(--etcd-logo-width);
+            position: absolute;
+            left: 50%;
+            margin-left: calc(var(--etcd-logo-width) / -2);
+            top: 50%;
+            margin-top: calc(var(--etcd-logo-width) / -2);
+            z-index: 2;
+        }
+
+        .fragments {
+            position: absolute;
+            width: var(--fragments-width);
+            height: var(--fragments-width);
+            left: 50%;
+            margin-left: calc(var(--fragments-width) / -2 - var(--fragments-border-width));
+            top: 50%;
+            margin-top: calc(var(--fragments-width) / -2 - var(--fragments-border-width));
+            border: 10px solid #00897B;
+            border-radius: 50%;
+        }
+
+        .overlay {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            margin-left: calc(var(--fragments-overlay-width) / -2);
+            margin-top: calc((var(--fragments-width) + 40px) / -2);
+            width: var(--fragments-overlay-width);
+            height: calc(var(--fragments-width) + 40px);
+            background-color: var(--icon-bg-color);
+        }
+
+        .overlay:nth-child(1) {
+            transform: rotate(45deg);
+        }
+        .overlay:nth-child(2) {
+            transform: rotate(90deg);
+        }
+        .overlay:nth-child(3) {
+            transform: rotate(135deg);
+        }
+        .overlay:nth-child(4) {
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+<body>
+<button onclick="download()">生成图片</button>
+<div id="logo">
+    <img src="etcd.png" alt="etcd-icon" class="etcd-icon"/>
+    <div class="fragments">
+        <div class="overlay"></div>
+        <div class="overlay"></div>
+        <div class="overlay"></div>
+        <div class="overlay"></div>
+    </div>
+</div>
+</body>
+<script type="text/javascript" src="http://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+<script type="text/javascript">
+//  图片尺寸调整：https://www.iloveimg.com/zh-cn/resize-image
+//  png转ico：https://cloudconvert.com/png-converter
+    function download() {
+        const node = document.getElementById("logo")
+        html2canvas(node, {
+            useCORS: true,
+            allowTaint: true,
+            height: node.offsetHeight,
+            width: node.offsetWidth,
+            scrollY: 0,
+            scrollX: 0,
+            backgroundColor: null
+        }).then(async (canvas) => {
+
+            // canvas.shadowOffsetX = 0;
+            // canvas.shadowOffsetY = 0;
+            // canvas.shadowBlur = 15;
+            // canvas.shadowColor = "rgba(0,0,0,0.5)"
+
+            let imgUrl = canvas.toDataURL();
+            let img = new Image();
+            img.src = imgUrl;  // 导出图片
+            document.body.appendChild(img);  // 将生成的图片添加到body
+        })
+    }
+</script>
+</html>

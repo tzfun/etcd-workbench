@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import etcdLogo from "~/assets/etcd.png";
 import Skeleton from "~/components/Skeleton.vue";
 import {computed, onMounted, reactive, ref, watch} from "vue";
 import EditorExample from "~/components/editor/EditorExample.vue";
@@ -267,20 +266,9 @@ const onScroll = _debounce(() => {
       <v-layout class="fill-height overflow-y-auto position-relative">
 
         <v-navigation-drawer permanent class="user-select-none">
-          <v-list-item class="ma-5"
-          >
-            <template #prepend>
-              <v-img :src="etcdLogo"
-                     cover
-                     :width="30"
-                     :height="30"
-                     class="mr-2"
-              ></v-img>
-            </template>
-            <template #title>
-              <h3 class="text-center">Etcd Workbench</h3>
-            </template>
-          </v-list-item>
+          <v-layout class="justify-center py-6">
+            <WorkbenchLogo matrix font-size="20px"></WorkbenchLogo>
+          </v-layout>
           <v-divider class="mb-5"></v-divider>
           <v-list lines="one"
                   activatable
