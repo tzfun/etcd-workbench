@@ -155,6 +155,7 @@ const openFolder = (info: SnapshotInfo) => {
       <v-card title="Recent Snapshot"
               border
               flat
+              class="user-select-none"
       >
         <v-divider></v-divider>
         <v-card-text>

@@ -97,7 +97,6 @@ const getRoleInfo = (role: any) => {
     loadingStore.getInfo = true
     _getRolePermissions(props.session?.id, role).then((permissions) => {
       currentRoleInfo.value = permissions
-      console.log(permissions)
     }).catch(e => {
       _handleError({
         e,
@@ -331,6 +330,7 @@ const grantPerm = () => {
               <v-empty-state icon="mdi-alert-circle-outline"
                              headline="Something error!"
                              text="Failed to read lease information, please try again."
+                             class="user-select-none"
               ></v-empty-state>
             </div>
           </v-expansion-panel-text>
@@ -339,6 +339,7 @@ const grantPerm = () => {
       <v-empty-state v-else
                      icon="mdi-package-variant"
                      headline="No Roles"
+                     class="user-select-none"
       ></v-empty-state>
     </div>
 

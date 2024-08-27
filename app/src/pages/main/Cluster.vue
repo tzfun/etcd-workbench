@@ -129,7 +129,7 @@ const snapshot = () => {
     <div v-if="cluster" class="d-block">
       <div>
         <v-card class="mx-auto mt-5 mb-5" border flat>
-          <v-list-item>
+          <v-list-item class="user-select-none">
             <template v-slot:prepend>
               <v-avatar color="surface-light" size="32">🎯</v-avatar>
             </template>
@@ -348,6 +348,8 @@ const snapshot = () => {
 
   .info-label {
     width: $--info-label-width;
+    user-select: none;
+    cursor: default;
   }
 
   .info-label:after {

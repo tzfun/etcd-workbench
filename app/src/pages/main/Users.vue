@@ -328,11 +328,11 @@ const roleSelectionProps = (item: string) => {
       ></v-btn>
     </div>
     <div>
-      <v-card class="mt-5 mb-5"
+      <v-card class="mt-5 mb-5 overflow-x-auto"
               border
       >
         <v-card-text>
-          <v-table hover>
+          <v-table hover style="min-width: 840px">
             <thead>
             <tr>
               <th class="text-left user-col font-weight-bold">
@@ -533,5 +533,6 @@ const roleSelectionProps = (item: string) => {
   display: inline-block;
   width: 180px;
   line-height: 48px;
+  user-select: none;
 }
 </style>

@@ -27,7 +27,7 @@
         "minHeight": 500,
         "center": true,
         "decorations": false,
-        "transparent": true,
+        "transparent": false,
         "visible": false,
         "closable": true,
         "focus": false,
@@ -43,7 +43,7 @@
         "url": "/?page=setting",
         "decorations": false,
         "titleBarStyle": "Overlay",
-        "transparent": true,
+        "transparent": false,
         "visible": false,
         "focus": false
       },

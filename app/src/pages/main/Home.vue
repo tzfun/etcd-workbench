@@ -73,7 +73,7 @@ const removeConnectionConfig = (name: string) => {
 
 <template>
   <v-layout class="fill-height overflow-y-auto">
-    <v-navigation-drawer permanent>
+    <v-navigation-drawer permanent class="user-select-none">
       <v-list lines="two"
               activatable
               activated="new"

@@ -5,6 +5,7 @@ import mitt, {Handler} from "mitt";
 import {checkUpdate, installUpdate, UpdateManifest, UpdateResult} from "@tauri-apps/api/updater";
 import {_useSettings} from "~/common/store.ts";
 import {relaunch} from "@tauri-apps/api/process";
+import {writeText} from "@tauri-apps/api/clipboard";
 
 const localEvents = mitt();
 
@@ -243,5 +244,14 @@ export function _checkUpdateAndInstall() {
         } else {
             _tipError(e)
         }
+    })
+}
+
+export function _copyToClipboard(content: string) {
+    writeText(content).then(() => {
+        _tipSuccess("Copied")
+    }).catch(e => {
+        _tipError("Can not write to clipboard")
+        console.error(e)
     })
 }

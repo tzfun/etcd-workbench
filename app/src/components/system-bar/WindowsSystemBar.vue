@@ -116,13 +116,13 @@ const snapshotListShowChanged = (show: boolean) => {
              :ripple="false"
              @click="_openSettingWindow"
       ></v-btn>
-
-      <v-divider vertical
-                 class="mr-2 ml-2"
-                 length="80%"
-                 style="margin-top: 3px;"
-      ></v-divider>
     </div>
+    <v-divider vertical
+               class="mr-2 ml-2"
+               length="80%"
+               style="margin-top: 3px;"
+               v-if="windowLabel == 'main'"
+    ></v-divider>
 
     <v-btn class="system-native-btn"
            icon="mdi-minus"

@@ -789,11 +789,12 @@ const clearAllKeyLeaseListener = () => {
                 v-if="paginationKeyCursor != undefined"
                 block
                 density="compact"
-                color="secondary"
+                color="cyan-darken-4"
                 class="text-none border-none"
                 style="border-radius: 0;"
                 text="Load More"
                 @click="loadNextPage"
+                prepend-icon="mdi-book-open-page-variant-outline"
             ></v-btn>
           </v-sheet>
         </drag-item>
@@ -875,7 +876,7 @@ const clearAllKeyLeaseListener = () => {
             <v-empty-state icon="mdi-text-box-edit-outline"
                            headline="Please select a key"
                            title="Select a key to view its details or edit it"
-                           class="mx-auto my-auto"
+                           class="mx-auto my-auto user-select-none"
             >
 
             </v-empty-state>

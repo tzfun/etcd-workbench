@@ -116,7 +116,6 @@ const exampleCodeLang = "yaml"
 
 const settingForm = ref<SettingConfig>(JSON.parse(JSON.stringify(DEFAULT_SETTING_CONFIG)))
 const appVersion = ref<string>('0.0.0')
-const buildHash = ref<string>('04139fc')
 const loadingStore = reactive({
   exportConnection: false,
   importConnection: false,
@@ -264,7 +263,7 @@ const onScroll = _debounce(() => {
     <v-container class="fill-height pa-0" style="max-width: 1200px;">
       <v-layout class="fill-height overflow-y-auto position-relative">
 
-        <v-navigation-drawer permanent>
+        <v-navigation-drawer permanent class="user-select-none">
           <v-list-item class="ma-5"
           >
             <template #prepend>
@@ -323,50 +322,29 @@ const onScroll = _debounce(() => {
               ></v-btn>
             </v-layout>
 
-            <h3 class="mt-5" id="setting-theme">App Theme</h3>
+            <h3 class="group-title mt-5" id="setting-theme">App Theme</h3>
             <v-sheet class="d-flex mt-2 form-area">
               <div class="mx-auto my-5 cursor-pointer position-relative" @click="setAppTheme('light')">
-
                 <Skeleton theme="light"
-                          :class="settingForm.theme === 'light' ? 'app-theme-active' : ''"
+                          :active="settingForm.theme === 'light'"
                 ></Skeleton>
-                <p class="text-center text-medium-emphasis">Light</p>
-
-                <v-icon v-show="settingForm.theme === 'light'"
-                        color="primary"
-                        class="app-theme-selected-icon"
-                >mdi-check-decagram-outline
-                </v-icon>
-
+                <p class="text-center text-medium-emphasis mt-2">Light</p>
               </div>
               <div class="mx-auto my-5 cursor-pointer position-relative" @click="setAppTheme('dark')">
                 <Skeleton theme="dark"
-                          :class="settingForm.theme === 'dark' ? 'app-theme-active' : ''"
+                          :active="settingForm.theme === 'dark'"
                 ></Skeleton>
-                <p class="text-center text-medium-emphasis">Dark</p>
-
-                <v-icon v-show="settingForm.theme === 'dark'"
-                        color="primary"
-                        class="app-theme-selected-icon"
-                >mdi-check-decagram-outline
-                </v-icon>
+                <p class="text-center text-medium-emphasis mt-2">Dark</p>
               </div>
               <div class="mx-auto my-5 cursor-pointer position-relative" @click="setAppTheme('auto')">
                 <Skeleton theme="auto"
-                          :class="settingForm.theme === 'auto' ? 'app-theme-active' : ''"
+                          :active="settingForm.theme === 'auto'"
                 ></Skeleton>
-                <p class="text-center text-medium-emphasis">System</p>
-
-                <v-icon v-show="settingForm.theme === 'auto'"
-                        color="primary"
-                        class="app-theme-selected-icon"
-                >mdi-check-decagram-outline
-                </v-icon>
-
+                <p class="text-center text-medium-emphasis mt-2">System</p>
               </div>
             </v-sheet>
 
-            <h3 class="mt-5" id="setting-connection">Connection</h3>
+            <h3 class="group-title mt-5" id="setting-connection">Connection</h3>
             <v-sheet class="mt-2 form-area pa-3">
 
               <v-layout>
@@ -449,7 +427,7 @@ const onScroll = _debounce(() => {
               </v-layout>
             </v-sheet>
 
-            <h3 class="mt-5" id="setting-keys">Keys</h3>
+            <h3 class="group-title mt-5" id="setting-keys">Keys</h3>
             <v-sheet class="mt-2 form-area pa-3">
               <v-layout>
                 <div>
@@ -535,12 +513,12 @@ const onScroll = _debounce(() => {
 
               <v-divider class="mt-5 mb-5"></v-divider>
 
-              <p class="mt-5">Editor Theme</p>
+              <p class="mt-5 user-select-none">Editor Theme</p>
               <p class="v-messages">Set the Key-Value editor personalized theme.</p>
               <v-sheet class="mt-5 form-area">
                 <v-sheet v-show="settingForm.theme === 'light' || settingForm.theme === 'auto'"
                          class="form-area">
-                  <h4 class="text-center">Light Theme</h4>
+                  <h4 class="text-center user-select-none">Light Theme</h4>
                   <v-row>
                     <v-col :cols="6"
                            v-for="(theme, idx) in editorTheme.light"
@@ -572,7 +550,7 @@ const onScroll = _debounce(() => {
                 </v-sheet>
 
                 <v-sheet class="form-area mt-12" v-show="settingForm.theme === 'dark' || settingForm.theme === 'auto'">
-                  <h4 class="text-center">Dark Theme</h4>
+                  <h4 class="text-center user-select-none">Dark Theme</h4>
 
                   <v-row>
                     <v-col :cols="6"
@@ -605,7 +583,7 @@ const onScroll = _debounce(() => {
 
             </v-sheet>
 
-            <h3 class="mt-5" id="setting-update">Update</h3>
+            <h3 class="group-title mt-5" id="setting-update">Update</h3>
             <v-sheet class="mt-2 form-area pa-3">
               <v-layout>
                 <div class="form-label text-high-emphasis">Version</div>
@@ -658,9 +636,9 @@ const onScroll = _debounce(() => {
               </v-layout>
             </v-sheet>
 
-            <h3 class="mt-5" id="setting-about">About</h3>
+            <h3 class="group-title mt-5" id="setting-about">About</h3>
             <v-sheet class="mt-2 form-area pa-3">
-              <div class="mb-5">
+              <div class="mb-12">
                 <WorkbenchLogo class="my-5"></WorkbenchLogo>
                 <p class="description my-3">A beautiful and lightweight gui client for ETCD V3</p>
                 <p class="copyright">
@@ -768,11 +746,16 @@ const onScroll = _debounce(() => {
 
 <style scoped lang="scss">
 
+.group-title {
+  user-select: none;
+  cursor: default;
+}
 .form-area {
   border-radius: 10px;
   margin: 8px 0;
 
   .form-label {
+    user-select: none;
     display: flex;
     align-items: center;
   }
@@ -784,8 +767,8 @@ const onScroll = _debounce(() => {
 
 .app-theme-selected-icon {
   position: absolute;
-  right: 0;
-  bottom: 26px;
+  right: 2px;
+  bottom: 32px;
   font-size: 60px;
 }
 

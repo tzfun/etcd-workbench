@@ -23,7 +23,7 @@ defineProps({
 </script>
 
 <template>
-  <div class="design">
+  <div class="design user-select-none">
     <div class="container-matrix" align="center" v-if="matrix">
       <img :src="etcdLogo" class="logo" :style="`width:${logoSize};`">
       <div class="words" :style="`font-size:${fontSize};line-height:${logoSize};`">Workbench</div>

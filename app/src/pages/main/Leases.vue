@@ -4,7 +4,7 @@ import {_getLease, _grantLease, _handleError, _leases, _revokeLeases} from "~/co
 import {SessionData} from "~/common/transport/connection.ts";
 import {LeaseInfo} from "~/common/transport/kv.ts";
 import CountDownTimer from "~/components/CountDownTimer.vue";
-import {_confirmSystem, _tipWarn} from "~/common/events.ts";
+import {_confirmSystem, _copyToClipboard, _tipWarn} from "~/common/events.ts";
 import {_isEmpty} from "~/common/utils.ts";
 
 const props = defineProps({
@@ -187,9 +187,25 @@ const grantLease = () => {
                   <v-card-text>
                     <v-table class="text-caption" density="compact">
                       <tbody>
+
                       <tr align="right">
                         <th>
-                          <v-icon class="mr-2">mdi-calendar-clock</v-icon>
+                          <v-icon class="mr-2" color="teal-darken-1">mdi-lightbulb</v-icon>
+                          <span>Lease ID:</span>
+                        </th>
+
+                        <td class="text-high-emphasis">
+                          <span @click="_copyToClipboard(currentLeaseInfo.id)"
+                                class="cursor-pointer text-primary"
+                                title="Copy"
+                          >{{ currentLeaseInfo.id }}</span>
+                        </td>
+                      </tr>
+                      <tr align="right">
+
+
+                        <th>
+                          <v-icon class="mr-2" color="teal-darken-1">mdi-calendar-clock</v-icon>
                           <span>Granted TTL:</span>
                         </th>
 
@@ -200,7 +216,7 @@ const grantLease = () => {
 
                       <tr align="right">
                         <th>
-                          <v-icon class="mr-2">mdi-link</v-icon>
+                          <v-icon class="mr-2" color="teal-darken-1">mdi-link</v-icon>
                           <span>TTL:</span>
                         </th>
 
@@ -211,7 +227,7 @@ const grantLease = () => {
 
                       <tr align="right">
                         <th>
-                          <v-icon class="mr-2">mdi-key-chain</v-icon>
+                          <v-icon class="mr-2" color="teal-darken-1">mdi-file-document-multiple</v-icon>
                           Keys:
                         </th>
 
@@ -243,6 +259,7 @@ const grantLease = () => {
               <v-empty-state icon="mdi-alert-circle-outline"
                              headline="Something error!"
                              text="Failed to read lease information, please try again."
+                             class="user-select-none"
               ></v-empty-state>
             </div>
           </v-expansion-panel-text>
@@ -251,6 +268,7 @@ const grantLease = () => {
       <v-empty-state v-else
                      icon="mdi-package-variant"
                      headline="No Leases"
+                     class="user-select-none"
       ></v-empty-state>
     </div>
 

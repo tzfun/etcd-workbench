@@ -40,6 +40,7 @@ const clickList = (page: string) => {
     <v-navigation-drawer permanent
                          rail
                          expand-on-hover
+                         class="user-select-none"
     >
       <v-list lines="two"
               activatable

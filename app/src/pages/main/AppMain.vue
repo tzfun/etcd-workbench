@@ -97,7 +97,6 @@ onMounted(async () => {
         mainWindowMaximize: res[1]
       }
 
-      console.log("save setting", setting)
       _saveSettings(setting)
     }).catch(e => {
       console.error(e)

@@ -12,12 +12,13 @@ defineProps({
   width: {
     type: Number,
     default: 160
-  }
+  },
+  active: Boolean
 })
 </script>
 
 <template>
-  <div :style="`height:${height}px;width:${width}px;`" class="skeleton-container">
+  <div :style="`height:${height}px;width:${width}px;`" :class="active ? 'skeleton-container-active': ''">
     <div v-if="theme != 'auto'"
          :class="`skeleton fill-height skeleton-${theme}`">
       <div class="header"></div>
@@ -57,13 +58,25 @@ defineProps({
         </div>
       </div>
     </div>
+    <v-icon v-show="active"
+            color="primary"
+            class="selected-icon"
+    >mdi-check-decagram-outline
+    </v-icon>
   </div>
 </template>
 
 <style scoped lang="scss">
 
-.skeleton-container {
-  border-radius: 10px;
+.skeleton-container-active {
+  border: 3px solid #1867c0;
+}
+
+.selected-icon {
+  position: absolute;
+  right: 2px;
+  bottom: 32px;
+  font-size: 60px;
 }
 
 .skeleton-light {
@@ -117,8 +130,6 @@ defineProps({
 }
 
 .skeleton {
-  border: 1px solid #e0e0e0;
-
   $--skeleton-header-height: 10px;
   $--skeleton-nav-width: 40px;
 
