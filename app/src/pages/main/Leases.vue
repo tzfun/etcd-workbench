@@ -331,5 +331,6 @@ const grantLease = () => {
   display: inline-block;
   width: 180px;
   line-height: 48px;
+  user-select: none;
 }
 </style>

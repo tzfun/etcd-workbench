@@ -73,7 +73,7 @@ const removeConnectionConfig = (name: string) => {
 
 <template>
   <v-layout class="fill-height overflow-y-auto">
-    <v-navigation-drawer permanent class="user-select-none">
+    <v-navigation-drawer permanent class="connection-menu user-select-none">
       <v-list lines="two"
               activatable
               activated="new"
@@ -85,9 +85,7 @@ const removeConnectionConfig = (name: string) => {
         <v-list-item value="new">
           New Connection
           <template v-slot:prepend>
-            <v-avatar>
-              <v-icon>mdi-transit-connection-variant</v-icon>
-            </v-avatar>
+            <v-icon>mdi-transit-connection-variant</v-icon>
           </template>
         </v-list-item>
         <v-list-subheader>Favorites List</v-list-subheader>
@@ -98,9 +96,7 @@ const removeConnectionConfig = (name: string) => {
         >
           {{ item.name }}
           <template v-slot:prepend>
-            <v-avatar>
-              <v-icon>mdi-database-outline</v-icon>
-            </v-avatar>
+            <v-icon>mdi-database-outline</v-icon>
           </template>
           <template v-slot:append>
             <v-icon class="config-close-icon" @click="removeConnectionConfig(item.name)">mdi-close-circle</v-icon>
@@ -123,6 +119,18 @@ const removeConnectionConfig = (name: string) => {
 .config-close-item:hover {
   .config-close-icon {
     font-size: 1.5rem;
+  }
+}
+</style>
+
+<style lang="scss">
+.connection-menu {
+  .v-list-item__prepend {
+    display: block;
+  }
+
+  .v-list-item__append {
+    display: block;
   }
 }
 </style>

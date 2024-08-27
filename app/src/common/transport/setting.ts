@@ -26,6 +26,8 @@ export interface SettingConfig {
     connectTimeoutSeconds: number | string,
     //  请求超时秒数
     requestTimeoutSeconds: number | string,
+    //  SSH连接超时秒数
+    sshConnectTimeoutSeconds: number | string,
     //  窗口初始化状态
     windowInitState?: SettingWindowState,
 }
@@ -48,7 +50,8 @@ export const DEFAULT_SETTING_CONFIG: SettingConfig = {
     closeTabUseCtrlW: true,
     autoUpdate: true,
     connectTimeoutSeconds: 5,
-    requestTimeoutSeconds: 15
+    requestTimeoutSeconds: 15,
+    sshConnectTimeoutSeconds: 10
 }
 
 export interface UpdateInfo {

@@ -20,17 +20,7 @@ const props = defineProps({
 const formData = ref<ConnectionForm>(JSON.parse(JSON.stringify(DefaultConnection)))
 const formRules = ref({
   host: [
-    (v?: string) => !!v || 'Host is required',
-    (v: string) => {
-      let regexIP = /^((25[0-5]|2[0-4]\d|((1\d{2})|([1-9]?\d)))\.){3}(25[0-5]|2[0-4]\d|((1\d{2})|([1-9]?\d)))$/;
-      if (regexIP.test(v)) {
-        return true
-      } else if (v.toLowerCase() === 'localhost') {
-        return true
-      } else {
-        return 'Invalid host'
-      }
-    }
+    (v?: string) => !!v || 'Host is required'
   ],
   port: [
     (v?: string) => !!v || 'Port is required',
@@ -78,17 +68,7 @@ const formRules = ref({
   },
   tls: {
     domain: [
-      (v?: string) => {
-        if (formData.value.tls.enable && v && v.length > 0) {
-          let regexIP = /^((25[0-5]|2[0-4]\d|((1\d{2})|([1-9]?\d)))\.){3}(25[0-5]|2[0-4]\d|((1\d{2})|([1-9]?\d)))$/;
-          if (regexIP.test(v)) {
-            return true
-          } else if (v.toLowerCase() === 'localhost') {
-            return true
-          } else {
-            return 'Invalid authority'
-          }
-        }
+      () => {
         return true
       }
     ]
@@ -383,13 +363,13 @@ const saveConnection = () => {
             <v-form ref="formRef">
               <div class="d-flex">
                 <div class="form-label">
-                  Connection Name
+                  Name
                 </div>
                 <div class="form-input">
                   <v-text-field
                       v-model="formData.name"
                       density="comfortable"
-                      placeholder="New connection"
+                      placeholder="Customize the name of the current connection"
                   ></v-text-field>
                 </div>
               </div>
@@ -692,11 +672,12 @@ const saveConnection = () => {
 }
 
 .connection-card {
-  $--form-label-width: 150px;
+  $--form-label-width: 120px;
 
   .form-label {
     width: $--form-label-width;
     line-height: 52px;
+    user-select: none;
   }
 
   .form-label:after {

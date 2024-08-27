@@ -36,6 +36,9 @@ pub struct SettingConfig {
     /// 请求超时秒数
     #[serde(default = "default_request_timeout_seconds")]
     pub request_timeout_seconds: u64,
+    /// SSH连接超时秒数
+    #[serde(default = "default_ssh_connect_timeout_seconds")]
+    pub ssh_connect_timeout_seconds: u64,
     /// 窗口初始化状态
     #[serde(default)]
     pub window_init_state: Option<SettingWindowState>,
@@ -69,6 +72,10 @@ fn default_request_timeout_seconds() -> u64 {
     15
 }
 
+fn default_ssh_connect_timeout_seconds() -> u64 {
+    10
+}
+
 fn default_auto_update() -> bool {
     true
 }
@@ -85,8 +92,9 @@ impl Default for SettingConfig {
             kv_limit_per_page: default_kv_limit_per_page(),
             auto_update: true,
             close_tab_use_ctrl_w: true,
-            connect_timeout_seconds: 5,
-            request_timeout_seconds: 15,
+            connect_timeout_seconds: default_connect_timeout_seconds(),
+            request_timeout_seconds: default_request_timeout_seconds(),
+            ssh_connect_timeout_seconds: default_ssh_connect_timeout_seconds(),
             window_init_state: None,
         }
     }

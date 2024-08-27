@@ -150,6 +150,9 @@ onMounted(async () => {
     if (typeof setting.requestTimeoutSeconds === 'string') {
       setting.requestTimeoutSeconds = parseInt(setting.requestTimeoutSeconds)
     }
+    if (typeof setting.sshConnectTimeoutSeconds === 'string') {
+      setting.sshConnectTimeoutSeconds = parseInt(setting.sshConnectTimeoutSeconds)
+    }
     _setLocalSettings(setting)
     _emitGlobal(EventName.SETTING_UPDATE, setting)
   }, {
@@ -374,6 +377,25 @@ const onScroll = _debounce(() => {
                 <v-spacer></v-spacer>
                 <div class="form-input">
                   <v-text-field v-model="settingForm.requestTimeoutSeconds"
+                                variant="outlined"
+                                type="number"
+                                density="compact"
+                                append-inner-icon="mdi-alpha-s"
+                                hide-details
+                  ></v-text-field>
+                </div>
+              </v-layout>
+
+              <v-divider class="mt-5 mb-5"></v-divider>
+
+              <v-layout>
+                <div>
+                  <div class="form-label text-high-emphasis">SSH Connect Timeout</div>
+                  <div class="v-messages">Timeout for connecting to ssh server, in seconds.</div>
+                </div>
+                <v-spacer></v-spacer>
+                <div class="form-input">
+                  <v-text-field v-model="settingForm.sshConnectTimeoutSeconds"
                                 variant="outlined"
                                 type="number"
                                 density="compact"

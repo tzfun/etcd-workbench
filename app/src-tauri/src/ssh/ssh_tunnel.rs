@@ -6,10 +6,12 @@ use log::{debug, error, info, warn};
 use russh::client;
 use russh::client::Handle;
 use russh::keys::decode_secret_key;
+use tokio::time::timeout;
 use tokio::{io, select};
-use tokio::net::TcpListener;
+use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::{oneshot, watch};
 
+use crate::api::settings::get_settings;
 use crate::error::LogicError;
 use crate::ssh::ssh_client::SshClient;
 use crate::transport::connection::ConnectionSsh;
@@ -33,7 +35,16 @@ impl SshTunnel {
         let client = SshClient::new(ssh_simple_info.clone());
         let addr = format!("{}:{}", remote.host, remote.port);
 
-        let mut session = client::connect(config, addr, client).await?;
+        let settings = get_settings().await?;
+
+        let stream = timeout(
+            Duration::from_secs(settings.ssh_connect_timeout_seconds), 
+            TcpStream::connect(addr)
+        )
+        .await
+        .map_err(|_| io::Error::new(ErrorKind::ConnectionAborted, "ssh connection timeout"))??;
+
+        let mut session = client::connect_stream(config, stream, client).await?;
 
         if let Some(identity) = remote.identity {
             if let Some(key) = identity.key {
