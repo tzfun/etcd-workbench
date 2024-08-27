@@ -99,7 +99,7 @@ export const DefaultConnection:ConnectionForm = {
     },
     tls: {
         enable: false,
-        domain: '',
+        domain: '127.0.0.1',
         cert: {
             file: undefined,
             content: undefined

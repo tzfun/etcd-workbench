@@ -253,7 +253,7 @@ const checkForm = async (): Promise<Connection> => {
     if (tlsForm.enable) {
 
       connection.tls = {
-        domain: tlsForm.domain,
+        domain: _isEmpty(tlsForm.domain) ? undefined : tlsForm.domain,
         cert: [_encodeStringToBytes(tlsForm.cert.content)]
       }
 
@@ -308,7 +308,6 @@ const resetFormValidation = () => {
 
 const testConnect = () => {
   checkForm().then((connection: Connection) => {
-    console.log("test connection:", connection)
     _loading(true)
     _connectTest(connection).then(() => {
       _tipSuccess("Succeeded!")
@@ -372,7 +371,7 @@ const saveConnection = () => {
 <template>
   <v-layout class="fill-height w-100 overflow-y-auto ml-0 mr-0 pl-0 pr-0 pt-12 pb-12">
     <div class="mx-auto my-auto">
-      <div class="header">
+      <div class="header user-select-none cursor-default">
         <div class="header-icon">
           <v-img :src="etcdLogo" cover/>
         </div>
@@ -404,7 +403,7 @@ const saveConnection = () => {
                       v-model="formData.host"
                       :rules="formRules.host"
                       density="comfortable"
-                      placeholder="127.0.0.1"
+                      placeholder="Etcd server host"
                   ></v-text-field>
                 </div>
               </div>
@@ -509,7 +508,7 @@ const saveConnection = () => {
                   <div class="form-input">
                     <SingleFileSelector v-model="formData.tls.cert"
                                         :max-size="128*1024"
-                                        prompt-text="The file must be smaller than 128KB"
+                                        prompt-text="PEM encoded X509 certificate, less than 128KB."
                     ></SingleFileSelector>
                   </div>
                 </div>
@@ -530,7 +529,7 @@ const saveConnection = () => {
                   <div class="form-input">
                     <SingleFileSelector v-model="formData.tls.identity.cert"
                                         :max-size="128*1024"
-                                        prompt-text="The file must be smaller than 128KB"
+                                        prompt-text="PEM encoded certificate, less than 128KB."
                     ></SingleFileSelector>
                   </div>
                 </div>
@@ -542,7 +541,7 @@ const saveConnection = () => {
                   <div class="form-input">
                     <SingleFileSelector v-model="formData.tls.identity.key"
                                         :max-size="128*1024"
-                                        prompt-text="The file must be smaller than 128KB"
+                                        prompt-text="PEM encoded private key, less than 128KB."
                     ></SingleFileSelector>
                   </div>
                 </div>
@@ -631,7 +630,7 @@ const saveConnection = () => {
                     <div v-else-if="formData.ssh.identity.model == 'key'">
                       <SingleFileSelector v-model="formData.ssh.identity.key.key"
                                           :max-size="128*1024"
-                                          prompt-text="The file must be smaller than 128KB"
+                                          prompt-text="Supported private key formats: Openssh, RSA, PKCS8, PKCS8 Encrypted. Less than 128KB."
                       ></SingleFileSelector>
 
                       <v-text-field

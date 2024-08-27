@@ -1,9 +1,11 @@
 <script setup lang="ts">
 
 import {appWindow} from "@tauri-apps/api/window";
-import {onMounted, ref} from "vue";
+import {computed, onMounted, reactive, ref} from "vue";
 import {_openSettingWindow} from "~/common/windows.ts";
 import SnapshotList from "~/components/SnapshotList.vue";
+import {_checkUpdateAndInstall} from "~/common/events.ts";
+import {_useUpdateInfo} from "~/common/store.ts";
 
 const maximize = ref(false)
 
@@ -16,6 +18,15 @@ const props = defineProps({
 })
 
 const title = ref<string>('Etcd Workbench')
+const updateInfo = _useUpdateInfo();
+const snapshotListState = reactive({
+  show: false,
+  len: 0
+})
+
+const showSnapshotList = computed<boolean>(() => {
+  return snapshotListState.show || snapshotListState.len > 0
+})
 
 onMounted(async () => {
   switch (props.windowLabel) {
@@ -42,12 +53,19 @@ const setting = async () => {
   _openSettingWindow()
 }
 
+const snapshotListLenChanged = (len: number) => {
+  snapshotListState.len = len
+}
+
+const snapshotListShowChanged = (show: boolean) => {
+  snapshotListState.show = show
+}
+
 </script>
 
 <template>
   <v-system-bar window
                 :height="height"
-                @dblclick="appWindow.toggleMaximize()"
                 data-tauri-drag-region
                 class="pr-0"
   >
@@ -110,19 +128,36 @@ const setting = async () => {
 
     <v-spacer></v-spacer>
 
-    <SnapshotList v-if="windowLabel == 'main'"></SnapshotList>
+    <div v-if="windowLabel == 'main'">
+      <v-btn v-if="updateInfo.valid"
+             class="text-none ms-2 pr-2"
+             color="light-green-darken-1"
+             text="Update Workbench"
+             variant="outlined"
+             rounded
+             density="comfortable"
+             prepend-icon="mdi-bell-ring-outline"
+             size="small"
+             @click="_checkUpdateAndInstall"
+      ></v-btn>
 
-    <v-btn class="me-2"
-           icon="mdi-cog"
-           size="small"
-           variant="text"
-           :rounded="false"
-           density="comfortable"
-           title="Settings"
-           :ripple="false"
-           @click="setting"
-           v-if="windowLabel == 'main'"
-    ></v-btn>
+      <SnapshotList v-show="showSnapshotList"
+                    @length-changed="snapshotListLenChanged"
+                    @show-changed="snapshotListShowChanged"
+      ></SnapshotList>
+
+      <v-btn class="me-2"
+             icon="mdi-cog"
+             size="small"
+             variant="text"
+             :rounded="false"
+             density="comfortable"
+             title="Settings"
+             :ripple="false"
+             @click="setting"
+      ></v-btn>
+    </div>
+
   </v-system-bar>
 </template>
 
@@ -157,14 +192,5 @@ $--mac-native-btn-width: 12px;
   .system-native-icon {
     opacity: 1;
   }
-}
-
-.system-extend-btn {
-  font-size: 1.1em;
-  opacity: $--system-btn-opacity;
-}
-
-.system-extend-btn:hover {
-  opacity: 1;
 }
 </style>

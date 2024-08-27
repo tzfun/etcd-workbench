@@ -20,10 +20,16 @@ const showList = ref<boolean>(false)
 const eventUnListens = reactive<Function[]>([])
 const listBoxRef = ref()
 
-const emits = defineEmits(['length-changed'])
+const emits = defineEmits(['length-changed','show-changed'])
 
 watch(() => snapshotList.value, (v) => {
   emits('length-changed', v.length)
+}, {
+  deep: true
+})
+
+watch(() => showList.value, (v) => {
+  emits('show-changed', v)
 })
 
 onMounted(async () => {
@@ -40,6 +46,7 @@ onMounted(async () => {
   })
 
   _listenLocal(EventName.SNAPSHOT_CREATE, e => {
+    console.log("list changed")
     snapshotList.value.push(e as SnapshotInfo)
     showList.value = true
   })
@@ -133,7 +140,7 @@ const openFolder = (info: SnapshotInfo) => {
 </script>
 
 <template>
-  <div class="d-inline-block position-relative">
+  <div class="position-relative snapshot-list-container">
     <v-btn class="system-extend-btn ms-2"
            icon="mdi-cloud-arrow-down"
            size="small"
@@ -231,56 +238,59 @@ const openFolder = (info: SnapshotInfo) => {
 
 <style scoped lang="scss">
 
-.list-box {
-  width: 400px;
-  position: absolute;
-  z-index: 1000;
-  top: 28px;
-  right: 0;
-  text-align: start;
+.snapshot-list-container {
+  display: inline-block;
 
-  .list-item {
-    $--item-icon-width: 40px;
+  .list-box {
+    width: 400px;
+    position: absolute;
+    z-index: 1000;
+    top: 28px;
+    right: 0;
+    text-align: start;
 
-    .list-item-info {
-      display: flex;
-      overflow: hidden;
-      text-wrap: nowrap;
-      text-overflow: ellipsis;
+    .list-item {
+      $--item-icon-width: 40px;
 
-      .list-item-prepend-icon,
-      .list-item-append-icon,
-      {
-        width: $--item-icon-width;
-        text-align: center;
-        font-size: 1rem;
-        padding-top: 5px;
-      }
-
-      .list-item-append-icon:hover {
-        opacity: 0.6;
-      }
-
-      .list-item-title {
-        width: calc(100% - $--item-icon-width * 2);
-        text-align: start;
-        padding: 5px 15px;
-        vertical-align: middle;
-        font-size: 1rem;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+      .list-item-info {
+        display: flex;
         overflow: hidden;
-      }
-      .list-item-title-success {
-        cursor: pointer;
-      }
-      .list-item-title-success:hover {
-        opacity: 0.7;
+        text-wrap: nowrap;
+        text-overflow: ellipsis;
+
+        .list-item-prepend-icon,
+        .list-item-append-icon {
+          width: $--item-icon-width;
+          text-align: center;
+          font-size: 1rem;
+          padding-top: 5px;
+        }
+
+        .list-item-append-icon:hover {
+          opacity: 0.6;
+        }
+
+        .list-item-title {
+          width: calc(100% - $--item-icon-width * 2);
+          text-align: start;
+          padding: 5px 15px;
+          vertical-align: middle;
+          font-size: 1rem;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          overflow: hidden;
+        }
+        .list-item-title-success {
+          cursor: pointer;
+        }
+        .list-item-title-success:hover {
+          opacity: 0.7;
+        }
       }
     }
-
   }
 }
+
 
 .v-theme--dark {
   .list-box {

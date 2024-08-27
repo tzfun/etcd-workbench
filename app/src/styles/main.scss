@@ -11,9 +11,10 @@ html, body, #app {
   height: 100%;
 }
 
+// 主窗口圆角
 .main-window-radius {
   border-radius: 10px;
-  border: 1px solid rgba(69, 67, 67, 0.41);
+  border: 1px solid rgba(216, 212, 212, 0.3);
 }
 
 ::-webkit-scrollbar {

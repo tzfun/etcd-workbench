@@ -87,7 +87,7 @@ const showFileContent = () => {
         @click="clickFileInput"
     >{{ text }}
     </v-btn>
-    <p v-if="promptText" class="prompt-text text-grey-lighten-1 mt-2">{{ promptText }}</p>
+    <p v-if="promptText" class="v-messages mt-2">{{ promptText }}</p>
     <div class="file-detail mt-2">
       <div class="d-flex" v-if="fileReadStatus != 'none'">
         <span class="label text-cyan">File:</span>

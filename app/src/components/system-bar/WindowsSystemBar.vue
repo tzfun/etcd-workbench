@@ -2,11 +2,11 @@
 
 import etcdLogo from "~/assets/etcd.png";
 import {appWindow} from "@tauri-apps/api/window";
-import {onMounted, ref} from "vue";
+import {computed, onMounted, reactive, ref} from "vue";
 import {_openSettingWindow} from "~/common/windows.ts";
 import SnapshotList from "~/components/SnapshotList.vue";
 import {_checkUpdateAndInstall, _emitGlobal, EventName} from "~/common/events.ts";
-import {_useSettings, _useUpdateInfo} from "~/common/store.ts";
+import {_useUpdateInfo} from "~/common/store.ts";
 
 const maximize = ref(false)
 
@@ -22,8 +22,16 @@ const updateInfo = _useUpdateInfo();
 
 const title = ref<string>('Etcd Workbench')
 
-onMounted(async () => {
+const snapshotListState = reactive({
+  show: false,
+  len: 0
+})
 
+const showSnapshotList = computed<boolean>(() => {
+  return snapshotListState.show || snapshotListState.len > 0
+})
+
+onMounted(async () => {
   switch (props.windowLabel) {
     case 'main':
       title.value = 'Etcd Workbench'
@@ -36,6 +44,8 @@ onMounted(async () => {
   maximize.value = await appWindow.isMaximized()
 })
 
+
+
 const closeApp = () => {
   if (props.windowLabel === 'main') {
     _emitGlobal(EventName.CONFIRM_EXIT, null);
@@ -47,6 +57,14 @@ const closeApp = () => {
 const toggleMaximize = async () => {
   await appWindow.toggleMaximize()
   maximize.value = !maximize.value
+}
+
+const snapshotListLenChanged = (len: number) => {
+  snapshotListState.len = len
+}
+
+const snapshotListShowChanged = (show: boolean) => {
+  snapshotListState.show = show
 }
 
 </script>
@@ -73,17 +91,20 @@ const toggleMaximize = async () => {
 
       <v-btn v-if="updateInfo.valid"
              class="system-extend-btn text-none ms-2 pl-2 pr-2"
-             color="green"
-             text="New Version"
+             color="light-green-darken-1"
+             text="Update Workbench"
              variant="outlined"
              rounded
-             prepend-icon="mdi-update"
+             prepend-icon="mdi-bell-ring-outline"
              density="comfortable"
              size="small"
              @click="_checkUpdateAndInstall"
       ></v-btn>
 
-      <SnapshotList></SnapshotList>
+      <SnapshotList v-show="showSnapshotList"
+                    @length-changed="snapshotListLenChanged"
+                    @show-changed="snapshotListShowChanged"
+      ></SnapshotList>
 
       <v-btn class="system-extend-btn ms-2"
              icon="mdi-cog"
