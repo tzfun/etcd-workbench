@@ -1,6 +1,5 @@
 <script setup lang="ts">
 
-import logo from "~/assets/logo.png";
 import {appWindow} from "@tauri-apps/api/window";
 import {computed, onMounted, reactive, ref} from "vue";
 import {_openSettingWindow} from "~/common/windows.ts";
@@ -77,7 +76,7 @@ const snapshotListShowChanged = (show: boolean) => {
                 class="pr-0"
   >
     <v-icon class="me-2">
-      <v-img :src="logo"
+      <v-img src="/logo.png"
              cover
              :width="30"
              :height="30"

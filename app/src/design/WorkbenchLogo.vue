@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import logo from "~/assets/logo.png"
 
 defineProps({
   matrix: {
@@ -24,11 +23,11 @@ defineProps({
 <template>
   <div class="design user-select-none">
     <div class="container-matrix" align="center" v-if="matrix">
-      <img :src="logo" alt="etcd-workbench-logo" class="logo" :style="`width:${logoSize};`">
+      <img src="/logo.png" alt="etcd-workbench-logo" class="logo" :style="`width:${logoSize};`">
       <div class="words" :style="`font-size:${fontSize};line-height:${fontSize};`">Etcd Workbench</div>
     </div>
     <div class="container" v-else>
-      <img :src="logo" alt="etcd-workbench-logo" class="logo" :style="`width:${logoSize};`">
+      <img src="/logo.png" alt="etcd-workbench-logo" class="logo" :style="`width:${logoSize};`">
       <div class="words" :style="`font-size:${fontSize};line-height:${logoSize};`">Etcd Workbench</div>
     </div>
   </div>

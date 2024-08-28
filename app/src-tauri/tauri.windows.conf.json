@@ -60,7 +60,7 @@
         "visible": true
       }
     ],
-    "macOSPrivateApi": false,
+    "macOSPrivateApi": true,
     "security": {
       "csp": null
     },

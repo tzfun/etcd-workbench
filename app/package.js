@@ -1,4 +1,6 @@
-// mdi字体体积优化：https://www.shedloadofcode.com/blog/reduce-material-design-icons-font-to-7kb-and-automate-with-pyautogui
+//  mdi字体体积优化：https://www.shedloadofcode.com/blog/reduce-material-design-icons-font-to-7kb-and-automate-with-pyautogui
+//  图片尺寸调整：https://www.iloveimg.com/zh-cn/resize-image
+//  png转ico：https://cloudconvert.com/png-converter
 import path from 'path'
 import fs from 'fs'
 

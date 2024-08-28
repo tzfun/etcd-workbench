@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import {PropType, reactive, ref, watch} from "vue";
 import {ConnectionForm, ConnectionSshForm, ConnectionTlsForm, DefaultConnection} from "~/common/types.ts";
-import logo from '~/assets/logo.png'
 import SingleFileSelector from "~/components/SingleFileSelector.vue";
 import {Connection, ConnectionInfo, ErrorPayload, SessionData, SshIdentity} from "~/common/transport/connection.ts";
 import {_decodeBytesToString, _encodeStringToBytes, _isEmpty, _nonEmpty} from "~/common/utils.ts";
 import {_connect, _connectTest, _handleError, _saveConnection} from "~/common/services.ts";
 import {_emitLocal, _loading, _tipSuccess, _tipWarn, EventName} from "~/common/events.ts";
 import {VForm} from "vuetify/components";
+import * as process from "node:process";
 
 const emits = defineEmits(['on-save'])
 const props = defineProps({
@@ -353,9 +353,9 @@ const saveConnection = () => {
     <div class="mx-auto my-auto">
       <div class="header user-select-none cursor-default">
         <div class="header-icon">
-          <v-img :src="logo" cover/>
+          <v-img src="/logo.png" cover/>
         </div>
-        <h1 class="pt-0 pb-0 pl-5 header-title">Connection</h1>
+        <h1 class="pt-0 pb-0 pl-5 header-title">Server Connection</h1>
       </div>
       <v-sheet class="justify-center mx-auto mt-5">
         <v-card width="600" class="connection-card card-box-shadow" border>
