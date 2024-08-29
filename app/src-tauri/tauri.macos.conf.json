@@ -68,6 +68,7 @@
       "active": true,
       "targets": "all",
       "identifier": "com.beifengtz.etcdworkbench",
+      "category": "DeveloperTool",
       "icon": [
         "icons/macos/32x32.png",
         "icons/macos/128x128.png",

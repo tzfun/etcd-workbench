@@ -6,8 +6,7 @@
     "distDir": "../dist"
   },
   "package": {
-    "productName": "Etcd Workbench",
-    "version": "1.0.0"
+    "productName": "Etcd Workbench"
   },
   "tauri": {
     "allowlist": {
