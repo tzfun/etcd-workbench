@@ -1,0 +1,23 @@
+{
+    "version": "0.0.1",
+    "notes": "Test Version",
+    "pub_date": "2024-08-26T18:04:57Z",
+    "platforms": {
+      "darwin-x86_64": {
+        "signature": "Content of app.tar.gz.sig",
+        "url": "https://github.com/username/reponame/releases/download/v1.0.0/app-x86_64.app.tar.gz"
+      },
+      "darwin-aarch64": {
+        "signature": "Content of app.tar.gz.sig",
+        "url": "https://github.com/username/reponame/releases/download/v1.0.0/app-aarch64.app.tar.gz"
+      },
+      "linux-x86_64": {
+        "signature": "Content of app.AppImage.tar.gz.sig",
+        "url": "https://github.com/username/reponame/releases/download/v1.0.0/app-amd64.AppImage.tar.gz"
+      },
+      "windows-x86_64": {
+        "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K1BZWk1FcFNkU205UnBGQUY4V1kzZVZDK05RSTdHM2pHYzlnbDZUa3EwRjgyNlhrZks1c1FwdkFrL0dxUE5IalNrMENwUDBETVp2bFlpcWpMVU4zOFFRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzI0NjY2MjkzCWZpbGU6RXRjZCBXb3JrYmVuY2hfMC4wLjFfeDY0LXNldHVwLm5zaXMuemlwClZmZGsxSEpmc0MxbnNOMTc3bk1oalF4YTdZSS9qK2ZSd1VLSVEyN1RUTWgrMk8xNVJublR2L2FLcU9WTnMxbEgxZ3NDd0lxYnRxT2RCNWtIZVVzTEF3PT0K",
+        "url": "https://vr360-beifengtz.oss-cn-beijing.aliyuncs.com/etcd-workbench/bin/windows-x86_64/Etcd%20Workbench_0.0.1_x64-setup.nsis.zip"
+      }
+    }
+  }
