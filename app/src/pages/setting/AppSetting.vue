@@ -13,7 +13,7 @@ import {
 } from "~/common/events.ts";
 import {DEFAULT_SETTING_CONFIG, SettingConfig} from "~/common/transport/setting.ts";
 import {_debounce, _goBrowserPage} from "~/common/utils.ts";
-import WorkbenchLogo from "~/design/WorkbenchLogo.vue";
+import WorkbenchLogo from "~/components/WorkbenchLogo.vue";
 import {_loadSettings, _setLocalSettings, _useSettings} from "~/common/store.ts";
 import {appWindow} from "@tauri-apps/api/window";
 import {useTheme} from "vuetify";

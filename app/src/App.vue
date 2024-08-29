@@ -135,11 +135,6 @@ const setAppTheme = (appTheme: AppTheme) => {
 }
 
 const disableWebviewNativeEvents = () => {
-
-  if (window.location.hostname !== "tauri.localhost") {
-    return
-  }
-
   document.addEventListener('keydown', e => {
     let key = e.key.toLowerCase()
     if (e.ctrlKey && key == 'r') {
@@ -174,7 +169,6 @@ const disableWebviewNativeEvents = () => {
       ></MacSystemBar>
 
       <v-main class="fill-height position-relative" id="mainBody">
-
         <AppSetting v-if="windowLabel === 'setting'"
                     class="app-setting"
                     :platform="platform"

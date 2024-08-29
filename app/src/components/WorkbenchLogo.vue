@@ -61,5 +61,10 @@ defineProps({
       margin-left: 0;
     }
   }
+
+  .logo {
+    pointer-events: none;
+    cursor: default;
+  }
 }
 </style>
