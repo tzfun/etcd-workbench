@@ -1,7 +1,6 @@
 {
   "name": "etcd-workbench",
   "private": true,
-  "version": "1.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
