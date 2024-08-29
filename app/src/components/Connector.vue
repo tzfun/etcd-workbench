@@ -7,7 +7,7 @@ import {_decodeBytesToString, _encodeStringToBytes, _isEmpty, _nonEmpty} from "~
 import {_connect, _connectTest, _handleError, _saveConnection} from "~/common/services.ts";
 import {_emitLocal, _loading, _tipSuccess, _tipWarn, EventName} from "~/common/events.ts";
 import {VForm} from "vuetify/components";
-import * as process from "node:process";
+import EtcdLogo from "~/components/EtcdLogo.vue";
 
 const emits = defineEmits(['on-save'])
 const props = defineProps({
@@ -353,7 +353,7 @@ const saveConnection = () => {
     <div class="mx-auto my-auto">
       <div class="header user-select-none cursor-default">
         <div class="header-icon">
-          <v-img src="/logo.png" cover/>
+          <EtcdLogo :width="100" :height="100"></EtcdLogo>
         </div>
         <h1 class="pt-0 pb-0 pl-5 header-title">Server Connection</h1>
       </div>

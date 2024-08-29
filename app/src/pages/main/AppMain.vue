@@ -104,7 +104,7 @@ onMounted(async () => {
   }))
 
   eventUnListens.push(await listen(EventName.CONFIRM_EXIT, () => {
-    _confirm("Exist Workbench", "Are you sure you want to close the app?").then(() => {
+    _confirm("Confirm Exit", "Are you sure you want to exit?").then(() => {
       _exitApp()
     }).catch(() => {
     })

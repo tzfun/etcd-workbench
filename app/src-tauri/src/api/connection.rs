@@ -1,3 +1,5 @@
+use log::info;
+
 use crate::error::LogicError;
 use crate::etcd;
 use crate::etcd::etcd_connector::EtcdConnector;
@@ -13,11 +15,13 @@ pub async fn connect_test(connection: Connection) -> Result<(), LogicError> {
 #[tauri::command]
 pub async fn connect(connection: Connection) -> Result<SessionData, LogicError> {
     let session = etcd::new_connector(connection).await?;
+    info!("New connection: {}", session.id);
     Ok(session)
 }
 
 #[tauri::command]
 pub async fn disconnect(session: i32) -> Result<(), LogicError> {
     etcd::remove_connector(&session);
+    info!("Removed connection: {}", session);
     Ok(())
 }

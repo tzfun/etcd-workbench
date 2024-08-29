@@ -54,7 +54,7 @@ export function _loading(state: boolean) {
     _emitLocal(EventName.LOADING, state)
 }
 
-export function _confirm(title: string, text: string): Promise<undefined> {
+export function _confirm(title: string, text: string,): Promise<undefined> {
     return new Promise((resolve, reject) => {
         let dialog: DialogItem = {
             value: true,
@@ -72,7 +72,8 @@ export function _confirm(title: string, text: string): Promise<undefined> {
                 },
                 {
                     text: "Confirm",
-                    class: 'text-primary',
+                    variant: "elevated",
+                    color: 'primary',
                     callback: (item: DialogItem) => {
                         item.value = false
                         resolve(undefined)
