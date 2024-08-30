@@ -8,7 +8,7 @@ import {unregisterConfigListener} from "~/common/Config";
 import {clearLoginStatus, getBuildHash, getUser, getVersion, saveVersionInfo} from "~/common/Store";
 import {_nonEmpty} from "~/common/Util";
 import {Moon, Sunny, InfoFilled} from "@element-plus/icons-vue";
-import etcd from "~/assets/etcd.png";
+import logo from "~/assets/logo.png";
 import {ServerInfo} from "~/common/Types";
 import WorkbenchLogo from "~/design/WorkbenchLogo.vue";
 
@@ -18,7 +18,6 @@ const needLogin = ref(false)
 const status = ref<'login' | 'main' | 'none'>('none')
 const eventListener = ref<EventListener>()
 const user = ref()
-const etcdLogo = ref(etcd)
 const enableInfoDialog = ref(false)
 const workbenchInfo = reactive<ServerInfo>({
   version: '',
@@ -154,27 +153,33 @@ const showInfo = () => {
           @select="handleSelectHeader"
       >
         <div class="header-item" style="margin-left: 1em">
-          <el-image style="width: 30px; height: 30px" :src="etcdLogo" fit="cover"/>
+          <el-image style="width: 30px; height: 30px" :src="logo" fit="cover"/>
         </div>
         <span class="header-title">ETCD Workbench</span>
         <div class="flex-grow"/>
 
         <div class="header-item">
+          <a href="https://github.com/tzfun/etcd-workbench/releases/tag/App-1.0.0" target="_blank" title="Download App">
+            <svg viewBox="0 0 1024 1024"
+                 xmlns="http://www.w3.org/2000/svg"
+                 width="25"
+                 height="25">
+              <path d="M768 42.688a128 128 0 0 1 128 128V256c47.104 0 85.312 38.208 85.312 85.312v256c0 47.168-38.208 85.376-85.312 85.376v170.624a128 128 0 0 1-128 128H256a128 128 0 0 1-128-128v-170.624A85.312 85.312 0 0 1 42.688 597.312v-256C42.688 294.208 80.896 256 128 256V170.688a128 128 0 0 1 128-128h512z m42.688 639.936H213.312v170.688c0 23.104 18.368 42.048 41.472 42.688H768a42.688 42.688 0 0 0 42.688-41.472v-171.904z m-238.976 42.688c28.48 0 42.688 14.272 42.688 42.688 0 28.416-14.208 42.688-42.688 42.688H452.288c-28.48 0-42.688-14.272-42.688-42.688 0-28.416 14.208-42.688 42.688-42.688h119.424zM308.48 353.024h-52.16L161.088 597.312h52.352l20.16-55.488h97.664l21.312 55.488h53.696L308.416 353.024z m203.136 0H432.448v244.288h49.28v-92.16h32.192a281.6 281.6 0 0 0 51.2-3.456c8.64-1.92 17.152-5.76 25.6-11.584 8.32-5.888 15.232-13.888 20.672-24.128 5.44-10.24 8.192-22.848 8.192-37.76 0-19.52-4.736-35.392-14.144-47.616a64.064 64.064 0 0 0-35.2-23.936c-9.088-2.432-28.672-3.648-58.688-3.648z m227.712 0h-79.168v244.288h49.28v-92.16h32.192a281.6 281.6 0 0 0 51.2-3.456c8.64-1.92 17.152-5.76 25.6-11.584 8.32-5.888 15.296-13.888 20.736-24.128 5.44-10.24 8.128-22.848 8.128-37.76 0-19.52-4.736-35.392-14.144-47.616a64.064 64.064 0 0 0-35.2-23.936c-9.088-2.432-28.608-3.648-58.624-3.648z m-457.536 56.96l33.664 90.688H248.768l32.96-90.688zM505.6 394.304c17.792 0 29.568 0.64 35.456 1.728a34.112 34.112 0 0 1 19.84 10.816c5.248 5.76 7.872 13.12 7.872 22.016a32.384 32.384 0 0 1-20.992 30.976c-6.592 2.56-19.584 3.84-39.04 3.84h-27.008V394.24z m227.648 0c17.792 0 29.632 0.64 35.52 1.728a34.112 34.112 0 0 1 19.84 10.816c5.184 5.76 7.808 13.12 7.808 22.016 0 7.168-1.92 13.504-5.568 18.944a32.384 32.384 0 0 1-15.424 12.032c-6.592 2.56-19.584 3.84-39.04 3.84h-26.944V394.24zM769.216 128H256a42.688 42.688 0 0 0-42.688 41.472V256h597.376V170.688A42.688 42.688 0 0 0 769.216 128z"
+                    :fill="isDark ? 'white' : 'black'"/>
+            </svg>
+          </a>
+        </div>
+        <div class="header-item">
           <el-icon class="workbench-info" size="26" @click="showInfo"><InfoFilled /></el-icon>
         </div>
         <div class="header-item">
           <a href="https://www.github.com/tzfun/etcd-workbench" target="_blank" title="Fork from GitHub">
-            <svg t="1702187888545"
-                 class="icon"
-                 viewBox="0 0 1024 1024"
-                 version="1.1"
+            <svg viewBox="0 0 1024 1024"
                  xmlns="http://www.w3.org/2000/svg"
-                 p-id="8271"
                  width="25"
                  height="25">
               <path
                   d="M511.6 76.3C264.3 76.2 64 276.4 64 523.5 64 718.9 189.3 885 363.8 946c23.5 5.9 19.9-10.8 19.9-22.2v-77.5c-135.7 15.9-141.2-73.9-150.3-88.9C215 726 171.5 718 184.5 703c30.9-15.9 62.4 4 98.9 57.9 26.4 39.1 77.9 32.5 104 26 5.7-23.5 17.9-44.5 34.7-60.8-140.6-25.2-199.2-111-199.2-213 0-49.5 16.3-95 48.3-131.7-20.4-60.5 1.9-112.3 4.9-120 58.1-5.2 118.5 41.6 123.2 45.3 33-8.9 70.7-13.6 112.9-13.6 42.4 0 80.2 4.9 113.5 13.9 11.3-8.6 67.3-48.8 121.3-43.9 2.9 7.7 24.7 58.3 5.5 118 32.4 36.8 48.9 82.7 48.9 132.3 0 102.2-59 188.1-200 212.9 23.5 23.2 38.1 55.4 38.1 91v112.5c0.8 9 0 17.9 15 17.9 177.1-59.7 304.6-227 304.6-424.1 0-247.2-200.4-447.3-447.5-447.3z"
-                  p-id="8272"
                   :fill="isDark ? 'white' : 'black'"/>
             </svg>
           </a>
@@ -245,6 +250,21 @@ const showInfo = () => {
           <div class="info-item">
             <div class="info-label">Build Hash</div>
             <div class="info-content"><strong>{{ workbenchInfo.buildHash }}</strong></div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">App</div>
+            <div class="info-content">
+              <a class="link" href="https://github.com/tzfun/etcd-workbench/releases/tag/App-1.0.0" target="_blank">Download</a>
+              <svg
+                  style="margin-left: 5px"
+                  viewBox="0 0 1024 1024"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="25"
+                  height="25">
+                <path d="M245.76 286.72h552.96c124.928 0 225.28 100.352 225.28 225.28s-100.352 225.28-225.28 225.28H0V532.48c0-135.168 110.592-245.76 245.76-245.76z m133.12 348.16V401.408H348.16v178.176l-112.64-178.176H204.8V634.88h30.72v-178.176L348.16 634.88h30.72z m182.272-108.544v-24.576h-96.256v-75.776h110.592v-24.576h-141.312V634.88h143.36v-24.576h-112.64v-83.968h96.256z m100.352 28.672l-34.816-151.552h-34.816l55.296 233.472H675.84l47.104-161.792 4.096-20.48 4.096 20.48 47.104 161.792h28.672l57.344-233.472h-34.816l-32.768 151.552-4.096 30.72-6.144-30.72-40.96-151.552h-30.72l-40.96 151.552-6.144 30.72-6.144-30.72z"
+                      fill="#EE502F"/>
+              </svg>
+            </div>
           </div>
           <div class="info-item">
             <div class="info-label">Open Source</div>

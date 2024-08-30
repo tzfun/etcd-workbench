@@ -1,8 +1,6 @@
 <script setup lang="ts">
-import etcd from "~/assets/etcd.png"
-import {ref} from "vue";
-const etcdLogo = ref(etcd)
-const props = defineProps({
+import logo from "~/assets/logo.png"
+defineProps({
   matrix: {
     type: Boolean
   },
@@ -25,11 +23,11 @@ const props = defineProps({
 <template>
   <div class="design">
     <div class="container-matrix" align="center" v-if="matrix">
-      <img :src="etcdLogo" class="logo" :style="`width:${logoSize};`">
+      <img :src="logo" class="logo" :style="`width:${logoSize};`">
       <div class="words" :style="`font-size:${fontSize};line-height:${logoSize};`">Workbench</div>
     </div>
     <div class="container" v-else>
-      <img :src="etcdLogo" class="logo" :style="`width:${logoSize};`">
+      <img :src="logo" class="logo" :style="`width:${logoSize};`">
       <div class="words" :style="`font-size:${fontSize};line-height:${logoSize};`">Workbench</div>
     </div>
   </div>
