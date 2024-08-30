@@ -13,7 +13,7 @@ import {_loadSettings, _useSettings, _useUpdateInfo} from "~/common/store.ts";
 import {DEFAULT_SETTING_CONFIG} from "~/common/transport/setting.ts";
 import {installUpdate} from "@tauri-apps/api/updater";
 
-const loading = ref(false)
+const loading = ref<boolean>(false)
 const dialogs = ref<DialogItem[]>([])
 const tips = ref<TipsItem[]>([])
 const platform = ref<string>('win32')
@@ -39,10 +39,6 @@ onMounted(async () => {
     if (systemTheme) {
       theme.global.name.value = systemTheme
     }
-  }))
-
-  eventUnListens.push(await appWindow.listen('tauri://menu', (e) => {
-    console.log('menu', e.payload)
   }))
 
   platform.value = await getPlatform()
@@ -103,7 +99,6 @@ onMounted(async () => {
     let updateInfo = _useUpdateInfo().value
     // 检查更新
     _checkUpdate().then(async (manifest) => {
-      console.log(manifest,settings.autoUpdate)
       updateInfo.valid = true
       updateInfo.latestVersion = manifest
 
@@ -176,18 +171,18 @@ const disableWebviewNativeEvents = () => {
         <AppMain v-else-if="windowLabel === 'main'"
                  :platform="platform"
         ></AppMain>
-
       </v-main>
     </v-layout>
 
     <!--    全局公共组件    -->
 
     <v-overlay
-        :model-value="loading"
+        v-model="loading"
         persistent
         data-tauri-drag-region
         attach="#mainBody"
         class="align-center justify-center"
+        :z-index="1000"
     >
       <v-progress-circular
           color="primary"
@@ -261,7 +256,7 @@ const disableWebviewNativeEvents = () => {
   width: 100%;
   height: calc(100% - 28px);
   position: absolute;
-  z-index: 10000;
+  z-index: 1;
   top: 28px;
   left: 0;
 }
