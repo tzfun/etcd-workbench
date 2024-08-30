@@ -3,6 +3,7 @@ export interface ServerInfo {
     needLogin?: boolean;
     version: string | null;
     buildHash: string | null;
+    enableHeartbeat?: boolean;
 }
 
 export interface KeyDTO {

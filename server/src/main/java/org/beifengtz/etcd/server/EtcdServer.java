@@ -79,6 +79,8 @@ public class EtcdServer {
                             Configuration.INSTANCE.setDataDir(value);
                         } else if ("configEncryptKey".equalsIgnoreCase(key)) {
                             Configuration.INSTANCE.setConfigEncryptKey(value);
+                        } else if ("enableHeartbeat".equalsIgnoreCase(key)) {
+                            Configuration.INSTANCE.setEnableHeartbeat(Boolean.parseBoolean(value));
                         }
                     }
                     //  读取 auth 配置

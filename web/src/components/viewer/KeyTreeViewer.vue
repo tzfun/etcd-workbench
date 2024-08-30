@@ -57,9 +57,7 @@ const editorChange = () => {
 }
 
 const editorSave = () => {
-  if (changed.value) {
-    saveKV()
-  }
+  saveKV()
 }
 
 const clickTreeNode = (node: TreeNode) => {
@@ -85,6 +83,9 @@ const clickTreeNode = (node: TreeNode) => {
 }
 
 const saveKV = () => {
+  if (!changed.value) {
+    return
+  }
   const key = currentNode.value!.path
   const value = editorRef.value.readDataString()
 

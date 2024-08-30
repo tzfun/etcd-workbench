@@ -21,6 +21,7 @@ import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.options.PutOption;
 import io.grpc.stub.StreamObserver;
 import io.netty.util.internal.StringUtil;
+import lombok.Getter;
 import org.beifengtz.etcd.server.config.Configuration;
 import org.beifengtz.etcd.server.entity.SshContext;
 import org.beifengtz.etcd.server.entity.bo.ClusterBO;
@@ -55,6 +56,7 @@ public class EtcdConnector {
 
     private static final Logger logger = LoggerFactory.getLogger(EtcdConnector.class);
 
+    @Getter
     private final String connKey;
     private final Client client;
     private long activeTime;
@@ -65,21 +67,24 @@ public class EtcdConnector {
         this.connKey = UUID.randomUUID().toString().replaceAll("-", "").toLowerCase(Locale.ROOT);
         this.activeTime = System.currentTimeMillis();
         this.sshContext = sshContext;
-    }
 
-    public String getConnKey() {
-        return connKey;
+        logger.debug("Created new connector: {}", connKey);
     }
 
     public void onActive() {
         activeTime = System.currentTimeMillis();
     }
 
-    boolean checkRelease() {
-        //  35秒无响应，释放连接
-        if (System.currentTimeMillis() - activeTime > TimeUnit.SECONDS.toMillis(35)) {
+    boolean checkActive() {
+        //  开启心跳时 35 秒检测一次是否有响应，否则 2 小时检测一次
+        long timeout = Configuration.INSTANCE.isEnableHeartbeat()
+                ? TimeUnit.SECONDS.toMillis(35)
+                : TimeUnit.HOURS.toMillis(2);
+
+        //  超时无响应，释放连接
+        if (System.currentTimeMillis() - activeTime > timeout) {
             client.close();
-            logger.debug("Connector closed by factory monitor. {}", connKey);
+            logger.warn("The connection will be disconnected due to long period of inactivity. {}", connKey);
             return true;
         }
         return false;
@@ -91,7 +96,6 @@ public class EtcdConnector {
             sshContext.getSession().disconnect();
         }
         EtcdConnectorFactory.onClose(connKey);
-        logger.debug("Connector closed by invoke. {}", connKey);
     }
 
     private String transferTarget(String target) {
@@ -112,7 +116,7 @@ public class EtcdConnector {
                 }
                 return parsedTarget;
             } catch (URISyntaxException e) {
-                logger.warn("Parse target failed: " + e.getMessage(), e);
+                logger.warn("Parse target failed: {}", e.getMessage(), e);
                 return target;
             }
         }

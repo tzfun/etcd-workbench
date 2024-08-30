@@ -63,10 +63,10 @@ public class EtcdConnectorFactory {
         nameResolverRegistry.register(new HttpResolverProvider());
         nameResolverRegistry.register(new HttpsResolverProvider());
 
-        //  每3秒检测一次连接
+        //  每3秒检测一次心跳连接
         ExecutorFactory.getThreadPool().scheduleWithFixedDelay(() -> {
-            CONNECTORS.entrySet().removeIf(entry -> entry.getValue().checkRelease());
-        }, 3, 3, TimeUnit.SECONDS);
+            CONNECTORS.entrySet().removeIf(entry -> entry.getValue().checkActive());
+        }, 20, 20, TimeUnit.SECONDS);
 
         logger.info("Initialized the connector factory");
     }
@@ -223,6 +223,14 @@ public class EtcdConnectorFactory {
     public static CompletableFuture<SessionBO> registerConnectorAsync(NewSessionDTO data) {
         try {
             EtcdConnector connector = newConnector(data);
+            SshDTO ssh = data.getSsh();
+            if (ssh == null) {
+                logger.info("Registered new connector: {} => {}:{}", connector.getConnKey(), data.getHost(), data.getPort());
+            } else {
+                logger.info("Registered new connector: {} => {}:{}[ssh {}@{}:{}]", connector.getConnKey(), data.getHost(),
+                        data.getPort(), ssh.getUser(), ssh.getHost(), ssh.getPort());
+            }
+
             return connector.kvGet(" ").thenCompose(kv -> {
                 CONNECTORS.put(connector.getConnKey(), connector);
                 logger.debug("Create a new etcd connector {}", connector.getConnKey());

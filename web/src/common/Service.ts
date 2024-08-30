@@ -1,6 +1,6 @@
 import request from '~/request'
 import {host} from "~/common/Config";
-import {SessionConfig, SessionStoreConfig} from "~/common/Types";
+import {ServerInfo, SessionConfig, SessionStoreConfig} from "~/common/Types";
 import {ResultData} from "~/request/type";
 import {_md5, _rsaEncryptPartly, _base64Decode} from "~/common/Util";
 import {getToken} from "~/common/Store";
@@ -335,7 +335,7 @@ export function _login(user: string, password: string): Promise<any> {
     })
 }
 
-export function _checkLogin(): Promise<any> {
+export function _checkLogin(): Promise<ServerInfo> {
     return request.post(host + PUBLIC_API_PREFIX + "/auth/check_login", getToken())
 }
 

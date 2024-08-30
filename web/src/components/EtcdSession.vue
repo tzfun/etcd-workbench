@@ -14,6 +14,7 @@ import {
   saveConf,
   unregisterConfigListener
 } from "~/common/Config";
+import {enableHeartbeat} from "~/common/Store";
 
 const emits = defineEmits(['change'])
 defineProps({
@@ -58,23 +59,25 @@ const onNewSession = ({sessionInfo, name}) => {
     name: name,
     key: key
   })
-  heartBeatId.value = setInterval(() => {
-    if (state.value != 'new') {
-      _heartBeat(key).catch(e => {
-        if (state.value !== 'new') {
-          onSessionClosed()
-          if (_nonEmpty(e)) {
-            ElMessage({
-              showClose: true,
-              message: e,
-              type: "error",
-              duration: 3000,
-            })
+  if (enableHeartbeat()) {
+    heartBeatId.value = setInterval(() => {
+      if (state.value != 'new') {
+        _heartBeat(key).catch(e => {
+          if (state.value !== 'new') {
+            onSessionClosed()
+            if (_nonEmpty(e)) {
+              ElMessage({
+                showClose: true,
+                message: e,
+                type: "error",
+                duration: 3000,
+              })
+            }
           }
-        }
-      })
-    }
-  }, 15000)
+        })
+      }
+    }, 15000)
+  }
 }
 
 const onSaveSession = (config: SessionStoreConfig) => {

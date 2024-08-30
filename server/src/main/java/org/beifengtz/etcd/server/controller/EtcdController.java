@@ -71,6 +71,7 @@ public class EtcdController {
     public ResultVO closeSession(@RequestParam String sessionId) {
         EtcdConnector connector = EtcdConnectorFactory.get(sessionId);
         connector.close();
+        log.info("Connection closed {}", sessionId);
         return ResultCode.OK.result(null);
     }
 

@@ -1,5 +1,8 @@
 package org.beifengtz.etcd.server.config;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
@@ -10,6 +13,8 @@ import java.util.Map;
  *
  * @author beifengtz
  */
+@Getter
+@Setter
 public class Configuration {
 
     public static final Configuration INSTANCE = new Configuration();
@@ -21,30 +26,9 @@ public class Configuration {
     private String configEncryptKey = "etcdWorkbench@*?";
     private boolean enableAuth;
     private final Map<String, String> users = new HashMap<>();
+    private boolean enableHeartbeat = true;
 
     private Configuration() {
-    }
-
-    public int getPort() {
-        return port;
-    }
-
-    public Configuration setPort(int port) {
-        this.port = port;
-        return this;
-    }
-
-    public int getEtcdExecuteTimeoutMillis() {
-        return etcdExecuteTimeoutMillis;
-    }
-
-    public Configuration setEtcdExecuteTimeoutMillis(int etcdExecuteTimeoutMillis) {
-        this.etcdExecuteTimeoutMillis = etcdExecuteTimeoutMillis;
-        return this;
-    }
-
-    public String getDataDir() {
-        return dataDir;
     }
 
     public File getUserDir(String user) {
@@ -57,33 +41,6 @@ public class Configuration {
 
     public File getUserTokenFile(String user) {
         return new File(dataDir + "/" + user + "/token");
-    }
-
-    public Configuration setDataDir(String dataDir) {
-        this.dataDir = dataDir;
-        return this;
-    }
-
-    public String getConfigEncryptKey() {
-        return configEncryptKey;
-    }
-
-    public Configuration setConfigEncryptKey(String configEncryptKey) {
-        this.configEncryptKey = configEncryptKey;
-        return this;
-    }
-
-    public boolean isEnableAuth() {
-        return enableAuth;
-    }
-
-    public Configuration setEnableAuth(boolean enableAuth) {
-        this.enableAuth = enableAuth;
-        return this;
-    }
-
-    public Map<String, String> getUsers() {
-        return users;
     }
 
     public void addUser(String user, String password) {

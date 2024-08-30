@@ -14,4 +14,5 @@ public class CheckLoginVO {
     private boolean needLogin;
     private String version;
     private String buildHash;
+    private boolean enableHeartbeat;
 }

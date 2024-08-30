@@ -113,7 +113,8 @@ public class AuthController {
     @HttpRequest(value = Mapping.PUBLIC_API_PREFIX + "/auth/check_login", method = Method.POST)
     public ResultVO checkLogin(@RequestBody String token) {
         CheckLoginVO result = new CheckLoginVO();
-        result.setEnableAuth(Configuration.INSTANCE.isEnableAuth());
+        Configuration conf = Configuration.INSTANCE;
+        result.setEnableAuth(conf.isEnableAuth());
         if (result.isEnableAuth()) {
             try {
                 verifyToken(token);
@@ -124,6 +125,7 @@ public class AuthController {
         String[] versionInfo = CommonUtil.getVersionInfo();
         result.setVersion(versionInfo[0]);
         result.setBuildHash(versionInfo[1]);
+        result.setEnableHeartbeat(conf.isEnableHeartbeat());
         return ResultCode.OK.result(result);
     }
 }

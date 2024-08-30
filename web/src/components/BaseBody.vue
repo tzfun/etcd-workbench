@@ -5,7 +5,7 @@ import type {TabPaneName} from 'element-plus'
 import {_checkLogin, _closeSession} from "~/common/Service";
 import {EventListener, pushEvent, registerEventListener} from "~/common/Event";
 import {unregisterConfigListener} from "~/common/Config";
-import {clearLoginStatus, getBuildHash, getUser, getVersion, saveVersionInfo} from "~/common/Store";
+import {clearLoginStatus, getBuildHash, getUser, getVersion, saveInfo} from "~/common/Store";
 import {_nonEmpty} from "~/common/Util";
 import {Moon, Sunny, InfoFilled} from "@element-plus/icons-vue";
 import logo from "~/assets/logo.png";
@@ -38,7 +38,7 @@ onBeforeMount(async () => {
     clearLoginStatus()
     status.value = 'main'
   }
-  saveVersionInfo(result.version, result.buildHash)
+  saveInfo(result.version, result.buildHash, result.enableHeartbeat)
 })
 
 onMounted(() => {

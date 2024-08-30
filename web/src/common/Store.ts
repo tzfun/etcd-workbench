@@ -5,7 +5,8 @@ let data = {
     user: <string | null>null,
     token: <string | null>null,
     version: <string | null>null,
-    buildHash: <string | null>null
+    buildHash: <string | null>null,
+    enableHeartbeat: <boolean>true,
 }
 
 export function loadStore() {
@@ -49,9 +50,10 @@ export function clearLoginStatus() {
     onDirty()
 }
 
-export function saveVersionInfo(version: string | null, buildHash: string | null) {
+export function saveInfo(version: string | null, buildHash: string | null, enableHeartbeat: boolean) {
     data.version = version
     data.buildHash = buildHash
+    data.enableHeartbeat = enableHeartbeat
     onDirty()
 }
 
@@ -61,6 +63,10 @@ export function getVersion(): string | null {
 
 export function getBuildHash(): string | null {
     return data.buildHash
+}
+
+export function enableHeartbeat(): boolean {
+    return data.enableHeartbeat
 }
 
 loadStore()
