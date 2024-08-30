@@ -46,11 +46,7 @@ pub fn open_main_window(app_handle: tauri::AppHandle) {
 #[tauri::command]
 pub async fn open_setting_window(app_handle: tauri::AppHandle, window: tauri::Window) {
     if let Some(setting) = window.get_window("setting") {
-        if setting.is_visible().unwrap() {
-            setting.set_focus().unwrap()
-        } else {
-            setting.show().unwrap();
-        }
+        setting.show().unwrap();
     } else {
         create_configured_window(&app_handle, "setting");
     }

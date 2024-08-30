@@ -20,15 +20,19 @@ def build_app_windows(target, build_platform):
     os.chdir('./app/')
     app_path = os.getcwd()
 
+    bundle_path = os.path.join(app_path, f'src-tauri/target/{target}/release/bundle')
+    if os.path.exists(bundle_path):
+        shutil.rmtree(bundle_path)
+
     execute(f'pnpm tauri build --target {target}')
 
     to_dir = os.path.join(root_path, 'bin', 'app', build_platform)
-    bundle_path = os.path.join(app_path, f'src-tauri/target/{target}/release/bundle/nsis')
 
-    files = os.listdir(bundle_path)
+    nsis_path = os.path.join(bundle_path, 'nsis')
+
     app_version = None
-    for file in files:
-        file_path = os.path.join(bundle_path, file)
+    for file in os.listdir(nsis_path):
+        file_path = os.path.join(nsis_path, file)
         filename = None
         if file.endswith('.exe'):
             if app_version is None:
@@ -56,14 +60,19 @@ def build_app_macos(target, build_platform):
     os.chdir('./app/')
     app_path = os.getcwd()
 
+    bundle_path = os.path.join(app_path, f'src-tauri/target/{target}/release/bundle')
+    if os.path.exists(bundle_path):
+        shutil.rmtree(bundle_path)
+
     execute(f'pnpm tauri build --target {target}')
 
     to_dir = os.path.join(root_path, 'bin', 'app', build_platform)
 
     dmg_bg_file = os.path.join(app_path, f'src-tauri/icons/macos/dmg-bg.png')
     dmg_icon_file = os.path.join(app_path, f'src-tauri/icons/macos/icon.icns')
-    macos_path = os.path.join(app_path, f'src-tauri/target/{target}/release/bundle/macos')
-    dmg_path = os.path.join(app_path, f'src-tauri/target/{target}/release/bundle/dmg')
+    
+    macos_path = os.path.join(bundle_path, 'macos')
+    dmg_path = os.path.join(bundle_path, 'dmg')
 
     app_version = None
     for file in os.listdir(dmg_path):
@@ -92,6 +101,10 @@ def build_app_macos(target, build_platform):
             copy_bundle_files(file_path, to_dir, filename)
     
     dmg_file = os.path.join(to_dir, f"{BUNDLE_NAME}-{app_version}-{build_platform}.dmg")
+
+    if os.path.exists(dmg_file):
+        os.unlink(dmg_file)
+
     create_dmg_cmd = f"""
 create-dmg \\
 --volname "{APP_NAME}" \\
