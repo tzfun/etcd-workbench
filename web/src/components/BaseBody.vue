@@ -152,10 +152,10 @@ const showInfo = () => {
           :ellipsis="false"
           @select="handleSelectHeader"
       >
-        <div class="header-item" style="margin-left: 1em">
+        <div class="header-item user-select-none pointer-events-none" style="margin-left: 1em">
           <el-image style="width: 30px; height: 30px" :src="logo" fit="cover"/>
         </div>
-        <span class="header-title">ETCD Workbench</span>
+        <span class="header-title user-select-none pointer-events-none">ETCD Workbench</span>
         <div class="flex-grow"/>
 
         <div class="header-item">

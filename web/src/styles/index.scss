@@ -134,3 +134,15 @@ code {
 .ͼ1.cm-focused {
   outline: none;
 }
+
+
+.user-select-none {
+  user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-user-select: none;
+}
+
+.pointer-events-none {
+  pointer-events: none;
+}

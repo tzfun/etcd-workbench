@@ -115,7 +115,10 @@ const loadNextPage = () => {
       }
 
       if (data.length > 0) {
-        paginationKeyCursor.value = data[data.length - 1].key
+        if (paginationKeyCursor.value != undefined) {
+          paginationKeyCursor.value = data[data.length - 1].key
+        }
+
         addKvListToTree(data)
         tableData.value.push(...data)
       }
@@ -608,11 +611,13 @@ const confirmCopyAndSave = () => {
       <key-tree-viewer ref="treeViewerRef"
                        v-if="loadedViewer.tree"
                        :data="treeData.children"
+                       :has-more-data="paginationKeyCursor != undefined"
                        @on-select="getKVDetail"
                        @on-save="putKeyValue"
                        @on-diff="diff"
                        @on-delete="del"
-                       @copy-and-save="onCopyAndSave"/>
+                       @copy-and-save="onCopyAndSave"
+                       @load-more="loadNextPage"/>
     </div>
     <div class="table-viewer"
          v-show="viewer === 'table'"
@@ -620,10 +625,12 @@ const confirmCopyAndSave = () => {
       <key-table-viewer ref="tableViewerRef"
                         v-if="loadedViewer.table"
                         :data="tableData"
+                        :has-more-data="paginationKeyCursor != undefined"
                         @on-edit="edit"
                         @on-diff="diff"
                         @on-delete="del"
-                        @copy-and-save="onCopyAndSave"/>
+                        @copy-and-save="onCopyAndSave"
+                        @load-more="loadNextPage"/>
     </div>
 
     <!-- 编辑弹窗 -->
@@ -666,33 +673,33 @@ const confirmCopyAndSave = () => {
                :close-on-click-modal="false"
                append-to-body
                align-center>
-      Version A:
-      <el-select v-model="versionDiffInfo.versionA"
-                 fit-input-width
-                 class="inline-flex"
-                 placeholder="Select language"
-                 @change="loadDiff(true)">
-        <el-option
-            v-for="item in versionDiffInfo.versionHistory"
-            :key="item"
-            :label="item"
-            :value="item"
-        >
-          <span style="float: left">{{ item }}</span>
-          <span v-if="item == versionDiffInfo.modRevision" class="version-option-tag">
-          latest
-        </span>
-          <span v-else-if="item == versionDiffInfo.createRevision" class="version-option-tag">
-          create
-        </span>
-        </el-option>
-      </el-select>
+      <div class="flex items-center">
+        <div class="diff-label">Version A:</div>
+        <el-select v-model="versionDiffInfo.versionA"
+                   fit-input-width
+                   class="diff-select"
+                   placeholder="Select language"
+                   @change="loadDiff(true)">
+          <el-option
+              v-for="item in versionDiffInfo.versionHistory"
+              :key="item"
+              :label="item"
+              :value="item"
+          >
+            <span style="float: left">{{ item }}</span>
+            <span v-if="item == versionDiffInfo.modRevision" class="version-option-tag">
+              latest
+            </span>
+            <span v-else-if="item == versionDiffInfo.createRevision" class="version-option-tag">
+              create
+            </span>
+          </el-option>
+        </el-select>
 
-      <div style="float: right">
-        Version B:
+        <div class="diff-label" style="margin-left: auto">Version B:</div>
         <el-select v-model="versionDiffInfo.versionB"
                    fit-input-width
-                   class="inline-flex"
+                   class="diff-select"
                    placeholder="Select language"
                    @change="loadDiff(false)">
           <el-option
@@ -703,20 +710,22 @@ const confirmCopyAndSave = () => {
           >
             <span style="float: left">{{ item }}</span>
             <span v-if="item == versionDiffInfo.modRevision" class="version-option-tag">
-            latest
-          </span>
+                latest
+              </span>
             <span v-else-if="item == versionDiffInfo.createRevision" class="version-option-tag">
-            create
-          </span>
+                create
+              </span>
           </el-option>
         </el-select>
       </div>
 
+
       <code-diff
           style="max-height: 70vh;min-height:50vh;"
           :old-string="versionDiffInfo.versionAContent"
+          :filename="`Revision: ${versionDiffInfo.versionA}`"
           :new-string="versionDiffInfo.versionBContent"
-          :file-name="versionDiffInfo.key"
+          :new-filename="`Revision: ${versionDiffInfo.versionB}`"
           :theme="isDark ? 'dark' : 'light'"
           output-format="side-by-side"/>
     </el-dialog>
@@ -822,4 +831,13 @@ $--editor-label-width: 60px;
   width: calc(100% - $--editor-label-width);
 }
 
+.diff-label {
+  width: 70px;
+  font-size: 0.9em;
+  color: #168f8f;
+  font-weight: bold;
+}
+.diff-select {
+  width: 200px;
+}
 </style>

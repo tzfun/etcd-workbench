@@ -5,9 +5,15 @@ import {reactive} from "vue";
 import {_isEmpty} from "~/common/Util";
 
 const props = defineProps({
-  data: Array<KeyDTO>
+  data: {
+    type: Array<KeyDTO>,
+    required: true
+  },
+  hasMoreData: {
+    type: Boolean
+  }
 })
-const emits = defineEmits(['on-edit', 'on-diff', 'on-delete', 'copy-and-save'])
+const emits = defineEmits(['on-edit', 'on-diff', 'on-delete', 'copy-and-save', 'load-more'])
 
 const keySearch = ref()
 const selectedKey = ref<string[]>([])
@@ -140,6 +146,10 @@ defineExpose({
           @size-change="handlePaginationSizeChange"
           @current-change="handlePaginationPageChange"
       />
+      <el-button type="primary"
+                 v-show="hasMoreData"
+                 @click="emits('load-more')"
+      >Load More</el-button>
     </div>
   </div>
 </template>

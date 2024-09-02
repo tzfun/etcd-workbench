@@ -14,15 +14,22 @@ const EMPTY_KV = {
   lease: 0
 }
 const props = defineProps({
-  data: Array<TreeNode>,
+  data: {
+    type: Array<TreeNode>,
+    required: true
+  },
+  hasMoreData: {
+    type: Boolean
+  }
+
 })
-const emits = defineEmits(['on-select', 'on-save', 'on-delete', 'on-diff', 'copy-and-save'])
+const emits = defineEmits(['on-select', 'on-save', 'on-delete', 'on-diff', 'copy-and-save', 'load-more'])
 
 const keySearch = ref()
 const treeRef = ref()
 const editorRef = ref()
 const currentNode = ref<TreeNode>()
-const changed = ref<Boolean>()
+const changed = ref<boolean>()
 const treeDefaultProps = {
   children: 'children',
   label: 'label'
@@ -172,6 +179,12 @@ defineExpose({
           </template>
         </el-tree>
       </div>
+      <div class="load-more-btn ep-button--primary"
+           @click="emits('load-more')"
+           v-show="hasMoreData"
+      >
+        Load More
+      </div>
     </div>
     <div class="tree-editor">
       <editor ref="editorRef"
@@ -183,7 +196,7 @@ defineExpose({
               @save="editorSave">
         <template #headerAppender>
           <div>
-            <el-button type="primary" :icon="Tickets" size="small" @click="saveKV">Save{{
+            <el-button type="primary" :icon="Tickets" size="small" @click="saveKV" v-show="changed">Save{{
                 changed ? " *" : ""
               }}
             </el-button>
@@ -226,12 +239,30 @@ defineExpose({
     padding-right: $--tree-aside-padding-right;
     position: relative;
 
+    $--tree-search-input-height: 30px;
+    $--tree-load-more-height: 20px;
+
     .search-input {
-      height: 30px;
+      height: $--tree-search-input-height;
+    }
+
+    .load-more-btn {
+      height: $--tree-load-more-height;
+      width: 100%;
+      cursor: pointer;
+      text-align: center;
+      background: #168f8f;
+      color: white;
+      font-size: 0.9em;
+      line-height: $--tree-load-more-height;
+    }
+
+    .load-more-btn:hover {
+      opacity: 0.61;
     }
 
     .tree {
-      height: calc(100% - 30px);
+      height: calc(100% - $--tree-search-input-height - $--tree-load-more-height);
       overflow-y: auto;
 
       .tree-node-icon {

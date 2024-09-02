@@ -169,7 +169,10 @@ const loadNextPage = () => {
       }
 
       if (data.length > 0) {
-        paginationKeyCursor.value = data[data.length - 1].key
+        if (paginationKeyCursor.value != undefined) {
+          paginationKeyCursor.value = data[data.length - 1].key
+        }
+        
         addKvListToTree(data)
       }
     }).catch((e: ErrorPayload | string) => {
