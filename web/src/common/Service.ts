@@ -360,3 +360,10 @@ export function _importKeys(sessionId: string, data: string): Promise<any> {
         data: data
     })
 }
+
+export function _defragment(sessionId: string, target: string): Promise<any> {
+    return request.get(host + PRIVATE_API_PREFIX + "/session/etcd/cluster/defragment", {
+        sessionId,
+        target
+    })
+}

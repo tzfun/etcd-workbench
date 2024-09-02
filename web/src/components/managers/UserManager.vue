@@ -166,24 +166,51 @@ const add = () => {
 }
 
 const doAuthEnable = () => {
-  _authEnable(props.sessionKey!).then(() => {
-    ElMessage({
-      type: 'success',
-      message: 'Enabled authentication',
+
+  ElMessageBox.confirm(
+      `Are you sure you want to turn on the authentication function? You will need to reconnect after executing?`,
+      'System',
+      {
+        confirmButtonText: 'OK',
+        cancelButtonText: 'Cancel',
+        dangerouslyUseHTMLString: true,
+        type: 'warning',
+      }
+  ).then(() => {
+    _authEnable(props.sessionKey!).then(() => {
+      ElMessage({
+        type: 'success',
+        message: 'Enabled authentication',
+      })
+    }).catch(e => {
+      console.error(e)
     })
-  }).catch(e => {
-    console.error(e)
+  }).catch(() => {
+
   })
 }
 
 const doAuthDisable = () => {
-  _authDisable(props.sessionKey!).then(() => {
-    ElMessage({
-      type: 'success',
-      message: 'Disabled authentication',
+  ElMessageBox.confirm(
+      `Are you sure you want to turn off authentication? You will need to reconnect after executing this command?`,
+      'System',
+      {
+        confirmButtonText: 'OK',
+        cancelButtonText: 'Cancel',
+        dangerouslyUseHTMLString: true,
+        type: 'warning',
+      }
+  ).then(() => {
+    _authDisable(props.sessionKey!).then(() => {
+      ElMessage({
+        type: 'success',
+        message: 'Disabled authentication',
+      })
+    }).catch(e => {
+      console.error(e)
     })
-  }).catch(e => {
-    console.error(e)
+  }).catch(() => {
+
   })
 }
 </script>

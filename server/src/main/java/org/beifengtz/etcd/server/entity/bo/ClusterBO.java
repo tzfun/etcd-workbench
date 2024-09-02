@@ -13,8 +13,12 @@ import java.util.List;
 @Data
 public class ClusterBO {
     private String clusterId;
+    private String memberId;
     private String leaderId;
     private long revision;
     private long raftTerm;
+    private long raftIndex;
+    private long dbSize;
+    private String version;
     private List<MemberBO> members = List.of();
 }

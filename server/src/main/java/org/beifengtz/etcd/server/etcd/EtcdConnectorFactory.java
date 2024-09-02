@@ -165,7 +165,7 @@ public class EtcdConnectorFactory {
             builder.password(CommonUtil.toByteSequence(data.getPassword()));
         }
 
-        return new EtcdConnector(builder.build(), sshContext);
+        return new EtcdConnector(builder, sshContext);
     }
 
     /**

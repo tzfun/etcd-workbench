@@ -3,6 +3,7 @@ package org.beifengtz.etcd.server.etcd;
 import io.etcd.jetcd.Auth;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
+import io.etcd.jetcd.ClientBuilder;
 import io.etcd.jetcd.KV;
 import io.etcd.jetcd.KeyValue;
 import io.etcd.jetcd.Response.Header;
@@ -63,12 +64,14 @@ public class EtcdConnector {
     private final Client client;
     private long activeTime;
     private final SshContext sshContext;
+    private final String target;
 
-    public EtcdConnector(Client client, SshContext sshContext) {
-        this.client = client;
+    public EtcdConnector(ClientBuilder clientBuilder, SshContext sshContext) {
+        this.client = clientBuilder.build();
         this.connKey = UUID.randomUUID().toString().replaceAll("-", "").toLowerCase(Locale.ROOT);
         this.activeTime = System.currentTimeMillis();
         this.sshContext = sshContext;
+        target = clientBuilder.target();
 
         logger.debug("Created new connector: {}", connKey);
     }
@@ -680,7 +683,8 @@ public class EtcdConnector {
         Map<String, MemberBO> memberMap = new HashMap<>();
         Map<String, AlarmType> alarmMap = new HashMap<>();
 
-        var futures = new CompletableFuture[2];
+
+        var futures = new CompletableFuture[3];
         futures[0] = client.getClusterClient()
                 .listMember()
                 .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS)
@@ -688,9 +692,8 @@ public class EtcdConnector {
                     Header header = response.getHeader();
 
                     cluster.setClusterId(Long.toUnsignedString(header.getClusterId()));
-                    cluster.setLeaderId(Long.toUnsignedString(header.getMemberId()));
+                    cluster.setMemberId(Long.toUnsignedString(header.getMemberId()));
                     cluster.setRevision(header.getRevision());
-                    cluster.setRaftTerm(header.getRaftTerm());
                     List<Member> memberList = response.getMembers();
                     if (!memberList.isEmpty()) {
                         cluster.setMembers(memberList.stream().map(o -> {
@@ -707,6 +710,17 @@ public class EtcdConnector {
                     for (AlarmMember alarmMember : response.getAlarms()) {
                         alarmMap.put(Long.toUnsignedString(alarmMember.getMemberId()), alarmMember.getAlarmType());
                     }
+                });
+
+        futures[2] = client.getMaintenanceClient()
+                .statusMember(target)
+                .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS)
+                .thenAccept(response -> {
+                    cluster.setLeaderId(Long.toUnsignedString(response.getLeader()));
+                    cluster.setDbSize(response.getDbSize());
+                    cluster.setVersion(response.getVersion());
+                    cluster.setRaftTerm(response.getRaftTerm());
+                    cluster.setRaftIndex(response.getRaftIndex());
                 });
 
         return CompletableFuture.allOf(futures).thenApply(v -> {
@@ -790,6 +804,10 @@ public class EtcdConnector {
                 .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
     }
 
+    public CompletableFuture<MemberStatusBO> maintenanceMemberStatus() {
+        return maintenanceMemberStatus(target);
+    }
+
     /**
      * 获取节点的状态信息
      *
@@ -798,10 +816,17 @@ public class EtcdConnector {
      */
     public CompletableFuture<MemberStatusBO> maintenanceMemberStatus(String target) {
         onActive();
+        if (org.beifengtz.jvmm.common.util.StringUtil.isEmpty(target)) {
+            target = this.target;
+        }
         return client.getMaintenanceClient()
                 .statusMember(transferTarget(target))
                 .thenApply(MemberStatusBO::parseFrom)
                 .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
+    }
+
+    public CompletableFuture<DefragmentResponse> maintenanceDefragment() {
+        return maintenanceDefragment(target);
     }
 
     /**
@@ -811,6 +836,9 @@ public class EtcdConnector {
      */
     public CompletableFuture<DefragmentResponse> maintenanceDefragment(String target) {
         onActive();
+        if (org.beifengtz.jvmm.common.util.StringUtil.isEmpty(target)) {
+            target = this.target;
+        }
         return client.getMaintenanceClient()
                 .defragmentMember(transferTarget(target))
                 .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
