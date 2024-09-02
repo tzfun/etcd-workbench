@@ -18,6 +18,8 @@ import io.etcd.jetcd.maintenance.DefragmentResponse;
 import io.etcd.jetcd.maintenance.SnapshotResponse;
 import io.etcd.jetcd.options.DeleteOption;
 import io.etcd.jetcd.options.GetOption;
+import io.etcd.jetcd.options.GetOption.SortOrder;
+import io.etcd.jetcd.options.GetOption.SortTarget;
 import io.etcd.jetcd.options.PutOption;
 import io.grpc.stub.StreamObserver;
 import io.netty.util.internal.StringUtil;
@@ -241,6 +243,30 @@ public class EtcdConnector {
                 .withRange(CommonUtil.toByteSequence("\0"))
                 .withKeysOnly(true)
                 .build())
+                .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * 分页获取所有Key
+     *
+     * @param cursorKey key 游标位
+     * @param limit     获取数量
+     * @return keys
+     */
+    public CompletableFuture<List<KeyValueBO>> kvGetAllKeysPaging(String cursorKey, long limit) {
+        if (org.beifengtz.jvmm.common.util.StringUtil.isEmpty(cursorKey)) {
+            cursorKey = "\0";
+        } else {
+            cursorKey += "\0";
+        }
+        GetOption option = GetOption.newBuilder()
+                .withKeysOnly(true)
+                .withRange(CommonUtil.toByteSequence("\0"))
+                .withSortField(SortTarget.KEY)
+                .withSortOrder(SortOrder.ASCEND)
+                .withLimit(limit)
+                .build();
+        return kvGet(cursorKey, option)
                 .orTimeout(Configuration.INSTANCE.getEtcdExecuteTimeoutMillis(), TimeUnit.MILLISECONDS);
     }
 

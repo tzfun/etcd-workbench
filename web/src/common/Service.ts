@@ -1,6 +1,6 @@
 import request from '~/request'
 import {host} from "~/common/Config";
-import {ServerInfo, SessionConfig, SessionStoreConfig} from "~/common/Types";
+import {KeyValueDTO, ServerInfo, SessionConfig, SessionStoreConfig} from "~/common/Types";
 import {ResultData} from "~/request/type";
 import {_md5, _rsaEncryptPartly, _base64Decode} from "~/common/Util";
 import {getToken} from "~/common/Store";
@@ -82,8 +82,16 @@ export function _heartBeat(sessionId: string): Promise<any> {
     return request.get(host + PRIVATE_API_PREFIX + "/session/heart_beat", {sessionId: sessionId}, undefined, false, false)
 }
 
-export function _getAllKeys(sessionId: string): Promise<any> {
+export function _getAllKeys(sessionId: string): Promise<KeyValueDTO[]> {
     return request.get(host + PRIVATE_API_PREFIX + "/session/etcd/kv/get_all_keys", {sessionId: sessionId})
+}
+
+export function _getAllKeysPaging(sessionId: string, cursor: string, limit: number): Promise<KeyValueDTO[]> {
+    return request.get(host + PRIVATE_API_PREFIX + "/session/etcd/kv/get_all_keys_paging", {
+        sessionId,
+        cursor,
+        limit
+    })
 }
 
 export function _getKV(sessionId: string, key: string, version?: number | null): Promise<any> {

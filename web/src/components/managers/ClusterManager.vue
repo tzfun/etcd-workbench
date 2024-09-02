@@ -134,6 +134,7 @@ const getStatus = (target: string) => {
     <el-dialog
         v-model="showStatusDialog"
         title="Cluster Member Status"
+        append-to-body
         width="500px">
       <el-descriptions :column="1" border>
         <el-descriptions-item label="DB Size">

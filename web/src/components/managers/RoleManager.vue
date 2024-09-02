@@ -202,6 +202,7 @@ const grantPermission = () => {
 
     <el-dialog v-model="showPermissionDialog"
                :title="`Role permissions: ${curRole}`"
+               append-to-body
                align-center>
 
       <el-card class="mb-10">

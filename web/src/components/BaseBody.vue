@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import {isDark, toggleDark} from "~/composables";
+import {isDark} from "~/composables";
 import {reactive, ref} from 'vue'
 import type {TabPaneName} from 'element-plus'
 import {_checkLogin, _closeSession} from "~/common/Service";
@@ -233,6 +233,7 @@ const showInfo = () => {
 
     <el-dialog
         v-model="enableInfoDialog"
+        append-to-body
         title="About"
         width="600"
     >

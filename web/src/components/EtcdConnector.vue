@@ -361,8 +361,8 @@ defineExpose({
 
           <el-form-item label="Cert Mode">
             <el-radio-group v-model="form.cert.caType">
-              <el-radio label="public">Public CA</el-radio>
-              <el-radio label="custom">Custom CA</el-radio>
+              <el-radio value="public">Public CA</el-radio>
+              <el-radio value="custom">Custom CA</el-radio>
             </el-radio-group>
           </el-form-item>
 
@@ -391,8 +391,8 @@ defineExpose({
 
             <el-form-item label="Client Cert">
               <el-radio-group v-model="form.cert.certMode">
-                <el-radio label="password">Cert + Password</el-radio>
-                <el-radio label="key">Cert + Key</el-radio>
+                <el-radio value="password">Cert + Password</el-radio>
+                <el-radio value="key">Cert + Key</el-radio>
               </el-radio-group>
             </el-form-item>
 

@@ -136,7 +136,11 @@ impl EtcdConnector {
         limit: i64,
     ) -> Result<Vec<SerializableKeyValue>, Error> {
         let mut kv_client = self.client.kv_client();
-        let key = self.get_full_key(cursor_key);
+
+        let mut key = self.get_full_key(cursor_key);
+
+        key.push(0);
+
         let get_options = GetOptions::new()
             .with_from_key()
             .with_keys_only()

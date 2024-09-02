@@ -71,7 +71,7 @@ public class EtcdConnectorFactory {
         logger.info("Initialized the connector factory");
     }
 
-    public static EtcdConnector get(String sessionId) {
+    public static EtcdConnector get(String sessionId) throws EtcdSessionLostException {
         if (sessionId == null) {
             throw new EtcdSessionLostException("Session lost");
         }

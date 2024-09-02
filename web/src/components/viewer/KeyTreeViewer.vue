@@ -214,6 +214,7 @@ defineExpose({
 
 .tree-container {
   width: 100%;
+  height: 100%;
   display: flex;
 
   $--tree-aside-width: 300px;

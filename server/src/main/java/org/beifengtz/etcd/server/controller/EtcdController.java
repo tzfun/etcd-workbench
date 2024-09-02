@@ -69,8 +69,12 @@ public class EtcdController {
 
     @HttpRequest(Mapping.PRIVATE_API_PREFIX + "/session/close")
     public ResultVO closeSession(@RequestParam String sessionId) {
-        EtcdConnector connector = EtcdConnectorFactory.get(sessionId);
-        connector.close();
+        try {
+            EtcdConnector connector = EtcdConnectorFactory.get(sessionId);
+            connector.close();
+        } catch (Exception e) {
+            log.debug("Close session", e);
+        }
         log.info("Connection closed {}", sessionId);
         return ResultCode.OK.result(null);
     }
@@ -86,6 +90,16 @@ public class EtcdController {
     public void getAllKeys(@RequestParam String sessionId, ResponseFuture future) {
         EtcdConnector connector = EtcdConnectorFactory.get(sessionId);
         connector.kvGetAllKeys().whenComplete(((keyValue, throwable) -> handleEtcdComplete(future, keyValue, throwable)));
+    }
+
+    @HttpRequest(Mapping.PRIVATE_API_PREFIX + "/session/etcd/kv/get_all_keys_paging")
+    public void kvGetAllKeysPaging(@RequestParam String sessionId,
+                                   @RequestParam String cursor,
+                                   @RequestParam long limit,
+                                   ResponseFuture future) {
+        EtcdConnector connector = EtcdConnectorFactory.get(sessionId);
+        connector.kvGetAllKeysPaging(cursor, limit)
+                .whenComplete(((keyValue, throwable) -> handleEtcdComplete(future, keyValue, throwable)));
     }
 
     @HttpRequest(Mapping.PRIVATE_API_PREFIX + "/session/etcd/kv/get")

@@ -4,6 +4,14 @@
   overflow: hidden;
   position: relative;
   height: max-content;
+  user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-user-select: none;
+
+  .logo {
+    pointer-events: none;
+  }
 
   .words {
     color: #7c7d87;

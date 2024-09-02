@@ -162,10 +162,13 @@ const loadNextPage = () => {
   let cursor = paginationKeyCursor.value
   if (cursor != undefined) {
     loadingStore.loadMore = true
-    _getAllKeysPaging(props.session?.id, cursor, LIMIT_PER_PAGE.value as number).then(data => {
-      if (data.length == 0) {
+    let limit: number = LIMIT_PER_PAGE.value as number
+    _getAllKeysPaging(props.session?.id, cursor, limit).then((data: KeyValue[]) => {
+      if (data.length < limit) {
         paginationKeyCursor.value = undefined
-      } else {
+      }
+
+      if (data.length > 0) {
         paginationKeyCursor.value = data[data.length - 1].key
         addKvListToTree(data)
       }

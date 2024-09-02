@@ -10,6 +10,7 @@ import io.netty.handler.ssl.ApplicationProtocolConfig;
 import io.netty.handler.ssl.ApplicationProtocolNames;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslProvider;
+import org.beifengtz.etcd.server.entity.bo.KeyValueBO;
 import org.beifengtz.etcd.server.entity.dto.NewSessionDTO;
 import org.beifengtz.etcd.server.entity.dto.SshDTO;
 import org.beifengtz.etcd.server.etcd.EtcdConnector;
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -139,5 +141,27 @@ public class EtcdTest {
                 .withRange(ByteSequence.EMPTY)
                 .build();
         System.out.println(connector.kvGet("/", option).get());
+    }
+
+    @Test
+    public void testPagination() throws Exception {
+        NewSessionDTO config = new NewSessionDTO();
+        config.setHost("127.0.0.1");
+        config.setPort(2379);
+
+        EtcdConnector connector = EtcdConnectorFactory.newConnector(config);
+        String cursorKey = null;
+        int page = 1;
+        final int LIMIT = 2;
+        while (true) {
+            List<KeyValueBO> kvList = connector.kvGetAllKeysPaging(cursorKey, LIMIT).get();
+            System.out.println(page + " ==> " + kvList);
+            if (kvList.size() < LIMIT) {
+                break;
+            }
+            cursorKey = kvList.get(kvList.size() - 1).getKey() + "\0";
+            page++;
+        }
+
     }
 }

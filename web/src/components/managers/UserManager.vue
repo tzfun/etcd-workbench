@@ -221,6 +221,7 @@ const doAuthDisable = () => {
     <el-dialog v-model="showAddDialog"
                title="Add user"
                :close-on-click-modal="false"
+               append-to-body
                width="500"
                align-center>
       <el-form :model="addForm" label-position="left" label-suffix=":" label-width="100px">
@@ -243,6 +244,7 @@ const doAuthDisable = () => {
     <el-dialog v-model="showRoleDialog"
                title="User roles"
                width="700"
+               append-to-body
                align-center>
       <el-row class="mt-4 mb-4">
         <el-col :span="12">
