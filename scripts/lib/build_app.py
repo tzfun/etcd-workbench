@@ -144,6 +144,7 @@ def build_web(bin_name, skip_merge_jar = False):
     
     os.chdir('web')
     web_path = os.getcwd()
+    execute("pnpm install")
     execute("pnpm run build")
 
     print("Deleting server static files...")
@@ -154,12 +155,13 @@ def build_web(bin_name, skip_merge_jar = False):
     shutil.copytree(os.path.join(web_path, 'dist'), server_static_path)
 
     os.chdir('../server')
-    execute('gradlew clean')
+    graldew_script = os.path.join(root_path, 'server', 'gradlew')
+    execute(f'{graldew_script} clean')
 
     if skip_merge_jar:
-        execute('gradlew jar -PskipMerge=1', 'utf-8')
+        execute(f'{graldew_script} jar -PskipMerge=1', 'utf-8')
     else:
-        execute('gradlew jar', 'utf-8')
+        execute(f'{graldew_script} jar', 'utf-8')
     
     os.chdir('../')
     to_dir = os.path.join(root_path, 'bin', 'web', bin_name)

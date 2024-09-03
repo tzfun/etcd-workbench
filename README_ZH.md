@@ -1,22 +1,49 @@
 中文版 | [English](./README.md)
 
 <div align=center>
-<img src=web/src/design/logo.png/>
+<img src=web/src/assets/logo.png width=300/>
 </div>
 
 # Etcd Workbench
 
-一个漂亮的、轻量的、可私有化部署的 ETCD V3 客户端，支持SSL、SSH Tunnel连接，支持多账户 session 管理。
+一个漂亮、轻量的 ETCD V3 客户端，提供 App 和 Web 版本，支持SSL、SSH Tunnel连接。
 
-# 为什么选择它？
+# 特点及功能
 
-1. 官方的客户端工具支持功能少，在线编辑效果差，本工具提供了SSH tunnel、在线代码编辑、版本对比、快捷复制等功能，让配置中心管理更高效！
-2. 大部分好用的第三方工具需要收费💔
-3. 本工具完全开源免费！
+1. 本工具完全开源免费！
+2. 提供 App 和 Web 两个版本，App直接下载安装到本地，Web版本可直接或使用 Docker 部署到服务器
+3. 非常轻量，App 包体仅 **4M** ，Web包体仅 **15M**
+4. 支持主题切换
+5. 支持多连接管理
+6. 支持 SSL、SSH 连接
+7. 支持集群信息查看、版本压缩、数据备份等功能
+8. 支持 Key-Value 编辑、多语言格式高亮、批量导入/导出
+9. 支持 Key 多个版本内容比较
+10. 支持 Lease 管理：创建、删除、Key绑定关系、倒计时显示
+11. 支持用户管理：开关身份认证功能、用户创建、用户删除、用户授予/回收角色等
+12. 支持角色管理：角色创建、角色删除、角色授权/回收权限等
 
-# 快速体验
+- **App**: 拥有所有功能，相比Web版拥有更好的体验，数据方便迁移，后续将持续更新，推荐使用
+- **Web**：拥有大部分功能，少部分功能不支持（例如数据备份等），用户无需下载可使用浏览器直接访问，支持多用户登录，**在未来某个版本将停更**！
 
-## Demo
+# 下载
+
+请前往 [releases](https://github.com/tzfun/etcd-workbench/releases) 下载对应版本的最新版。
+
+- App：版本号以 **App** 为前缀，例如 `App-1.0.0`
+    - 支持 `windows-x86_64`
+    - 支持 `macos-x86_64`
+    - 支持 `macos-aarch64`
+- Web：版本号以 **Web** 为前缀，例如 `Web-1.1.4`
+    - 支持 Docker 平台：`linux/amd64`, `linux/arm64`, `windows/amd64`
+
+> 注：在 2024年5月10日及之前的版本均是Web版，从 2024年8月30日发布的首个App版本开始使用此前缀规则。
+
+# Web版使用文档
+
+## 1. 快速体验
+
+### 1.1 在线体验
 
 访问 [http://etcd.beifengtz.com](http://etcd.beifengtz.com)
 
@@ -26,7 +53,7 @@
 > **注意** 该测试客户端仅用作展示，请不要在其中保存真实的连接信息，保存的信息将会对所有登录test账号的人公开，
 > Demo不会保留以及记录所有连接信息，但为避免你的连接信息泄露，请使用测试ETCD地址，或者使用私有化部署体验。
 
-## 私有部署
+### 1.2 本地体验
 
 首先需确保你的本地环境拥有 JDK 11及以上的版本，前往 [release](https://github.com/tzfun/etcd-workbench/releases) 下载最新的 jar 包后执行：
 
@@ -36,53 +63,15 @@ java -jar etcd-workbench.jar
 
 浏览器中访问`http://localhost:8002`
 
-# 私有部署文档
+## 2. 私有部署
 
-## 配置文件
+### 2.1 配置文件
 
-部署的配置很简单，仅需一个配置文件，并且配置内容也非常少。
+Web部署的配置很简单，仅需一个配置文件，并且配置内容也非常少，完整配置文件请查看 [etcd-workbench.conf](server/src/main/resources/etcd-workbench.conf)
 
-etcd-workbench.conf
-```ini
-[server]
-# Configure the port the service will run on.
-port = 8002
-# Configure the timeout for executing instructions to ETCD server, in milliseconds.
-etcdExecuteTimeoutMillis = 3000
-# Configure data storage directory.
-dataDir = ./data
-# If Authentication is turned on, in order to ensure that user data is not easily cracked,
-# configure the data signature key to encrypt and protect it. It must be 16 characters.
-configEncryptKey = etcdWorkbench@*?
+### 2.2 本地部署
 
-[auth]
-# If set to true, user must log in to use etcd workbench, and add the user field to configure the user.
-# If set to false, all connection data can be used and shared by anyone!!!
-enable = false
-# If enabled authentication, add username and password with `user` field.
-# Supports repeatedly adding multiple `user` fields.
-user = username1:password1
-user = username2:password2
-
-[log]
-# Base log level
-level = INFO
-# Customize the log level of the specified path.
-levels = io.netty:INFO,io.grpc:INFO
-# Configure log storage directory.
-file = ./logs
-# Configure log file name.
-fileName = etcd-workbench
-# Configure the log file rolling size. When this size is exceeded, a new file will be created to store the log.
-# Unit MB
-fileLimitSize = 10
-# Support: `std` and `file`
-printers = std,file
-```
-
-## 本地部署
-
-首先需确保你的本地环境拥有 **JDK 11+** 的版本，前往 [release](https://github.com/tzfun/etcd-workbench/releases) 下载最新的 jar 包，将配置文件 `etcd-workbench.conf` 放到和 jar 包同级目录即可生效，执行启动：
+首先需确保你的本地环境拥有 **JDK 11+** 的版本，前往 [release](https://github.com/tzfun/etcd-workbench/releases) 下载最新的 Web版 jar 包，将配置文件 `etcd-workbench.conf` 放到和 jar 包同级目录即可生效，然后执行启动：
 
 ```shell
 java -jar etcd-workbench.jar
@@ -90,7 +79,7 @@ java -jar etcd-workbench.jar
 
 浏览器中访问`http://localhost:8002`
 
-## Docker中部署
+### 2.3 Docker部署
 
 Docker hub仓库地址：[https://hub.docker.com/r/tzfun/etcd-workbench](https://hub.docker.com/r/tzfun/etcd-workbench)
 
@@ -125,32 +114,51 @@ docker run \
 
 # 截图
 
-本工具提供黑色和白色两种主题
+## App部分页面截图
 
-![connector-light](screenshot/connector-light.jpg)
-![connector-dark](screenshot/connector.jpg)
+![key-editor-light.png](screenshot/app/key-editor-light.png)
 
-集群管理
-![cluster-manager](screenshot/cluster-manager.jpg)
+![key-editor.png](screenshot/app/key-editor.png)
 
-Key管理
-![key-manager-table](screenshot/key-manager-table.jpg)
+![key-new.png](screenshot/app/key-new.png)
 
-提供树状视图
-![key-manager-tree](screenshot/key-manager-tree.jpg)
+![cluster.png](screenshot/app/cluster.png)
 
-Key编辑器
-![key-editor](screenshot/key-editor.jpg)
+![leases.png](screenshot/app/leases.png)
 
-支持版本对比
-![key-diff](screenshot/key-diff.jpg)
+![settings.png](screenshot/app/settings.png)
 
-用户管理
-![user-manager](screenshot/user-manager.jpg)
+## Web部分页面截图
 
-角色管理
-![role-manager](screenshot/role-manager.jpg)
-![role-permission](screenshot/role-permission.jpg)
+![key-editor-light.png](screenshot/web/key-editor-light.png)
+
+![key-editor.png](screenshot/web/key-editor.png)
+
+![key-diff.png](screenshot/web/key-diff.png)
+
+![cluster.png](screenshot/web/cluster.png)
+
+# 技术栈
+
+## App
+
+前端基于 Vue 开发，后端基于 Rust 开发，内存安全、低消耗、高性能
+
+- **Tauri** - App Framework
+- **Tokio** - 异步IO通信
+- **etcd-client** - Etcd Connector
+- **Vuetify** - UI框架
+
+
+## Web
+
+前端基于 Vue 开发，后端基于 Java 开发
+
+- **[Jvmm](https://github.com/tzfun/jvmm)** - Server Framework
+- **Netty** - 异步IO通信
+- **jetcd** - Etcd Connector
+- **element-plus** - UI框架
+
 
 # License
 

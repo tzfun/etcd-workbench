@@ -1,22 +1,49 @@
 [中文版](./README_ZH.md) | English
 
 <div align=center>
-<img src=web/src/design/logo.png/>
+<img src=web/src/assets/logo.png width=300/>
 </div>
 
 # Etcd Workbench
 
-A beautiful, lightweight, privately deployable ETCD V3 client that supports SSL, SSH Tunnel connections, and multi-account session management.
+A beautiful and lightweight ETCD V3 client. Provides App and Web packages. Supports SSL and SSH Tunnel connections.
 
-# Why choose it?
+# Features
 
-1. The official client tool supports few functions and has poor online editing effect. This tool provides SSH tunnel, online code editing, version comparison, quick copy and other functions to make configuration center management more efficient!
-2. Most of the nice third-party tools need to be charged. 💔
-3. This tool is completely open source and free!
+1. This tool is completely open source and free!
+2. Provides two packages: App and Web. The app can be run directly on your local, and the web package can be deployed to the server directly or using docker.
+3. Very lightweight, App package is only **4M**, Web package is only **15M**.
+4. Support theme switching.
+5. Support multiple connection management.
+6. Support SSL, SSH connection.
+7. Support cluster information viewing, version compression, data backup and other functions.
+8. Support Key-Value editing, multi-language format highlighting, batch import/export.
+9. Supports comparison of multiple versions of key.
+10. Support lease management: creation, deletion, key bind relationship, countdown display.
+11. Support user management: enable/disable authentication, creation, deletion, grant/revocation of roles, etc.
+12. Support role management: creation, deletion, authorization/revocation of permissions, etc.
 
-# Quick Start
+- **App**: It has all the functions, has a better experience than the web version, and is easy to migrate data. It will be continuously updated in the future. It is recommended to use.
+- **Web**: It has most of the functions, but a few functions are not supported (such as data backup, etc.). Users can access it directly with a browser without downloading. It supports multi-user login. **Updates will be stopped in a future version**!
 
-## Example
+# Download
+
+Please go to [releases](https://github.com/tzfun/etcd-workbench/releases) to download the latest version of the corresponding version.
+
+- App: The version number is prefixed with **App**, for example `App-1.0.0`
+    - Support `windows-x86_64`
+    - Support `macos-x86_64`
+    - Support `macos-aarch64`
+- Web: Version numbers are prefixed with **Web**, for example `Web-1.1.4`
+    - Supported docker platforms: `linux/amd64`, `linux/arm64`, `windows/amd64`
+
+> Note: All versions on and before May 10, 2024 are web versions. This prefix rule will be used starting from the first app version released on August 30, 2024.
+
+# Document for Web
+
+## 1. Quick Start
+
+### 1.1 Start Online
 
 Access [http://etcd.beifengtz.com](http://etcd.beifengtz.com)
 
@@ -26,7 +53,7 @@ Access [http://etcd.beifengtz.com](http://etcd.beifengtz.com)
 > **Note** This test client is for display only. Please do not save real connection information in it. The saved information will be public to all people who log in to the test account.
 > Demo will not retain or record all connection information, but to avoid leaking your connection information, please use the test ETCD address or use a private deployment experience.
 
-## Private Deployment
+### Start on Locally
 
 First, make sure your local environment has JDK 11 or above, download the latest jar package from [release](https://github.com/tzfun/etcd-workbench/releases) and execute:
 
@@ -36,51 +63,13 @@ java -jar etcd-workbench.jar
 
 Access `http://localhost:8002` in browser.
 
-# Document
+## 2. Private Deployment
 
-## Configuration
+### 2.1 Configuration
 
-The deployment configuration is very simple, requiring only one configuration file and very little configuration content.
+The configuration of web deployment is very simple, only one configuration file is required, and the configuration content is very small. For the complete configuration file, please see [etcd-workbench.conf](server/src/main/resources/etcd-workbench.conf).
 
-etcd-workbench.conf
-```ini
-[server]
-# Configure the port the service will run on.
-port = 8002
-# Configure the timeout for executing instructions to ETCD server, in milliseconds.
-etcdExecuteTimeoutMillis = 3000
-# Configure data storage directory.
-dataDir = ./data
-# If Authentication is turned on, in order to ensure that user data is not easily cracked,
-# configure the data signature key to encrypt and protect it. It must be 16 characters.
-configEncryptKey = etcdWorkbench@*?
-
-[auth]
-# If set to true, user must log in to use etcd workbench, and add the user field to configure the user.
-# If set to false, all connection data can be used and shared by anyone!!!
-enable = false
-# If enabled authentication, add username and password with `user` field.
-# Supports repeatedly adding multiple `user` fields.
-user = username1:password1
-user = username2:password2
-
-[log]
-# Base log level
-level = INFO
-# Customize the log level of the specified path.
-levels = io.netty:INFO,io.grpc:INFO
-# Configure log storage directory.
-file = ./logs
-# Configure log file name.
-fileName = etcd-workbench
-# Configure the log file rolling size. When this size is exceeded, a new file will be created to store the log.
-# Unit MB
-fileLimitSize = 10
-# Support: `std` and `file`
-printers = std,file
-```
-
-## Run in Local
+### 2.2 Run in Local
 
 First, make sure that your local environment has the **JDK 11+** version, download the latest jar package from [release](https://github.com/tzfun/etcd-workbench/releases), and place the configuration file `etcd-workbench.conf` in the same directory as the jar package to take effect. Execute startup:
 
@@ -90,7 +79,7 @@ java -jar etcd-workbench.jar
 
 Access `http://localhost:8002` in browser.
 
-## Run in Docker
+### 2.3 Run in Docker
 
 Docker hub repository address: [https://hub.docker.com/r/tzfun/etcd-workbench](https://hub.docker.com/r/tzfun/etcd-workbench)
 
@@ -125,33 +114,49 @@ The working directory of the image is in `/usr/tzfun/etcd-workbench`, and its di
 
 # Screenshot
 
-This tool provides two themes: dark and light
+## Screenshot for App
 
-![connector-light](screenshot/connector-light.jpg)
-![connector-dark](screenshot/connector.jpg)
+![key-editor-light.png](screenshot/app/key-editor-light.png)
 
-Cluster manager
+![key-editor.png](screenshot/app/key-editor.png)
 
-![cluster-manager](screenshot/cluster-manager.jpg)
+![key-new.png](screenshot/app/key-new.png)
 
-Key manager
-![key-manager-table](screenshot/key-manager-table.jpg)
+![cluster.png](screenshot/app/cluster.png)
 
-Provide tree view
-![key-manager-tree](screenshot/key-manager-tree.jpg)
+![leases.png](screenshot/app/leases.png)
 
-Key editor
-![key-editor](screenshot/key-editor.jpg)
+![settings.png](screenshot/app/settings.png)
 
-Provide version comparison
-![key-diff](screenshot/key-diff.jpg)
+## Screenshot for Web
 
-User manager
-![user-manager](screenshot/user-manager.jpg)
+![key-editor-light.png](screenshot/web/key-editor-light.png)
 
-Role manager
-![role-manager](screenshot/role-manager.jpg)
-![role-permission](screenshot/role-permission.jpg)
+![key-editor.png](screenshot/web/key-editor.png)
+
+![key-diff.png](screenshot/web/key-diff.png)
+
+![cluster.png](screenshot/web/cluster.png)
+
+# Development Stack
+
+## For App
+
+The front-end is developed based on Vue, and the back-end is developed based on Rust, with memory safety, low consumption and high performance.
+
+- **Tauri** - App Framework
+- **Tokio** - Asynchronous IO communication
+- **etcd-client** - Etcd Connector
+- **Vuetify** - UI Framework
+
+## For Web
+
+The front-end is developed based on Vue, and the back-end is developed based on Java.
+
+- **[Jvmm](https://github.com/tzfun/jvmm)** - Server Framework
+- **Netty** - Asynchronous IO communication
+- **jetcd** - Etcd Connector
+- **element-plus** - UI Framework
 
 # License
 

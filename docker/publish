@@ -7,16 +7,16 @@ if [ $# == 1 ] ; then
 VERSION=$1
 fi
 
-cd ../
-./build skipMerge
+cd ../scripts
+python build_web_docker.py
 wait
 if [ $? -ne 0 ]; then
     exit $?
 fi
 
-cd ./docker
+cd ../docker
 
-cp ../bin/*.jar ./
+cp ../bin/web/docker/*.jar ./
 
 IMAGE_NAME="tzfun/etcd-workbench:$VERSION"
 
