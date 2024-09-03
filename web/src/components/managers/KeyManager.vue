@@ -30,7 +30,6 @@ import KeyTableViewer from "~/components/viewer/KeyTableViewer.vue";
 import KeyTreeViewer from "~/components/viewer/KeyTreeViewer.vue";
 import {isDark} from "~/composables";
 import {ElMessage, UploadUserFile} from "element-plus";
-import * as console from "node:console";
 
 const editorRef = ref()
 const treeViewerRef = ref<InstanceType<typeof KeyTreeViewer>>()
@@ -59,11 +58,11 @@ const treeData = reactive<TreeNode>({
 })
 const paginationKeyCursor = ref<string | undefined>("")
 
-const editing = ref<Boolean>(false)
-const isNew = ref<Boolean>(false)
+const editing = ref<boolean>(false)
+const isNew = ref<boolean>(false)
 const editingKV = ref<KeyValueDTO>()
 
-const showDiff = ref<Boolean>(false)
+const showDiff = ref<boolean>(false)
 const versionDiffInfo = reactive({
   key: '',
   version: 0,
@@ -136,20 +135,20 @@ const addKvListToTree = (data: KeyValueDTO[]) => {
   }
 }
 
-const switchViewer = () => {
-  if (viewer.value === 'table') {
-    viewer.value = 'tree'
-  } else {
-    viewer.value = 'table'
-  }
-
-  if (!loadedViewer[viewer.value]) {
-    loadedViewer[viewer.value] = true
+const switchViewer = (v:string) => {
+  if (!loadedViewer[v]) {
+    loadedViewer[v] = true
   }
 }
 
 const addKvToTree = (kv: KeyValueDTO) => {
   let k = kv.key
+  let originKey = kv.key
+  //  为了方便解析为统一的树状结构，如果key不是以分隔符开头，默认补充分隔符
+  if (!k.startsWith(KEY_SPLITTER)) {
+    k = KEY_SPLITTER + k
+  }
+
   let splits = k.split(KEY_SPLITTER)
   let node: TreeNode = treeData
   const path = [""]
@@ -179,7 +178,7 @@ const addKvToTree = (kv: KeyValueDTO) => {
   }
   let fileName = splits[splits.length - 1]
   let fileNode: TreeNode = {
-    path: k,
+    path: originKey,
     type: 'file',
     label: fileName,
     data: kv
@@ -208,18 +207,31 @@ const add = () => {
   editing.value = true
 }
 
-const edit = (info: KeyDTO) => {
-  _getKV(props.sessionKey, info.key).then(data => {
-    editingKV.value = data
-    editorConfig.language = _parseCodeLanguage(info.key, data.value)
+const edit = (info: KeyDTO, index: number) => {
 
-    isNew.value = false
-    editing.value = true
+  _getKV(props.sessionKey, info.key).then(data => {
+    if (data) {
+      editingKV.value = data
+      editorConfig.language = _parseCodeLanguage(info.key, data.value)
+
+      isNew.value = false
+      editing.value = true
+    } else {
+      ElMessage({
+        showClose: true,
+        message: "The key does not exist or has expired.",
+        type: 'info',
+      })
+      tableData.value.splice(index, 1)
+    }
   })
 }
 
 const getKVDetail = ({key, callback}) => {
   _getKV(props.sessionKey, key).then(data => {
+    if (!data) {
+      deleteKeysFromTree([key])
+    }
     callback(data)
   })
 }
@@ -591,9 +603,11 @@ const confirmCopyAndSave = () => {
       <el-button type="warning" plain :icon="BottomRight" @click="drawer=true">Import Keys</el-button>
 
       <el-switch
-          :model-value="viewer == 'tree'"
-          @click="switchViewer"
+          v-model="viewer"
+          @change="switchViewer"
           size="large"
+          active-value="tree"
+          inactive-value="table"
           inline-prompt
           :active-action-icon="Switch"
           :inactive-action-icon="Switch"

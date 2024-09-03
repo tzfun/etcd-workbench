@@ -48,8 +48,8 @@ const handleSelectionChange = (rows: KeyValueDTO[]) => {
   selectedKey.value = selected
 }
 
-const edit = (row: KeyDTO) => {
-  emits('on-edit', row)
+const edit = (row: KeyDTO, index: number) => {
+  emits('on-edit', row, index)
 }
 
 const diff = (row: KeyDTO) => {
@@ -60,7 +60,7 @@ const copyAndSave = (row: KeyDTO) => {
   emits('copy-and-save', row.key)
 }
 
-const del = (index: number, row: KeyDTO) => {
+const del = (row: KeyDTO,index: number) => {
   emits('on-delete', {
     key: row.key,
     callback: () => {
@@ -124,14 +124,14 @@ defineExpose({
           <el-input v-model="keySearch" placeholder="Type to search" :prefix-icon="Search"/>
         </template>
         <template #default="scope">
-          <el-button type="primary" :icon="Edit" size="small" @click="edit(scope.row)">Edit
+          <el-button type="primary" :icon="Edit" size="small" @click="edit(scope.row, scope.$index)">Edit
           </el-button>
           <el-button type="info" :icon="DocumentCopy" size="small" @click="diff(scope.row)">Version
             Diff
           </el-button>
           <el-button type="warning" :icon="Finished" size="small" @click="copyAndSave(scope.row)">Copy And Save
           </el-button>
-          <el-button type="danger" :icon="Delete" size="small" @click="del(scope.$index,scope.row)">Delete</el-button>
+          <el-button type="danger" :icon="Delete" size="small" @click="del(scope.row, scope.$index)">Delete</el-button>
         </template>
       </el-table-column>
     </el-table>

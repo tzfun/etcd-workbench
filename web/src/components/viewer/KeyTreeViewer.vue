@@ -4,6 +4,7 @@ import {EditorConfig, KeyValueDTO, TreeNode} from "~/common/Types";
 import {reactive, ref} from "vue";
 import {_parseCodeLanguage} from "~/common/Util";
 import WorkbenchLogo from "~/design/WorkbenchLogo.vue";
+import {ElMessage} from "element-plus";
 
 const EMPTY_KV = {
   key: '',
@@ -75,8 +76,17 @@ const clickTreeNode = (node: TreeNode) => {
         key: node.path,
         callback: data => {
           changed.value = false
-          editingKV.value = data
-          editorConfig.language = _parseCodeLanguage(node.label, data.value)
+          if (data) {
+            editingKV.value = data
+            editorConfig.language = _parseCodeLanguage(node.label, data.value)
+          } else {
+            ElMessage({
+              showClose: true,
+              message: " The key does not exist or has expired.",
+              type: 'info',
+            })
+            clear()
+          }
         }
       })
     }
@@ -207,7 +217,7 @@ defineExpose({
         </template>
         <template #footerAppender>
           <div>
-            <span class="item">{{ currentNode.path }}</span>
+            <span class="item" title="Key" style="color: #039BE5;">{{ currentNode.path }}</span>
             <span class="item"><strong>Version</strong>: {{ editingKV.version }}</span>
             <span class="item"><strong>Create Revision</strong>: {{ editingKV.createRevision }}</span>
             <span class="item"><strong>Modify Revision</strong>: {{ editingKV.modRevision }}</span>
