@@ -10,11 +10,12 @@ APP_NAME = "Etcd Workbench"
 BUNDLE_NAME = "etcd-workbench"
 ENCODING = "gbk" if platform.system().lower() == 'windows' else 'utf-8'
 
-def execute(command, print_output = True):
+def execute(command, encoding = ENCODING):
     print(f"calling: {command}")
-    subprocess.call(command, shell=True, encoding=ENCODING)
+    subprocess.call(command, shell=True, encoding=encoding)
     
 def build_app_windows(target, build_platform):
+    print("Building app source of windows...")
     os.chdir('../')
     root_path = os.getcwd()
     os.chdir('./app/')
@@ -55,6 +56,7 @@ def build_app_windows(target, build_platform):
     os.chdir('../scripts/')
 
 def build_app_macos(target, build_platform):
+    print("Building app source of macos...")
     os.chdir('../')
     root_path = os.getcwd()
     os.chdir('./app/')
@@ -123,6 +125,7 @@ create-dmg \\
     execute(create_dmg_cmd)
     print(f'create dmg: {dmg_file}')
 
+
 def copy_bundle_files(from_file, to_dir, filename):
     
     if not os.path.exists(to_dir):
@@ -132,3 +135,35 @@ def copy_bundle_files(from_file, to_dir, filename):
     shutil.copyfile(from_file, to_file)
 
     print(f'copied file {to_file}')
+
+
+def build_web(bin_name, skip_merge_jar = False):
+    print("Building web source...")
+    os.chdir('../')
+    root_path = os.getcwd()
+    
+    os.chdir('web')
+    web_path = os.getcwd()
+    execute("pnpm run build")
+
+    print("Deleting server static files...")
+    server_static_path = os.path.join(root_path, "server/src/main/resources/static")
+    if os.path.exists(server_static_path):
+        shutil.rmtree(server_static_path)
+
+    shutil.copytree(os.path.join(web_path, 'dist'), server_static_path)
+
+    os.chdir('../server')
+    execute('gradlew clean')
+
+    if skip_merge_jar:
+        execute('gradlew jar -PskipMerge=1', 'utf-8')
+    else:
+        execute('gradlew jar', 'utf-8')
+    
+    os.chdir('../')
+    to_dir = os.path.join(root_path, 'bin', 'web', bin_name)
+    if os.path.exists(to_dir):
+        shutil.rmtree(to_dir)
+
+    shutil.copytree(os.path.join(root_path, 'server/build/libs'), to_dir)
