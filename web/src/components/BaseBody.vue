@@ -159,7 +159,7 @@ const showInfo = () => {
         <div class="flex-grow"/>
 
         <div class="header-item">
-          <a href="https://github.com/tzfun/etcd-workbench/releases/tag/App-1.0.0" target="_blank" title="Download App">
+          <a href="https://github.com/tzfun/etcd-workbench/releases" target="_blank" title="Download App">
             <svg viewBox="0 0 1024 1024"
                  xmlns="http://www.w3.org/2000/svg"
                  width="25"
@@ -255,7 +255,7 @@ const showInfo = () => {
           <div class="info-item">
             <div class="info-label">App</div>
             <div class="info-content">
-              <a class="link" href="https://github.com/tzfun/etcd-workbench/releases/tag/App-1.0.0" target="_blank">Download</a>
+              <a class="link" href="https://github.com/tzfun/etcd-workbench/releases" target="_blank">Download</a>
               <svg
                   style="margin-left: 5px"
                   viewBox="0 0 1024 1024"

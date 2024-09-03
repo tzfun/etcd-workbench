@@ -298,6 +298,7 @@ defineExpose({
 
   .tree-editor {
     width: calc(100% - $--tree-aside-width - $--tree-aside-padding-right);
+    min-width: 900px;
     height: 100%;
 
     .item {

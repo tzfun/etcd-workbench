@@ -194,7 +194,7 @@ public class EtcdConnector {
                     startRevision,
                     endRevision,
                     client.getKVClient(),
-                    new TreeSet<>(),
+                    new TreeSet<>((o1, o2) -> Long.compare(o2, o1)),
                     future
             );
         }
