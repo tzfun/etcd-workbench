@@ -2,6 +2,7 @@ package org.beifengtz.etcd.server.config;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.beifengtz.etcd.server.exceptions.ConfigurationException;
 
 import java.io.File;
 import java.util.HashMap;
@@ -47,6 +48,21 @@ public class Configuration {
         String previous = users.put(user, password);
         if (previous != null) {
             System.err.println("Warning: exist multi user in [auth] configuration: " + user);
+        }
+    }
+
+    public void verify() throws ConfigurationException {
+        if (port <= 0) {
+            throw new ConfigurationException("'port' must be greater than 0");
+        }
+        if (etcdExecuteTimeoutMillis <= 1) {
+            throw new ConfigurationException("'etcdExecuteTimeoutMillis' must be greater than 1");
+        }
+        if (dataDir == null) {
+            throw new ConfigurationException("'dataDir' must be set");
+        }
+        if (configEncryptKey == null || configEncryptKey.length() != 16) {
+            throw new ConfigurationException("The length of 'configEncryptKey' must be 16");
         }
     }
 }
