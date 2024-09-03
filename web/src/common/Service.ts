@@ -94,7 +94,7 @@ export function _getAllKeysPaging(sessionId: string, cursor: string, limit: numb
     })
 }
 
-export function _getKV(sessionId: string, key: string, version?: number | null): Promise<any> {
+export function _getKV(sessionId: string, key: string, version?: number | null): Promise<KeyValueDTO> {
     return request.get(host + PRIVATE_API_PREFIX + "/session/etcd/kv/get", {
         sessionId: sessionId,
         key: key,
@@ -107,7 +107,7 @@ export function _getKVHistory(
     key: string,
     startVersion: number,
     endVersion: number
-): Promise<any> {
+): Promise<number[]> {
     return request.get(host + PRIVATE_API_PREFIX + "/session/etcd/kv/get_history", {
         sessionId: sessionId,
         key: key,

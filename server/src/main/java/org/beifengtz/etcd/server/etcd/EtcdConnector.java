@@ -186,7 +186,7 @@ public class EtcdConnector {
         onActive();
         CompletableFuture<Collection<Long>> future = new CompletableFuture<>();
         if (endRevision <= startRevision) {
-            future.completeExceptionally(new IllegalArgumentException("Out of range error: start value is greater than end value"));
+            future.complete(List.of());
         } else {
             kvGetHistoryVersion0(
                     CommonUtil.toByteSequence(key),

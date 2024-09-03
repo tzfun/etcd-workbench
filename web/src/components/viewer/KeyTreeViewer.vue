@@ -1,5 +1,15 @@
 <script setup lang="ts">
-import {Delete, Document, DocumentCopy, Finished, Folder, InfoFilled, Search, Tickets} from "@element-plus/icons-vue";
+import {
+  Delete,
+  Document,
+  DocumentCopy,
+  Finished,
+  Folder,
+  InfoFilled,
+  Refresh,
+  Search,
+  Tickets
+} from "@element-plus/icons-vue";
 import {EditorConfig, KeyValueDTO, TreeNode} from "~/common/Types";
 import {reactive, ref} from "vue";
 import {_parseCodeLanguage} from "~/common/Util";
@@ -70,26 +80,24 @@ const editorSave = () => {
 
 const clickTreeNode = (node: TreeNode) => {
   if (node.type === "file") {
-    if (currentNode.value != node) {
-      currentNode.value = node
-      emits('on-select', {
-        key: node.path,
-        callback: data => {
-          changed.value = false
-          if (data) {
-            editingKV.value = data
-            editorConfig.language = _parseCodeLanguage(node.label, data.value)
-          } else {
-            ElMessage({
-              showClose: true,
-              message: " The key does not exist or has expired.",
-              type: 'info',
-            })
-            clear()
-          }
+    currentNode.value = node
+    emits('on-select', {
+      key: node.path,
+      callback: data => {
+        changed.value = false
+        if (data) {
+          editingKV.value = data
+          editorConfig.language = _parseCodeLanguage(node.label, data.value)
+        } else {
+          ElMessage({
+            showClose: true,
+            message: " The key does not exist or has expired.",
+            type: 'info',
+          })
+          clear()
         }
-      })
-    }
+      }
+    })
   } else {
     let tmp = node
     while (tmp.children && tmp.children.length == 1) {
@@ -206,10 +214,8 @@ defineExpose({
               @save="editorSave">
         <template #headerAppender>
           <div>
-            <el-button type="primary" :icon="Tickets" size="small" @click="saveKV" v-show="changed">Save{{
-                changed ? " *" : ""
-              }}
-            </el-button>
+            <el-button type="primary" :icon="Tickets" size="small" @click="saveKV" v-show="changed">Save{{ changed ? " *" : "" }}</el-button>
+            <el-button :icon="Refresh" size="small" @click="clickTreeNode(currentNode)">Refresh</el-button>
             <el-button type="info" :icon="DocumentCopy" size="small" @click="diff">Version Diff</el-button>
             <el-button type="warning" :icon="Finished" size="small" @click="copyAndSave">Copy And Save</el-button>
             <el-button type="danger" :icon="Delete" size="small" @click="del">Delete</el-button>

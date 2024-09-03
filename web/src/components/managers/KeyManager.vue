@@ -135,7 +135,7 @@ const addKvListToTree = (data: KeyValueDTO[]) => {
   }
 }
 
-const switchViewer = (v:string) => {
+const switchViewer = (v: string) => {
   if (!loadedViewer[v]) {
     loadedViewer[v] = true
   }
@@ -237,38 +237,51 @@ const getKVDetail = ({key, callback}) => {
 }
 
 const diff = (row: KeyDTO) => {
-  if (row.version <= 1) {
-    ElMessage({
-      type: 'info',
-      message: 'No multiple versions',
-    })
-    return
-  }
-
-  versionDiffInfo.version = row.version
-  versionDiffInfo.key = row.key
-  versionDiffInfo.createRevision = row.createRevision
-  versionDiffInfo.modRevision = row.modRevision
-
-  _getKVHistory(
-      props.sessionKey,
-      versionDiffInfo.key,
-      versionDiffInfo.createRevision,
-      versionDiffInfo.modRevision).then(data => {
-    versionDiffInfo.versionHistory = data
-    _getKV(props.sessionKey, versionDiffInfo.key).then(data => {
+  _getKV(props.sessionKey, row.key).then((dataB: KeyValueDTO) => {
+    if (dataB) {
+      versionDiffInfo.key = dataB.key
+      versionDiffInfo.createRevision = dataB.createRevision
+      versionDiffInfo.modRevision = dataB.modRevision
       versionDiffInfo.versionB = row.modRevision
-      versionDiffInfo.versionBContent = data.value
+      versionDiffInfo.versionBContent = dataB.value
+      versionDiffInfo.version = dataB.version
+      versionDiffInfo.modRevision = dataB.modRevision
 
-      //  上一个版本
-      versionDiffInfo.versionA = versionDiffInfo.versionHistory[row.version - 2]
-      loadDiff(true)
-    }).catch(e => {
-      console.error(e)
-    })
+      _getKVHistory(
+          props.sessionKey,
+          versionDiffInfo.key,
+          versionDiffInfo.createRevision,
+          versionDiffInfo.modRevision
+      ).then((versions: number[]) => {
+        if (versions.length <= 1) {
+          ElMessage({
+            type: 'info',
+            message: 'No multiple versions',
+          })
+          return
+        }
+        versionDiffInfo.versionHistory = versions
+
+        //  上一个版本
+        versionDiffInfo.versionA = versionDiffInfo.versionHistory[dataB.version - 2]
+        loadDiff(true)
+      }).catch(e => {
+        console.error(e)
+      })
+    } else {
+      ElMessage({
+        showClose: true,
+        message: "The key does not exist or has expired.",
+        type: 'info',
+      })
+    }
   }).catch(e => {
     console.error(e)
   })
+
+
+
+
 }
 
 const loadDiff = (forA: Boolean) => {
@@ -327,7 +340,7 @@ const del = ({key, callback}) => {
 }
 
 const delBatch = () => {
-  let keys:string[]
+  let keys: string[]
   if (viewer.value === 'tree') {
     keys = treeViewerRef.value!.getSelectedKeys()
   } else {
@@ -387,7 +400,7 @@ const exportKeys = () => {
   }
   _startLoading("Search selected keys...")
   _exportKeys(props.sessionKey, keys).then((data) => {
-    const blob = new Blob([data], { type : 'plain/text' });
+    const blob = new Blob([data], {type: 'plain/text'});
     _saveFile(blob, "keys-dump.ew")
   }).finally(() => {
     _endLoading()
@@ -784,10 +797,11 @@ const confirmCopyAndSave = () => {
                :with-header="false"
                append-to-body
     >
-      <el-alert title="If there are already existing parts in the imported keys, these parts will be forcibly overwritten, and non-existing keys will be inserted."
-                type="warning"
-                :closable="false"
-                class="mb-2"/>
+      <el-alert
+          title="If there are already existing parts in the imported keys, these parts will be forcibly overwritten, and non-existing keys will be inserted."
+          type="warning"
+          :closable="false"
+          class="mb-2"/>
       <el-upload
           class="upload-demo"
           drag
@@ -796,7 +810,9 @@ const confirmCopyAndSave = () => {
           :limit="1"
           v-model:file-list="importKeysFile"
       >
-        <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
+        <el-icon class="el-icon--upload">
+          <UploadFilled/>
+        </el-icon>
         <div class="el-upload__text">
           Drop file here or <em>click to select</em>
         </div>
@@ -851,6 +867,7 @@ $--editor-label-width: 60px;
   color: #168f8f;
   font-weight: bold;
 }
+
 .diff-select {
   width: 200px;
 }
