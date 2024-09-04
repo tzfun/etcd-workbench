@@ -172,7 +172,7 @@ const loadNextPage = () => {
         if (paginationKeyCursor.value != undefined) {
           paginationKeyCursor.value = data[data.length - 1].key
         }
-        
+
         addKvListToTree(data)
       }
     }).catch((e: ErrorPayload | string) => {
@@ -566,65 +566,73 @@ const saveKV = () => {
 }
 
 const loadVersionDiff = () => {
-  let kv = currentKv.value
-  if (!kv) {
+
+  let key = currentKv.value ? currentKv.value.key : null
+  if (!key) {
     return
   }
-  if (kv.version <= 1) {
-    _tipWarn('No multiple versions')
-    return;
-  }
+
   loadingStore.diff = true
-  versionDiffInfo.key = kv.key
-  versionDiffInfo.version = kv.version
-  versionDiffInfo.createRevision = kv.createRevision
-  versionDiffInfo.modRevision = kv.modRevision
-  //  当前版本
-  versionDiffInfo.B.version = versionDiffInfo.modRevision
-  versionDiffInfo.B.content = _decodeBytesToString(kv!.value)
+  versionDiffInfo.key = key
+  _getKV(props.session?.id, key).then(dataB => {
+    versionDiffInfo.version = dataB.version
+    versionDiffInfo.createRevision = dataB.createRevision
+    versionDiffInfo.modRevision = dataB.modRevision
 
-  let lang = tryParseFileNameToType(kv.key)
-  if (!lang) {
-    lang = tryFileContentToType(versionDiffInfo.B.content)
-  }
+    //  当前版本
+    versionDiffInfo.B.version = versionDiffInfo.modRevision
+    versionDiffInfo.B.content = _decodeBytesToString(dataB!.value)
 
-  switch (lang) {
-    case 'text':
-      versionDiffInfo.language = 'plaintext'
-      break
-    case 'sql':
-      versionDiffInfo.language = 'SQL'
-      break
-    case 'md':
-      versionDiffInfo.language = 'Markdown'
-      break
-    default:
-      versionDiffInfo.language = lang.substring(0, 1).toUpperCase() + lang.substring(1)
-  }
-
-  _getKVHistoryVersions(
-      props.session?.id,
-      kv.key,
-      kv.createRevision,
-      kv.modRevision
-  ).then(versions => {
-    if (versions.length < 2) {
-      _tipWarn('No multiple versions, required revision has been compacted')
-      return;
+    let lang = tryParseFileNameToType(dataB.key)
+    if (!lang) {
+      lang = tryFileContentToType(versionDiffInfo.B.content)
     }
 
-    //  倒序
-    versionDiffInfo.versionHistory = versions
+    switch (lang) {
+      case 'text':
+        versionDiffInfo.language = 'plaintext'
+        break
+      case 'sql':
+        versionDiffInfo.language = 'SQL'
+        break
+      case 'md':
+        versionDiffInfo.language = 'Markdown'
+        break
+      default:
+        versionDiffInfo.language = lang.substring(0, 1).toUpperCase() + lang.substring(1)
+    }
 
-    //  上个版本
-    versionDiffInfo.A.version = versions[1]
-    loadDiff(versionDiffInfo.A)
+    _getKVHistoryVersions(
+        props.session?.id,
+        key,
+        dataB.createRevision,
+        dataB.modRevision
+    ).then(versions => {
+      if (versions.length < 2) {
+        _tipWarn('No multiple versions, required revision has been compacted')
+        return;
+      }
+
+      //  倒序
+      versionDiffInfo.versionHistory = versions
+
+      //  上个版本
+      versionDiffInfo.A.version = versions[1]
+      loadDiff(versionDiffInfo.A)
+    }).catch(e => {
+      _handleError({
+        e,
+        session: props.session
+      })
+    }).finally(() => {
+      loadingStore.diff = false
+    })
+
   }).catch(e => {
     _handleError({
       e,
       session: props.session
     })
-  }).finally(() => {
     loadingStore.diff = false
   })
 }
