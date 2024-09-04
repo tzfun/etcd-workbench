@@ -12,7 +12,7 @@ import {
   EventName
 } from "~/common/events.ts";
 import {DEFAULT_SETTING_CONFIG, SettingConfig} from "~/common/transport/setting.ts";
-import {_debounce, _goBrowserPage} from "~/common/utils.ts";
+import {_debounce, _encodeStringToBytes, _goBrowserPage} from "~/common/utils.ts";
 import WorkbenchLogo from "~/components/WorkbenchLogo.vue";
 import {_loadSettings, _setLocalSettings, _useSettings} from "~/common/store.ts";
 import {appWindow} from "@tauri-apps/api/window";
@@ -129,6 +129,19 @@ const isMac = computed<boolean>(() => {
   return props.platform == 'darwin'
 })
 
+const connectionConfEncryptKeyRule = [
+  (v) => {
+    let keyBytes = _encodeStringToBytes(v)
+    if (keyBytes.length != 16) {
+      return "Invalid byte length"
+    }
+    // if ((v as string).match(/\\{|}|\\[|]|\\:|\\,|"|'/)) {
+    //   return "Invalid characters"
+    // }
+    return true
+  }
+]
+
 onMounted(async () => {
   await _loadSettings()
   settingForm.value = JSON.parse(JSON.stringify(_useSettings().value))
@@ -152,6 +165,10 @@ onMounted(async () => {
     }
     if (typeof setting.sshConnectTimeoutSeconds === 'string') {
       setting.sshConnectTimeoutSeconds = parseInt(setting.sshConnectTimeoutSeconds)
+    }
+    let keyBytes = _encodeStringToBytes(setting.connectionConfEncryptKey)
+    if (keyBytes.length != 16) {
+      return
     }
     _setLocalSettings(setting)
     _emitGlobal(EventName.SETTING_UPDATE, setting)
@@ -340,6 +357,24 @@ const onScroll = _debounce(() => {
 
             <h3 class="group-title mt-5" id="setting-connection">Connection</h3>
             <v-sheet class="mt-2 form-area pa-3">
+
+              <v-layout>
+                <div>
+                  <div class="form-label text-high-emphasis">File Encrypt Key</div>
+                  <div class="v-messages">Local storage of connection profile encryption key.</div>
+                </div>
+                <v-spacer></v-spacer>
+                <div class="form-input" style="width: 200px;">
+                  <v-text-field v-model="settingForm.connectionConfEncryptKey"
+                                variant="outlined"
+                                density="compact"
+                                :counter="16"
+                                persistent-counter
+                                :rules="connectionConfEncryptKeyRule"
+                  ></v-text-field>
+                </div>
+              </v-layout>
+              <v-divider class="mt-5 mb-5"></v-divider>
 
               <v-layout>
                 <div>

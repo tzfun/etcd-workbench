@@ -6,6 +6,8 @@ use log::error;
 use serde::{Deserialize, Serialize, Serializer};
 use tokio::sync::oneshot;
 
+use crate::utils::aes_util::AesError;
+
 #[derive(Debug, Serialize, Deserialize)]
 enum ErrorType {
     /// 身份认证失效，需要重新连接
@@ -32,6 +34,7 @@ pub struct ErrorPayload<'a> {
 
 #[derive(Debug)]
 pub enum LogicError<> {
+    MsgError(String),
     ConnectionLose,
     ArgumentError,
     ResourceNotExist(&'static str),
@@ -39,9 +42,9 @@ pub enum LogicError<> {
     SshError(russh::Error),
     IoError(io::Error),
     SerdeError(serde_json::Error),
-    Base64DecodeError(base64::DecodeError),
+    AesError(AesError),
     ChannelRcvError(oneshot::error::RecvError),
-    StringConvertError(FromUtf8Error),
+    StringConvertError(FromUtf8Error)
 }
 
 impl Serialize for LogicError {
@@ -50,6 +53,12 @@ impl Serialize for LogicError {
         S: Serializer,
     {
         match self {
+            LogicError::MsgError(e) => {
+                ErrorPayload {
+                    err_type: ErrorType::ResourceNotExist,
+                    err_msg: e.as_str(),
+                }.serialize(serializer)
+            },
             LogicError::EtcdClientError(e) => {
                 error!("[ETCD] {:?}", e);
                 match e {
@@ -122,8 +131,8 @@ impl Serialize for LogicError {
                     err_msg: msg.as_str(),
                 }.serialize(serializer)
             }
-            LogicError::Base64DecodeError(e) => {
-                error!("[Base64Decode] {:?}", e);
+            LogicError::AesError(e) => {
+                error!("[AesError] {:?}", e);
                 let msg = e.to_string();
                 ErrorPayload {
                     err_type: ErrorType::AppError,
@@ -190,9 +199,9 @@ impl From<serde_json::Error> for LogicError {
     }
 }
 
-impl From<base64::DecodeError> for LogicError {
-    fn from(value: base64::DecodeError) -> Self {
-        LogicError::Base64DecodeError(value)
+impl From<AesError> for LogicError {
+    fn from(value: AesError) -> Self {
+        LogicError::AesError(value)
     }
 }
 

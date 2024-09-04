@@ -36,6 +36,12 @@ pub struct SettingConfig {
     /// SSH连接超时秒数
     #[serde(default = "default_ssh_connect_timeout_seconds")]
     pub ssh_connect_timeout_seconds: u64,
+    /// 连接存储加密密钥，bytes字符长度必须为16位
+    #[serde(default = "default_connection_conf_encrypt_key")]
+    pub connection_conf_encrypt_key: String,
+
+
+
     /// 窗口初始化状态
     #[serde(default)]
     pub window_init_state: Option<SettingWindowState>,
@@ -77,6 +83,10 @@ fn default_auto_update() -> bool {
     true
 }
 
+fn default_connection_conf_encrypt_key() -> String {
+    String::from("workbench*#)&%.$")
+}
+
 impl Default for SettingConfig {
     fn default() -> Self {
         SettingConfig {
@@ -91,6 +101,7 @@ impl Default for SettingConfig {
             connect_timeout_seconds: default_connect_timeout_seconds(),
             request_timeout_seconds: default_request_timeout_seconds(),
             ssh_connect_timeout_seconds: default_ssh_connect_timeout_seconds(),
+            connection_conf_encrypt_key: default_connection_conf_encrypt_key(),
             window_init_state: None,
         }
     }

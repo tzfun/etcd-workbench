@@ -31,6 +31,8 @@ md5 = "0.7.0"
 base64 = "0.22.1"
 async-trait = { version = "0.1.81" }
 
+aes = "0.8.4"
+
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!
 custom-protocol = ["tauri/custom-protocol"]

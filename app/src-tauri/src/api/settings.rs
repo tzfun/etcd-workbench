@@ -3,17 +3,17 @@ use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::Path;
 
-use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
+use base64::Engine;
 use lazy_static::lazy_static;
-use log::debug;
+use log::{debug, warn};
 use tauri::AppHandle;
 use tokio::sync::RwLock;
 
 use crate::error::LogicError;
 use crate::transport::connection::ConnectionInfo;
 use crate::transport::settings::SettingConfig;
-use crate::utils::file_util;
+use crate::utils::{aes_util, file_util};
 
 lazy_static! {
     static ref SETTING_CONFIG: RwLock<Option<SettingConfig>> = RwLock::new(None);
@@ -56,6 +56,10 @@ pub async fn get_settings() -> Result<SettingConfig, LogicError> {
 
 #[tauri::command]
 pub async fn save_settings(setting_config: SettingConfig) -> Result<(), LogicError> {
+    if setting_config.connection_conf_encrypt_key.as_bytes().len() != aes_util::LENGTH_16 {
+        return Err(LogicError::ArgumentError)
+    }
+
     let path = file_util::get_setting_file_path();
     let s = serde_json::to_string(&setting_config)?;
     if !path.exists() {
@@ -75,7 +79,7 @@ pub async fn save_settings(setting_config: SettingConfig) -> Result<(), LogicErr
 }
 
 #[tauri::command]
-pub fn save_connection(connection: ConnectionInfo) -> Result<(), LogicError> {
+pub async fn save_connection(connection: ConnectionInfo) -> Result<(), LogicError> {
     let mut dir = file_util::get_config_dir_path();
 
     let digest = md5::compute(&connection.name);
@@ -87,8 +91,12 @@ pub fn save_connection(connection: ConnectionInfo) -> Result<(), LogicError> {
     };
 
     let json = serde_json::to_string(&connection)?;
-    let info = BASE64_STANDARD.encode(json.as_bytes());
-    file.write_all(info.as_bytes())?;
+    println!("==> {}",json);
+    let key = get_settings().await?.connection_conf_encrypt_key;
+
+    let data = aes_util::encrypt_128(key.as_bytes(), json)?;
+
+    file.write_all(data.as_slice())?;
 
     Ok(())
 }
@@ -107,21 +115,29 @@ pub fn remove_connection(name: String) -> Result<(), LogicError> {
 }
 
 #[tauri::command]
-pub fn get_connection_list() -> Result<Vec<ConnectionInfo>, LogicError> {
+pub async fn get_connection_list() -> Result<Vec<ConnectionInfo>, LogicError> {
     let dir = file_util::get_config_dir_path();
 
     let mut result = Vec::new();
     if dir.exists() {
+        let settings = get_settings().await?;
+        let key = settings.connection_conf_encrypt_key.as_bytes();
         let entries = fs::read_dir(dir)?;
         for entry in entries {
             let path = entry?.path();
             if !path.is_dir() {
-                let mut file = File::open(path)?;
-                let mut content = String::new();
-                file.read_to_string(&mut content)?;
-                let json = BASE64_STANDARD.decode(content)?;
-                let info = serde_json::from_slice::<ConnectionInfo>(json.as_slice())?;
-                result.push(info);
+                let mut file = File::open(path.clone())?;
+                let mut content = vec![];
+                file.read_to_end(&mut content)?;
+
+                if let Ok(data) = aes_util::decrypt_128(key, content) {
+                    let info = serde_json::from_slice::<ConnectionInfo>(data.as_slice())?;
+                    result.push(info);
+                } else {
+                    let filepath: String = path.to_string_lossy().to_string();
+                    warn!("read connection conf failed with aes decrypt, file will be removed. {}", filepath);
+                    let _ = fs::remove_file(path);
+                }
             }
         }
     }
@@ -130,8 +146,8 @@ pub fn get_connection_list() -> Result<Vec<ConnectionInfo>, LogicError> {
 }
 
 #[tauri::command]
-pub fn export_connection(filepath: String) -> Result<(), LogicError> {
-    let list = get_connection_list()?;
+pub async fn export_connection(filepath: String) -> Result<(), LogicError> {
+    let list = get_connection_list().await?;
 
     let s = serde_json::to_string(&list)?;
     let content = BASE64_STANDARD.encode(s.as_bytes());
@@ -150,7 +166,7 @@ pub fn export_connection(filepath: String) -> Result<(), LogicError> {
 }
 
 #[tauri::command]
-pub fn import_connection(filepath: String) -> Result<(), LogicError> {
+pub async fn import_connection(filepath: String) -> Result<(), LogicError> {
     let path = Path::new(&filepath);
     if !path.exists() {
         return Err(LogicError::ResourceNotExist("File not exists"))
@@ -160,11 +176,14 @@ pub fn import_connection(filepath: String) -> Result<(), LogicError> {
     let mut content = String::new();
     file.read_to_string(&mut content)?;
 
-    let s = BASE64_STANDARD.decode(content)?;
+    let s = BASE64_STANDARD.decode(content).map_err(|e| {
+        debug!("Failed to decode file. {}", e);
+        LogicError::MsgError("Failed to decode file.".to_string())
+    })?;
     let list = serde_json::from_slice::<Vec<ConnectionInfo>>(s.as_slice())?;
 
     for info in list {
-        save_connection(info)?;
+        save_connection(info).await?;
     }
 
     Ok(())

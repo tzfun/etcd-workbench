@@ -26,6 +26,9 @@ export interface SettingConfig {
     requestTimeoutSeconds: number | string,
     //  SSH连接超时秒数
     sshConnectTimeoutSeconds: number | string,
+    //  连接存储加密密钥，bytes字符长度必须为16位
+    connectionConfEncryptKey: string,
+
     //  窗口初始化状态
     windowInitState?: SettingWindowState,
 }
@@ -48,7 +51,8 @@ export const DEFAULT_SETTING_CONFIG: SettingConfig = {
     autoUpdate: true,
     connectTimeoutSeconds: 5,
     requestTimeoutSeconds: 15,
-    sshConnectTimeoutSeconds: 10
+    sshConnectTimeoutSeconds: 10,
+    connectionConfEncryptKey: 'workbench*#)&%.$'
 }
 
 export interface UpdateInfo {

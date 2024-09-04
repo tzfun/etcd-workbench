@@ -17,7 +17,7 @@ mod utils;
 
 fn main() {
     env_logger::Builder::from_default_env()
-        .filter_level(LevelFilter::Info)
+        .filter_level(LevelFilter::Debug)
         .filter_module("tao::platform_impl::platform::event_loop::runner", LevelFilter::Error)
         .init();
     info!("env logger initialized");

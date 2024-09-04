@@ -1221,6 +1221,7 @@ dependencies = [
 name = "etcd-workbench"
 version = "1.0.0"
 dependencies = [
+ "aes",
  "async-trait",
  "base64 0.22.1",
  "dashmap",
