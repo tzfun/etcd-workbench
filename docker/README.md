@@ -1,5 +1,5 @@
 <div align=center>
-<img src=https://raw.githubusercontent.com/tzfun/etcd-workbench/master/web/src/design/logo.png />
+<img src=https://raw.githubusercontent.com/tzfun/etcd-workbench/master/web/src/assets/logo.png />
 </div>
 
 # What is Etcd Workbench?
@@ -17,7 +17,8 @@ Supported platforms: linux/amd64, linux/arm64, linux/arm64/v8, windows/amd64
     * `1.1.1`: Fix some display bug.
     * `1.1.2`: Optimized some displays and fixed some bugs.
     * `1.1.3`: The docker image supports the arm64 platform and fixed the problem of SSL connection failure.
-* `1.0.0`: The first public verison, enjoy it!
+    * `1.1.4`: Fix some bug, and supported defragment
+* `1.0.0`: The first public version, enjoy it!
 
 # Reference
 

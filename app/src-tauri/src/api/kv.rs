@@ -12,7 +12,7 @@ pub async fn kv_get_all_keys(session: i32) -> Result<Vec<SerializableKeyValue>, 
 }
 
 #[tauri::command]
-pub async fn kv_get_all_keys_paging(session: i32, mut cursor_key: String, limit: i64) -> Result<Vec<SerializableKeyValue>, LogicError> {
+pub async fn kv_get_all_keys_paging(session: i32, cursor_key: String, limit: i64) -> Result<Vec<SerializableKeyValue>, LogicError> {
     let connector = etcd::get_connector(&session)?;
     let keys = connector.kv_get_all_keys_paging(cursor_key, limit).await?;
     Ok(keys)

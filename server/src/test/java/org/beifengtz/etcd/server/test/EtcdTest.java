@@ -148,6 +148,7 @@ public class EtcdTest {
         NewSessionDTO config = new NewSessionDTO();
         config.setHost("127.0.0.1");
         config.setPort(2379);
+        config.setNamespace("/tz_mac");
 
         EtcdConnector connector = EtcdConnectorFactory.newConnector(config);
         String cursorKey = null;

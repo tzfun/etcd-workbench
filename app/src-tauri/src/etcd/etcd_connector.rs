@@ -1,7 +1,7 @@
 #![allow(unused)]
 use std::collections::HashMap;
 use std::ffi::{OsStr, OsString};
-use std::fs;
+use std::{fs, u8};
 use std::future::Future;
 use std::path::PathBuf;
 use std::pin::Pin;
@@ -15,8 +15,8 @@ use crate::transport::kv::{
     SerializableKeyValue, SerializableLeaseInfo, SerializableLeaseSimpleInfo,
 };
 use crate::transport::maintenance::{
-    SerializableCluster, SerializableClusterMember, SerializableClusterStatus, SnapshotState,
-    SnapshotInfo,
+    SerializableCluster, SerializableClusterMember, SerializableClusterStatus, SnapshotInfo,
+    SnapshotState,
 };
 use crate::transport::user::{SerializablePermission, SerializableUser};
 use etcd_client::{
@@ -28,9 +28,9 @@ use log::{debug, error, info, warn};
 use serde::{Deserialize, Serialize};
 use tokio::fs::{File, OpenOptions};
 use tokio::io::AsyncWriteExt;
+use tokio::select;
 use tokio::sync::{mpsc, oneshot};
 use tokio::task::JoinHandle;
-use tokio::select;
 
 pub struct EtcdConnector {
     namespace: Option<String>,
@@ -99,8 +99,8 @@ impl EtcdConnector {
     }
 
     pub fn has_namespace(&self) -> bool {
-        if let Some(_) = self.namespace {
-            true
+        if let Some(ref namespace) = self.namespace {
+            !namespace.is_empty()
         } else {
             false
         }
@@ -111,7 +111,7 @@ impl EtcdConnector {
     }
 
     pub async fn test_connection(&self) -> Result<(), Error> {
-        let key = self.get_full_key("/");
+        let key = self.prefix_namespace("/");
         let response = self
             .client
             .kv_client()
@@ -124,7 +124,7 @@ impl EtcdConnector {
     /// 获取所有key，不包含value
     pub async fn kv_get_all_keys(&self) -> Result<Vec<SerializableKeyValue>, Error> {
         let mut kv_client = self.client.kv_client();
-        let root_path = self.get_full_key("");
+        let root_path = self.root_key();
         let get_options = GetOptions::new().with_prefix().with_keys_only();
         self.kv_get_by_option(root_path, get_options).await
     }
@@ -137,13 +137,15 @@ impl EtcdConnector {
     ) -> Result<Vec<SerializableKeyValue>, Error> {
         let mut kv_client = self.client.kv_client();
 
-        let mut key = self.get_full_key(cursor_key);
+        let mut cursor:Vec<u8> = cursor_key.into();
+        cursor.push(0);
 
-        key.push(0);
+        let key = self.prefix_namespace(cursor);
+        let end_key = self.prefix_namespace_to_range_end(vec![0]);
 
         let get_options = GetOptions::new()
-            .with_from_key()
             .with_keys_only()
+            .with_range(end_key)
             .with_limit(limit)
             .with_sort(SortTarget::Key, SortOrder::Ascend);
         self.kv_get_by_option(key, get_options).await
@@ -173,7 +175,7 @@ impl EtcdConnector {
         key: impl Into<Vec<u8>>,
     ) -> Result<SerializableKeyValue, LogicError> {
         let mut kv_client = self.get_client().kv_client();
-        let path = self.get_full_key(key);
+        let path = self.prefix_namespace(key);
         let response = kv_client.get(path, None).await?;
 
         self.parse_kv_get_response(response)
@@ -186,7 +188,7 @@ impl EtcdConnector {
         version: i64,
     ) -> Result<SerializableKeyValue, LogicError> {
         let mut kv_client = self.get_client().kv_client();
-        let path = self.get_full_key(key);
+        let path = self.prefix_namespace(key);
         let mut response = kv_client
             .get(path, Some(GetOptions::new().with_revision(version)))
             .await?;
@@ -214,7 +216,7 @@ impl EtcdConnector {
 
     /// 获取Key的数量
     pub async fn kv_count(&self) -> Result<i64, Error> {
-        let key = self.get_full_key("/");
+        let key = self.prefix_namespace("/");
         let response = self
             .client
             .kv_client()
@@ -231,7 +233,7 @@ impl EtcdConnector {
         ttl: Option<i64>,
     ) -> Result<(), Error> {
         let mut lease_id = 0;
-        let final_key = self.get_full_key(key);
+        let final_key = self.prefix_namespace(key);
         if let Some(ttl_param) = ttl {
             let response = self.client.lease_client().grant(ttl_param, None).await?;
             lease_id = response.id()
@@ -267,7 +269,7 @@ impl EtcdConnector {
         value: impl Into<Vec<u8>>,
         lease: i64,
     ) -> Result<(), Error> {
-        let final_key = self.get_full_key(key);
+        let final_key = self.prefix_namespace(key);
         self.client
             .kv_client()
             .put(final_key, value, Some(PutOptions::new().with_lease(lease)))
@@ -281,7 +283,7 @@ impl EtcdConnector {
         let mut client = self.client.kv_client();
         let mut success = 0usize;
         for key in keys {
-            let result = client.delete(self.get_full_key(key), None).await;
+            let result = client.delete(self.prefix_namespace(key), None).await;
             if result.is_ok() {
                 success += 1;
             }
@@ -298,7 +300,7 @@ impl EtcdConnector {
         end: i64,
     ) -> Result<Vec<i64>, Error> {
         let mut history = Vec::new();
-        let final_key = self.get_full_key(key);
+        let final_key = self.prefix_namespace(key);
         self.kv_get_history_versions0(final_key, end, start, end, &mut history)
             .await;
         Ok(history)
@@ -351,13 +353,34 @@ impl EtcdConnector {
         })
     }
 
-    fn get_full_key(&self, key: impl Into<Vec<u8>>) -> Vec<u8> {
+    fn root_key(&self) -> Vec<u8> {
+        self.get_namespace_unchecked().clone().into_bytes()
+    }
+
+    fn prefix_namespace(&self, end_key: impl Into<Vec<u8>>) -> Vec<u8> {
         if self.has_namespace() {
-            let mut full_key = self.get_namespace_unchecked().clone().into_bytes();
-            full_key.append(&mut key.into());
+            let mut full_key = self.root_key();
+            full_key.append(&mut end_key.into());
             full_key
         } else {
-            key.into()
+            end_key.into()
+        }
+    }
+
+    fn prefix_namespace_to_range_end(&self, end_key: impl Into<Vec<u8>>) -> Vec<u8> {
+        if self.has_namespace() {
+            let mut end_key_bytes: Vec<u8> = end_key.into();
+            let mut prefix = self.get_namespace_unchecked().clone().into_bytes();
+            // range end is '\0', calculate the prefixed range end by (key + 1)
+            if end_key_bytes.len() == 1 && end_key_bytes[0] == 0 {
+                key_next(&mut prefix);
+                prefix
+            } else {
+                prefix.append(&mut end_key_bytes);
+                prefix
+            }
+        } else {
+            end_key.into()
         }
     }
 
@@ -698,7 +721,7 @@ impl EtcdConnector {
         &self,
         file_path: PathBuf,
         watch_sender: mpsc::Sender<(u64, u64, Option<String>)>,
-        stop_receiver: oneshot::Receiver<()>
+        stop_receiver: oneshot::Receiver<()>,
     ) -> Result<(), LogicError> {
         let mut stream = self.client.maintenance_client().snapshot().await?;
         if let Some(parent) = file_path.parent() {
@@ -771,6 +794,14 @@ impl EtcdConnector {
     }
 }
 
+fn key_next(key: &mut Vec<u8>) {
+    let len = key.len();
+    if key[len - 1] == u8::MAX {
+        key.push(0u8)
+    } else {
+        key[len - 1] += 1
+    }
+}
 pub struct SnapshotTask {
     pub name: String,
     pub folder: String,

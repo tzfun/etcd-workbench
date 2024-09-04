@@ -17,7 +17,7 @@ mod utils;
 
 fn main() {
     env_logger::Builder::from_default_env()
-        .filter_level(LevelFilter::Debug)
+        .filter_level(LevelFilter::Info)
         .init();
     info!("env logger initialized");
 

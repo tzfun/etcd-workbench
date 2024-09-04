@@ -9,7 +9,7 @@ mod test_connect {
         let connection: Connection = Connection {
             host: String::from("127.0.0.1"),
             port: 2379,
-            namespace: None,
+            namespace: Some(String::from("/tz_mac")),
             user: None,
             tls: None,
             ssh: None,
@@ -63,6 +63,7 @@ mod test_connect {
     async fn get_kv_paging() -> Result<(), LogicError> {
         let connector = get_connector().await?;
         let mut cursor = String::new();
+        let mut page = 1;
         const LIMIT: i64 = 2;
         loop {
             let kv_list = connector.kv_get_all_keys_paging(cursor.clone(), LIMIT).await?;
@@ -71,11 +72,11 @@ mod test_connect {
                 cursor.push_str(kv.key.clone().leak());
             }
 
-            println!("{:?}", &kv_list);
-            if kv_list.len() == 0 {
+            println!("{} ==> {:?}", page, &kv_list);
+            if kv_list.len() < LIMIT as usize {
                 break;
             }
-            cursor.push('\0');
+            page += 1;
         }
 
         println!("finished");
