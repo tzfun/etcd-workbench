@@ -176,16 +176,6 @@ const loadNextPage = () => {
         addKvListToTree(data)
       }
     }).catch((e: ErrorPayload | string) => {
-      if (typeof e == 'object') {
-        if (e.errType && e.errType === 'PermissionDenied') {
-          if (_useSettings().value.kvReadAllWhenPagingFailed) {
-            enforceLoadAllKey.value = true
-            loadAllKeys()
-            return
-          }
-        }
-      }
-
       _handleError({
         e,
         session: props.session

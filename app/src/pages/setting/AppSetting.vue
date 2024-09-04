@@ -478,34 +478,6 @@ const onScroll = _debounce(() => {
                 <v-divider class="mt-5 mb-5"></v-divider>
                 <v-layout>
                   <div>
-                    <div class="form-label text-high-emphasis my-auto">Read All When Paging Failed
-                      <v-tooltip location="top"
-                                 text="The paging function requires the connection account to have at least read permission for all keys, otherwise it may not be able to read."
-                      >
-                        <template #activator="{props}">
-                          <v-icon v-bind="props"
-                                  class="ml-2"
-                          >mdi-alert-circle-outline</v-icon>
-                        </template>
-                      </v-tooltip>
-                    </div>
-                    <div class="v-messages">If paging fails due to permission reasons, all keys will be read. This is a compatibility option.</div>
-                  </div>
-                  <v-spacer></v-spacer>
-                  <div>
-                    <v-switch v-model="settingForm.kvReadAllWhenPagingFailed"
-                              inset
-                              density="compact"
-                              color="primary"
-                              hide-details
-                              true-icon="mdi-check"
-                    ></v-switch>
-                  </div>
-                </v-layout>
-
-                <v-divider class="mt-5 mb-5"></v-divider>
-                <v-layout>
-                  <div>
                     <div class="form-label text-high-emphasis">Pagination Limit</div>
                     <div class="v-messages">Number of queries per page when querying all keys in pagination.</div>
                   </div>

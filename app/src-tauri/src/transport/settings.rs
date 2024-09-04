@@ -18,9 +18,6 @@ pub struct SettingConfig {
     /// KV分页查询
     #[serde(default)]
     pub kv_pagination_query: bool,
-    ///  KV分页失败时读取所有key
-    #[serde(default)]
-    pub kv_read_all_when_paging_failed: bool,
     /// KV分页获取每页大小
     #[serde(default = "default_kv_limit_per_page")]
     pub kv_limit_per_page: u32,
@@ -88,7 +85,6 @@ impl Default for SettingConfig {
             editor_light_theme: default_editor_light_theme(),
             kv_path_splitter: default_kv_path_splitter(),
             kv_pagination_query: true,
-            kv_read_all_when_paging_failed: true,
             kv_limit_per_page: default_kv_limit_per_page(),
             auto_update: true,
             close_tab_use_ctrl_w: true,

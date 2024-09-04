@@ -14,8 +14,6 @@ export interface SettingConfig {
     kvPathSplitter: string,
     //  KV分页查询
     kvPaginationQuery: boolean,
-    //  KV分页失败时读取所有key
-    kvReadAllWhenPagingFailed: boolean,
     //  KV分页获取每页大小
     kvLimitPerPage: number | string,
     //  自动下载更新
@@ -45,7 +43,6 @@ export const DEFAULT_SETTING_CONFIG: SettingConfig = {
     editorLightTheme: 'smoothy',
     kvPathSplitter: '/',
     kvPaginationQuery: true,
-    kvReadAllWhenPagingFailed: true,
     kvLimitPerPage: 5000,
     closeTabUseCtrlW: true,
     autoUpdate: true,
