@@ -18,6 +18,7 @@ mod utils;
 fn main() {
     env_logger::Builder::from_default_env()
         .filter_level(LevelFilter::Info)
+        .filter_module("tao::platform_impl::platform::event_loop::runner", LevelFilter::Error)
         .init();
     info!("env logger initialized");
 
@@ -64,6 +65,7 @@ fn main() {
             api::windows::open_setting_window,
             api::windows::exit_app,
             api::windows::open_folder,
+            api::windows::get_download_path,
             api::connection::connect_test,
             api::connection::connect,
             api::connection::disconnect,

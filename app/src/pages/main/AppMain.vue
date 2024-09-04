@@ -21,6 +21,7 @@ type TabItem = {
 const HOME_TAB = "___home"
 const activeTab = ref<string>(HOME_TAB)
 const tabList = reactive<TabItem[]>([])
+const exitConfirmState = ref<boolean>(false)
 
 const eventUnListens = reactive<Function[]>([])
 
@@ -104,10 +105,17 @@ onMounted(async () => {
   }))
 
   eventUnListens.push(await listen(EventName.CONFIRM_EXIT, () => {
+    if (exitConfirmState.value) {
+      return
+    }
+    exitConfirmState.value = true
     _confirm("Confirm Exit", "Are you sure you want to exit?").then(() => {
       _exitApp()
     }).catch(() => {
+    }).finally(() => {
+      exitConfirmState.value = false
     })
+    appWindow.show()
   }))
 
   _listenLocal(EventName.NEW_CONNECTION, (e: any) => {

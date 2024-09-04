@@ -17,8 +17,9 @@ import WorkbenchLogo from "~/components/WorkbenchLogo.vue";
 import {_loadSettings, _setLocalSettings, _useSettings} from "~/common/store.ts";
 import {appWindow} from "@tauri-apps/api/window";
 import {useTheme} from "vuetify";
-import {save, open} from "@tauri-apps/api/dialog";
+import {open, save} from "@tauri-apps/api/dialog";
 import {_exportConnection, _getAppVersion, _handleError, _importConnection} from "~/common/services.ts";
+import {_getDownloadPath} from "~/common/windows.ts";
 
 const theme = useTheme()
 
@@ -132,7 +133,7 @@ onMounted(async () => {
   await _loadSettings()
   settingForm.value = JSON.parse(JSON.stringify(_useSettings().value))
 
-  _getAppVersion().then((version:string) => {
+  _getAppVersion().then((version: string) => {
     appVersion.value = version
   }).catch(e => {
     console.error(e)
@@ -194,12 +195,14 @@ const selectGroup = ({id}: any) => {
   }
 }
 
-const exportConnectionConfig = () => {
+const exportConnectionConfig = async () => {
+  let downloadPath = await _getDownloadPath()
   save({
     filters: [{
       name: 'Etcd Workbench Config',
       extensions: ['wbc']
-    }]
+    }],
+    defaultPath: downloadPath
   }).then(filepath => {
     if (filepath) {
       loadingStore.exportConnection = true
@@ -256,7 +259,7 @@ const onScroll = _debounce(() => {
       }
     }
   }
-},200)
+}, 200)
 
 </script>
 
@@ -732,6 +735,7 @@ const onScroll = _debounce(() => {
   user-select: none;
   cursor: default;
 }
+
 .form-area {
   border-radius: 10px;
   margin: 8px 0;

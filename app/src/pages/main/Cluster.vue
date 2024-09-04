@@ -7,6 +7,7 @@ import {Alarm, Cluster} from "~/common/transport/maintenance.ts";
 import {_byteTextFormat} from "~/common/utils.ts";
 import {_alertError, _confirmSystem, _emitLocal, _tipSuccess, EventName} from "~/common/events.ts";
 import {save} from "@tauri-apps/api/dialog";
+import {_getDownloadPath} from "~/common/windows.ts";
 
 const props = defineProps({
   session: {
@@ -74,8 +75,11 @@ const defragment = () => {
 }
 
 const snapshot = () => {
-  _confirmSystem('Are you sure you want to start a snapshot task? Download time depends on the size of the data.').then(() => {
-    save().then(filepath => {
+  _confirmSystem('Are you sure you want to start a snapshot task? Download time depends on the size of the data.').then(async () => {
+    let downloadPath = await _getDownloadPath()
+    save({
+      defaultPath: downloadPath
+    }).then(filepath => {
       if (filepath) {
         loadingStore.snapshot = true
         _maintenanceCreateSnapshotTask(props.session?.id, filepath).then(info => {

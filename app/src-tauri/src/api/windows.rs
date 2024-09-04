@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 use std::process::Command;
 
+use tauri::api::path::download_dir;
 use tauri::{Manager, WindowBuilder};
 use tauri::utils::config::WindowConfig;
 
@@ -90,6 +91,11 @@ pub fn open_folder(path: String, select_file: Option<String>) -> Result<(), Logi
     Ok(())
 }
 
+
+#[tauri::command]
+pub fn get_download_path() -> Option<String> {
+    download_dir().map(|path| path.to_string_lossy().to_string())
+}
 
 pub fn create_configured_window(app_handle: &tauri::AppHandle, name: &'static str) {
     let window_config_arr = &app_handle.config().tauri.windows;

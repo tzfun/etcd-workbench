@@ -458,6 +458,7 @@ const saveConnection = () => {
                         :append-inner-icon="formPasswordShow.show1 ? 'mdi-eye-off' : 'mdi-eye'"
                         @click:append-inner="formPasswordShow.show1 = !formPasswordShow.show1"
                         density="comfortable"
+                        autocomplete
                         placeholder="Etcd auth password"
                     ></v-text-field>
                   </div>
@@ -605,6 +606,7 @@ const saveConnection = () => {
                         :append-inner-icon="formPasswordShow.show2 ? 'mdi-eye-off' : 'mdi-eye'"
                         @click:append-inner="formPasswordShow.show2 = !formPasswordShow.show2"
                         density="comfortable"
+                        autocomplete
                         placeholder="Password"
                     ></v-text-field>
                     <div v-else-if="formData.ssh.identity.model == 'key'">
@@ -619,6 +621,7 @@ const saveConnection = () => {
                           :append-inner-icon="formPasswordShow.show3 ? 'mdi-eye-off' : 'mdi-eye'"
                           @click:append-inner="formPasswordShow.show3 = !formPasswordShow.show3"
                           density="comfortable"
+                          autocomplete
                           placeholder="Passphrase (optional)"
                       ></v-text-field>
                     </div>
