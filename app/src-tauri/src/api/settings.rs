@@ -1,7 +1,7 @@
-use std::fs;
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::Path;
+use std::{fs, io};
 
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
@@ -56,8 +56,14 @@ pub async fn get_settings() -> Result<SettingConfig, LogicError> {
 
 #[tauri::command]
 pub async fn save_settings(setting_config: SettingConfig) -> Result<(), LogicError> {
-    if setting_config.connection_conf_encrypt_key.as_bytes().len() != aes_util::LENGTH_16 {
-        return Err(LogicError::ArgumentError)
+    let new_key = &setting_config.connection_conf_encrypt_key;
+    if new_key.as_bytes().len() != aes_util::LENGTH_16 {
+        return Err(LogicError::ArgumentError);
+    }
+
+    let old_key = get_settings().await?.connection_conf_encrypt_key;
+    if old_key.ne(new_key) {
+        restore_connections(old_key.as_bytes(), new_key.as_bytes())?;
     }
 
     let path = file_util::get_setting_file_path();
@@ -65,9 +71,7 @@ pub async fn save_settings(setting_config: SettingConfig) -> Result<(), LogicErr
     if !path.exists() {
         File::create(path.clone())?;
     }
-
     fs::write(path, s)?;
-
     {
         let mut write_lock = SETTING_CONFIG.write().await;
         *write_lock = Some(setting_config);
@@ -75,6 +79,31 @@ pub async fn save_settings(setting_config: SettingConfig) -> Result<(), LogicErr
 
     debug!("Save settings");
 
+    Ok(())
+}
+
+fn restore_connections(old_key: &[u8], new_key: &[u8]) -> io::Result<()> {
+    let dir = file_util::get_config_dir_path();
+    if dir.exists() {
+        let entries = fs::read_dir(dir)?;
+        for entry in entries {
+            let path = entry?.path();
+            if !path.is_dir() {
+                let mut file = OpenOptions::new().read(true).write(true).open(path)?;
+                let mut content = vec![];
+                file.read_to_end(&mut content)?;
+
+                if let Ok(data) = aes_util::reencrypt_128(content, old_key, new_key) {
+                    file.write_all(data.as_slice())?;
+                } else {
+                    return Err(io::Error::new(
+                        io::ErrorKind::InvalidData,
+                        "parse config error",
+                    ));
+                }
+            }
+        }
+    }
     Ok(())
 }
 
@@ -91,7 +120,6 @@ pub async fn save_connection(connection: ConnectionInfo) -> Result<(), LogicErro
     };
 
     let json = serde_json::to_string(&connection)?;
-    println!("==> {}",json);
     let key = get_settings().await?.connection_conf_encrypt_key;
 
     let data = aes_util::encrypt_128(key.as_bytes(), json)?;
@@ -131,11 +159,19 @@ pub async fn get_connection_list() -> Result<Vec<ConnectionInfo>, LogicError> {
                 file.read_to_end(&mut content)?;
 
                 if let Ok(data) = aes_util::decrypt_128(key, content) {
-                    let info = serde_json::from_slice::<ConnectionInfo>(data.as_slice())?;
-                    result.push(info);
+                    if let Ok(info) = serde_json::from_slice::<ConnectionInfo>(data.as_slice()) {
+                        result.push(info);
+                    } else {
+                        let filepath: String = path.to_string_lossy().to_string();
+                        warn!("read connection conf failed with json decode, file will be removed. {}", filepath);
+                        let _ = fs::remove_file(path);
+                    }
                 } else {
                     let filepath: String = path.to_string_lossy().to_string();
-                    warn!("read connection conf failed with aes decrypt, file will be removed. {}", filepath);
+                    warn!(
+                        "read connection conf failed with aes decrypt, file will be removed. {}",
+                        filepath
+                    );
                     let _ = fs::remove_file(path);
                 }
             }
@@ -156,9 +192,7 @@ pub async fn export_connection(filepath: String) -> Result<(), LogicError> {
     let mut file = if !path.exists() {
         File::create(path)?
     } else {
-        File::options()
-            .write(true)
-            .open(path)?
+        File::options().write(true).open(path)?
     };
 
     file.write_all(content.as_bytes())?;
@@ -169,7 +203,7 @@ pub async fn export_connection(filepath: String) -> Result<(), LogicError> {
 pub async fn import_connection(filepath: String) -> Result<(), LogicError> {
     let path = Path::new(&filepath);
     if !path.exists() {
-        return Err(LogicError::ResourceNotExist("File not exists"))
+        return Err(LogicError::ResourceNotExist("File not exists"));
     }
 
     let mut file = File::open(path)?;

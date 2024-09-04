@@ -135,9 +135,6 @@ const connectionConfEncryptKeyRule = [
     if (keyBytes.length != 16) {
       return "Invalid byte length"
     }
-    // if ((v as string).match(/\\{|}|\\[|]|\\:|\\,|"|'/)) {
-    //   return "Invalid characters"
-    // }
     return true
   }
 ]

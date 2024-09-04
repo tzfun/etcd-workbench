@@ -12,7 +12,7 @@ pub const LENGTH_16: usize = 16;
 pub enum AesError {
     InvalidKeyLength(String),
     InvalidBlockLength,
-    TryFromSliceError
+    TryFromSliceError,
 }
 
 impl Display for AesError {
@@ -20,10 +20,10 @@ impl Display for AesError {
         match self {
             AesError::InvalidKeyLength(s) => {
                 write!(f, "aes crypt error: InvalidKeyLength {}", s)
-            },
+            }
             AesError::InvalidBlockLength => {
                 write!(f, "aes crypt error: InvalidBlockLength")
-            },
+            }
             AesError::TryFromSliceError => {
                 write!(f, "aes crypt error: TryFromSliceError")
             }
@@ -31,10 +31,22 @@ impl Display for AesError {
     }
 }
 
+pub fn reencrypt_128(
+    content: impl Into<Vec<u8>>,
+    old_key: &[u8],
+    new_key: &[u8],
+) -> Result<Vec<u8>, AesError> {
+    let data = decrypt_128(old_key, content)?;
+    encrypt_128(new_key, data)
+}
+
 pub fn encrypt_128(key: &[u8], content: impl Into<Vec<u8>>) -> Result<Vec<u8>, AesError> {
     let key_len = key.len();
     if key_len != LENGTH_16 {
-        return Err(AesError::InvalidKeyLength(format!("Invalid aes key length: {}, expect: {}", key_len, LENGTH_16)));
+        return Err(AesError::InvalidKeyLength(format!(
+            "Invalid aes key length: {}, expect: {}",
+            key_len, LENGTH_16
+        )));
     }
     let k = GenericArray::from_slice(key);
     let cipher = Aes128::new(&k);
@@ -47,7 +59,10 @@ pub fn encrypt_128(key: &[u8], content: impl Into<Vec<u8>>) -> Result<Vec<u8>, A
 pub fn decrypt_128(key: &[u8], content: impl Into<Vec<u8>>) -> Result<Vec<u8>, AesError> {
     let key_len = key.len();
     if key_len != LENGTH_16 {
-        return Err(AesError::InvalidKeyLength(format!("Invalid aes key length: {}, expect: {}", key_len, LENGTH_16)));
+        return Err(AesError::InvalidKeyLength(format!(
+            "Invalid aes key length: {}, expect: {}",
+            key_len, LENGTH_16
+        )));
     }
     let k = GenericArray::from_slice(key);
     let cipher = Aes128::new(&k);
@@ -61,7 +76,9 @@ pub fn decrypt_128(key: &[u8], content: impl Into<Vec<u8>>) -> Result<Vec<u8>, A
         if end_idx > len {
             return Err(AesError::InvalidBlockLength);
         }
-        let array: [u8; LENGTH_16] = content_vec[idx..end_idx].try_into().map_err(|_| AesError::TryFromSliceError)?;
+        let array: [u8; LENGTH_16] = content_vec[idx..end_idx]
+            .try_into()
+            .map_err(|_| AesError::TryFromSliceError)?;
         blocks.push(GenericArray::from(array));
         idx += LENGTH_16;
     }
@@ -73,7 +90,9 @@ pub fn decrypt_128(key: &[u8], content: impl Into<Vec<u8>>) -> Result<Vec<u8>, A
     decode_aes_block_content_16(&blocks)
 }
 
-fn encode_aes_block_content_16(content: impl Into<Vec<u8>>) -> Result<Vec<GenericArray<u8, U16>>, AesError> {
+fn encode_aes_block_content_16(
+    content: impl Into<Vec<u8>>,
+) -> Result<Vec<GenericArray<u8, U16>>, AesError> {
     let content_vec = content.into();
     let mut blocks = vec![];
 
@@ -84,7 +103,9 @@ fn encode_aes_block_content_16(content: impl Into<Vec<u8>>) -> Result<Vec<Generi
         let split_size = min(len - idx, LENGTH_16);
         if split_size == LENGTH_16 {
             let split_idx = idx + split_size;
-            let array: [u8; LENGTH_16] = content_vec[idx..split_idx].try_into().map_err(|_| AesError::TryFromSliceError)?;
+            let array: [u8; LENGTH_16] = content_vec[idx..split_idx]
+                .try_into()
+                .map_err(|_| AesError::TryFromSliceError)?;
             blocks.push(GenericArray::from(array));
             idx += LENGTH_16;
         } else {
