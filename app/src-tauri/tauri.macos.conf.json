@@ -15,6 +15,9 @@
       "dialog": {
         "open": true,
         "save": true
+      },
+      "process": {
+        "relaunch": true
       }
     },
     "windows": [
@@ -22,7 +25,7 @@
         "label": "main",
         "title": "Etcd Workbench",
         "width": 1200,
-        "height": 900,
+        "height": 800,
         "minWidth": 900,
         "minHeight": 500,
         "center": true,

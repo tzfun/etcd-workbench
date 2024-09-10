@@ -35,7 +35,7 @@
         "label": "main",
         "title": "Etcd Workbench",
         "width": 1200,
-        "height": 900,
+        "height": 800,
         "minWidth": 1000,
         "minHeight": 700,
         "center": true,

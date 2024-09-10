@@ -8,7 +8,7 @@ import WindowsSystemBar from "~/components/system-bar/WindowsSystemBar.vue";
 import MacSystemBar from "~/components/system-bar/MacSystemBar.vue";
 import AppSetting from "~/pages/setting/AppSetting.vue";
 import AppMain from "~/pages/main/AppMain.vue";
-import {_checkUpdate, _listenLocal, EventName} from "~/common/events.ts";
+import {_alertError, _checkUpdate, _listenLocal, EventName} from "~/common/events.ts";
 import {_loadSettings, _useSettings, _useUpdateInfo} from "~/common/store.ts";
 import {DEFAULT_SETTING_CONFIG} from "~/common/transport/setting.ts";
 import {installUpdate} from "@tauri-apps/api/updater";
@@ -107,9 +107,13 @@ onMounted(async () => {
       updateInfo.latestVersion = manifest
 
       if (settings.autoUpdate) {
-        await installUpdate()
+        installUpdate().catch(e => {
+          console.error(e)
+          _alertError("A new version was found but the update failed. Please update manually or go to GitHub to download the latest version.")
+        })
       }
-    }).catch(() => {
+    }).catch(e => {
+      console.error(e)
       updateInfo.valid = false
     })
   }

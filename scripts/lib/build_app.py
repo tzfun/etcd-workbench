@@ -144,6 +144,7 @@ def build_web(bin_name, skip_merge_jar = False):
     
     os.chdir('web')
     web_path = os.getcwd()
+    execute("nvm use 22")
     execute("pnpm install")
     execute("pnpm run build")
 

@@ -228,10 +228,13 @@ export function _checkUpdateAndInstall() {
         ).then(() => {
             _loading(true)
             installUpdate().then(async () => {
-                await relaunch()
+                relaunch().catch((e:string) => {
+                    console.error(e)
+                    _alertError("Unable to relaunch, please relaunch manually.")
+                })
             }).catch(e => {
                 console.error(e)
-                _alertError("Download failed: " + e)
+                _alertError("Unable to download: " + e)
             }).finally(() => {
                 _loading(false)
             })
