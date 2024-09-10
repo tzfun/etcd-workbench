@@ -22,7 +22,7 @@
         "label": "main",
         "title": "Etcd Workbench",
         "width": 1200,
-        "height": 800,
+        "height": 900,
         "minWidth": 900,
         "minHeight": 500,
         "center": true,
@@ -84,7 +84,10 @@
         "icons/macos/Square284x284Logo.png",
         "icons/macos/Square310x310Logo.png",
         "icons/macos/StoreLogo.png"
-      ]
+      ],
+      "macOS": {
+        "minimumSystemVersion": "11.0"
+      }
     }
   }
 }

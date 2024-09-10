@@ -895,6 +895,7 @@ const clearAllKeyLeaseListener = () => {
         persistent
         max-width="70vw"
         min-width="500px"
+        scrollable
     >
       <v-card
           :min-width="800"
@@ -941,7 +942,7 @@ const clearAllKeyLeaseListener = () => {
           </v-layout>
 
           <code-diff
-              style="max-height: 70vh;min-height:50vh;"
+              style="max-height: 60vh;"
               :old-string="versionDiffInfo.A.content"
               :filename="`Revision: ${versionDiffInfo.A.version}`"
               :new-string="versionDiffInfo.B.content"

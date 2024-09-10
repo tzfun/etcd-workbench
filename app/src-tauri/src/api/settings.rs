@@ -83,7 +83,7 @@ pub async fn save_settings(setting_config: SettingConfig) -> Result<(), LogicErr
 }
 
 fn restore_connections(old_key: &[u8], new_key: &[u8]) -> io::Result<()> {
-    let dir = file_util::get_config_dir_path();
+    let dir = file_util::get_conn_config_dir_path();
     if dir.exists() {
         let entries = fs::read_dir(dir)?;
         for entry in entries {
@@ -109,7 +109,7 @@ fn restore_connections(old_key: &[u8], new_key: &[u8]) -> io::Result<()> {
 
 #[tauri::command]
 pub async fn save_connection(connection: ConnectionInfo) -> Result<(), LogicError> {
-    let mut dir = file_util::get_config_dir_path();
+    let mut dir = file_util::get_conn_config_dir_path();
 
     let digest = md5::compute(&connection.name);
     dir.push(format!("{:x}", digest));
@@ -131,7 +131,7 @@ pub async fn save_connection(connection: ConnectionInfo) -> Result<(), LogicErro
 
 #[tauri::command]
 pub fn remove_connection(name: String) -> Result<(), LogicError> {
-    let mut dir = file_util::get_config_dir_path();
+    let mut dir = file_util::get_conn_config_dir_path();
 
     let digest = md5::compute(&name);
     dir.push(format!("{:x}", digest));
@@ -144,7 +144,7 @@ pub fn remove_connection(name: String) -> Result<(), LogicError> {
 
 #[tauri::command]
 pub async fn get_connection_list() -> Result<Vec<ConnectionInfo>, LogicError> {
-    let dir = file_util::get_config_dir_path();
+    let dir = file_util::get_conn_config_dir_path();
 
     let mut result = Vec::new();
     if dir.exists() {
@@ -228,4 +228,16 @@ pub fn get_app_version(app: AppHandle) -> String {
     let conf = app.package_info();
     let version = conf.version.clone();
     version.to_string()
+}
+
+#[tauri::command]
+#[cfg(debug_assertions)]
+pub fn is_debug_model() -> bool {
+    true
+}
+
+#[tauri::command]
+#[cfg(not(debug_assertions))]
+pub fn is_debug_model() -> bool {
+    false
 }

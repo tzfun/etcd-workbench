@@ -12,6 +12,7 @@ import {_checkUpdate, _listenLocal, EventName} from "~/common/events.ts";
 import {_loadSettings, _useSettings, _useUpdateInfo} from "~/common/store.ts";
 import {DEFAULT_SETTING_CONFIG} from "~/common/transport/setting.ts";
 import {installUpdate} from "@tauri-apps/api/updater";
+import {_isDebugModel} from "~/common/services.ts";
 
 const loading = ref<boolean>(false)
 const dialogs = ref<DialogItem[]>([])
@@ -29,8 +30,11 @@ const windowLabel = computed<string>(() => {
 onMounted(async () => {
   let settings = await _loadSettings()
 
-  //  频闭Webview原生事件
-  disableWebviewNativeEvents()
+  let isDebug = await _isDebugModel()
+  if (!isDebug) {
+    //  频闭Webview原生事件
+    disableWebviewNativeEvents()
+  }
 
   setAppTheme(settings.theme)
 
@@ -137,7 +141,7 @@ const disableWebviewNativeEvents = () => {
       return false
     }
 
-    if (key == 'f5' || key == 'escape') {
+    if (key.match(/^f\d+$/) || key == 'escape') {
       e.preventDefault()
       return false
     }

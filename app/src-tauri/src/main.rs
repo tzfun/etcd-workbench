@@ -16,8 +16,15 @@ mod error;
 mod utils;
 
 fn main() {
+    let mut log_level = LevelFilter::Info;
+    if api::settings::is_debug_model() {
+        log_level = LevelFilter::Debug;
+        println!("Running in debug model...");
+    } else {
+        println!("Running in release model...");
+    }
     env_logger::Builder::from_default_env()
-        .filter_level(LevelFilter::Debug)
+        .filter_level(log_level)
         .filter_module("tao::platform_impl::platform::event_loop::runner", LevelFilter::Error)
         .init();
     info!("env logger initialized");
@@ -77,6 +84,7 @@ fn main() {
             api::settings::export_connection,
             api::settings::import_connection,
             api::settings::get_app_version,
+            api::settings::is_debug_model,
             api::kv::kv_get_all_keys,
             api::kv::kv_get_all_keys_paging,
             api::kv::kv_get,

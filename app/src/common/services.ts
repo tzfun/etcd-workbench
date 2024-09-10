@@ -24,6 +24,10 @@ export function _getAppVersion(): Promise<string> {
     return invoke('get_app_version')
 }
 
+export function _isDebugModel(): Promise<boolean> {
+    return invoke('is_debug_model')
+}
+
 export function _connectTest(connection: Connection): Promise<undefined> {
     return invoke('connect_test', {connection})
 }
