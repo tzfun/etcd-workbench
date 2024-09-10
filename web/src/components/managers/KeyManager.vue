@@ -242,7 +242,7 @@ const diff = (row: KeyDTO) => {
       versionDiffInfo.key = dataB.key
       versionDiffInfo.createRevision = dataB.createRevision
       versionDiffInfo.modRevision = dataB.modRevision
-      versionDiffInfo.versionB = row.modRevision
+      versionDiffInfo.versionB = dataB.modRevision
       versionDiffInfo.versionBContent = dataB.value
       versionDiffInfo.version = dataB.version
       versionDiffInfo.modRevision = dataB.modRevision
@@ -263,7 +263,7 @@ const diff = (row: KeyDTO) => {
         versionDiffInfo.versionHistory = versions
 
         //  上一个版本
-        versionDiffInfo.versionA = versionDiffInfo.versionHistory[dataB.version - 2]
+        versionDiffInfo.versionA = versions[1]
         loadDiff(true)
       }).catch(e => {
         console.error(e)
