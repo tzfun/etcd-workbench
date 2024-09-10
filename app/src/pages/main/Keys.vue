@@ -594,7 +594,7 @@ const loadVersionDiff = () => {
 
     _getKVHistoryVersions(
         props.session?.id,
-        key,
+        key!,
         dataB.createRevision,
         dataB.modRevision
     ).then(versions => {
@@ -893,7 +893,7 @@ const clearAllKeyLeaseListener = () => {
     <v-dialog
         v-model="versionDiffInfo.show"
         persistent
-        max-width="70vw"
+        max-width="80vw"
         min-width="500px"
         scrollable
     >
@@ -942,7 +942,7 @@ const clearAllKeyLeaseListener = () => {
           </v-layout>
 
           <code-diff
-              style="max-height: 60vh;"
+              style="max-height: 60vh;min-height: 40vh;"
               :old-string="versionDiffInfo.A.content"
               :filename="`Revision: ${versionDiffInfo.A.version}`"
               :new-string="versionDiffInfo.B.content"

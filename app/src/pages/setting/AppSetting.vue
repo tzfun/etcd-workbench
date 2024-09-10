@@ -130,7 +130,7 @@ const isMac = computed<boolean>(() => {
 })
 
 const connectionConfEncryptKeyRule = [
-  (v) => {
+  (v?: string) => {
     let keyBytes = _encodeStringToBytes(v)
     if (keyBytes.length != 16) {
       return "Invalid byte length"

@@ -25,6 +25,6 @@ export function _openFolder(path: string, selectFile?: string): Promise<undefine
     })
 }
 
-export function _getDownloadPath():Promise<string | null> {
+export function _getDownloadPath():Promise<string | undefined> {
     return invoke('get_download_path')
 }
