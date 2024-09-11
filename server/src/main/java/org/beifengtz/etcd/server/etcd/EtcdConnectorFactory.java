@@ -149,6 +149,9 @@ public class EtcdConnectorFactory {
         if (ssl != null) {
             builder.sslContext(ssl);
         }
+        if (StringUtil.nonEmpty(data.getAuthority())) {
+            builder.authority(data.getAuthority());
+        }
         URI endpoints = null;
         try {
             endpoints = new URI(endpointsStr);

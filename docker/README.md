@@ -1,5 +1,5 @@
 <div align=center>
-<img src=https://raw.githubusercontent.com/tzfun/etcd-workbench/master/web/src/assets/logo.png />
+<img src=https://raw.githubusercontent.com/tzfun/etcd-workbench/master/app/design/icon-apple.png width=200 />
 </div>
 
 # What is Etcd Workbench?
@@ -10,7 +10,6 @@ Supported platforms: linux/amd64, linux/arm64, linux/arm64/v8, windows/amd64
 
 # Tag logs
 
-> new -> old
 
 * `latest`: Always latest version.
 * `1.1.0`: Supports batch import and export of keys.

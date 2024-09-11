@@ -42,4 +42,5 @@ public class NewSessionDTO {
      */
     private String clientCertKey;
     private SshDTO ssh;
+    private String authority;
 }
