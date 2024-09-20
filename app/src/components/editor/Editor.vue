@@ -64,7 +64,7 @@ const consolePanelData = reactive({
 })
 const languageSelectionBoxRef = ref()
 
-const content = ref<String>(props.value)
+const content = ref<string>(props.value)
 const propsConfig = ref(props.config!)
 
 const tauriBlurUnListen = ref<Function>()

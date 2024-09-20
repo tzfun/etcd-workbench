@@ -19,7 +19,7 @@ const props = defineProps({
 
 const updateInfo = _useUpdateInfo();
 //  只有主窗口才允许全屏
-const enableMaximize = reactive(props.windowLabel == 'main');
+const enableMaximize:boolean = props.windowLabel == 'main';
 
 const title = ref<string>('Etcd Workbench')
 
