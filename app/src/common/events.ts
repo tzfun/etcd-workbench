@@ -126,7 +126,7 @@ export function _confirmUpdateApp(text: string): Promise<undefined> {
 export function _dialogContent(content: string) {
     let dialog: DialogItem = {
         value: true,
-        title: 'Display Content',
+        title: 'Content',
         content: content,
         maxWidth: 1200,
         closeBtn: true

@@ -360,7 +360,7 @@ const saveConnection = () => {
       <v-sheet class="justify-center mx-auto mt-5">
         <v-card width="600" class="connection-card card-box-shadow" border>
           <v-card-text>
-            <v-form ref="formRef">
+            <v-form ref="formRef" validate-on="submit lazy">
               <div class="d-flex">
                 <div class="form-label">
                   Name

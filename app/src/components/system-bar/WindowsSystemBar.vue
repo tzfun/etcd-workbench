@@ -18,6 +18,8 @@ const props = defineProps({
 })
 
 const updateInfo = _useUpdateInfo();
+//  只有主窗口才允许全屏
+const enableMaximize = reactive(props.windowLabel == 'main');
 
 const title = ref<string>('Etcd Workbench')
 
@@ -54,8 +56,10 @@ const closeApp = () => {
 }
 
 const toggleMaximize = async () => {
-  await appWindow.toggleMaximize()
-  maximize.value = !maximize.value
+  if (enableMaximize) {
+    await appWindow.toggleMaximize()
+    maximize.value = !maximize.value
+  }
 }
 
 const snapshotListLenChanged = (len: number) => {
@@ -71,7 +75,7 @@ const snapshotListShowChanged = (show: boolean) => {
 <template>
   <v-system-bar window
                 :height="height"
-                @dblclick.self="appWindow.toggleMaximize()"
+                @dblclick.self="toggleMaximize()"
                 data-tauri-drag-region
                 class="pr-0"
   >
@@ -138,6 +142,7 @@ const snapshotListShowChanged = (show: boolean) => {
            variant="text"
            :rounded="false"
            density="comfortable"
+           :disabled="!enableMaximize"
            @click="toggleMaximize"
     ></v-btn>
     <v-btn class="system-native-btn system-native-btn-close ms-2"

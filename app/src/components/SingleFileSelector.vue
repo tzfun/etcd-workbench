@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {onMounted, PropType, ref} from "vue";
+import {onMounted, PropType, ref, watch} from "vue";
 import {FileForm} from "~/common/types.ts";
 import {_byteTextFormat, _timeFormat} from "~/common/utils.ts";
 import {_dialogContent, _tipError} from "~/common/events.ts";
@@ -27,11 +27,23 @@ const props = defineProps({
 const fileReadStatus = ref<'none' | 'reading' | 'success' | 'error'>('none')
 
 const fileInputRef = ref<HTMLInputElement>()
-const modelValueMirror = props.modelValue
+const modelValueMirror = ref<FileForm>(props.modelValue)
 
 onMounted(() => {
   if (props.modelValue?.content) {
     fileReadStatus.value = 'success'
+  } else {
+    fileReadStatus.value = 'none'
+  }
+})
+
+watch( () => props.modelValue, (newVal) => {
+  console.log("change", newVal)
+  modelValueMirror.value = newVal
+  if (newVal?.content) {
+    fileReadStatus.value = 'success'
+  } else {
+    fileReadStatus.value = 'none'
   }
 })
 
@@ -49,22 +61,22 @@ const fileInputChange = (event: Event) => {
       _tipError("Selected file is too large!")
       return
     }
-    modelValueMirror.file = file
+    modelValueMirror.value.file = file
     let reader = new FileReader();
-    reader.readAsText(modelValueMirror.file, 'utf-8')
+    reader.readAsText(modelValueMirror.value.file, 'utf-8')
     // reader.readAsArrayBuffer(modelValueMirror.file)
     fileReadStatus.value = 'reading'
     reader.onload = function () {
-      modelValueMirror.content = reader.result as string
+      modelValueMirror.value.content = reader.result as string
       fileReadStatus.value = 'success'
     }
     reader.onerror = function () {
-      modelValueMirror.file = undefined
+      modelValueMirror.value.file = undefined
       _tipError(`Read file error: ${reader.error?.message}`)
       fileReadStatus.value = 'error'
     }
   } else {
-    modelValueMirror.file = undefined
+    modelValueMirror.value.file = undefined
     fileReadStatus.value = 'none'
   }
 }
@@ -108,8 +120,7 @@ const showFileContent = () => {
                color="green"
                variant="text"
                @click="showFileContent"
-        >view
-        </v-btn>
+        >view</v-btn>
         <span v-else-if="fileReadStatus == 'error'"
               class="text-red"
         >Read Error</span>

@@ -113,7 +113,7 @@ onMounted(async () => {
         })
       }
     }).catch(e => {
-      console.error(e)
+      console.error("Failed to check update", e)
       updateInfo.valid = false
     })
   }
@@ -217,7 +217,7 @@ const disableWebviewNativeEvents = () => {
         </template>
 
         <template v-slot:prepend>
-          <v-icon :color="item.iconColor">{{ item.icon }}</v-icon>
+          <v-icon :color="item.iconColor" v-if="item.icon">{{ item.icon }}</v-icon>
         </template>
         <template v-slot:append v-if="item.closeBtn">
           <v-icon class="cursor-pointer" @click="item.value = false">mdi-close</v-icon>

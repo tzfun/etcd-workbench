@@ -324,7 +324,7 @@ const snapshot = () => {
                   <tr align="right">
                     <th>
                       <v-icon class="mr-2">mdi-link-variant</v-icon>
-                      Client Uri:
+                      <span>Client Uri:</span>
                     </th>
 
                     <td class="text-high-emphasis">
