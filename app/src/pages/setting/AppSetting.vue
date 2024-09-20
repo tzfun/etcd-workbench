@@ -106,7 +106,7 @@ const editorTheme = reactive({
 const exampleCode = `server:
   # Workbench running port
   port: 8002
-  etcdExecuteTimeoutMillis: 3000
+  timeoutMillis: 3000
   dataPath: "./data"
 auth:
   enable: false
@@ -542,7 +542,6 @@ const onScroll = _debounce(() => {
                            :key="idx"
                            class="editor-example mt-2"
                     >
-
                       <v-card hover :title="theme.label"
                               @click="settingForm.editorLightTheme = theme.value"
                               :ripple="false"

@@ -22,6 +22,14 @@ import {appWindow} from "@tauri-apps/api/window";
 import {_useSettings} from "~/common/store.ts";
 import {getThemeByName} from "~/components/editor/themes.ts";
 import {VSheet} from "vuetify/components";
+import {platform as getPlatform} from "@tauri-apps/api/os";
+
+import * as prettier from "prettier/standalone";
+import prettierPluginBabel from "prettier/plugins/babel";
+import prettierPluginHtml from "prettier/plugins/html";
+import prettierPluginYaml from "prettier/plugins/yaml";
+import prettierPluginEstree from "prettier/plugins/estree";
+import prettierPluginSql from "prettier-plugin-sql";
 
 type ContentFormatType = 'text' | 'blob'
 
@@ -38,6 +46,8 @@ const props = defineProps({
 
 const emits = defineEmits(["change", "save"])
 
+const enabledFormatLanguage = new Set(["json", "yaml", "xml", "sql"])
+
 const allLanguages = reactive([
   'text',
   'blob',
@@ -48,14 +58,22 @@ const allLanguages = reactive([
   'properties'
 ])
 const showLanguageSelection = ref<boolean>(false)
+const consolePanelData = reactive({
+  show: false,
+  content: ""
+})
 const languageSelectionBoxRef = ref()
 
-const content = ref(props.value)
+const content = ref<String>(props.value)
 const propsConfig = ref(props.config!)
 
 const tauriBlurUnListen = ref<Function>()
+const platform = ref<'win32' | 'darwin' | string>('win32')
+
 
 onMounted(async () => {
+  platform.value = await getPlatform()
+
   tauriBlurUnListen.value = await appWindow.listen('tauri://blur', () => {
     showLanguageSelection.value = false
   })
@@ -71,6 +89,19 @@ onMounted(async () => {
         }
       }
     }
+  })
+
+  document.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (platform.value == 'darwin') {
+      if (e.metaKey && e.altKey && e.key == 'l') {
+        formatContent()
+      }
+    } else if (platform.value == 'win32') {
+      if (e.ctrlKey && e.altKey && e.key == 'l') {
+        formatContent()
+      }
+    }
+
   })
 })
 
@@ -205,6 +236,55 @@ const changeLanguage = (lang: string) => {
   showLanguageSelection.value = false
 }
 
+//  对当前内容进行格式化
+const formatContent = () => {
+  showLanguageSelection.value = false
+  let language = props.config?.language
+  if (!enabledFormatLanguage.has(language)) {
+    return
+  }
+  let parser
+  let plugins = []
+  switch (language) {
+    case 'json':
+      parser = 'json-stringify';
+      plugins.push(prettierPluginBabel)
+      plugins.push(prettierPluginEstree)
+      break
+    case 'xml':
+      parser = 'html';
+      plugins.push(prettierPluginHtml)
+      break
+    case 'yaml':
+      parser = 'yaml'
+      plugins.push(prettierPluginYaml)
+      break
+    case 'sql':
+      parser = 'sql'
+      plugins.push(prettierPluginSql)
+          break
+  }
+  prettier.format(content.value, {
+    parser: parser,
+    plugins: plugins,
+    bracketSameLine: true
+  }).then(newContent => {
+    consolePanelData.show = false
+    let oldContent = content.value
+    content.value = newContent
+    if (newContent != oldContent) {
+      onChanged(newContent)
+    }
+  }).catch(e => {
+    openConsolePanel(e.toString())
+  })
+}
+
+const openConsolePanel = (content: string) => {
+  consolePanelData.content = content
+  consolePanelData.show = true
+}
+
 /**
  * 将当前内容读出为 byte 数组
  */
@@ -252,8 +332,8 @@ defineExpose({
       </span>
 
       <v-sheet class="editor-language-selection card-box-shadow"
-           v-show="showLanguageSelection"
-           ref="languageSelectionBoxRef"
+               v-show="showLanguageSelection"
+               ref="languageSelectionBoxRef"
       >
         <v-list density="compact"
         >
@@ -267,6 +347,45 @@ defineExpose({
                        color="primary"
           ></v-list-item>
         </v-list>
+        <div v-if="enabledFormatLanguage.has(config.language)">
+          <v-divider></v-divider>
+          <v-list density="compact"
+          >
+            <v-list-item title="Format"
+                         color="primary"
+                         @click="formatContent"
+                         class="text-center"
+            >
+              <template #title>
+                Format
+                <span class="text-medium-emphasis" v-if="platform == 'win32'">
+                  (
+                  <span class="font-weight-bold" style="font-size: 0.9em">Ctrl</span> +
+                  <span class="font-weight-bold" style="font-size: 0.9em">Alt</span> +
+                  <span class="font-weight-bold" style="font-size: 0.9em">L</span>
+                  )
+                </span>
+                <span class="text-medium-emphasis" v-else-if="platform == 'darwin'">
+                  (
+                  <v-icon size="0.9em" class="font-weight-bold">mdi-apple-keyboard-command</v-icon> +
+                  <v-icon size="0.9em" class="font-weight-bold">mdi-apple-keyboard-option</v-icon> +
+                  <span class="font-weight-bold">L</span>
+                  )
+                </span>
+              </template>
+            </v-list-item>
+          </v-list>
+        </div>
+      </v-sheet>
+
+      <v-sheet class="console-panel border-t-md"
+               v-show="consolePanelData.show"
+      >
+        <v-icon class="console-panel-close"
+                @click="consolePanelData.show = false"
+        >mdi-close
+        </v-icon>
+        <pre><code>{{ consolePanelData.content }}</code></pre>
       </v-sheet>
     </div>
   </div>
@@ -308,6 +427,24 @@ $--editor-padding: 0 1rem;
     bottom: $--editor-footer-height;
     border: 1px solid rgba(90, 90, 90, 0.12);
     color-scheme: normal;
+  }
+
+  .console-panel {
+    position: absolute;
+    width: 100%;
+    height: 300px;
+    z-index: 10;
+    bottom: $--editor-footer-height;
+    left: 0;
+    padding: 15px;
+    overflow: auto;
+    font-size: 1em;
+
+    .console-panel-close {
+      position: absolute;
+      right: 15px;
+      top: 15px;
+    }
   }
 }
 </style>

@@ -22,7 +22,9 @@
     "v-code-diff": "^1.12.1",
     "vue": "^3.3.4",
     "vue-codemirror": "^6.1.1",
-    "vuetify": "3.6.12"
+    "vuetify": "3.6.12",
+    "prettier": "3.3.3",
+    "prettier-plugin-sql": "0.18.1"
   },
   "devDependencies": {
     "@mdi/font": "^7.4.47",
