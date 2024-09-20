@@ -131,13 +131,14 @@ const formatData = (content: string, fromFormat: ContentFormatType, toFormat: Co
 
   //  text to blob
   if (toFormat == 'blob') {
-    let uint8Array = _encodeStringToBytes(content)
+    let uint8Array:number[] = _encodeStringToBytes(content)
     let newContent = ""
     const SPLIT_LEN = 20
     for (let i = 0; i < uint8Array.length; i += SPLIT_LEN) {
       let end = Math.min(i + SPLIT_LEN, uint8Array.length)
       for (let j = i; j < end; j++) {
-        newContent += `${uint8Array[j]} `
+        let numStr = uint8Array[j].toString().padStart(3, '0')
+        newContent += `${numStr} `
       }
       newContent += '\n'
     }
