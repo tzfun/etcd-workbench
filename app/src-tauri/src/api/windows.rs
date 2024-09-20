@@ -48,6 +48,8 @@ pub fn open_main_window(app_handle: tauri::AppHandle) {
 pub async fn open_setting_window(app_handle: tauri::AppHandle, window: tauri::Window) {
     if let Some(setting) = window.get_window("setting") {
         setting.show().unwrap();
+        setting.set_always_on_top(true).unwrap();
+        setting.set_always_on_top(false).unwrap();
     } else {
         create_configured_window(&app_handle, "setting");
     }
