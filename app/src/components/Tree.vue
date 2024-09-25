@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import {onMounted, ref} from "vue";
-import {KeyValue} from "~/common/transport/kv.ts";
 
 import '@ztree/ztree_v3/js/jquery-1.4.4.min';
 import '@ztree/ztree_v3/js/jquery.ztree.core.js';
 import '@ztree/ztree_v3/js/jquery.ztree.excheck.js';
 // import '@ztree/ztree_v3/css/metroStyle/metroStyle.css';
-import {b} from "vite/dist/node/types.d-aGj9QkWt";
 
 export type TreeNode = {
   //  节点ID，整棵树一定不能重复
@@ -191,10 +189,24 @@ const constructFileNode = (id: string, name: string, pId?: string): TreeNode => 
   }
 }
 
+const getSelectedItems = (): string[] => {
+  let nodes: TreeNode[] = treeRootObj.value.getCheckedNodes(true)
+  let items: string[] = []
+  if (nodes) {
+    for (let node of nodes) {
+      if (!node.isParent) {
+        items.push(node.id)
+      }
+    }
+  }
+  return items
+}
+
 defineExpose({
   addItemToTree,
   removeItemFromTree,
-  rerender
+  rerender,
+  getSelectedItems
 })
 
 </script>
@@ -389,10 +401,6 @@ defineExpose({
       vertical-align: middle;
     }
 
-    a {
-      opacity: 0.8;
-    }
-
     a,
     a.curSelectedNode {
       height: $--tree-item-height;
@@ -404,7 +412,6 @@ defineExpose({
 
     a:hover {
       text-decoration: none;
-      opacity: 0.9;
     }
   }
 }
@@ -416,9 +423,11 @@ defineExpose({
 
   .key-tree {
     li {
+      a {
+        color: rgba(255, 255, 255, 0.7);
+      }
       a.curSelectedNode {
         color: white;
-        opacity: 1;
         font-weight: bold;
       }
 
@@ -437,9 +446,12 @@ defineExpose({
 
   .key-tree {
     li {
+      a {
+        color: rgba(0, 0, 0, 0.7);
+      }
+
       a.curSelectedNode {
         color: black;
-        opacity: 1;
         font-weight: bold;
       }
 

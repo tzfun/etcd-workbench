@@ -11,7 +11,7 @@ import {
   _putKV,
   _putKVWithLease
 } from "~/common/services.ts";
-import {_confirmSystem, _tipInfo, _tipSuccess, _tipWarn} from "~/common/events.ts";
+import {_confirmSystem, _loading, _tipInfo, _tipSuccess, _tipWarn} from "~/common/events.ts";
 import {computed, onMounted, onUnmounted, PropType, reactive, ref} from "vue";
 import {ErrorPayload, SessionData} from "~/common/transport/connection.ts";
 import DragBox from "~/components/DragBox.vue";
@@ -51,8 +51,6 @@ const props = defineProps({
 const enforceLoadAllKey = ref<boolean>(false)
 const kvTree = ref<InstanceType<typeof Tree>>()
 
-const treeValue = ref<KeyValue[]>([])
-const treeSelectable = ref(false)
 const currentKv = ref<KeyValue>()
 const currentKvChanged = ref<boolean>(false)
 const keyLeaseListeners = reactive<Set<any>>(new Set())
@@ -113,30 +111,36 @@ const isDarkTheme = computed<boolean>(() => {
 })
 
 onMounted(() => {
-  refreshAllKeys()
+  //  海量数据加载时会导致页面其他动画卡顿，这里延迟加载
+  setTimeout(() => {
+    _loading(true)
+    refreshAllKeys().finally(() => {
+      _loading(false)
+    })
+  }, 100)
 })
 
 onUnmounted(() => {
   clearAllKeyLeaseListener()
 })
 
-const refreshAllKeys = () => {
+const refreshAllKeys = (): Promise<any> => {
   currentKv.value = undefined
   clearAllKeyLeaseListener()
   kvTree.value?.rerender()
 
   if (_useSettings().value.kvPaginationQuery && !enforceLoadAllKey.value) {
     paginationKeyCursor.value = ""
-    loadNextPage()
+    return loadNextPage()
   } else {
-    loadAllKeys()
+    return loadAllKeys()
   }
 }
 
-const loadAllKeys = () => {
+const loadAllKeys = (): Promise<any> => {
   paginationKeyCursor.value = undefined
   loadingStore.loadMore = true
-  _getAllKeys(props.session?.id).then(data => {
+  return _getAllKeys(props.session?.id).then(data => {
     addDataListToTree(data)
   }).catch(e => {
     _handleError({
@@ -148,12 +152,12 @@ const loadAllKeys = () => {
   })
 }
 
-const loadNextPage = () => {
+const loadNextPage = (): Promise<any> => {
   let cursor = paginationKeyCursor.value
   if (cursor != undefined) {
     loadingStore.loadMore = true
     let limit: number = LIMIT_PER_PAGE.value as number
-    _getAllKeysPaging(props.session?.id, cursor, limit).then((data: KeyValue[]) => {
+    return _getAllKeysPaging(props.session?.id, cursor, limit).then((data: KeyValue[]) => {
       if (data.length < limit) {
         paginationKeyCursor.value = undefined
       }
@@ -173,6 +177,8 @@ const loadNextPage = () => {
     }).finally(() => {
       loadingStore.loadMore = false
     })
+  } else {
+    return Promise.resolve()
   }
 }
 
@@ -307,20 +313,24 @@ const addDataListToTree = (data: KeyValue[]) => {
 }
 
 const deleteKeyBatch = () => {
-  if (treeValue.value.length == 0) {
+  let keys: string[] = kvTree.value?.getSelectedItems()
+  if (keys.length == 0) {
     _tipInfo('Please select at least one key')
     return
   }
-  let keys: string[] = []
-  let containsCurrentKV = false
-  for (let value of treeValue.value) {
-    keys.push(value.key)
-    if (currentKv.value && currentKv.value.key == value.key) {
-      containsCurrentKV = true
-    }
-  }
 
-  _confirmSystem(`Please confirm to permanently delete these keys: <br/><br/><strong>${keys.join('<br/>')}</strong>`).then(() => {
+  let containsCurrentKV = currentKv.value && keys.includes(currentKv.value)
+  let message = "Please confirm to permanently delete these keys:<br/><br/><strong>"
+  const showCount = 20
+  if (keys.length >= showCount) {
+    message += keys.slice(0, showCount).join('<br/>')
+    message += `<br/><br/> ... Omit ${keys.length - showCount} keys`
+  } else {
+    message += keys.join('<br/>')
+  }
+  message += '</strong>'
+  _confirmSystem(message).then(() => {
+    _loading(true)
     loadingStore.deleteBatch = true
     _deleteKV(props.session?.id, keys).then(() => {
       if (containsCurrentKV) {
@@ -334,6 +344,7 @@ const deleteKeyBatch = () => {
       })
     }).finally(() => {
       loadingStore.deleteBatch = false
+      _loading(false)
     })
   }).catch(() => {
   })
@@ -367,11 +378,6 @@ const onClickTreeItem = (key: string) => {
     })
     currentKv.value = undefined
   })
-}
-
-const toggleTreeSelectable = () => {
-  treeValue.value = []
-  treeSelectable.value = !treeSelectable.value
 }
 
 const editorChange = () => {
@@ -567,13 +573,6 @@ const clearAllKeyLeaseListener = () => {
              text="Add Key"
       ></v-btn>
       <v-btn class="text-none ml-2"
-             :prepend-icon="treeSelectable ? 'mdi-checkbox-outline' : 'mdi-checkbox-blank-outline'"
-             color="secondary"
-             @click="toggleTreeSelectable"
-             text="Select Keys"
-      ></v-btn>
-      <v-btn class="text-none ml-2"
-             v-show="treeSelectable"
              prepend-icon="mdi-file-document-minus-outline"
              color="red"
              @click="deleteKeyBatch"
@@ -615,34 +614,11 @@ const clearAllKeyLeaseListener = () => {
         <drag-item class="overflow-y-auto" style="min-width: 300px">
 
           <Tree ref="kvTree"
-                tree-id="kv-tree"
+                :tree-id="`kv-tree-${new Date().getTime()}`"
                 :key-splitter="KEY_SPLITTER"
                 style="height: calc(100% - 30px);"
                 @on-click="onClickTreeItem"
           ></Tree>
-
-          <!--          <v-treeview-->
-          <!--              v-model:selected="treeValue"-->
-          <!--              :items="treeData.children"-->
-          <!--              open-strategy="multiple"-->
-          <!--              item-value="data"-->
-          <!--              :selectable="treeSelectable"-->
-          <!--              :select-strategy="treeSelectable ? 'leaf' : 'single-leaf'"-->
-          <!--              @click:select="treeSelected"-->
-          <!--              return-object-->
-          <!--              open-on-click-->
-          <!--              slim-->
-          <!--              density="compact"-->
-          <!--              class="user-select-none"-->
-          <!--              height="calc(100% - 30px)"-->
-          <!--          >-->
-          <!--            <template v-slot:prepend="{ item }">-->
-          <!--              <v-icon v-if="!item.file">mdi-folder</v-icon>-->
-          <!--              <v-icon v-else>-->
-          <!--                {{ fileTypeIcon[item.iconKey] }}-->
-          <!--              </v-icon>-->
-          <!--            </template>-->
-          <!--          </v-treeview>-->
           <v-sheet height="30px"
                    class="d-flex align-center justify-center"
           >
