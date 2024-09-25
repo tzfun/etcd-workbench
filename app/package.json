@@ -15,16 +15,18 @@
     "@codemirror/language": "^6.x",
     "@codemirror/legacy-modes": "^6.x",
     "@codemirror/theme-one-dark": "^6.x",
+    "@rollup/plugin-inject": "^5.0.5",
     "@tauri-apps/api": "^1",
+    "@ztree/ztree_v3": "3.5.48",
     "codemirror": "^6.0.1",
     "mitt": "^3.0.1",
+    "prettier": "3.3.3",
+    "prettier-plugin-sql": "0.18.1",
     "thememirror": "^2.0.1",
     "v-code-diff": "^1.12.1",
     "vue": "^3.3.4",
     "vue-codemirror": "^6.1.1",
-    "vuetify": "3.6.12",
-    "prettier": "3.3.3",
-    "prettier-plugin-sql": "0.18.1"
+    "vuetify": "3.6.12"
   },
   "devDependencies": {
     "@mdi/font": "^7.4.47",

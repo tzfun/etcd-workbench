@@ -1,7 +1,8 @@
 <script setup lang="ts">
 
 import {
-  _deleteKV, _getAllKeys,
+  _deleteKV,
+  _getAllKeys,
   _getAllKeysPaging,
   _getKV,
   _getKVByVersion,
@@ -17,22 +18,15 @@ import DragBox from "~/components/DragBox.vue";
 import DragItem from "~/components/DragItem.vue";
 import {KeyValue} from "~/common/transport/kv.ts";
 import Editor from "~/components/editor/Editor.vue";
-import {_decodeBytesToString, _isEmpty, fileTypeIcon} from "~/common/utils.ts";
+import {_decodeBytesToString, _isEmpty} from "~/common/utils.ts";
 import {EditorConfig} from "~/common/types.ts";
 import {CodeDiff} from "v-code-diff";
 import {useTheme} from "vuetify";
 import CountDownTimer from "~/components/CountDownTimer.vue";
 import {_useSettings} from "~/common/store.ts";
+import Tree from "~/components/Tree.vue";
 
 const theme = useTheme()
-
-type TreeNode = {
-  title: string,
-  file: boolean,
-  iconKey: string,
-  children?: TreeNode[],
-  data?: KeyValue
-}
 
 type DiffInfo = {
   version: number,
@@ -55,14 +49,9 @@ const props = defineProps({
 })
 
 const enforceLoadAllKey = ref<boolean>(false)
+const kvTree = ref<InstanceType<typeof Tree>>()
 
 const treeValue = ref<KeyValue[]>([])
-const treeData = reactive<TreeNode>({
-  title: 'root',
-  file: false,
-  iconKey: 'dir',
-  children: []
-})
 const treeSelectable = ref(false)
 const currentKv = ref<KeyValue>()
 const currentKvChanged = ref<boolean>(false)
@@ -132,8 +121,9 @@ onUnmounted(() => {
 })
 
 const refreshAllKeys = () => {
-  treeData.children = []
+  currentKv.value = undefined
   clearAllKeyLeaseListener()
+  kvTree.value?.rerender()
 
   if (_useSettings().value.kvPaginationQuery && !enforceLoadAllKey.value) {
     paginationKeyCursor.value = ""
@@ -147,7 +137,7 @@ const loadAllKeys = () => {
   paginationKeyCursor.value = undefined
   loadingStore.loadMore = true
   _getAllKeys(props.session?.id).then(data => {
-    addKvListToTree(data)
+    addDataListToTree(data)
   }).catch(e => {
     _handleError({
       e,
@@ -173,7 +163,7 @@ const loadNextPage = () => {
           paginationKeyCursor.value = data[data.length - 1].key
         }
 
-        addKvListToTree(data)
+        addDataListToTree(data)
       }
     }).catch((e: ErrorPayload | string) => {
       _handleError({
@@ -186,152 +176,13 @@ const loadNextPage = () => {
   }
 }
 
-const addKvListToTree = (data: KeyValue[]) => {
-  for (let kv of data) {
-    addKvToTree(kv)
-  }
-}
-
-const addKvToTree = (kv: KeyValue) => {
-  let key = kv.key
-  //  为了方便解析为统一的树状结构，如果key不是以分隔符开头，默认补充分隔符
-  if (!key.startsWith(KEY_SPLITTER.value)) {
-    key = KEY_SPLITTER.value + key
-  }
-
-  let splits = key.split(KEY_SPLITTER.value)
-  let node: TreeNode = treeData
-
-  for (let i = 1; i < splits.length - 1; i++) {
-    const floorName = splits[i]
-    let floorNode: TreeNode | undefined = undefined
-    if (!node.children) {
-      node.children = []
+const removeKeysFromTree = (keys: string[]) => {
+  for (let key of keys) {
+    kvTree.value?.removeItemFromTree(key)
+    if (currentKv.value && currentKv.value.key == key) {
+      currentKv.value = undefined
     }
-    for (let child of node.children) {
-      if (!child.file && child.title === floorName) {
-        floorNode = child
-      }
-    }
-    if (!floorNode) {
-      floorNode = {
-        title: floorName,
-        file: false,
-        iconKey: 'dir',
-        children: []
-      }
-      node.children.push(floorNode)
-    }
-    node = floorNode
   }
-
-  let fileName = splits[splits.length - 1]
-  let fileNode: TreeNode = {
-    title: fileName,
-    file: true,
-    iconKey: tryParseFileNameToType(fileName, 'file')!,
-    data: kv
-  }
-
-  node.children?.push(fileNode)
-}
-
-const removeKeyFromTreeData = (keys: string[]) => {
-  keysLoop:
-      for (let key of keys) {
-        //  为了方便解析为统一的树状结构，如果key不是以分隔符开头，默认补充分隔符
-        if (!key.startsWith(KEY_SPLITTER.value)) {
-          key = KEY_SPLITTER.value + key
-        }
-        let pathArr = key.split(KEY_SPLITTER.value)
-        let stack: TreeNode[] = []
-
-        let nodeArr: TreeNode[] = treeData.children!
-
-        //  搜索前缀路径
-        keyPathLoop:
-            for (let i = 1; i < pathArr.length - 1; i++) {
-              let path = pathArr[i]
-              for (let node of nodeArr) {
-                if (node.title === path && !node.file) {
-                  stack.push(node)
-                  nodeArr = node.children ? node.children : []
-                  continue keyPathLoop;
-                }
-              }
-              continue keysLoop
-            }
-
-        let path = pathArr[pathArr.length - 1]
-        //  第一层
-        if (stack.length == 0) {
-          let idx = -1
-          for (let i = 0; i < nodeArr.length; i++) {
-            let node = nodeArr[i]
-            if (node.title === path && node.file) {
-              idx = i
-              break
-            }
-          }
-          if (idx >= 0) {
-            nodeArr.splice(idx, 1)
-          }
-          continue
-        }
-
-        let removedFile = false
-        let needRemoveDirNode: TreeNode | null = null
-        while (true) {
-          let node = stack.pop()
-          if (removedFile) {
-            //  文件已删除，开始清空空目录
-            if (node) {
-              let idx = node.children!.indexOf(needRemoveDirNode!)
-              if (idx >= 0) {
-                node.children?.splice(idx, 1)
-              }
-            } else {
-              let idx = treeData.children!.indexOf(needRemoveDirNode!)
-              if (idx >= 0) {
-                treeData.children!.splice(idx, 1)
-              }
-              break
-            }
-          } else {
-            //  删除目标文件
-            let nodeArr: TreeNode[]
-            if (node) {
-              nodeArr = node.children ? node.children : []
-            } else {
-              nodeArr = treeData.children!
-            }
-
-            let idx = -1
-            for (let i = 0; i < nodeArr.length; i++) {
-              let node = nodeArr[i]
-              if (node.title === path && node.file) {
-                idx = i
-                break
-              }
-            }
-            if (idx >= 0) {
-              nodeArr.splice(idx, 1)
-              removedFile = true
-              if (nodeArr.length > 0) {
-                break
-              }
-              if (node) {
-                needRemoveDirNode = node
-              } else {
-                break
-              }
-            } else {
-              //  未找到
-              break
-            }
-          }
-        }
-      }
 }
 
 const tryParseFileNameToType = (fileName: string, defaultType?: string): string | undefined => {
@@ -438,12 +289,7 @@ const putKey = () => {
     _tipSuccess("Succeeded!")
     newKeyDialog.show = false
 
-    //  @ts-ignore
-    let kv: KeyValue = {
-      key: key,
-      value: []
-    }
-    addKvToTree(kv)
+    kvTree.value?.addItemToTree(key)
   }).catch(e => {
     _handleError({
       e,
@@ -452,6 +298,12 @@ const putKey = () => {
   }).finally(() => {
     loadingStore.confirmNewKey = false
   })
+}
+
+const addDataListToTree = (data: KeyValue[]) => {
+  for (let kv of data) {
+    kvTree.value?.addItemToTree(kv.key)
+  }
 }
 
 const deleteKeyBatch = () => {
@@ -474,7 +326,7 @@ const deleteKeyBatch = () => {
       if (containsCurrentKV) {
         currentKv.value = undefined
       }
-      removeKeyFromTreeData(keys)
+      removeKeysFromTree(keys)
     }).catch(e => {
       _handleError({
         e,
@@ -487,37 +339,34 @@ const deleteKeyBatch = () => {
   })
 }
 
-const treeSelected = ({id}: any) => {
-  if (!treeSelectable.value) {
-    let selectedKv = id as KeyValue
-    _getKV(props.session?.id, selectedKv.key).then((kv) => {
-      let language = tryParseFileNameToType(kv.key)
-      if (!language) {
-        language = tryFileContentToType(_decodeBytesToString(kv.value))
-      }
-      editorConfig.language = language
-      currentKv.value = kv
-      currentKvChanged.value = false
+const onClickTreeItem = (key: string) => {
+  _getKV(props.session?.id, key).then((kv) => {
+    let language = tryParseFileNameToType(kv.key)
+    if (!language) {
+      language = tryFileContentToType(_decodeBytesToString(kv.value))
+    }
+    editorConfig.language = language
+    currentKv.value = kv
+    currentKvChanged.value = false
 
-      if (kv.leaseInfo) {
-        let timer = setTimeout(() => {
-          keyLeaseListeners.delete(timer)
-          onKeyTimeOver(kv.key)
-        }, kv.leaseInfo.ttl * 1000)
-        keyLeaseListeners.add(timer)
-      }
+    if (kv.leaseInfo) {
+      let timer = setTimeout(() => {
+        keyLeaseListeners.delete(timer)
+        onKeyTimeOver(kv.key)
+      }, kv.leaseInfo.ttl * 1000)
+      keyLeaseListeners.add(timer)
+    }
 
-    }).catch(e => {
-      if (e.errType && e.errType == 'ResourceNotExist') {
-        removeKeyFromTreeData([selectedKv.key])
-      }
-      _handleError({
-        e,
-        session: props.session
-      })
-      currentKv.value = undefined
+  }).catch(e => {
+    if (e.errType && e.errType == 'ResourceNotExist') {
+      removeKeysFromTree([key])
+    }
+    _handleError({
+      e,
+      session: props.session
     })
-  }
+    currentKv.value = undefined
+  })
 }
 
 const toggleTreeSelectable = () => {
@@ -671,7 +520,7 @@ const deleteKey = () => {
     let keys = [key]
     _deleteKV(props.session?.id, [key]).then(() => {
       currentKv.value = undefined
-      removeKeyFromTreeData(keys)
+      removeKeysFromTree(keys)
     }).catch(e => {
       _handleError({
         e,
@@ -688,7 +537,7 @@ const onKeyTimeOver = (key: string) => {
   if (currentKv.value && currentKv.value.key) {
     currentKv.value = undefined
   }
-  removeKeyFromTreeData([key])
+  removeKeysFromTree([key])
 }
 
 const clearAllKeyLeaseListener = () => {
@@ -764,28 +613,36 @@ const clearAllKeyLeaseListener = () => {
     <v-layout class="main-area">
       <drag-box>
         <drag-item class="overflow-y-auto" style="min-width: 300px">
-          <v-treeview
-              v-model:selected="treeValue"
-              :items="treeData.children"
-              open-strategy="multiple"
-              item-value="data"
-              :selectable="treeSelectable"
-              :select-strategy="treeSelectable ? 'leaf' : 'single-leaf'"
-              @click:select="treeSelected"
-              return-object
-              open-on-click
-              slim
-              density="compact"
-              class="user-select-none"
-              height="calc(100% - 30px)"
-          >
-            <template v-slot:prepend="{ item }">
-              <v-icon v-if="!item.file">mdi-folder</v-icon>
-              <v-icon v-else>
-                {{ fileTypeIcon[item.iconKey] }}
-              </v-icon>
-            </template>
-          </v-treeview>
+
+          <Tree ref="kvTree"
+                tree-id="kv-tree"
+                :key-splitter="KEY_SPLITTER"
+                style="height: calc(100% - 30px);"
+                @on-click="onClickTreeItem"
+          ></Tree>
+
+          <!--          <v-treeview-->
+          <!--              v-model:selected="treeValue"-->
+          <!--              :items="treeData.children"-->
+          <!--              open-strategy="multiple"-->
+          <!--              item-value="data"-->
+          <!--              :selectable="treeSelectable"-->
+          <!--              :select-strategy="treeSelectable ? 'leaf' : 'single-leaf'"-->
+          <!--              @click:select="treeSelected"-->
+          <!--              return-object-->
+          <!--              open-on-click-->
+          <!--              slim-->
+          <!--              density="compact"-->
+          <!--              class="user-select-none"-->
+          <!--              height="calc(100% - 30px)"-->
+          <!--          >-->
+          <!--            <template v-slot:prepend="{ item }">-->
+          <!--              <v-icon v-if="!item.file">mdi-folder</v-icon>-->
+          <!--              <v-icon v-else>-->
+          <!--                {{ fileTypeIcon[item.iconKey] }}-->
+          <!--              </v-icon>-->
+          <!--            </template>-->
+          <!--          </v-treeview>-->
           <v-sheet height="30px"
                    class="d-flex align-center justify-center"
           >

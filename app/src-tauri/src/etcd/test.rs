@@ -83,4 +83,28 @@ mod test_connect {
 
         Ok(())
     }
+
+    #[tokio::test]
+    async fn put_huge_kvs() -> Result<(), LogicError> {
+        let connector = get_connector().await?;
+        
+        for i in 0..20000 {
+            let mut key = String::new();
+            if i % 3 == 0 {
+                key.push_str("/deep1/");
+            } else if i % 7 == 0 {
+                key.push_str("/deep2/");
+            } else if i % 2 == 0 {
+                key.push_str("/deep3/");
+            } else {
+                key.push_str("/deep4/");
+            }
+            key.push_str(format!("key-{}.txt", i).as_str());
+            
+            let value = format!("value {}", i);
+            connector.kv_put(key, value, None).await?;
+        }
+        println!("finished");
+        Ok(())
+    }
 }

@@ -26,12 +26,21 @@ importers:
       '@codemirror/theme-one-dark':
         specifier: ^6.x
         version: 6.0.0
+      '@rollup/plugin-inject':
+        specifier: ^5.0.5
+        version: 5.0.5(rollup@4.20.0)
       '@tauri-apps/api':
         specifier: ^1
         version: 1.0.0
+      '@ztree/ztree_v3':
+        specifier: 3.5.48
+        version: 3.5.48
       codemirror:
         specifier: ^6.0.1
         version: 6.0.1(@lezer/common@1.2.1)
+      jquery:
+        specifier: 3.7.1
+        version: 3.7.1
       mitt:
         specifier: ^3.0.1
         version: 3.0.1
@@ -63,6 +72,9 @@ importers:
       '@tauri-apps/cli':
         specifier: ^1.5.14
         version: 1.5.14
+      '@types/jquery':
+        specifier: ^3.5.30
+        version: 3.5.30
       '@types/node':
         specifier: ^20.14.10
         version: 20.14.10
@@ -319,6 +331,24 @@ packages:
   '@mdi/font@7.4.47':
     resolution: {integrity: sha512-43MtGpd585SNzHZPcYowu/84Vz2a2g31TvPMTm9uTiCSWzaheQySUcSyUH/46fPnuPQWof2yd0pGBtzee/IQWw==}
 
+  '@rollup/plugin-inject@5.0.5':
+    resolution: {integrity: sha512-2+DEJbNBoPROPkgTDNe8/1YXWcqxbN5DTjASVIOx8HS+pITXushyNiBV56RB08zuptzz8gT3YfkqriTBVycepg==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      rollup: ^1.20.0||^2.0.0||^3.0.0||^4.0.0
+    peerDependenciesMeta:
+      rollup:
+        optional: true
+
+  '@rollup/pluginutils@5.1.2':
+    resolution: {integrity: sha512-/FIdS3PyZ39bjZlwqFnWqCOVnW7o963LtKMwQOD0NhQqw22gSr2YY1afu3FxRip4ZCZNsD5jq6Aaz6QV3D/Njw==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      rollup: ^1.20.0||^2.0.0||^3.0.0||^4.0.0
+    peerDependenciesMeta:
+      rollup:
+        optional: true
+
   '@rollup/rollup-android-arm-eabi@4.20.0':
     resolution: {integrity: sha512-TSpWzflCc4VGAUJZlPpgAJE1+V60MePDQnBd7PPkpuEmOy8i87aL6tinFGKBFKuEDikYpig72QzdT3QPYIi+oA==}
     cpu: [arm]
@@ -484,8 +514,14 @@ packages:
   '@types/estree@1.0.5':
     resolution: {integrity: sha512-/kYRxGDLWzHOB7q+wtSUQlFrtcdUccpfy+X+9iMBpHK8QLLhx2wIPYuS5DYtR9Wa/YlZAbIovy7qVdB1Aq6Lyw==}
 
+  '@types/jquery@3.5.30':
+    resolution: {integrity: sha512-nbWKkkyb919DOUxjmRVk8vwtDb0/k8FKncmUKFi+NY+QXqWltooxTrswvz4LspQwxvLdvzBN1TImr6cw3aQx2A==}
+
   '@types/node@20.14.10':
     resolution: {integrity: sha512-MdiXf+nDuMvY0gJKxyfZ7/6UFsETO7mGKF54MVD/ekJS6HdFtpZFBgrh6Pseu64XTb2MLyFPlbW6hj8HYRQNOQ==}
+
+  '@types/sizzle@2.3.8':
+    resolution: {integrity: sha512-0vWLNK2D5MT9dg0iOo8GlKguPAU02QjmZitPEsXRuJXU/OGIOt9vT9Fc26wtYuavLxtO45v9PGleoL9Z0k1LHg==}
 
   '@vitejs/plugin-vue@5.0.5':
     resolution: {integrity: sha512-LOjm7XeIimLBZyzinBQ6OSm3UBCNVCpLkxGC0oWmm2YPzVZoxMsdvNVimLTBzpAnR9hl/yn1SHGuRfe6/Td9rQ==}
@@ -560,6 +596,10 @@ packages:
     peerDependencies:
       vue: ^3.0.0
       vuetify: ^3.0.0
+
+  '@ztree/ztree_v3@3.5.48':
+    resolution: {integrity: sha512-4dSA1g26T3j/O3I89+r/Palg+a+xwMGRS1etZoggnCGBPoOrwW8VGA3zitJCK/Yd7eEMX+LfKTRJjEGiWpoN3w==}
+    engines: {node: '>=0.10.0'}
 
   anymatch@3.1.3:
     resolution: {integrity: sha512-KMReFUr0B4t+D+OBkjR3KYqvocp2XaSzO55UcB6mgQMd3KbcE+mWTyvVV7D/zsdEbNnV6acZUutkiHQXvTr1Rw==}
@@ -682,6 +722,9 @@ packages:
   is-number@7.0.0:
     resolution: {integrity: sha512-41Cifkg6e8TylSpdtTpeLVMqvSBEVzTttHvERD741+pnZ8ANv0004MRL43QKPDlK9cGvNp6NZWZUBlbGXYxxng==}
     engines: {node: '>=0.12.0'}
+
+  jquery@3.7.1:
+    resolution: {integrity: sha512-m4avr8yL8kmFN8psrbFFFmB/If14iN5o9nw/NgnnM+kybDJpRsAynV2BsfpTYrTRysYUdADVD7CkUUizgkpLfg==}
 
   jsox@1.2.119:
     resolution: {integrity: sha512-f37obwxWKKuylcaOzNlUlzfDvURSCpqTXs8yEivhvsp86D/DTIySxP4v5Qdlg24qCuzDSZ0mJr3krc/f7TZ/5A==}
@@ -1155,6 +1198,22 @@ snapshots:
 
   '@mdi/font@7.4.47': {}
 
+  '@rollup/plugin-inject@5.0.5(rollup@4.20.0)':
+    dependencies:
+      '@rollup/pluginutils': 5.1.2(rollup@4.20.0)
+      estree-walker: 2.0.2
+      magic-string: 0.30.11
+    optionalDependencies:
+      rollup: 4.20.0
+
+  '@rollup/pluginutils@5.1.2(rollup@4.20.0)':
+    dependencies:
+      '@types/estree': 1.0.5
+      estree-walker: 2.0.2
+      picomatch: 2.3.1
+    optionalDependencies:
+      rollup: 4.20.0
+
   '@rollup/rollup-android-arm-eabi@4.20.0':
     optional: true
 
@@ -1252,9 +1311,15 @@ snapshots:
 
   '@types/estree@1.0.5': {}
 
+  '@types/jquery@3.5.30':
+    dependencies:
+      '@types/sizzle': 2.3.8
+
   '@types/node@20.14.10':
     dependencies:
       undici-types: 5.26.5
+
+  '@types/sizzle@2.3.8': {}
 
   '@vitejs/plugin-vue@5.0.5(vite@5.3.1(@types/node@20.14.10)(sass@1.59.3))(vue@3.3.4)':
     dependencies:
@@ -1369,6 +1434,10 @@ snapshots:
       upath: 2.0.1
       vue: 3.3.4
       vuetify: 3.6.12(typescript@5.2.2)(vite-plugin-vuetify@2.0.3)(vue-i18n@9.13.1(vue@3.3.4))(vue@3.3.4)
+
+  '@ztree/ztree_v3@3.5.48':
+    dependencies:
+      jquery: 3.7.1
 
   anymatch@3.1.3:
     dependencies:
@@ -1495,6 +1564,8 @@ snapshots:
       is-extglob: 2.1.1
 
   is-number@7.0.0: {}
+
+  jquery@3.7.1: {}
 
   jsox@1.2.119: {}
 
