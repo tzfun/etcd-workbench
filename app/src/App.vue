@@ -13,6 +13,8 @@ import {_loadSettings, _useSettings, _useUpdateInfo} from "~/common/store.ts";
 import {DEFAULT_SETTING_CONFIG} from "~/common/transport/setting.ts";
 import {installUpdate} from "@tauri-apps/api/updater";
 import {_isDebugModel} from "~/common/services.ts";
+import LinuxSystemBar from "~/components/system-bar/LinuxSystemBar.vue";
+import {_isLinux, _isMac, _isWindows, _setPlatform} from "~/common/windows.ts";
 
 const DEFAULT_LOADING_TEXT: string = "Loading..."
 const loading = ref<boolean>(false)
@@ -32,6 +34,7 @@ const windowLabel = computed<string>(() => {
 
 onMounted(async () => {
   let settings = await _loadSettings()
+  _setPlatform(await getPlatform())
 
   let isDebug = await _isDebugModel()
   if (!isDebug) {
@@ -48,8 +51,8 @@ onMounted(async () => {
     }
   }))
 
-  platform.value = await getPlatform()
-  if (platform.value != 'win32') {
+  //  mac和linux添加窗口圆角
+  if (_isMac() || _isLinux()) {
     document.getElementById("app")!.classList.add("main-window-radius")
   }
 
@@ -166,23 +169,22 @@ const disableWebviewNativeEvents = () => {
 <template>
   <v-app id="vuetify-app">
     <v-layout>
-      <WindowsSystemBar v-if="platform == 'win32'"
+      <WindowsSystemBar v-if="_isWindows()"
                         :height="28"
                         :window-label="windowLabel"
       ></WindowsSystemBar>
-      <MacSystemBar v-if="platform == 'darwin'"
+      <MacSystemBar v-if="_isMac()"
                     :height="28"
                     :window-label="windowLabel"
       ></MacSystemBar>
+      <LinuxSystemBar v-if="_isLinux()"
+                      :window-label="windowLabel"
+                      :height="28"
+      ></LinuxSystemBar>
 
       <v-main class="fill-height position-relative" id="mainBody">
-        <AppSetting v-if="windowLabel === 'setting'"
-                    class="app-setting"
-                    :platform="platform"
-        ></AppSetting>
-        <AppMain v-else-if="windowLabel === 'main'"
-                 :platform="platform"
-        ></AppMain>
+        <AppSetting v-if="windowLabel === 'setting'" class="app-setting"></AppSetting>
+        <AppMain v-else-if="windowLabel === 'main'"></AppMain>
       </v-main>
     </v-layout>
 

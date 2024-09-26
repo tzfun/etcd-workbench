@@ -31,6 +31,7 @@ import prettierPluginYaml from "prettier/plugins/yaml";
 import prettierPluginEstree from "prettier/plugins/estree";
 import prettierPluginSql from "prettier-plugin-sql";
 import {BuiltInParserName, LiteralUnion, Plugin} from "prettier";
+import {_isLinux, _isMac, _isWindows} from "~/common/windows.ts";
 
 type ContentFormatType = 'text' | 'blob'
 
@@ -73,7 +74,6 @@ const platform = ref<'win32' | 'darwin' | string>('win32')
 
 
 onMounted(async () => {
-  platform.value = await getPlatform()
 
   tauriBlurUnListen.value = await appWindow.listen('tauri://blur', () => {
     showLanguageSelection.value = false
@@ -93,11 +93,11 @@ onMounted(async () => {
   })
 
   document.addEventListener('keydown', (e: KeyboardEvent) => {
-    if (platform.value == 'darwin') {
+    if (_isMac()) {
       if (e.metaKey && e.altKey && e.key == 'l') {
         formatContent()
       }
-    } else if (platform.value == 'win32') {
+    } else if (_isWindows() || _isLinux()) {
       if (e.ctrlKey && e.altKey && e.key == 'l') {
         formatContent()
       }
@@ -375,14 +375,14 @@ defineExpose({
             >
               <template #title>
                 Format
-                <span class="text-medium-emphasis" v-if="platform == 'win32'">
+                <span class="text-medium-emphasis" v-if="_isWindows() || _isLinux()">
                   (
                   <span class="font-weight-bold" style="font-size: 0.9em">Ctrl</span> +
                   <span class="font-weight-bold" style="font-size: 0.9em">Alt</span> +
                   <span class="font-weight-bold" style="font-size: 0.9em">L</span>
                   )
                 </span>
-                <span class="text-medium-emphasis" v-else-if="platform == 'darwin'">
+                <span class="text-medium-emphasis" v-else-if="_isMac()">
                   (
                   <v-icon size="0.9em" class="font-weight-bold">mdi-apple-keyboard-command</v-icon> +
                   <v-icon size="0.9em" class="font-weight-bold">mdi-apple-keyboard-option</v-icon> +

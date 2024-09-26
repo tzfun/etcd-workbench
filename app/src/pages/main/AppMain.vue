@@ -4,10 +4,10 @@ import Home from "~/pages/main/Home.vue";
 import Connection from "~/pages/main/Connection.vue";
 import {_confirm, _listenLocal, EventName} from "~/common/events.ts";
 import {_disconnect} from "~/common/services.ts";
-import {computed, onMounted, onUnmounted, reactive, ref} from "vue";
+import {onMounted, onUnmounted, reactive, ref} from "vue";
 import {SessionData} from "~/common/transport/connection.ts";
 import {appWindow, PhysicalSize} from "@tauri-apps/api/window";
-import {_exitApp, _openMainWindow} from "~/common/windows.ts";
+import {_exitApp, _isMac, _openMainWindow} from "~/common/windows.ts";
 import {_debounce} from "~/common/utils.ts";
 import {_saveSettings, _useSettings} from "~/common/store.ts";
 import {listen} from "@tauri-apps/api/event";
@@ -24,21 +24,6 @@ const tabList = reactive<TabItem[]>([])
 const exitConfirmState = ref<boolean>(false)
 
 const eventUnListens = reactive<Function[]>([])
-
-const props = defineProps({
-  platform: {
-    type: String,
-    required: true
-  }
-})
-
-const isWindows = computed<boolean>(() => {
-  return props.platform == 'win32'
-})
-
-const isMac = computed<boolean>(() => {
-  return props.platform == 'darwin'
-})
 
 const lastWindowSize = reactive({
   width: 0,
@@ -145,8 +130,8 @@ onMounted(async () => {
 
   document.addEventListener('keydown', e => {
     let key = e.key.toLowerCase()
-
-    let ctrlKey = (isWindows.value && e.ctrlKey) || (isMac.value && e.metaKey)
+    let isMac = _isMac()
+    let ctrlKey = (!isMac && e.ctrlKey) || (isMac.value && e.metaKey)
 
     //  ctrl+w
     if (ctrlKey && key == 'w') {

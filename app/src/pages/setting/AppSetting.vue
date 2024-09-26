@@ -19,16 +19,9 @@ import {appWindow} from "@tauri-apps/api/window";
 import {useTheme} from "vuetify";
 import {open, save} from "@tauri-apps/api/dialog";
 import {_exportConnection, _getAppVersion, _handleError, _importConnection} from "~/common/services.ts";
-import {_getDownloadPath} from "~/common/windows.ts";
+import {_getDownloadPath, _isLinux, _isMac, _isWindows} from "~/common/windows.ts";
 
 const theme = useTheme()
-
-const props = defineProps({
-  platform: {
-    type: String,
-    required: true
-  }
-})
 
 const groups = ['theme', 'connection', 'keys', 'update', 'about']
 const activatedGroup = ref<string>('theme')
@@ -119,14 +112,6 @@ const appVersion = ref<string>('0.0.0')
 const loadingStore = reactive({
   exportConnection: false,
   importConnection: false,
-})
-
-const isWindows = computed<boolean>(() => {
-  return props.platform == 'win32'
-})
-
-const isMac = computed<boolean>(() => {
-  return props.platform == 'darwin'
 })
 
 const connectionConfEncryptKeyRule = [
@@ -433,13 +418,13 @@ const onScroll = _debounce(() => {
               <v-layout>
                 <div>
                   <div class="form-label text-high-emphasis">Close Tab By &nbsp;
-                    <span class="text-cyan" v-if="isWindows">Ctrl + W</span>
-                    <span class="text-cyan" v-else-if="isMac">Command + W</span>
+                    <span class="text-cyan" v-if="_isWindows() || _isLinux()">Ctrl + W</span>
+                    <span class="text-cyan" v-else-if="_isMac()">Command + W</span>
                   </div>
                   <div class="v-messages">
                     Use the
-                    <i v-if="isWindows">ctrl + w</i>
-                    <i v-else-if="isMac">command + w</i>
+                    <i v-if="_isWindows() || _isLinux()">ctrl + w</i>
+                    <i v-else-if="_isMac()">command + w</i>
                     shortcut key to close the current connection.
                   </div>
                 </div>

@@ -1,4 +1,25 @@
 import {invoke} from "@tauri-apps/api";
+import {ref} from "vue";
+
+const platform = ref<PlatformType>()
+
+export type PlatformType = 'linux' | 'darwin' | 'ios' | 'freebsd' | 'dragonfly' | 'netbsd' | 'openbsd' | 'solaris' | 'android' | 'win32' | string
+
+export function _setPlatform(p: PlatformType) {
+    platform.value = p
+}
+
+export function _isWindows(): boolean {
+    return platform.value == 'win32'
+}
+
+export function _isMac(): boolean {
+    return platform.value == 'darwin'
+}
+
+export function _isLinux(): boolean {
+    return platform.value == 'linux'
+}
 
 export function _openMainWindow() {
     invoke('open_main_window').catch(e => {
@@ -28,3 +49,5 @@ export function _openFolder(path: string, selectFile?: string): Promise<undefine
 export function _getDownloadPath():Promise<string | undefined> {
     return invoke('get_download_path')
 }
+
+
