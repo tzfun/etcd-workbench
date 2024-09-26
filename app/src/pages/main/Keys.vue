@@ -11,7 +11,7 @@ import {
   _putKV,
   _putKVWithLease
 } from "~/common/services.ts";
-import {_confirmSystem, _loading, _tipInfo, _tipSuccess, _tipWarn} from "~/common/events.ts";
+import {_confirm, _confirmSystem, _loading, _tipInfo, _tipSuccess, _tipWarn} from "~/common/events.ts";
 import {computed, nextTick, onMounted, onUnmounted, PropType, reactive, ref} from "vue";
 import {ErrorPayload, SessionData} from "~/common/transport/connection.ts";
 import DragBox from "~/components/DragBox.vue";
@@ -402,18 +402,33 @@ const editorSave = () => {
 const saveKV = () => {
   let kv = currentKv.value
   if (editorRef.value && kv) {
-    let value: number[] = editorRef.value.readDataBytes()
-    loadingStore.save = true
-    _putKV(props.session?.id, kv.key, value).then(() => {
-      currentKvChanged.value = false
-    }).catch(e => {
-      _handleError({
-        e,
-        session: props.session
+    let doSave = () => {
+      let value: number[] = editorRef.value.readDataBytes()
+      loadingStore.save = true
+      _putKV(props.session?.id, kv.key, value).then(() => {
+        currentKvChanged.value = false
+      }).catch(e => {
+        _handleError({
+          e,
+          session: props.session
+        })
+      }).finally(() => {
+        loadingStore.save = false
       })
-    }).finally(() => {
-      loadingStore.save = false
-    })
+    }
+
+    if (_useSettings().value.kvCheckFormatBeforeSave) {
+      editorRef.value.tryFormatContent().then(() => {
+        doSave()
+      }).catch(() => {
+        _confirm("Warning", "The format checker found incorrect content. Do you want to submit it anyway?").then(() => {
+          doSave()
+        }).catch(() => {
+        })
+      })
+    } else {
+      doSave()
+    }
   }
 }
 

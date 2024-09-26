@@ -131,7 +131,7 @@ const formatData = (content: string, fromFormat: ContentFormatType, toFormat: Co
 
   //  text to blob
   if (toFormat == 'blob') {
-    let uint8Array:number[] = _encodeStringToBytes(content)
+    let uint8Array: number[] = _encodeStringToBytes(content)
     let newContent = ""
     const SPLIT_LEN = 20
     for (let i = 0; i < uint8Array.length; i += SPLIT_LEN) {
@@ -240,9 +240,24 @@ const changeLanguage = (lang: string) => {
 //  对当前内容进行格式化
 const formatContent = () => {
   showLanguageSelection.value = false
+  tryFormatContent().then(newContent => {
+    if (newContent) {
+      let oldContent = content.value
+      content.value = newContent
+      if (newContent != oldContent) {
+        onChanged(newContent)
+      }
+    }
+  }).catch(e => {
+    console.debug(e)
+  })
+}
+
+//  尝试格式化，但并不会实际修改当前值
+const tryFormatContent = (): Promise<string | undefined> => {
   let language = props.config?.language
   if (!enabledFormatLanguage.has(language)) {
-    return
+    return Promise.resolve(undefined)
   }
   let parser
   let plugins = []
@@ -263,21 +278,20 @@ const formatContent = () => {
     case 'sql':
       parser = 'sql'
       plugins.push(prettierPluginSql)
-          break
+      break
   }
-  prettier.format(content.value, {
-    parser: parser,
-    plugins: plugins,
-    bracketSameLine: true
-  }).then(newContent => {
-    consolePanelData.show = false
-    let oldContent = content.value
-    content.value = newContent
-    if (newContent != oldContent) {
-      onChanged(newContent)
-    }
-  }).catch(e => {
-    openConsolePanel(e.toString())
+  return new Promise((resolve, reject) => {
+    prettier.format(content.value, {
+      parser: parser,
+      plugins: plugins,
+      bracketSameLine: true
+    }).then(newContent => {
+      consolePanelData.show = false
+      resolve(newContent)
+    }).catch(e => {
+      openConsolePanel(e.toString())
+      reject(e)
+    })
   })
 }
 
@@ -298,7 +312,8 @@ const readDataBytes = (): number[] => {
 }
 
 defineExpose({
-  readDataBytes
+  readDataBytes,
+  tryFormatContent
 })
 
 </script>

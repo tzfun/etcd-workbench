@@ -15,7 +15,7 @@ import {installUpdate} from "@tauri-apps/api/updater";
 import {_isDebugModel} from "~/common/services.ts";
 
 const DEFAULT_LOADING_TEXT: string = "Loading..."
-const loading = ref<boolean>(true)
+const loading = ref<boolean>(false)
 const loadingText = ref<string>(DEFAULT_LOADING_TEXT)
 
 const dialogs = ref<DialogItem[]>([])
