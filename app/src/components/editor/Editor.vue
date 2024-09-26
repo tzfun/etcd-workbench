@@ -30,6 +30,7 @@ import prettierPluginHtml from "prettier/plugins/html";
 import prettierPluginYaml from "prettier/plugins/yaml";
 import prettierPluginEstree from "prettier/plugins/estree";
 import prettierPluginSql from "prettier-plugin-sql";
+import {BuiltInParserName, LiteralUnion, Plugin} from "prettier";
 
 type ContentFormatType = 'text' | 'blob'
 
@@ -259,8 +260,8 @@ const tryFormatContent = (): Promise<string | undefined> => {
   if (!enabledFormatLanguage.has(language)) {
     return Promise.resolve(undefined)
   }
-  let parser
-  let plugins = []
+  let parser:LiteralUnion<BuiltInParserName>
+  let plugins: Array<string | Plugin> = []
   switch (language) {
     case 'json':
       parser = 'json-stringify';

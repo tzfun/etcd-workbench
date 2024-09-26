@@ -403,9 +403,9 @@ const saveKV = () => {
   let kv = currentKv.value
   if (editorRef.value && kv) {
     let doSave = () => {
-      let value: number[] = editorRef.value.readDataBytes()
+      let value: number[] = editorRef.value!.readDataBytes()
       loadingStore.save = true
-      _putKV(props.session?.id, kv.key, value).then(() => {
+      _putKV(props.session?.id, kv!.key, value).then(() => {
         currentKvChanged.value = false
       }).catch(e => {
         _handleError({
