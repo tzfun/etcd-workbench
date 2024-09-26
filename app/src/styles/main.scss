@@ -72,6 +72,10 @@ html, body, #app {
   outline: none;
 }
 
+.cm-gutterElement {
+  user-select: none;
+}
+
 .editor-footer-item {
   margin-left: 1em;
   display: inline-block;

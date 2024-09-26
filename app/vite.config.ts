@@ -2,7 +2,7 @@ import {defineConfig} from "vite";
 import vue from "@vitejs/plugin-vue";
 import vuetify from 'vite-plugin-vuetify';
 import {join} from "path";
-import inject from '@rollup/plugin-inject'
+// import inject from '@rollup/plugin-inject'
 
 // https://vitejs.dev/config/
 export default defineConfig(async () => ({
@@ -13,11 +13,11 @@ export default defineConfig(async () => ({
                 configFile: 'src/styles/settings.scss'
             }
         }),
-        inject({
-            $: 'jquery',
-            jQuery: 'jquery',
-            "windows.jQuery": "jquery"
-        })
+        // inject({
+            // $: 'jquery',
+            // jQuery: 'jquery',
+            // "windows.jQuery": "jquery"
+        // })
     ],
     // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
     //

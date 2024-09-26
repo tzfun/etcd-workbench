@@ -12,7 +12,7 @@ import {
   _putKVWithLease
 } from "~/common/services.ts";
 import {_confirmSystem, _loading, _tipInfo, _tipSuccess, _tipWarn} from "~/common/events.ts";
-import {computed, onMounted, onUnmounted, PropType, reactive, ref} from "vue";
+import {computed, nextTick, onMounted, onUnmounted, PropType, reactive, ref} from "vue";
 import {ErrorPayload, SessionData} from "~/common/transport/connection.ts";
 import DragBox from "~/components/DragBox.vue";
 import DragItem from "~/components/DragItem.vue";
@@ -56,6 +56,7 @@ const currentKvChanged = ref<boolean>(false)
 const keyLeaseListeners = reactive<Set<any>>(new Set())
 const paginationKeyCursor = ref<string | undefined>("")
 
+const kvEditorContainerRef = ref()
 const editorRef = ref<InstanceType<typeof Editor>>()
 const newKeyEditorRef = ref<InstanceType<typeof Editor>>()
 const editorConfig = reactive<EditorConfig>({
@@ -74,7 +75,8 @@ const loadingStore = reactive({
   delete: false,
   deleteBatch: false,
   confirmNewKey: false,
-  loadMore: false
+  loadMore: false,
+  getKey: false
 })
 
 const newKeyDialog = reactive({
@@ -113,11 +115,13 @@ const isDarkTheme = computed<boolean>(() => {
 onMounted(() => {
   //  海量数据加载时会导致页面其他动画卡顿，这里延迟加载
   setTimeout(() => {
-    _loading(true)
-    refreshAllKeys().finally(() => {
-      _loading(false)
+    nextTick(() => {
+      _loading(true)
+      refreshAllKeys().finally(() => {
+        _loading(false)
+      })
     })
-  }, 100)
+  }, 200)
 })
 
 onUnmounted(() => {
@@ -313,13 +317,13 @@ const addDataListToTree = (data: KeyValue[]) => {
 }
 
 const deleteKeyBatch = () => {
-  let keys: string[] = kvTree.value?.getSelectedItems()
+  let keys: string[] = kvTree.value!.getSelectedItems()
   if (keys.length == 0) {
     _tipInfo('Please select at least one key')
     return
   }
 
-  let containsCurrentKV = currentKv.value && keys.includes(currentKv.value)
+  let containsCurrentKV = currentKv.value && keys.includes(currentKv.value.key)
   let message = "Please confirm to permanently delete these keys:<br/><br/><strong>"
   const showCount = 20
   if (keys.length >= showCount) {
@@ -330,7 +334,7 @@ const deleteKeyBatch = () => {
   }
   message += '</strong>'
   _confirmSystem(message).then(() => {
-    _loading(true)
+    _loading(true, "Deleting keys...")
     loadingStore.deleteBatch = true
     _deleteKV(props.session?.id, keys).then(() => {
       if (containsCurrentKV) {
@@ -351,6 +355,7 @@ const deleteKeyBatch = () => {
 }
 
 const onClickTreeItem = (key: string) => {
+  loadingStore.getKey = true
   _getKV(props.session?.id, key).then((kv) => {
     let language = tryParseFileNameToType(kv.key)
     if (!language) {
@@ -377,6 +382,8 @@ const onClickTreeItem = (key: string) => {
       session: props.session
     })
     currentKv.value = undefined
+  }).finally(() => {
+    loadingStore.getKey = false
   })
 }
 
@@ -558,7 +565,7 @@ const clearAllKeyLeaseListener = () => {
 
 <template>
   <div class="fill-height overflow-y-auto">
-    <v-layout class="action-area">
+    <v-layout class="action-area pa-5">
       <v-btn class="text-none"
              prepend-icon="mdi-refresh"
              variant="outlined"
@@ -607,7 +614,6 @@ const clearAllKeyLeaseListener = () => {
           </v-chip>
         </template>
       </v-tooltip>
-
     </v-layout>
     <v-layout class="main-area">
       <drag-box>
@@ -635,7 +641,23 @@ const clearAllKeyLeaseListener = () => {
             ></v-btn>
           </v-sheet>
         </drag-item>
-        <drag-item style="width: calc(100% - 300px)" :show-resize-line="false">
+        <drag-item ref="kvEditorContainerRef"
+                   style="width: calc(100% - 300px)"
+                   :show-resize-line="false">
+          <v-overlay
+              v-model="loadingStore.getKey"
+              persistent
+              contained
+              class="align-center justify-center ma-0"
+              :z-index="100"
+          >
+            <v-progress-circular
+                color="primary"
+                size="40"
+                indeterminate
+            ></v-progress-circular>
+          </v-overlay>
+
           <div v-if="currentKv" class="fill-height">
             <v-layout class="editor-header">
               <v-spacer></v-spacer>
@@ -885,7 +907,7 @@ const clearAllKeyLeaseListener = () => {
 </template>
 
 <style scoped lang="scss">
-$--action-area-height: 50px;
+$--action-area-height: 60px;
 $--action-area-margin-bottom: 10px;
 
 .action-area {

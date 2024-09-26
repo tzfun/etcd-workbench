@@ -39,7 +39,6 @@ const clickList = (page: string) => {
   <v-layout class="fill-height">
     <v-navigation-drawer permanent
                          rail
-                         expand-on-hover
                          class="user-select-none"
     >
       <v-list lines="two"
@@ -50,33 +49,74 @@ const clickList = (page: string) => {
               mandatory
               nav
       >
-        <v-list-item title="Cluster"
-                     value="cluster"
-                     prepend-icon="mdi-apps"
-                     @click="clickList('cluster')"
-        ></v-list-item>
-        <v-list-item title="Keys"
-                     value="keys"
-                     prepend-icon="mdi-database"
-                     @click="clickList('keys')"
-        ></v-list-item>
-        <v-list-item title="Leases"
-                     value="leases"
-                     prepend-icon="mdi-clock-time-nine"
-                     @click="clickList('leases')"
-        ></v-list-item>
-        <v-list-item title="Users"
-                     value="users"
-                     prepend-icon="mdi-account-supervisor"
-                     @click="clickList('users')"
-                     :disabled="!session.root"
-        ></v-list-item>
-        <v-list-item title="Roles"
-                     value="roles"
-                     prepend-icon="mdi-lock"
-                     @click="clickList('roles')"
-                     :disabled="!session.root"
-        ></v-list-item>
+        <v-tooltip location="end center"
+                   origin="start center"
+                   no-click-animation
+                   text="Cluster">
+          <template v-slot:activator="{ props }">
+            <v-list-item title="Cluster"
+                         v-bind="props"
+                         value="cluster"
+                         prepend-icon="mdi-apps"
+                         @click="clickList('cluster')"
+            ></v-list-item>
+          </template>
+        </v-tooltip>
+
+        <v-tooltip location="end center"
+                   origin="start center"
+                   no-click-animation
+                   text="Keys">
+          <template v-slot:activator="{ props }">
+            <v-list-item title="Keys"
+                         v-bind="props"
+                         value="keys"
+                         prepend-icon="mdi-database"
+                         @click="clickList('keys')"
+            ></v-list-item>
+          </template>
+        </v-tooltip>
+        <v-tooltip location="end center"
+                   origin="start center"
+                   no-click-animation
+                   text="Leases">
+          <template v-slot:activator="{ props }">
+            <v-list-item title="Leases"
+                         v-bind="props"
+                         value="leases"
+                         prepend-icon="mdi-clock-time-nine"
+                         @click="clickList('leases')"
+            ></v-list-item>
+          </template>
+        </v-tooltip>
+        <v-tooltip location="end center"
+                   origin="start center"
+                   no-click-animation
+                   text="Users">
+          <template v-slot:activator="{ props }">
+            <v-list-item title="Users"
+                         v-bind="props"
+                         value="users"
+                         prepend-icon="mdi-account-supervisor"
+                         @click="clickList('users')"
+                         :disabled="!session.root"
+            ></v-list-item>
+          </template>
+        </v-tooltip>
+        <v-tooltip location="end center"
+                   origin="start center"
+                   no-click-animation
+                   text="Roles">
+          <template v-slot:activator="{ props }">
+            <v-list-item title="Roles"
+                         v-bind="props"
+                         value="roles"
+                         prepend-icon="mdi-lock"
+                         @click="clickList('roles')"
+                         :disabled="!session.root"
+            ></v-list-item>
+          </template>
+        </v-tooltip>
       </v-list>
     </v-navigation-drawer>
     <v-main class="fill-height">

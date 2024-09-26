@@ -8,9 +8,9 @@ import '@ztree/ztree_v3/js/jquery.ztree.excheck.js';
 
 export type TreeNode = {
   //  节点ID，整棵树一定不能重复
-  id: string | number,
+  id: string,
   //  父节点ID
-  pId?: string | number | null,
+  pId?: string | null,
   //  节点显示名称
   name: string,
   //  是否是父节点
@@ -44,7 +44,7 @@ const props = defineProps({
 const treeRootObj = ref()
 const treeLastSelectedItem = ref<string>()
 
-const onClick = (e: MouseEvent, treeId: any, treeNode: TreeNode) => {
+const onClick = (_e: MouseEvent, _treeId: string, treeNode: TreeNode) => {
   if (treeNode.isParent) {
     treeRootObj.value.expandNode(treeNode)
     if (treeLastSelectedItem.value) {
@@ -59,7 +59,7 @@ const onClick = (e: MouseEvent, treeId: any, treeNode: TreeNode) => {
   }
 }
 
-const showTitle = (id: string, node: TreeNode) => {
+const showTitle = (_id: string, node: TreeNode) => {
   return !node.isParent
 }
 
@@ -94,8 +94,10 @@ onMounted(() => {
 const rerender = () => {
   let tree = treeRootObj.value
   if (tree) {
+    //  @ts-ignore
     $.fn.zTree.destroy(props.treeId);
   }
+  //  @ts-ignore
   treeRootObj.value = $.fn.zTree.init($(`#${props.treeId}`), settings, [])
 }
 
@@ -165,7 +167,7 @@ const removeItemFromTree = (id: string) => {
   }
 }
 
-const constructDirNode = (id: string, name: string, pId?: string): TreeNode => {
+const constructDirNode = (id: string, name: string, pId: string | undefined): TreeNode => {
   return {
     id: id,
     pId: pId,
@@ -177,7 +179,7 @@ const constructDirNode = (id: string, name: string, pId?: string): TreeNode => {
   }
 }
 
-const constructFileNode = (id: string, name: string, pId?: string): TreeNode => {
+const constructFileNode = (id: string, name: string, pId: string | undefined): TreeNode => {
   return {
     id: id,
     pId: pId,
@@ -235,6 +237,7 @@ defineExpose({
     white-space: nowrap;
     text-overflow: ellipsis;
   }
+
   $--tree-item-height: 30px;
 
   .roots_docu:before,
@@ -426,6 +429,7 @@ defineExpose({
       a {
         color: rgba(255, 255, 255, 0.7);
       }
+
       a.curSelectedNode {
         color: white;
         font-weight: bold;

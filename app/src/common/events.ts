@@ -50,8 +50,11 @@ export function _emitWindow(windowLabel: EventName, eventName: string, eventPayl
 }
 
 
-export function _loading(state: boolean) {
-    _emitLocal(EventName.LOADING, state)
+export function _loading(state: boolean, text?: string) {
+    _emitLocal(EventName.LOADING, {
+        state,
+        text
+    })
 }
 
 export function _confirm(title: string, text: string,): Promise<undefined> {
@@ -220,13 +223,13 @@ export function _checkUpdate(): Promise<UpdateManifest> {
 }
 
 export function _checkUpdateAndInstall() {
-    _loading(true)
+    _loading(true, "Checking for updates...")
     _checkUpdate().then(manifest => {
         _loading(false)
         _confirmUpdateApp(
             `Etcd workbench <span class="text-green font-weight-bold">${manifest.version}</span> is now available.</br></br>Do you want to download and install it now?`,
         ).then(() => {
-            _loading(true)
+            _loading(true, "Installing package...")
             installUpdate().then(async () => {
                 relaunch().catch((e:string) => {
                     console.error(e)

@@ -288,7 +288,7 @@ const resetFormValidation = () => {
 
 const testConnect = () => {
   checkForm().then((connection: Connection) => {
-    _loading(true)
+    _loading(true, "Connection testing...")
     _connectTest(connection).then(() => {
       _tipSuccess("Succeeded!")
     }).catch((e: ErrorPayload | string) => {
@@ -311,7 +311,7 @@ const connect = () => {
     if (_isEmpty(name)) {
       name = fd.host + ":" + fd.port
     }
-    _loading(true)
+    _loading(true, "Connecting")
     _connect(connection).then((session: SessionData) => {
       _emitLocal(EventName.NEW_CONNECTION, {name, session})
     }).catch((e: ErrorPayload | string) => {
