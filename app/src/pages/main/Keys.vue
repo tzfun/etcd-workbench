@@ -24,7 +24,7 @@ import {CodeDiff} from "v-code-diff";
 import {useTheme} from "vuetify";
 import CountDownTimer from "~/components/CountDownTimer.vue";
 import {_useSettings} from "~/common/store.ts";
-import Tree from "~/components/Tree.vue";
+import Tree from "~/components/tree/Tree.vue";
 
 const theme = useTheme()
 

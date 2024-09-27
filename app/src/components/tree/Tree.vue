@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import {onMounted, ref} from "vue";
+import {computed, onMounted, ref} from "vue";
 
 import '@ztree/ztree_v3/js/jquery-1.4.4.min';
 import '@ztree/ztree_v3/js/jquery.ztree.core.js';
 import '@ztree/ztree_v3/js/jquery.ztree.excheck.js';
+import '@ztree/ztree_v3/js/jquery.ztree.exhide.js';
+import {fuzzySearch} from './ztree-fuzzysearch'
 // import '@ztree/ztree_v3/css/metroStyle/metroStyle.css';
 
 export type TreeNode = {
@@ -25,8 +27,6 @@ export type TreeNode = {
   iconOpen?: string,
   //  子节点数组
   children?: TreeNode[],
-  //  鼠标hover后的title显示
-  title?: string,
 }
 
 const emits = defineEmits(['on-click'])
@@ -38,9 +38,15 @@ const props = defineProps({
   keySplitter: {
     type: String,
     default: "/"
+  },
+  enableSearch: {
+    type: Boolean,
+    default: () => true
   }
 })
-
+const keyId = computed<string>(() => {
+  return `key-${props.treeId}`
+})
 const treeRootObj = ref()
 const treeLastSelectedItem = ref<string>()
 
@@ -66,10 +72,15 @@ const showTitle = (_id: string, node: TreeNode) => {
 const settings = {
   data: {
     key: {
-      title: "title"
+      title: "id"
+    },
+    simpleData: {
+      enable: true
     }
   },
   view: {
+    nameIsHTML: true, //  允许name支持html
+    selectedMulti: false,
     nodeClasses: {add: ['tree-item']},
     showLine: false,
     showTitle: showTitle,
@@ -81,6 +92,10 @@ const settings = {
   },
   check: {
     enable: true
+  },
+  edit: {
+    enable: false,
+    editNameSelectAll: false
   }
 }
 
@@ -99,6 +114,7 @@ const rerender = () => {
   }
   //  @ts-ignore
   treeRootObj.value = $.fn.zTree.init($(`#${props.treeId}`), settings, [])
+  fuzzySearch(props.treeId, `#${keyId.value}`, null, true)
 }
 
 /**
@@ -186,7 +202,6 @@ const constructFileNode = (id: string, name: string, pId: string | undefined): T
     name: name,
     isParent: false,
     open: false,
-    title: id,
     icon: "/file-text.png",
   }
 }
@@ -214,10 +229,48 @@ defineExpose({
 </script>
 
 <template>
-  <div :id="treeId" class="ztree key-tree overflow-auto"></div>
+  <div>
+    <div v-if="enableSearch">
+      <v-icon class="search-icon">mdi-magnify</v-icon>
+      <input type="text" :id="keyId" value="" class="search-input" placeholder="Type to search"/>
+    </div>
+    <div :id="treeId" class="ztree key-tree overflow-auto" :style="`height:${enableSearch ? 'calc(100% - 46px)' : '100%'};`"></div>
+  </div>
 </template>
 
 <style lang="scss">
+$--search-input-x-margin: 8px;
+$--search-white-border-color: #9da4a8;
+$--search-black-border-color: #4c4d4f;
+
+$--search-hover-border-color: #6c6e72;
+$--search-focus-border-color: rgb(33, 150, 243);
+
+.search-icon {
+  $--fixed-margin: 5px;
+  position: absolute;
+  left: calc($--search-input-x-margin + $--fixed-margin);
+  top: calc($--search-input-x-margin + $--fixed-margin);
+}
+
+.search-input {
+  padding-left: 30px;
+  border: 1px solid;
+  border-radius: 3px;
+  font-size: 0.9em;
+  width: calc(100% - $--search-input-x-margin * 2);
+  height: 30px;
+  margin: $--search-input-x-margin;
+  background-color: rgba(0, 0, 0, 0);
+  transition: all ease 0.2s;
+  outline: none;
+}
+
+.search-input:hover,
+.search-input:focus {
+  border-color: $--search-hover-border-color !important;
+}
+
 .tree-item {
   text-underline: none;
   text-decoration: none;
@@ -420,6 +473,15 @@ defineExpose({
 }
 
 .v-theme--dark {
+
+  .search-icon {
+    color: $--search-black-border-color;
+  }
+
+  .search-input {
+    border-color: $--search-black-border-color;
+  }
+
   .tree-item {
     color: #a29b9b;
   }
@@ -444,6 +506,15 @@ defineExpose({
 }
 
 .v-theme--light {
+
+  .search-icon {
+    color: $--search-white-border-color;
+  }
+
+  .search-input {
+    border-color: $--search-white-border-color;
+  }
+
   .tree-item {
     color: black;
   }
