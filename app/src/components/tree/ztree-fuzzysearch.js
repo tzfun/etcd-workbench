@@ -38,8 +38,10 @@ export function fuzzySearch(zTreeId, searchField, isHighLight, isExpand) {
                 zTreeObj.expandNode(node, isExpand);
                 return true;
             }
+
+            let keywordsLowerCase = _keywords.toLowerCase()
             //transform node name and keywords to lowercase
-            if (node[nameKey] && node[nameKey].toLowerCase().indexOf(_keywords.toLowerCase()) !== -1) {
+            if (node[nameKey] && node[nameKey].toLowerCase().indexOf(keywordsLowerCase) !== -1) {
                 if (isHighLight) { //highlight process
                     //a new variable 'newKeywords' created to store the keywords information
                     //keep the parameter '_keywords' as initial and it will be used in next node
@@ -61,6 +63,18 @@ export function fuzzySearch(zTreeId, searchField, isHighLight, isExpand) {
                 }
                 zTreeObj.showNode(node);//show node with matching keywords
                 return true; //return true and show this node
+            }
+
+            //  搜索全路径
+            if (node.id) {
+                let id = node.id
+                if (typeof id !== 'string') {
+                    id = id.toString()
+                }
+                if (id.toLowerCase().indexOf(keywordsLowerCase) >= 0) {
+                    zTreeObj.showNode(node);//show node with matching keywords
+                    return true; //return true and show this node
+                }
             }
 
             zTreeObj.hideNode(node); // hide node that not matched

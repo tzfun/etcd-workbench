@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import WindowsSystemBar from "~/components/system-bar/WindowsSystemBar.vue";
 
-const props = defineProps({
+defineProps({
   height: Number,
   windowLabel: {
     type: String,

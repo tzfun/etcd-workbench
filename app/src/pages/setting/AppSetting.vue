@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Skeleton from "~/components/Skeleton.vue";
-import {computed, onMounted, reactive, ref, watch} from "vue";
+import {onMounted, reactive, ref, watch} from "vue";
 import EditorExample from "~/components/editor/EditorExample.vue";
 import {AppTheme} from "~/common/types.ts";
 import {
@@ -517,7 +517,9 @@ const onScroll = _debounce(() => {
               <v-layout>
                 <div>
                   <div class="form-label text-high-emphasis">Check Format Before Saving</div>
-                  <div class="v-messages">Before saving the currently edited key each time, check whether the value format is correct.</div>
+                  <div class="v-messages">Before saving the currently edited key each time, check whether the value
+                    format is correct.
+                  </div>
                 </div>
                 <v-spacer></v-spacer>
                 <div>

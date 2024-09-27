@@ -131,7 +131,7 @@ onMounted(async () => {
   document.addEventListener('keydown', e => {
     let key = e.key.toLowerCase()
     let isMac = _isMac()
-    let ctrlKey = (!isMac && e.ctrlKey) || (isMac.value && e.metaKey)
+    let ctrlKey = (!isMac && e.ctrlKey) || (isMac && e.metaKey)
 
     //  ctrl+w
     if (ctrlKey && key == 'w') {

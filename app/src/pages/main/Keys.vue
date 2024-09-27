@@ -14,8 +14,8 @@ import {
 import {_confirm, _confirmSystem, _loading, _tipInfo, _tipSuccess, _tipWarn} from "~/common/events.ts";
 import {computed, nextTick, onMounted, onUnmounted, PropType, reactive, ref} from "vue";
 import {ErrorPayload, SessionData} from "~/common/transport/connection.ts";
-import DragBox from "~/components/DragBox.vue";
-import DragItem from "~/components/DragItem.vue";
+import DragBox from "~/components/drag-area/DragBox.vue";
+import DragItem from "~/components/drag-area/DragItem.vue";
 import {KeyValue} from "~/common/transport/kv.ts";
 import Editor from "~/components/editor/Editor.vue";
 import {_decodeBytesToString, _isEmpty} from "~/common/utils.ts";
@@ -51,6 +51,7 @@ const props = defineProps({
 const enforceLoadAllKey = ref<boolean>(false)
 const kvTree = ref<InstanceType<typeof Tree>>()
 
+const kvCount = ref<number>(0)
 const currentKv = ref<KeyValue>()
 const currentKvChanged = ref<boolean>(false)
 const keyLeaseListeners = reactive<Set<any>>(new Set())
@@ -130,6 +131,7 @@ onUnmounted(() => {
 
 const refreshAllKeys = (): Promise<any> => {
   currentKv.value = undefined
+  kvCount.value = 0
   clearAllKeyLeaseListener()
   kvTree.value?.rerender()
 
@@ -145,6 +147,7 @@ const loadAllKeys = (): Promise<any> => {
   paginationKeyCursor.value = undefined
   loadingStore.loadMore = true
   return _getAllKeys(props.session?.id).then(data => {
+    kvCount.value += data.length
     addDataListToTree(data)
   }).catch(e => {
     _handleError({
@@ -162,6 +165,7 @@ const loadNextPage = (): Promise<any> => {
     loadingStore.loadMore = true
     let limit: number = LIMIT_PER_PAGE.value as number
     return _getAllKeysPaging(props.session?.id, cursor, limit).then((data: KeyValue[]) => {
+      kvCount.value += data.length
       if (data.length < limit) {
         paginationKeyCursor.value = undefined
       }
@@ -640,8 +644,7 @@ const clearAllKeyLeaseListener = () => {
                 style="height: calc(100% - 30px);"
                 @on-click="onClickTreeItem"
           ></Tree>
-          <v-sheet height="30px"
-                   class="d-flex align-center justify-center"
+          <v-sheet class="loadMoreArea d-flex align-center justify-center loadMoreArea"
           >
             <v-btn
                 v-if="paginationKeyCursor != undefined"
@@ -653,7 +656,13 @@ const clearAllKeyLeaseListener = () => {
                 text="Load More"
                 @click="loadNextPage"
                 prepend-icon="mdi-book-open-page-variant-outline"
-            ></v-btn>
+            >
+              <template #append>
+                <span class="count text-medium-emphasis" title="The number of keys loaded">({{kvCount}})</span>
+              </template>
+            </v-btn>
+            <p v-else class="count text-center text-medium-emphasis" title="The number of keys loaded">{{kvCount}} Keys</p>
+
           </v-sheet>
         </drag-item>
         <drag-item ref="kvEditorContainerRef"
@@ -951,5 +960,17 @@ $--action-area-margin-bottom: 10px;
   display: inline-block;
   width: 80px;
   line-height: 48px;
+}
+
+.loadMoreArea {
+  $--load-more-area-height: 30px;
+  height: $--load-more-area-height;
+
+  .count {
+    font-size: 0.8em;
+    cursor: default;
+    height: $--load-more-area-height;
+    line-height: $--load-more-area-height;
+  }
 }
 </style>

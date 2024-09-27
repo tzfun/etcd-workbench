@@ -12,7 +12,8 @@ import {EditorView} from "codemirror";
 import {
   _byteTextFormat,
   _decodeBytesToString,
-  _encodeStringToBytes, _pointInRect,
+  _encodeStringToBytes,
+  _pointInRect,
   _strArrToNumArr,
   _upperCaseFirst,
   fileTypeIcon
@@ -22,7 +23,6 @@ import {appWindow} from "@tauri-apps/api/window";
 import {_useSettings} from "~/common/store.ts";
 import {getThemeByName} from "~/components/editor/themes.ts";
 import {VSheet} from "vuetify/components";
-import {platform as getPlatform} from "@tauri-apps/api/os";
 
 import * as prettier from "prettier/standalone";
 import prettierPluginBabel from "prettier/plugins/babel";
@@ -34,6 +34,7 @@ import {BuiltInParserName, LiteralUnion, Plugin} from "prettier";
 import {_isLinux, _isMac, _isWindows} from "~/common/windows.ts";
 
 type ContentFormatType = 'text' | 'blob'
+type ConsoleType = 'info' | 'warn' | 'error' | 'none'
 
 const props = defineProps({
   config: {
@@ -62,6 +63,8 @@ const allLanguages = reactive([
 const showLanguageSelection = ref<boolean>(false)
 const consolePanelData = reactive({
   show: false,
+  type: <ConsoleType>"error",
+  title: <undefined | string>undefined,
   content: ""
 })
 const languageSelectionBoxRef = ref()
@@ -70,8 +73,6 @@ const content = ref<string>(props.value)
 const propsConfig = ref(props.config!)
 
 const tauriBlurUnListen = ref<Function>()
-const platform = ref<'win32' | 'darwin' | string>('win32')
-
 
 onMounted(async () => {
 
@@ -260,7 +261,7 @@ const tryFormatContent = (): Promise<string | undefined> => {
   if (!enabledFormatLanguage.has(language)) {
     return Promise.resolve(undefined)
   }
-  let parser:LiteralUnion<BuiltInParserName>
+  let parser: LiteralUnion<BuiltInParserName>
   let plugins: Array<string | Plugin> = []
   switch (language) {
     case 'json':
@@ -290,13 +291,15 @@ const tryFormatContent = (): Promise<string | undefined> => {
       consolePanelData.show = false
       resolve(newContent)
     }).catch(e => {
-      openConsolePanel(e.toString())
+      openConsolePanel('error', e.toString(), "Format Error:")
       reject(e)
     })
   })
 }
 
-const openConsolePanel = (content: string) => {
+const openConsolePanel = (type: ConsoleType, content: string, title?: string) => {
+  consolePanelData.type = type
+  consolePanelData.title = title
   consolePanelData.content = content
   consolePanelData.show = true
 }
@@ -321,19 +324,39 @@ defineExpose({
 
 <template>
   <div class="fill-height position-relative border-solid border-sm border-opacity">
-    <div class="editor">
-      <codemirror
-          v-model="content"
-          style="width: 100%;height: 100%;"
-          :extensions="extensions"
-          :autofocus="config.autofocus"
-          :disabled="config.disabled"
-          :indent-with-tab="config.indentWithTab"
-          :tab-size="config.tabSize"
-          @ready="handleReady"
-          @change="onChanged"
-          @keydown="onKeyDown"
-      />
+    <div class="editor d-flex flex-column">
+      <div :style="`height:${consolePanelData.show ? 'calc(100% - 250px)' : '100%'};`">
+        <codemirror
+            v-model="content"
+            :extensions="extensions"
+            style="height: 100%;"
+            :autofocus="config.autofocus"
+            :disabled="config.disabled"
+            :indent-with-tab="config.indentWithTab"
+            :tab-size="config.tabSize"
+            @ready="handleReady"
+            @change="onChanged"
+            @keydown="onKeyDown"
+        />
+      </div>
+      <div class="console-panel border-t-md"
+           style="height: 250px;"
+           v-show="consolePanelData.show"
+      >
+        <v-icon class="console-panel-close"
+                @click="consolePanelData.show = false"
+                title="Hide"
+        >mdi-close
+        </v-icon>
+        <v-sheet class="fill-height overflow-auto pa-2">
+          <span v-if="consolePanelData.title">
+            <span style="color: red;" v-if="consolePanelData.type == 'error'">{{consolePanelData.title}}</span>
+            <span style="color: green;" v-else-if="consolePanelData.type == 'info'">{{consolePanelData.title}}</span>
+            <span style="color: yellow;" v-else-if="consolePanelData.type == 'warn'">{{consolePanelData.title}}</span>
+          </span>
+          <pre><code class="text-medium-emphasis">{{ consolePanelData.content }}</code></pre>
+        </v-sheet>
+      </div>
     </div>
     <v-divider></v-divider>
     <div class="footer">
@@ -394,16 +417,6 @@ defineExpose({
           </v-list>
         </div>
       </v-sheet>
-
-      <v-sheet class="console-panel border-t-md"
-               v-show="consolePanelData.show"
-      >
-        <v-icon class="console-panel-close"
-                @click="consolePanelData.show = false"
-        >mdi-close
-        </v-icon>
-        <pre><code>{{ consolePanelData.content }}</code></pre>
-      </v-sheet>
     </div>
   </div>
 </template>
@@ -425,6 +438,19 @@ $--editor-padding: 0 1rem;
     border-left: 1px solid var(--theme-border);
     font-family: monospace;
   }
+
+  .console-panel {
+    position: relative;
+    width: 100%;
+    z-index: 10;
+    font-size: 1em;
+
+    .console-panel-close {
+      position: absolute;
+      right: 8px;
+      top: 8px;
+    }
+  }
 }
 
 .footer {
@@ -444,24 +470,6 @@ $--editor-padding: 0 1rem;
     bottom: $--editor-footer-height;
     border: 1px solid rgba(90, 90, 90, 0.12);
     color-scheme: normal;
-  }
-
-  .console-panel {
-    position: absolute;
-    width: 100%;
-    height: 300px;
-    z-index: 10;
-    bottom: $--editor-footer-height;
-    left: 0;
-    padding: 15px;
-    overflow: auto;
-    font-size: 1em;
-
-    .console-panel-close {
-      position: absolute;
-      right: 15px;
-      top: 15px;
-    }
   }
 }
 </style>

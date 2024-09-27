@@ -5,8 +5,8 @@ import '@ztree/ztree_v3/js/jquery-1.4.4.min';
 import '@ztree/ztree_v3/js/jquery.ztree.core.js';
 import '@ztree/ztree_v3/js/jquery.ztree.excheck.js';
 import '@ztree/ztree_v3/js/jquery.ztree.exhide.js';
+//  @ts-ignore
 import {fuzzySearch} from './ztree-fuzzysearch'
-// import '@ztree/ztree_v3/css/metroStyle/metroStyle.css';
 
 export type TreeNode = {
   //  节点ID，整棵树一定不能重复
@@ -80,7 +80,6 @@ const settings = {
   },
   view: {
     nameIsHTML: true, //  允许name支持html
-    selectedMulti: false,
     nodeClasses: {add: ['tree-item']},
     showLine: false,
     showTitle: showTitle,
@@ -114,7 +113,7 @@ const rerender = () => {
   }
   //  @ts-ignore
   treeRootObj.value = $.fn.zTree.init($(`#${props.treeId}`), settings, [])
-  fuzzySearch(props.treeId, `#${keyId.value}`, null, true)
+  fuzzySearch(props.treeId, `#${keyId.value}`, null, false)
 }
 
 /**

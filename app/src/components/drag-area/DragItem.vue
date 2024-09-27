@@ -30,9 +30,13 @@ defineProps({
   position: absolute;
   top: 0;
   right: 0;
-  width: 4px;
+  width: 1px;
   height: 100%;
   cursor: col-resize;
+}
+
+.drag-resize-line:hover {
+  width: 4px;
 }
 
 .v-theme--light {

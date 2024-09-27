@@ -22,7 +22,6 @@ const loadingText = ref<string>(DEFAULT_LOADING_TEXT)
 
 const dialogs = ref<DialogItem[]>([])
 const tips = ref<TipsItem[]>([])
-const platform = ref<string>('win32')
 
 const theme = useTheme()
 
