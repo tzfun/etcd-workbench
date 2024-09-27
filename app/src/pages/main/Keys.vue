@@ -658,7 +658,7 @@ const clearAllKeyLeaseListener = () => {
                 prepend-icon="mdi-book-open-page-variant-outline"
             >
               <template #append>
-                <span class="count text-medium-emphasis" title="The number of keys loaded">({{kvCount}})</span>
+                <span class="count" title="The number of keys loaded">({{kvCount}})</span>
               </template>
             </v-btn>
             <p v-else class="count text-center text-medium-emphasis" title="The number of keys loaded">{{kvCount}} Keys</p>
