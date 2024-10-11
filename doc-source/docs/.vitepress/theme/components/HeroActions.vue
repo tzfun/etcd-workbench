@@ -30,20 +30,21 @@ const downloadWebText = computed(() => {
 const downloadAppMenu = computed(() => {
   switch (lang.value) {
     case 'zh':
+      let gitee = homepage.replace("github", "gitee")
       return [
         {
           text: 'Windows x64安装包 (.exe)',
-          link: `${homepage}/releases/download/App-${version}/etcd-workbench-${version}-windows-x86_64.exe`,
+          link: `${gitee}/releases/download/App-${version}/etcd-workbench-${version}-windows-x86_64.exe`,
           icon: Windows,
         },
         {
           text: 'macOS Apple芯片 (.dmg)',
-          link: `${homepage}/releases/download/App-${version}/etcd-workbench-${version}-macos-aarch64.dmg`,
+          link: `${gitee}/releases/download/App-${version}/etcd-workbench-${version}-macos-aarch64.dmg`,
           icon: Apple,
         },
         {
           text: 'macOS Intel芯片 (.dmg)',
-          link: `${homepage}/releases/download/App-${version}/etcd-workbench-${version}-macos-x86_64.dmg`,
+          link: `${gitee}/releases/download/App-${version}/etcd-workbench-${version}-macos-x86_64.dmg`,
           icon: Apple,
         },
       ]
@@ -71,10 +72,11 @@ const downloadAppMenu = computed(() => {
 const downloadWebMenu = computed(() => {
   switch (lang.value) {
     case 'zh':
+      let gitee = homepage.replace("github", "gitee")
       return [
         {
           text: '下载执行包 (.jar)',
-          link: `${homepage}/releases/download/Web-${webVersion}/etcd-workbench-${webVersion}.jar`,
+          link: `${gitee}/releases/download/Web-${webVersion}/etcd-workbench-${webVersion}.jar`,
           icon: Java,
         },
         {

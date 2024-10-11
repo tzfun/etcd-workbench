@@ -7,7 +7,7 @@ titleTemplate: Etcd Desktop Manager
 
 hero:
   name: "Etcd Workbench"
-  tagline: A beautiful and lightweight ETCD client
+  tagline: Make ETCD management easier
   image:
     src: /images/logo.png
     alt: Etcd Workbench
@@ -18,7 +18,7 @@ features:
     linkText: Download
     link: https://github.com/tzfun/etcd-workbench/releases
   - title: Private Deployment
-    details: Supports deployment of private web server, and etcd can be managed in the browser on any device. 
+    details: Supports deployment of private web server, and etcd can be managed in the browser on any device.
   - title: Docker Image
     details: The web server supports private deployment on any platform and provides Docker images for Windows, MacOS, and Linux (arm/x86).
     linkText: Docker Hub
