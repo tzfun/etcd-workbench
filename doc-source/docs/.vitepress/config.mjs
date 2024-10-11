@@ -6,6 +6,7 @@ import {zhConfig} from "./config/zh.js";
 export default defineConfig({
   title: "Etcd Workbench",
   description: "A beautiful and lightweight ETCD client",
+  base:"/etcd-workbench/",
   themeConfig: {
     logo: '/images/logo.png',
     siteTitle: 'Etcd Workbench',
