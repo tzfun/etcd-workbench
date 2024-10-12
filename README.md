@@ -18,7 +18,7 @@ A beautiful and lightweight ETCD V3 client. Provides App and Web packages. Suppo
 6. Support SSL, SSH connection.
 7. Support cluster information viewing, version compression, data backup and other functions.
 8. Support Key-Value editing, multi-language format highlighting, batch import/export.
-9. Supports comparison of multiple versions of key.
+9. Support comparison of multiple versions of key.
 10. Support lease management: creation, deletion, key bind relationship, countdown display.
 11. Support user management: enable/disable authentication, creation, deletion, grant/revocation of roles, etc.
 12. Support role management: creation, deletion, authorization/revocation of permissions, etc.
@@ -28,7 +28,7 @@ A beautiful and lightweight ETCD V3 client. Provides App and Web packages. Suppo
 
 # Download
 
-Please go to [releases](https://github.com/tzfun/etcd-workbench/releases) to download the latest version of the corresponding version.
+Please go to [website](https://tzfun.github.io/etcd-workbench/) to download the latest version. If you need to download historical versions, please go to [releases](https://github.com/tzfun/etcd-workbench/releases).
 
 - App: The version number is prefixed with **App**, for example `App-1.0.0`
     - Support `windows-x86_64`

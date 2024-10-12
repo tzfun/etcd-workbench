@@ -17,9 +17,9 @@ export default defineConfig({
       { icon: 'github', link: 'https://github.com/tzfun/etcd-workbench' },
     ],
 
-    search: {
-      provider: 'local'
-    }
+    // search: {
+    //   provider: 'local'
+    // }
   },
   locales: {
     root: {

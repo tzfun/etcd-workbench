@@ -28,7 +28,7 @@
 
 # 下载
 
-请前往 [releases](https://github.com/tzfun/etcd-workbench/releases) 下载对应版本的最新版。
+请前往[Etcd Workbench首页](https://tzfun.github.io/etcd-workbench/)下载最新版，如果需要下载历史版本请前往[releases](https://github.com/tzfun/etcd-workbench/releases)。
 
 - App：版本号以 **App** 为前缀，例如 `App-1.0.0`
     - 支持 `windows-x86_64`
