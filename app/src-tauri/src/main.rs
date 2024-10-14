@@ -49,10 +49,13 @@ fn main() {
                     debug!("try to set physical size of main window");
                     if let Some(state) = &window_init_state {
                         if state.main_window_fullscreen {
+                            debug!("The window returns to fullscreen mode");
                             window.set_fullscreen(true).unwrap();
                         } else if state.main_window_maximize {
-                            window.set_maximizable(true).unwrap();
+                            debug!("The window returns to maximizable mode");
+                            window.maximize().unwrap();
                         } else if state.main_window_width > 0f64 && state.main_window_height > 0f64 {
+                            debug!("Window restored to size: {}x{}", state.main_window_width, state.main_window_height);
                             window.set_size(Size::from(PhysicalSize {
                                 width: state.main_window_width,
                                 height: state.main_window_height,
