@@ -1,5 +1,6 @@
 import {invoke} from "@tauri-apps/api";
 import {ref} from "vue";
+import {trackEvent} from "~/common/analytics.ts";
 
 const platform = ref<PlatformType>()
 
@@ -28,6 +29,7 @@ export function _openMainWindow() {
 }
 
 export function _openSettingWindow() {
+    trackEvent('open_setting')
     invoke('open_setting_window').catch(e => {
         console.error(e)
     })

@@ -12,6 +12,7 @@ import {_debounce} from "~/common/utils.ts";
 import {_saveSettings, _useSettings} from "~/common/store.ts";
 import {listen} from "@tauri-apps/api/event";
 import {MAIN_WINDOW_MIN_HEIGHT, MAIN_WINDOW_MIN_WIDTH, SettingConfig} from "~/common/transport/setting.ts";
+import {loadModule, trackEvent} from "~/common/analytics.ts";
 
 type TabItem = {
   name: string,
@@ -31,6 +32,16 @@ const lastWindowSize = reactive({
 })
 
 onMounted(async () => {
+  try {
+    loadModule(true).then(() => {
+      trackEvent("create_window_main")
+    }).catch(() => {
+      console.warn("Failed to load umami script")
+    })
+  } catch (e) {
+    console.error(e)
+  }
+
   let size = await appWindow.innerSize() as PhysicalSize
   lastWindowSize.width = size.width
   lastWindowSize.height = size.height
@@ -95,7 +106,9 @@ onMounted(async () => {
     }
     exitConfirmState.value = true
     _confirm("Confirm Exit", "Are you sure you want to exit?").then(() => {
-      _exitApp()
+      trackEvent('exit').finally(() => {
+        _exitApp()
+      })
     }).catch(() => {
     }).finally(() => {
       exitConfirmState.value = false

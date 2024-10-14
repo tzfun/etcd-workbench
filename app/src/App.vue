@@ -9,7 +9,7 @@ import MacSystemBar from "~/components/system-bar/MacSystemBar.vue";
 import AppSetting from "~/pages/setting/AppSetting.vue";
 import AppMain from "~/pages/main/AppMain.vue";
 import {_alertError, _checkUpdate, _listenLocal, EventName} from "~/common/events.ts";
-import {_loadSettings, _useSettings, _useUpdateInfo} from "~/common/store.ts";
+import {_loadAppVersion, _loadSettings, _useSettings, _useUpdateInfo} from "~/common/store.ts";
 import {DEFAULT_SETTING_CONFIG} from "~/common/transport/setting.ts";
 import {installUpdate} from "@tauri-apps/api/updater";
 import {_isDebugModel} from "~/common/services.ts";
@@ -32,6 +32,7 @@ const windowLabel = computed<string>(() => {
 })
 
 onMounted(async () => {
+  await _loadAppVersion()
   let settings = await _loadSettings()
   _setPlatform(await getPlatform())
 

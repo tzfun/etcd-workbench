@@ -8,6 +8,7 @@ import {_connect, _connectTest, _handleError, _saveConnection} from "~/common/se
 import {_emitLocal, _loading, _tipSuccess, _tipWarn, EventName} from "~/common/events.ts";
 import {VForm} from "vuetify/components";
 import EtcdLogo from "~/components/EtcdLogo.vue";
+import {trackEvent} from "~/common/analytics.ts";
 
 const emits = defineEmits(['on-save'])
 const props = defineProps({
@@ -305,6 +306,7 @@ const testConnect = () => {
 }
 
 const connect = () => {
+  trackEvent('connect')
   checkForm().then((connection: Connection) => {
     let fd: ConnectionForm = formData.value;
     let name = fd.name
@@ -328,6 +330,7 @@ const connect = () => {
 }
 
 const saveConnection = () => {
+  trackEvent('save_connection')
   let name = formData.value.name
   if (_isEmpty(name)) {
     _tipWarn("Connection name can not be empty")
