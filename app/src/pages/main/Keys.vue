@@ -19,7 +19,7 @@ import DragItem from "~/components/drag-area/DragItem.vue";
 import {KeyValue} from "~/common/transport/kv.ts";
 import Editor from "~/components/editor/Editor.vue";
 import {_decodeBytesToString, _isEmpty} from "~/common/utils.ts";
-import {EditorConfig} from "~/common/types.ts";
+import {EditorConfig, EditorHighlightLanguage} from "~/common/types.ts";
 import {CodeDiff} from "v-code-diff";
 import {useTheme} from "vuetify";
 import CountDownTimer from "~/components/CountDownTimer.vue";
@@ -199,7 +199,7 @@ const removeKeysFromTree = (keys: string[]) => {
   }
 }
 
-const tryParseFileNameToType = (fileName: string, defaultType?: string): string | undefined => {
+const tryParseFileNameToType = (fileName: string, defaultType?: EditorHighlightLanguage): EditorHighlightLanguage | undefined => {
   let dotIdx = fileName.lastIndexOf(".")
   if (dotIdx >= 0) {
     let type = fileName.substring(dotIdx + 1).toLowerCase()
@@ -223,11 +223,18 @@ const tryParseFileNameToType = (fileName: string, defaultType?: string): string 
         return 'js'
       case 'md':
       case 'markdown':
-        return 'md'
+        return 'markdown'
       case 'ini':
-      case 'conf':
       case 'properties':
         return 'properties'
+      case 'conf':
+      case 'nginx':
+        return 'nginx'
+      case 'dockerfile':
+      case 'docker':
+        return 'dockerfile'
+      case 'sh':
+        return 'shell'
       default:
         return defaultType
     }
@@ -236,8 +243,8 @@ const tryParseFileNameToType = (fileName: string, defaultType?: string): string 
   return defaultType
 }
 
-const tryFileContentToType = (content: string): string => {
-  let lang = 'text'
+const tryFileContentToType = (content: string): EditorHighlightLanguage => {
+  let lang:EditorHighlightLanguage = 'text'
   content = content.trimStart()
   if (content.startsWith('<')) {
     lang = 'xml'
@@ -247,6 +254,8 @@ const tryFileContentToType = (content: string): string => {
     lang = 'yaml'
   } else if (content.startsWith("--")) {
     lang = "sql"
+  } else if (content.startsWith("#!")) {
+    lang = "shell"
   }
   return lang
 }
@@ -466,7 +475,7 @@ const loadVersionDiff = () => {
       case 'sql':
         versionDiffInfo.language = 'SQL'
         break
-      case 'md':
+      case 'markdown':
         versionDiffInfo.language = 'Markdown'
         break
       default:

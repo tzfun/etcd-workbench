@@ -1,5 +1,21 @@
 import {ErrorPayload, SessionData} from "~/common/transport/connection.ts";
 
+export type EditorHighlightLanguage = EditorSupportedHighlightLanguage | EditorNotSupportedHighlightLanguage
+
+export type EditorSupportedHighlightLanguage =
+    'text'
+    | 'blob'
+    | 'json'
+    | 'yaml'
+    | 'xml'
+    | 'sql'
+    | 'properties'
+    | 'shell'
+    | 'dockerfile'
+    | 'nginx'
+
+export type EditorNotSupportedHighlightLanguage = 'markdown' | 'js' | 'ts'
+
 export type DialogButtonFunc = (item: DialogItem, event: PointerEvent) => void;
 
 export type DialogButton = {
@@ -87,7 +103,7 @@ export type ConnectionSshForm = {
     identity: ConnectionSshIdentity,
 }
 
-export const DefaultConnection:ConnectionForm = {
+export const DefaultConnection: ConnectionForm = {
     name: '',
     host: '',
     port: '2379',
@@ -141,7 +157,7 @@ export type EditorConfig = {
     tabSize: number
     autofocus: boolean
     height: string | 'auto'
-    language: string
+    language: EditorHighlightLanguage
     fontSize: string,
 }
 

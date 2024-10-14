@@ -2,7 +2,7 @@
 
 import {computed, onMounted, onUnmounted, PropType, reactive, ref, shallowRef, watch} from "vue";
 import {useTheme} from "vuetify";
-import {EditorConfig} from "~/common/types.ts";
+import {EditorConfig, EditorHighlightLanguage, EditorSupportedHighlightLanguage} from "~/common/types.ts";
 import jsonLanguage from "./lang/json";
 import xmlLanguage from "./lang/xml";
 import yamlLanguage from "./lang/yaml";
@@ -32,6 +32,8 @@ import prettierPluginEstree from "prettier/plugins/estree";
 import prettierPluginSql from "prettier-plugin-sql";
 import {BuiltInParserName, LiteralUnion, Plugin} from "prettier";
 import {_isLinux, _isMac, _isWindows} from "~/common/windows.ts";
+import shellLanguage from "~/components/editor/lang/shell";
+import nginxLanguage from "~/components/editor/lang/nginx";
 
 type ContentFormatType = 'text' | 'blob'
 type ConsoleType = 'info' | 'warn' | 'error' | 'none'
@@ -49,16 +51,24 @@ const props = defineProps({
 
 const emits = defineEmits(["change", "save"])
 
-const enabledFormatLanguage = new Set(["json", "yaml", "xml", "sql"])
+const enabledFormatLanguage = new Set([
+  'json',
+  'yaml',
+  'xml',
+  'sql',
+])
 
-const allLanguages = reactive([
+const allLanguages = reactive<Array<EditorSupportedHighlightLanguage>>([
   'text',
   'blob',
   'json',
   'yaml',
   'xml',
   'sql',
-  'properties'
+  'properties',
+  'shell',
+  'dockerfile',
+  'nginx'
 ])
 const showLanguageSelection = ref<boolean>(false)
 const consolePanelData = reactive({
@@ -169,6 +179,13 @@ const extensions = computed(() => {
     case 'properties':
       result.push(propertiesLanguage())
       break
+    case 'shell':
+    case 'dockerfile':
+      result.push(shellLanguage())
+      break
+    case 'nginx':
+      result.push(nginxLanguage())
+      break
   }
 
   let appTheme = useTheme().global.name.value
@@ -234,7 +251,7 @@ const onKeyDown = (event: KeyboardEvent) => {
   }
 }
 
-const changeLanguage = (lang: string) => {
+const changeLanguage = (lang: EditorHighlightLanguage) => {
   propsConfig.value.language = lang
   showLanguageSelection.value = false
 }
@@ -350,9 +367,9 @@ defineExpose({
         </v-icon>
         <v-sheet class="fill-height overflow-auto pa-2">
           <span v-if="consolePanelData.title">
-            <span style="color: red;" v-if="consolePanelData.type == 'error'">{{consolePanelData.title}}</span>
-            <span style="color: green;" v-else-if="consolePanelData.type == 'info'">{{consolePanelData.title}}</span>
-            <span style="color: yellow;" v-else-if="consolePanelData.type == 'warn'">{{consolePanelData.title}}</span>
+            <span style="color: red;" v-if="consolePanelData.type == 'error'">{{ consolePanelData.title }}</span>
+            <span style="color: green;" v-else-if="consolePanelData.type == 'info'">{{ consolePanelData.title }}</span>
+            <span style="color: yellow;" v-else-if="consolePanelData.type == 'warn'">{{ consolePanelData.title }}</span>
           </span>
           <pre><code class="text-medium-emphasis">{{ consolePanelData.content }}</code></pre>
         </v-sheet>

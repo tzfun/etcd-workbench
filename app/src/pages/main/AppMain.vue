@@ -42,6 +42,7 @@ onMounted(async () => {
     console.error(e)
   }
 
+  _updateMaximizeState()
   let size = await appWindow.innerSize() as PhysicalSize
   lastWindowSize.width = size.width
   lastWindowSize.height = size.height

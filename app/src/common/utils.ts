@@ -19,6 +19,7 @@ export type TimeUnit =
     | 'minute'
     | 'second'
     | 'millisecond'
+
 export const fileTypeIcon: Record<string, string> = {
     file: 'mdi-file-document-outline',
     text: 'mdi-file-document-outline',
@@ -30,7 +31,10 @@ export const fileTypeIcon: Record<string, string> = {
     xml: 'mdi-file-xml-box',
     yaml: 'mdi-code-block-braces',
     properties: 'mdi-cog',
-    blob: 'mdi-alpha-b'
+    blob: 'mdi-alpha-b',
+    shell: 'mdi-powershell',
+    dockerfile: 'mdi-docker',
+    nginx: 'mdi-alpha-n-box'
 }
 
 export function _goBrowserPage(address: string) {

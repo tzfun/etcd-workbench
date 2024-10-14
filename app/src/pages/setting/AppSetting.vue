@@ -621,7 +621,7 @@ const onScroll = _debounce(() => {
                          prepend-icon="mdi-arrow-up-bold-circle-outline"
                          @click="_checkUpdateAndInstall"
                   ></v-btn>
-                  Or
+                  or
                   <v-btn class="text-none ml-2"
                          density="comfortable"
                          text="Download in GitHub"
@@ -655,7 +655,10 @@ const onScroll = _debounce(() => {
             <h3 class="group-title mt-5" id="setting-about">About</h3>
             <v-sheet class="mt-2 form-area pa-3">
               <div class="mb-12">
-                <WorkbenchLogo class="my-5"></WorkbenchLogo>
+                <WorkbenchLogo class="my-5 cursor-pointer"
+                               @click="_goBrowserPage('https://tzfun.github.io/etcd-workbench/')"
+                               title="Etcd Workbench App"
+                ></WorkbenchLogo>
                 <p class="description my-3">A beautiful and lightweight gui client for ETCD V3</p>
                 <p class="copyright">
                   Copyright &copy; 2024 <span class="link cursor-pointer"
@@ -728,9 +731,8 @@ const onScroll = _debounce(() => {
                   </v-icon>
 
                   <v-icon class="mr-2"
-                          @click="_goBrowserPage('https://github.com/tzfun/etcd-workbench/')"
+                          @click="_goBrowserPage('https://github.com/tzfun/')"
                           title="Contact me on github"
-
                   >mdi-github
                   </v-icon>
 
