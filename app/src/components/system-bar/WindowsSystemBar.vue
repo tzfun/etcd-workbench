@@ -2,12 +2,10 @@
 
 import {appWindow} from "@tauri-apps/api/window";
 import {computed, onMounted, reactive, ref} from "vue";
-import {_openSettingWindow} from "~/common/windows.ts";
+import {_openSettingWindow, isMaximizeState} from "~/common/windows.ts";
 import SnapshotList from "~/components/SnapshotList.vue";
 import {_checkUpdateAndInstall, _emitGlobal, EventName} from "~/common/events.ts";
 import {_useUpdateInfo} from "~/common/store.ts";
-
-const maximize = ref(false)
 
 const props = defineProps({
   height: Number,
@@ -19,7 +17,7 @@ const props = defineProps({
 
 const updateInfo = _useUpdateInfo();
 //  只有主窗口才允许全屏
-const enableMaximize:boolean = props.windowLabel == 'main';
+const enableMaximize: boolean = props.windowLabel == 'main';
 
 const title = ref<string>('Etcd Workbench')
 
@@ -41,11 +39,7 @@ onMounted(async () => {
       title.value = 'Settings'
       break
   }
-
-  maximize.value = await appWindow.isMaximized()
 })
-
-
 
 const closeApp = () => {
   if (props.windowLabel === 'main') {
@@ -58,7 +52,6 @@ const closeApp = () => {
 const toggleMaximize = async () => {
   if (enableMaximize) {
     await appWindow.toggleMaximize()
-    maximize.value = !maximize.value
   }
 }
 
@@ -138,7 +131,7 @@ const snapshotListShowChanged = (show: boolean) => {
     <v-btn class="system-native-btn ms-2"
            style="transform: rotate(90deg);"
            size="small"
-           :icon="maximize ? 'mdi-vector-arrange-below' : 'mdi-checkbox-blank-outline'"
+           :icon="isMaximizeState ? 'mdi-vector-arrange-below' : 'mdi-checkbox-blank-outline'"
            variant="text"
            :rounded="false"
            density="comfortable"

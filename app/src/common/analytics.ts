@@ -39,11 +39,13 @@ export function eventGlobalData(): Record<string, any> {
 
 export async function trackEvent(event: string, eventData?: Record<string, any>) {
     try {
+        //  @ts-ignore
         if (loaded && window.umami) {
             let data = {
                 ...eventGlobalData(),
                 ...eventData
             }
+            //  @ts-ignore
             await window.umami.track(({website, language}) => ({
                 language,
                 website,

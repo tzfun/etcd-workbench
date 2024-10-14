@@ -7,7 +7,7 @@ import {_disconnect} from "~/common/services.ts";
 import {onMounted, onUnmounted, reactive, ref} from "vue";
 import {SessionData} from "~/common/transport/connection.ts";
 import {appWindow, PhysicalSize} from "@tauri-apps/api/window";
-import {_exitApp, _isMac, _openMainWindow} from "~/common/windows.ts";
+import {_exitApp, _isMac, _openMainWindow, _updateMaximizeState} from "~/common/windows.ts";
 import {_debounce} from "~/common/utils.ts";
 import {_saveSettings, _useSettings} from "~/common/store.ts";
 import {listen} from "@tauri-apps/api/event";
@@ -46,6 +46,11 @@ onMounted(async () => {
   lastWindowSize.width = size.width
   lastWindowSize.height = size.height
 
+  //  实时更新最大屏幕状态
+  eventUnListens.push(await appWindow.listen('tauri://resize',() => {
+    _updateMaximizeState()
+  }))
+  //  计算窗口大小并写入文件（防抖）
   eventUnListens.push(await appWindow.listen('tauri://resize', _debounce((e: any) => {
     let payload = e.payload as Record<string, number>
     let height = payload.height

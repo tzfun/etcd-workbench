@@ -651,17 +651,17 @@ const clearAllKeyLeaseListener = () => {
                 block
                 density="compact"
                 color="cyan-darken-4"
-                class="text-none border-none"
+                class="text-none border-none user-select-none"
                 style="border-radius: 0;"
                 text="Load More"
                 @click="loadNextPage"
                 prepend-icon="mdi-book-open-page-variant-outline"
             >
               <template #append>
-                <span class="count" title="The number of keys loaded">({{kvCount}})</span>
+                <span class="count  user-select-none" title="The number of keys loaded">({{kvCount}})</span>
               </template>
             </v-btn>
-            <p v-else class="count text-center text-medium-emphasis" title="The number of keys loaded">{{kvCount}} Keys</p>
+            <p v-else class="count text-center text-medium-emphasis user-select-none" title="The number of keys loaded">Loaded {{kvCount}} keys</p>
 
           </v-sheet>
         </drag-item>

@@ -1,8 +1,10 @@
 import {invoke} from "@tauri-apps/api";
 import {ref} from "vue";
 import {trackEvent} from "~/common/analytics.ts";
+import {appWindow} from "@tauri-apps/api/window";
 
 const platform = ref<PlatformType>()
+export const isMaximizeState = ref<boolean>(false)
 
 export type PlatformType = 'linux' | 'darwin' | 'ios' | 'freebsd' | 'dragonfly' | 'netbsd' | 'openbsd' | 'solaris' | 'android' | 'win32' | string
 
@@ -20,6 +22,12 @@ export function _isMac(): boolean {
 
 export function _isLinux(): boolean {
     return platform.value == 'linux'
+}
+
+export function _updateMaximizeState() {
+    appWindow.isMaximized().then(state => {
+        isMaximizeState.value = state
+    })
 }
 
 export function _openMainWindow() {
