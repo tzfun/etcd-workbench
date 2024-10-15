@@ -1,25 +1,5 @@
 {
   "tauri": {
-    "allowlist": {
-      "all": false,
-      "shell": {
-        "all": false,
-        "open": true
-      },
-      "window": {
-        "all": true
-      },
-      "os": {
-        "all": true
-      },
-      "dialog": {
-        "open": true,
-        "save": true
-      },
-      "process": {
-        "relaunch": true
-      }
-    },
     "windows": [
       {
         "label": "main",

@@ -8,6 +8,7 @@ import {_goBrowserPage} from "~/common/utils.ts";
 
 const setup = () => {
     try {
+        //  @ts-ignore
         window._goBrowserPage = _goBrowserPage
         const app = createApp(App)
         app.use(vuetify)

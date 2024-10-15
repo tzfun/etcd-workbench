@@ -241,7 +241,10 @@ const handleReady = ({view}: any) => {
 }
 
 const onChanged = (data: string) => {
-  emits('change', data)
+  emits('change', {
+    data,
+    modified: data !== props.value
+  })
 }
 
 const onKeyDown = (event: KeyboardEvent) => {
@@ -362,7 +365,7 @@ defineExpose({
       >
         <v-icon class="console-panel-close"
                 @click="consolePanelData.show = false"
-                title="Hide"
+                title="Close"
         >mdi-close
         </v-icon>
         <v-sheet class="fill-height overflow-auto pa-2">

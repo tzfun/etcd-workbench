@@ -254,14 +254,17 @@ export function _checkUpdateAndInstall() {
     }).catch((e) => {
         _loading(false)
         if (e == undefined) {
-            _tipSuccess('You are already the latest version')
+            _tipSuccess('Your version is already the latest')
         } else {
             _tipError(e)
         }
     })
 }
 
-export function _copyToClipboard(content: string) {
+export function _copyToClipboard(content: any) {
+    if (content) {
+        content = content.toString()
+    }
     writeText(content).then(() => {
         _tipSuccess("Copied")
     }).catch(e => {

@@ -29,51 +29,11 @@
       "clipboard": {
         "all": false,
         "writeText": true
+      },
+      "process": {
+        "relaunch": true
       }
     },
-    "windows": [
-      {
-        "label": "main",
-        "title": "Etcd Workbench",
-        "width": 1200,
-        "height": 800,
-        "minWidth": 1000,
-        "minHeight": 700,
-        "center": true,
-        "decorations": false,
-        "transparent": true,
-        "visible": false,
-        "closable": true,
-        "focus": false,
-        "titleBarStyle": "Overlay"
-      },
-      {
-        "label": "setting",
-        "title": "Settings",
-        "width": 1100,
-        "height": 750,
-        "resizable": false,
-        "center": true,
-        "url": "/?page=setting",
-        "decorations": false,
-        "titleBarStyle": "Overlay",
-        "transparent": true,
-        "visible": false,
-        "focus": false
-      },
-      {
-        "label": "splashscreen",
-        "title": "Etcd Workbench",
-        "width": 350,
-        "height": 100,
-        "center": true,
-        "url": "splashscreen.html",
-        "decorations": false,
-        "resizable": false,
-        "transparent": true,
-        "visible": true
-      }
-    ],
     "security": {
       "csp": null
     },

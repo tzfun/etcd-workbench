@@ -11,7 +11,15 @@ import {
   _putKV,
   _putKVWithLease
 } from "~/common/services.ts";
-import {_confirm, _confirmSystem, _loading, _tipInfo, _tipSuccess, _tipWarn} from "~/common/events.ts";
+import {
+  _confirm,
+  _confirmSystem,
+  _copyToClipboard,
+  _loading,
+  _tipInfo,
+  _tipSuccess,
+  _tipWarn
+} from "~/common/events.ts";
 import {computed, nextTick, onMounted, onUnmounted, PropType, reactive, ref} from "vue";
 import {ErrorPayload, SessionData} from "~/common/transport/connection.ts";
 import DragBox from "~/components/drag-area/DragBox.vue";
@@ -25,6 +33,7 @@ import {useTheme} from "vuetify";
 import CountDownTimer from "~/components/CountDownTimer.vue";
 import {_useSettings} from "~/common/store.ts";
 import Tree from "~/components/tree/Tree.vue";
+import {_isMac} from "~/common/windows.ts";
 
 const theme = useTheme()
 
@@ -401,9 +410,9 @@ const onClickTreeItem = (key: string) => {
   })
 }
 
-const editorChange = () => {
+const editorChange = ({modified}: {data: string, modified: boolean}) => {
   if (currentKv.value) {
-    currentKvChanged.value = true
+    currentKvChanged.value = modified
   }
 }
 
@@ -617,7 +626,7 @@ const clearAllKeyLeaseListener = () => {
       ></v-btn>
       <v-spacer></v-spacer>
       <v-tooltip v-if="session.namespace"
-                 location="bottom"
+                 location="top"
                  text="The namespace of the current connection"
       >
         <template v-slot:activator="{ props }">
@@ -626,12 +635,13 @@ const clearAllKeyLeaseListener = () => {
                   color="brown-lighten-2"
                   class="font-weight-bold"
                   prepend-icon="mdi-view-headline"
+                  @click="_copyToClipboard(session.namespace)"
           >{{ session.namespace }}
           </v-chip>
         </template>
       </v-tooltip>
       <v-tooltip v-if="currentKv"
-                 location="bottom"
+                 location="top"
                  text="Current key"
       >
         <template v-slot:activator="{ props }">
@@ -639,6 +649,7 @@ const clearAllKeyLeaseListener = () => {
                   label
                   color="light-blue-accent-4"
                   class="font-weight-bold ml-2"
+                  @click="_copyToClipboard(currentKv.key)"
           >{{ currentKv.key }}
           </v-chip>
         </template>
@@ -695,16 +706,26 @@ const clearAllKeyLeaseListener = () => {
           <div v-if="currentKv" class="fill-height">
             <v-layout class="editor-header">
               <v-spacer></v-spacer>
-              <v-btn
-                  v-show="currentKvChanged"
-                  color="primary"
-                  size="small"
-                  @click="saveKV"
-                  text="Save"
-                  class="mr-2 text-none"
-                  :loading="loadingStore.save"
-                  prepend-icon="mdi-content-save-outline"
-              ></v-btn>
+
+              <v-tooltip location="top"
+                         :text="_isMac() ? '⌘ + S' : 'Ctrl + S'"
+              >
+                <template v-slot:activator="{ props }">
+                  <v-btn
+                      v-bind="props"
+                      :disabled="!currentKvChanged"
+                      color="primary"
+                      size="small"
+                      @click="saveKV"
+                      text="Save"
+                      class="mr-2 text-none"
+                      :loading="loadingStore.save"
+                      prepend-icon="mdi-content-save-outline"
+                  ></v-btn>
+                </template>
+              </v-tooltip>
+
+
               <v-btn
                   color="cyan-darken-1"
                   size="small"
@@ -754,11 +775,14 @@ const clearAllKeyLeaseListener = () => {
                   </span>
                   <v-spacer></v-spacer>
                   <span class="editor-footer-item"><strong>Version</strong>: {{ currentKv.version }}</span>
-                  <span class="editor-footer-item"><strong>Create Revision</strong>: {{
+                  <span class="editor-footer-item cursor-pointer"
+                        @click="_copyToClipboard(currentKv.createRevision)"><strong>Create Revision</strong>: {{
                       currentKv.createRevision
                     }}</span>
-                  <span class="editor-footer-item"><strong>Modify Revision</strong>: {{ currentKv.modRevision }}</span>
-                  <span class="editor-footer-item"
+                  <span class="editor-footer-item cursor-pointer"
+                        @click="_copyToClipboard(currentKv.modRevision)"><strong>Modify Revision</strong>: {{ currentKv.modRevision }}</span>
+                  <span class="editor-footer-item cursor-pointer"
+                        @click="_copyToClipboard(currentKv.lease)"
                         v-if="currentKv.lease != '0'"><strong>Lease</strong>: {{ currentKv.lease }}</span>
                 </template>
               </editor>
