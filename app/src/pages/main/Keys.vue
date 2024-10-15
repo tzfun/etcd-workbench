@@ -229,6 +229,7 @@ const tryParseFileNameToType = (fileName: string, defaultType?: EditorHighlightL
         return 'properties'
       case 'conf':
       case 'nginx':
+      case 'nginxconf':
         return 'nginx'
       case 'dockerfile':
       case 'docker':

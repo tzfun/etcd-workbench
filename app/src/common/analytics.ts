@@ -7,8 +7,7 @@ export function loadModule(autoTrack: boolean = true): Promise<void> {
     return new Promise((resolve, reject) => {
         _isDebugModel().then(isDebug => {
             if (isDebug) {
-                console.debug("Umami statistics are not started in debug mode")
-                reject()
+                reject("Statistics are ignored in debug mode")
             } else {
                 const script = document.createElement('script')
                 script.setAttribute('src', 'https://cloud.umami.is/script.js')
@@ -19,9 +18,9 @@ export function loadModule(autoTrack: boolean = true): Promise<void> {
                     loaded = true
                     resolve()
                 }
-                script.onerror = () => {
+                script.onerror = (e) => {
                     loaded = false
-                    reject()
+                    reject(e)
                 }
                 document.body.appendChild(script)
             }

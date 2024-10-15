@@ -22,6 +22,7 @@
         "all": true
       },
       "dialog": {
+        "ask": true,
         "open": true,
         "save": true
       },

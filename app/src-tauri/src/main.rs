@@ -55,7 +55,7 @@ fn main() {
                             debug!("The window returns to maximizable mode");
                             window.maximize().unwrap();
                         } else if state.main_window_width > 0f64 && state.main_window_height > 0f64 {
-                            debug!("Window restored to size: {}x{}", state.main_window_width, state.main_window_height);
+                            debug!("Window restored to size: {} x {}", state.main_window_width, state.main_window_height);
                             window.set_size(Size::from(PhysicalSize {
                                 width: state.main_window_width,
                                 height: state.main_window_height,
@@ -71,6 +71,7 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            api::windows::client_error,
             api::windows::open_main_window,
             api::windows::open_setting_window,
             api::windows::exit_app,

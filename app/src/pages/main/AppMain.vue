@@ -35,8 +35,8 @@ onMounted(async () => {
   try {
     loadModule(true).then(() => {
       trackEvent("create_window_main")
-    }).catch(() => {
-      console.warn("Failed to load umami script")
+    }).catch(e => {
+      console.warn("Failed to load umami script:", e)
     })
   } catch (e) {
     console.error(e)
@@ -48,7 +48,7 @@ onMounted(async () => {
   lastWindowSize.height = size.height
 
   //  实时更新最大屏幕状态
-  eventUnListens.push(await appWindow.listen('tauri://resize',() => {
+  eventUnListens.push(await appWindow.listen('tauri://resize', () => {
     _updateMaximizeState()
   }))
   //  计算窗口大小并写入文件（防抖）

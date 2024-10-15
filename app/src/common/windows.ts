@@ -2,11 +2,23 @@ import {invoke} from "@tauri-apps/api";
 import {ref} from "vue";
 import {trackEvent} from "~/common/analytics.ts";
 import {appWindow} from "@tauri-apps/api/window";
+import {ask} from "@tauri-apps/api/dialog";
 
 const platform = ref<PlatformType>()
 export const isMaximizeState = ref<boolean>(false)
 
-export type PlatformType = 'linux' | 'darwin' | 'ios' | 'freebsd' | 'dragonfly' | 'netbsd' | 'openbsd' | 'solaris' | 'android' | 'win32' | string
+export type PlatformType =
+    'linux'
+    | 'darwin'
+    | 'ios'
+    | 'freebsd'
+    | 'dragonfly'
+    | 'netbsd'
+    | 'openbsd'
+    | 'solaris'
+    | 'android'
+    | 'win32'
+    | string
 
 export function _setPlatform(p: PlatformType) {
     platform.value = p
@@ -27,6 +39,35 @@ export function _isLinux(): boolean {
 export function _updateMaximizeState() {
     appWindow.isMaximized().then(state => {
         isMaximizeState.value = state
+    })
+}
+
+export function _onClientError(info: string, err: string, exitAppFinally: boolean = false) {
+    let message = "An error occurred. To help resolve the issue, do you want to report it to the author?"
+    if (exitAppFinally) {
+        message += `\n\n(App will exit later)`
+    }
+    ask(message, {
+        title: "System",
+        type: "error"
+    }).then(sure => {
+        if (sure) {
+            trackEvent("client_error", {
+                client_err_info: info,
+                client_err_stack: err
+            }).then(() => {
+            })
+        }
+    }).finally(() => {
+        if (exitAppFinally) {
+            _exitApp()
+        }
+    })
+    invoke('client_error', {
+        info,
+        err
+    }).catch(e => {
+        console.error(e)
     })
 }
 
@@ -56,7 +97,7 @@ export function _openFolder(path: string, selectFile?: string): Promise<undefine
     })
 }
 
-export function _getDownloadPath():Promise<string | undefined> {
+export function _getDownloadPath(): Promise<string | undefined> {
     return invoke('get_download_path')
 }
 

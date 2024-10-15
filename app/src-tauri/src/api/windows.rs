@@ -1,11 +1,17 @@
 use std::path::PathBuf;
 use std::process::Command;
 
+use log::error;
 use tauri::api::path::download_dir;
 use tauri::{Manager, WindowBuilder};
 use tauri::utils::config::WindowConfig;
 
 use crate::error::LogicError;
+
+#[tauri::command]
+pub fn client_error(info: String, err: String) {
+    error!("info: {}, err: {}", info, err);
+}
 
 pub fn open_main_window0(app_handle: &tauri::AppHandle) {
     // 关闭初始屏幕
