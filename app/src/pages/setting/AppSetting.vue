@@ -14,7 +14,7 @@ import {
 import {DEFAULT_SETTING_CONFIG, SettingConfig} from "~/common/transport/setting.ts";
 import {_debounce, _encodeStringToBytes, _goBrowserPage} from "~/common/utils.ts";
 import WorkbenchLogo from "~/components/WorkbenchLogo.vue";
-import {_getAppVersionCache, _loadSettings, _setLocalSettings, _useSettings} from "~/common/store.ts";
+import {_loadAppVersion, _loadSettings, _setLocalSettings, _useSettings} from "~/common/store.ts";
 import {appWindow} from "@tauri-apps/api/window";
 import {useTheme} from "vuetify";
 import {open, save} from "@tauri-apps/api/dialog";
@@ -127,7 +127,7 @@ const connectionConfEncryptKeyRule = [
 onMounted(async () => {
   await _loadSettings()
   settingForm.value = JSON.parse(JSON.stringify(_useSettings().value))
-  appVersion.value = _getAppVersionCache()
+  appVersion.value = await _loadAppVersion()
 
   watch(() => settingForm.value, (v) => {
     let setting = {...v}

@@ -42,11 +42,15 @@ export function _useUpdateInfo(): Ref<UnwrapRef<UpdateInfo>> {
     return updateInfo
 }
 
-export async function _loadAppVersion() {
-    await _getAppVersion().then((version: string) => {
-        appVersion.value = version
-    }).catch(e => {
-        console.error(e)
+export function _loadAppVersion(): Promise<string> {
+    return new Promise<string>(resolve => {
+        _getAppVersion().then((version: string) => {
+            appVersion.value = version
+            resolve(version)
+        }).catch(e => {
+            console.error(e)
+            resolve(appVersion.value)
+        })
     })
 }
 
