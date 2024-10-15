@@ -6,6 +6,7 @@ import {checkUpdate, installUpdate, UpdateManifest, UpdateResult} from "@tauri-a
 import {_useSettings} from "~/common/store.ts";
 import {relaunch} from "@tauri-apps/api/process";
 import {writeText} from "@tauri-apps/api/clipboard";
+import {_goBrowserPage} from "~/common/utils.ts";
 
 const localEvents = mitt();
 
@@ -222,13 +223,19 @@ export function _checkUpdate(): Promise<UpdateManifest> {
     })
 }
 
+export function _genNewVersionUpdateMessage(manifest: UpdateManifest): string {
+    let version = manifest.version
+
+    return `New version <span onclick='_goBrowserPage("https://github.com/tzfun/etcd-workbench/releases/tag/App-${version}")' class="simulate-tag-a text-green font-weight-bold" title="Click to view updated content">${version}</span> is available, update now?`
+}
+
 export function _checkUpdateAndInstall() {
     _loading(true, "Checking for updates...")
     _checkUpdate().then(manifest => {
         _loading(false)
-        _confirmUpdateApp(
-            `Etcd workbench <span class="text-green font-weight-bold">${manifest.version}</span> is now available.</br></br>Do you want to download and install it now?`,
-        ).then(() => {
+        let message = _genNewVersionUpdateMessage(manifest)
+
+        _confirmUpdateApp(message).then(() => {
             _loading(true, "Installing package...")
             installUpdate().then(async () => {
                 relaunch().catch((e:string) => {
@@ -237,7 +244,7 @@ export function _checkUpdateAndInstall() {
                 })
             }).catch(e => {
                 console.error(e)
-                _alertError("Unable to download: " + e)
+                _alertError("Unable to update: " + e)
             }).finally(() => {
                 _loading(false)
             })

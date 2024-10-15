@@ -97,3 +97,12 @@ html, body, #app {
 button {
   outline: none;
 }
+
+.simulate-tag-a {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.simulate-tag-a:hover {
+  text-decoration: underline;
+}

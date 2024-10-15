@@ -1219,7 +1219,7 @@ dependencies = [
 
 [[package]]
 name = "etcd-workbench"
-version = "1.0.3"
+version = "1.0.4"
 dependencies = [
  "aes",
  "async-trait",

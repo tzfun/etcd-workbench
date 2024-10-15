@@ -4,9 +4,11 @@ import vuetify from "~/common/vuetify.ts";
 import '@mdi/font/css/materialdesignicons.css'
 import '~/styles/main.scss'
 import {_onClientError} from "~/common/windows.ts";
+import {_goBrowserPage} from "~/common/utils.ts";
 
 const setup = () => {
     try {
+        window._goBrowserPage = _goBrowserPage
         const app = createApp(App)
         app.use(vuetify)
 
