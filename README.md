@@ -1,7 +1,14 @@
 [中文版](./README_ZH.md) | English
 
 <div align=center>
-<img src=web/src/assets/logo.png width=300/>
+<img src=app/src-tauri/icons/macos/icon.png width=300/>
+
+</div>
+
+<div align=center>
+
+![Latest release](https://img.shields.io/github/release/tzfun/etcd-workbench) ![GitHub downloads](https://img.shields.io/github/downloads/tzfun/etcd-workbench/total) ![GitHub stars](https://img.shields.io/github/stars/tzfun/etcd-workbench) ![GitHub forks](https://img.shields.io/github/forks/tzfun/etcd-workbench)
+
 </div>
 
 # Etcd Workbench
