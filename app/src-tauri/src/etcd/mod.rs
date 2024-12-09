@@ -6,17 +6,19 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use dashmap::DashMap;
 use etcd_client::Error;
 use lazy_static::lazy_static;
+use tokio::sync::Mutex;
 use crate::error::LogicError;
 use crate::etcd::etcd_connector::EtcdConnector;
 use crate::transport::connection::{Connection, SessionData};
 
 pub mod etcd_connector;
+mod wrapped_etcd_client;
 mod test;
 
 static CONNECTION_ID_COUNTER: AtomicI32 = AtomicI32::new(1);
 
 lazy_static! {
-    static ref CONNECTION_POOL:DashMap<i32, Arc<EtcdConnector>> = DashMap::with_capacity(2);
+    static ref CONNECTION_POOL:DashMap<i32, Arc<Mutex<EtcdConnector>>> = DashMap::with_capacity(2);
 }
 
 fn gen_connection_id() -> i32 {
@@ -37,7 +39,7 @@ pub async fn new_connector(connection: Connection) -> Result<SessionData, LogicE
         None
     };
     let namespace = connection.namespace.clone();
-    let connector = EtcdConnector::new(connection).await?;
+    let mut connector = EtcdConnector::new(connection).await?;
     connector.test_connection().await?;
 
     let root = if let Some(u) = &user {
@@ -47,7 +49,7 @@ pub async fn new_connector(connection: Connection) -> Result<SessionData, LogicE
     };
 
     let connector_id = gen_connection_id();
-    CONNECTION_POOL.insert(connector_id, Arc::new(connector));
+    CONNECTION_POOL.insert(connector_id, Arc::new(Mutex::new(connector)));
 
     Ok(SessionData {
         id: connector_id,
@@ -57,11 +59,11 @@ pub async fn new_connector(connection: Connection) -> Result<SessionData, LogicE
     })
 }
 
-pub fn get_connector(id: &i32) -> Result<Arc<EtcdConnector>, LogicError> {
+pub fn get_connector(id: &i32) -> Result<Arc<Mutex<EtcdConnector>>, LogicError> {
     get_connector_optional(id).ok_or(LogicError::ConnectionLose)
 }
 
-pub fn get_connector_optional(id: &i32) -> Option<Arc<EtcdConnector>> {
+pub fn get_connector_optional(id: &i32) -> Option<Arc<Mutex<EtcdConnector>>> {
     let connector = CONNECTION_POOL.get(id)?;
     Some(Arc::clone(connector.value()))
 }

@@ -1,7 +1,7 @@
 use etcd_client::KeyValue;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all="camelCase")]
 pub struct SerializableKeyValue {
     pub key: String,
@@ -50,7 +50,7 @@ pub struct SerializableLeaseInfo {
     pub keys: Vec<String>
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 #[serde(rename_all="camelCase")]
 pub struct SerializableLeaseSimpleInfo {
     pub ttl: i64,
