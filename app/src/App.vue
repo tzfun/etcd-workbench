@@ -22,6 +22,7 @@ import {installUpdate} from "@tauri-apps/api/updater";
 import {_isDebugModel} from "~/common/services.ts";
 import LinuxSystemBar from "~/components/system-bar/LinuxSystemBar.vue";
 import {_isLinux, _isMac, _isWindows, _setPlatform} from "~/common/windows.ts";
+import {relaunch} from "@tauri-apps/api/process";
 
 const DEFAULT_LOADING_TEXT: string = "Loading..."
 const loading = ref<boolean>(false)
@@ -121,17 +122,23 @@ onMounted(async () => {
       updateInfo.latestVersion = manifest
 
       if (settings.autoUpdate) {
-
         let message = _genNewVersionUpdateMessage(manifest)
         _confirmUpdateApp(message).then(() => {
-          _loading(true, "Installing package...")
-          installUpdate().catch(e => {
+          _loading(true, "Installing...")
+          installUpdate().then(() => {
+            _loading(true, "Restarting...")
+            relaunch().catch((e:string) => {
+              console.error(e)
+              _alertError("Unable to relaunch, please relaunch manually.")
+            }).finally(() => {
+              _loading(false)
+            })
+          }).catch(e => {
+            _loading(false)
             console.error(e)
             _alertError("Update failed, please update manually or go to GitHub to download the latest version.")
           })
         }).catch(() => {
-        }).finally(() => {
-          _loading(false)
         })
       }
     }).catch(e => {
@@ -210,7 +217,6 @@ const disableWebviewNativeEvents = () => {
         data-tauri-drag-region
         max-width="320"
         persistent
-        class="loading-dialog"
     >
       <v-list
           class="py-2"
@@ -251,7 +257,6 @@ const disableWebviewNativeEvents = () => {
     <v-dialog
         v-for="(item, key) in dialogs"
         :key="key"
-        global-top="28px"
         v-model="item.value"
         :persistent="item.persistent == undefined ? true : item.persistent"
         :scrollable="item.scrollable == undefined ? true : item.scrollable"
@@ -321,9 +326,5 @@ const disableWebviewNativeEvents = () => {
 </style>
 
 <style lang="scss">
-.loading-dialog {
-  .v-overlay, .v-overlay__scrim {
-    margin-top: 28px;
-  }
-}
+
 </style>

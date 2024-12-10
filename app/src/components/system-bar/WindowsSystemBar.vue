@@ -154,10 +154,12 @@ const snapshotListShowChanged = (show: boolean) => {
 
 .system-extend-btn {
   font-size: 1.1em;
+  opacity: 0.8;
 }
 
 .system-native-btn {
   font-size: 0.9em;
+  opacity: 0.5;
 }
 
 .system-extend-btn:hover,

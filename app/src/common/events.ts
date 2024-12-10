@@ -230,23 +230,26 @@ export function _genNewVersionUpdateMessage(manifest: UpdateManifest): string {
 }
 
 export function _checkUpdateAndInstall() {
-    _loading(true, "Checking for updates...")
+    _loading(true, "Checking for update...")
     _checkUpdate().then(manifest => {
         _loading(false)
         let message = _genNewVersionUpdateMessage(manifest)
 
         _confirmUpdateApp(message).then(() => {
-            _loading(true, "Installing package...")
-            installUpdate().then(async () => {
+            _loading(true, "Installing...")
+            installUpdate().then(() => {
+                _loading(false)
+                _loading(true, "Restarting...")
                 relaunch().catch((e:string) => {
                     console.error(e)
                     _alertError("Unable to relaunch, please relaunch manually.")
+                }).finally(() => {
+                    _loading(false)
                 })
             }).catch(e => {
+                _loading(false)
                 console.error(e)
                 _alertError("Unable to update: " + e)
-            }).finally(() => {
-                _loading(false)
             })
         }).catch(() => {
 
