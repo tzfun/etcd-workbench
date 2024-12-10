@@ -26,7 +26,7 @@
     "v-code-diff": "^1.12.1",
     "vue": "^3.3.4",
     "vue-codemirror": "^6.1.1",
-    "vuetify": "3.7.2"
+    "vuetify": "3.7.5"
   },
   "devDependencies": {
     "@mdi/font": "^7.4.47",

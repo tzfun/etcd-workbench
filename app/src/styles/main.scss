@@ -17,6 +17,10 @@ html, body, #app {
   border: 1px solid rgba(216, 212, 212, 0.3);
 }
 
+.v-overlay-container .v-overlay__scrim {
+  top: 28px;
+}
+
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;

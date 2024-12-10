@@ -251,6 +251,7 @@ const disableWebviewNativeEvents = () => {
     <v-dialog
         v-for="(item, key) in dialogs"
         :key="key"
+        global-top="28px"
         v-model="item.value"
         :persistent="item.persistent == undefined ? true : item.persistent"
         :scrollable="item.scrollable == undefined ? true : item.scrollable"

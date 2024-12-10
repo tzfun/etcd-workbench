@@ -2,7 +2,7 @@ use async_trait::async_trait;
 use log::{info};
 use russh::{client};
 use russh::client::{DisconnectReason};
-use russh::keys::key;
+use russh::keys::ssh_key;
 
 pub struct SshClient {
     ssh_simple_info: String,
@@ -22,7 +22,7 @@ impl client::Handler for SshClient {
 
     async fn check_server_key(
         &mut self,
-        _server_public_key: &key::PublicKey,
+        _server_public_key: &ssh_key::PublicKey,
     ) -> Result<bool, Self::Error> {
         Ok(true)
     }
