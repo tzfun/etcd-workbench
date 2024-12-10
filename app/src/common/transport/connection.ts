@@ -43,6 +43,8 @@ export interface Connection {
 export interface ConnectionInfo {
     name: string,
     connection: Connection,
+    keyCollection: string[],
+    keyMonitorList: KeyMonitorConfig[],
     default?: boolean
 }
 
@@ -52,17 +54,29 @@ export const DEFAULT_CONNECTION: ConnectionInfo = {
         host: '',
         port: 2379
     },
-    default: true
+    default: true,
+    keyCollection: [],
+    keyMonitorList: []
 }
 
 export interface SessionData {
     id: number,
     user?: string,
     root: boolean,
-    namespace?: string
+    namespace?: string,
+    keyCollection: string[],
+    keyMonitorList: KeyMonitorConfig[],
 }
 
 export interface ErrorPayload {
     errType: string,
     errMsg: string
+}
+
+export interface KeyMonitorConfig {
+    key: string,
+    monitorLeaseChange: boolean,
+    monitorValueChange: boolean,
+    monitorCreate: boolean,
+    monitorRemove: boolean,
 }

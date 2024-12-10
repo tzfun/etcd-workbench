@@ -12,13 +12,15 @@ use tokio::sync::RwLock;
 
 use crate::error::LogicError;
 use crate::transport::connection::ConnectionInfo;
-use crate::transport::settings::SettingConfig;
+use crate::transport::settings::{GlobalStoreConfig, SettingConfig};
 use crate::utils::{aes_util, file_util};
 
 lazy_static! {
     static ref SETTING_CONFIG: RwLock<Option<SettingConfig>> = RwLock::new(None);
+    static ref GLOBAL_STORE_CONFIG: RwLock<Option<GlobalStoreConfig>> = RwLock::new(None);
 }
 
+/// 从文件中读取设置数据
 pub fn get_setting_from_file() -> Result<SettingConfig, LogicError> {
     let path = file_util::get_setting_file_path();
     let settings = if path.exists() {
@@ -32,6 +34,22 @@ pub fn get_setting_from_file() -> Result<SettingConfig, LogicError> {
     };
 
     Ok(settings)
+}
+
+/// 从文件中读取全局存储数据
+pub fn get_global_store_from_file() -> Result<GlobalStoreConfig, LogicError> {
+    let path = file_util::get_global_store_file_path();
+    let store = if path.exists() {
+        let mut file = File::open(path.display().to_string())?;
+        let mut content = String::new();
+        file.read_to_string(&mut content)?;
+
+        serde_json::from_str::<GlobalStoreConfig>(content.leak())?
+    } else {
+        GlobalStoreConfig::default()
+    };
+
+    Ok(store)
 }
 
 #[tauri::command]
@@ -52,6 +70,26 @@ pub async fn get_settings() -> Result<SettingConfig, LogicError> {
     };
 
     Ok(settings)
+}
+
+#[tauri::command]
+pub async fn get_global_store() -> Result<GlobalStoreConfig, LogicError> {
+    let lock = GLOBAL_STORE_CONFIG.read().await;
+    let store = if lock.is_none() {
+        drop(lock);
+
+        let store = get_global_store_from_file()?;
+        let mut write_lock = GLOBAL_STORE_CONFIG.write().await;
+
+        let cloned = store.clone();
+        *write_lock = Some(store);
+
+        cloned
+    } else {
+        lock.as_ref().unwrap().clone()
+    };
+
+    Ok(store)
 }
 
 #[tauri::command]
@@ -78,6 +116,25 @@ pub async fn save_settings(setting_config: SettingConfig) -> Result<(), LogicErr
     }
 
     debug!("Save settings");
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn save_global_store(store: GlobalStoreConfig) -> Result<(), LogicError> {
+    let path = file_util::get_global_store_file_path();
+    let s = serde_json::to_string(&store)?;
+    if !path.exists() {
+        File::create(path.clone())?;
+    }
+    fs::write(path, s)?;
+    
+    {
+        let mut write_lock = GLOBAL_STORE_CONFIG.write().await;
+        *write_lock = Some(store);
+    }
+
+    debug!("Save global store");
 
     Ok(())
 }

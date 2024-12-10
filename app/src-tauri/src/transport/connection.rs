@@ -55,16 +55,45 @@ pub struct Connection {
 
 /// 连接信息
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all="camelCase")]
 pub struct ConnectionInfo {
     //  连接名
     pub name: String,
-    pub connection: Connection
+    pub connection: Connection,
+    //  key收藏夹(全路径)
+    #[serde(default = "default_key_collection")]
+    pub key_collection: Vec<String>,
+    //  key监控列表
+    #[serde(default = "default_key_monitor_list")]
+    pub key_monitor_list: Vec<KeyMonitorConfig>
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all="camelCase")]
 pub struct SessionData {
     pub id: i32,
     pub user: Option<String>,
     pub root: bool,
-    pub namespace: Option<String>
+    pub namespace: Option<String>,
+    pub key_collection: Vec<String>,
+    pub key_monitor_list: Vec<KeyMonitorConfig>
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all="camelCase")]
+pub struct KeyMonitorConfig {
+    //  key值（全路径）
+    pub key: String,
+    pub monitor_lease_change: bool,
+    pub monitor_value_change: bool,
+    pub monitor_create: bool,
+    pub monitor_remove: bool,
+}
+
+fn default_key_collection() -> Vec<String> {
+    vec![]
+}
+
+fn default_key_monitor_list() -> Vec<KeyMonitorConfig> {
+    vec![]
 }

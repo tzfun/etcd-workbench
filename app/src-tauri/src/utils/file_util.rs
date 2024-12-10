@@ -12,6 +12,7 @@ static BASE_DIR: &'static str = "Etcd Workbench";
 pub static CONN_CONFIG_DIR: &'static str = "connections";
 pub static DATA_DIR: &'static str = "data";
 pub static SETTINGS_FILE: &'static str = "settings";
+pub static GLOBAL_STORE_FILE: &'static str = "store";
 pub static META_FILE: &'static str = "meta";
 
 /// 创建一个临时文件，并返回该文件的全路径
@@ -51,6 +52,13 @@ pub fn get_conn_config_dir_path() -> PathBuf {
 pub fn get_setting_file_path() -> PathBuf {
     let mut path = get_data_path();
     path.push(SETTINGS_FILE);
+    path
+}
+
+/// 获取设置文件路径
+pub fn get_global_store_file_path() -> PathBuf {
+    let mut path = get_data_path();
+    path.push(GLOBAL_STORE_FILE);
     path
 }
 

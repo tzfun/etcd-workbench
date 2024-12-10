@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -45,10 +47,6 @@ pub struct SettingConfig {
     /// 连接存储加密密钥，bytes字符长度必须为16位
     #[serde(default = "default_connection_conf_encrypt_key")]
     pub connection_conf_encrypt_key: String,
-
-    /// 窗口初始化状态
-    #[serde(default)]
-    pub window_init_state: Option<SettingWindowState>,
 }
 
 fn default_theme() -> String {
@@ -111,7 +109,6 @@ impl Default for SettingConfig {
             request_timeout_seconds: default_request_timeout_seconds(),
             ssh_connect_timeout_seconds: default_ssh_connect_timeout_seconds(),
             connection_conf_encrypt_key: default_connection_conf_encrypt_key(),
-            window_init_state: None,
         }
     }
 }
@@ -127,4 +124,14 @@ pub struct SettingWindowState {
     pub main_window_fullscreen: bool,
     /// 主窗口初始化是否最大化
     pub main_window_maximize: bool
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[serde(rename_all="camelCase")]
+pub struct GlobalStoreConfig {
+    /// 窗口初始化状态
+    #[serde(default)]
+    pub window_init_state: Option<SettingWindowState>,
+    //  value格式化类型记录
+    pub value_format_log: VecDeque<(String, String)>,
 }
