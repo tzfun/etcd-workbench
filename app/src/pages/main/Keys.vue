@@ -59,6 +59,8 @@ const props = defineProps({
 
 const enforceLoadAllKey = ref<boolean>(false)
 const kvTree = ref<InstanceType<typeof Tree>>()
+const kvCollectionTree = ref<InstanceType<typeof Tree>>()
+const collectionDialog = ref<boolean>(false)
 
 const kvCount = ref<number>(0)
 const currentKv = ref<KeyValue>()
@@ -254,7 +256,7 @@ const tryParseFileNameToType = (fileName: string, defaultType?: EditorHighlightL
 }
 
 const tryFileContentToType = (content: string): EditorHighlightLanguage => {
-  let lang:EditorHighlightLanguage = 'text'
+  let lang: EditorHighlightLanguage = 'text'
   content = content.trimStart()
   if (content.startsWith('<')) {
     lang = 'xml'
@@ -377,7 +379,7 @@ const deleteKeyBatch = () => {
   })
 }
 
-const onClickTreeItem = (key: string) => {
+const showKV = (key: string) => {
   loadingStore.getKey = true
   _getKV(props.session?.id, key).then((kv) => {
     let language = tryParseFileNameToType(kv.key)
@@ -410,7 +412,30 @@ const onClickTreeItem = (key: string) => {
   })
 }
 
-const editorChange = ({modified}: {data: string, modified: boolean}) => {
+const addCollectionKey = (key: string) => {
+  let set = props.session!.keyCollectionSet!
+  if (set.has(key)) {
+    return
+  }
+  set.add(key)
+  props.session!.keyCollection!.push(key)
+  kvCollectionTree.value?.addItemToTree(key)
+  kvTree.value?.refreshDiyDom(key)
+}
+
+const removeCollectionKey = (key: string) => {
+  console.log("remove ", key)
+  props.session!.keyCollectionSet!.delete(key)
+  let list = props.session!.keyCollection!
+  let idx = list.indexOf(key)
+  if (idx >= 0) {
+    list.splice(idx, 1)
+  }
+  kvCollectionTree.value?.removeItemFromTree(key)
+  kvTree.value?.refreshDiyDom(key)
+}
+
+const editorChange = ({modified}: { data: string, modified: boolean }) => {
   if (currentKv.value) {
     currentKvChanged.value = modified
   }
@@ -599,6 +624,11 @@ const clearAllKeyLeaseListener = () => {
   keyLeaseListeners.clear()
 }
 
+const onClickKeyCollectionTreeItem = (key: string) => {
+  showKV(key)
+  collectionDialog.value = false
+}
+
 </script>
 
 <template>
@@ -624,7 +654,16 @@ const clearAllKeyLeaseListener = () => {
              :loading="loadingStore.deleteBatch"
              text="Delete Keys"
       ></v-btn>
+
+      <v-btn class="text-none ml-2"
+             prepend-icon="mdi-star"
+             color="yellow"
+             @click="collectionDialog = true"
+             text="My Collections"
+      ></v-btn>
+
       <v-spacer></v-spacer>
+
       <v-tooltip v-if="session.namespace"
                  location="top"
                  text="The namespace of the current connection"
@@ -662,8 +701,9 @@ const clearAllKeyLeaseListener = () => {
           <Tree ref="kvTree"
                 :tree-id="`kv-tree-${new Date().getTime()}`"
                 :key-splitter="KEY_SPLITTER"
+                :session="session"
                 style="height: calc(100% - 30px);"
-                @on-click="onClickTreeItem"
+                @on-click="showKV"
           ></Tree>
           <v-sheet class="loadMoreArea d-flex align-center justify-center loadMoreArea"
           >
@@ -679,10 +719,11 @@ const clearAllKeyLeaseListener = () => {
                 prepend-icon="mdi-book-open-page-variant-outline"
             >
               <template #append>
-                <span class="count  user-select-none" title="The number of keys loaded">({{kvCount}})</span>
+                <span class="count  user-select-none" title="The number of keys loaded">({{ kvCount }})</span>
               </template>
             </v-btn>
-            <p v-else class="count text-center text-medium-emphasis user-select-none" title="The number of keys loaded">Loaded {{kvCount}} keys</p>
+            <p v-else class="count text-center text-medium-emphasis user-select-none" title="The number of keys loaded">
+              Loaded {{ kvCount }} keys</p>
 
           </v-sheet>
         </drag-item>
@@ -705,6 +746,21 @@ const clearAllKeyLeaseListener = () => {
 
           <div v-if="currentKv" class="fill-height">
             <v-layout class="editor-header">
+              <v-icon
+                  v-if="session.keyCollectionSet!.has(currentKv.key)"
+                  class="ml-2 mt-2"
+                  color="yellow"
+                  @click="removeCollectionKey(currentKv.key)"
+                  title="Remove from collections"
+              >mdi-star</v-icon>
+              <v-icon
+                  class="ml-2 mt-2"
+                  v-else
+                  color="yellow"
+                  title="Add to collections"
+                  @click="addCollectionKey(currentKv.key)"
+              >mdi-star-outline</v-icon>
+
               <v-spacer></v-spacer>
 
               <v-tooltip location="top"
@@ -724,7 +780,6 @@ const clearAllKeyLeaseListener = () => {
                   ></v-btn>
                 </template>
               </v-tooltip>
-
 
               <v-btn
                   color="cyan-darken-1"
@@ -780,7 +835,9 @@ const clearAllKeyLeaseListener = () => {
                       currentKv.createRevision
                     }}</span>
                   <span class="editor-footer-item cursor-pointer"
-                        @click="_copyToClipboard(currentKv.modRevision)"><strong>Modify Revision</strong>: {{ currentKv.modRevision }}</span>
+                        @click="_copyToClipboard(currentKv.modRevision)"><strong>Modify Revision</strong>: {{
+                      currentKv.modRevision
+                    }}</span>
                   <span class="editor-footer-item cursor-pointer"
                         @click="_copyToClipboard(currentKv.lease)"
                         v-if="currentKv.lease != '0'"><strong>Lease</strong>: {{ currentKv.lease }}</span>
@@ -961,6 +1018,38 @@ const clearAllKeyLeaseListener = () => {
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!--   key收藏弹窗-->
+    <v-dialog
+        v-model="collectionDialog"
+        eager
+        transition="slide-x-reverse-transition"
+        scrollable
+        class="collection-drawer"
+        contained
+    >
+      <v-card
+          :rounded="false"
+          title="My Collections"
+          prepend-icon="mdi-star"
+      >
+        <v-card-item>
+          <Tree ref="kvCollectionTree"
+                :tree-id="`kv-collection-tree-${new Date().getTime()}`"
+                :key-splitter="KEY_SPLITTER"
+                :session="session"
+                :show-collection-star="false"
+                :show-check-box="false"
+                show-hover-remove
+                style="height: 100%"
+                :init-items="session.keyCollection"
+                @on-click="onClickKeyCollectionTreeItem"
+                @on-click-remove="removeCollectionKey"
+          ></Tree>
+        </v-card-item>
+      </v-card>
+
+    </v-dialog>
   </div>
 </template>
 
@@ -1006,5 +1095,17 @@ $--action-area-margin-bottom: 10px;
     height: $--load-more-area-height;
     line-height: $--load-more-area-height;
   }
+}
+</style>
+
+<style>
+.collection-drawer .v-overlay__content {
+  width: 500px;
+  height: 100%;
+  margin: 0;
+  position: absolute;
+  right: 0;
+  padding: 0;
+  border-radius: 0;
 }
 </style>

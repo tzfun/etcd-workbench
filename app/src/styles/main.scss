@@ -110,3 +110,25 @@ button {
 .simulate-tag-a:hover {
   text-decoration: underline;
 }
+
+.icon-star-filled,
+.icon-star,
+.icon-remove {
+  display: inline-block;
+  width: 18px;
+  height: 18px !important;
+  line-height: 18px !important;
+  vertical-align: text-top;
+}
+
+.icon-star-filled {
+  background: url("/collection-fill.png") no-repeat scroll 0 0 transparent;
+}
+
+.icon-star {
+  background: url("/collection.png") no-repeat scroll 0 0 transparent;
+}
+
+.icon-remove {
+  background: url("/remove.png") no-repeat scroll 0 0 transparent;
+}

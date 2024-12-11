@@ -86,12 +86,16 @@ pub fn get_connector_optional(id: &i32) -> Option<RefMut<'_, i32, EtcdConnector>
     CONNECTION_POOL.get_mut(id)
 }
 
-pub fn remove_connector(id: &i32) {
-    if let Some(entry) = CONNECTION_POOL.remove(id) {
-        drop(entry.1)
-    }
-}
-
 pub fn get_connection_info_optional(id: &i32) -> Option<RefMut<'_, i32, ConnectionInfo>> {
     CONNECTION_INFO_POOL.get_mut(id)
+}
+
+pub fn remove_connector(id: &i32) {
+    if let Some((_, connector)) = CONNECTION_POOL.remove(id) {
+        drop(connector)
+    }
+
+    if let Some((_, info)) = CONNECTION_INFO_POOL.remove(id) {
+        drop(info)
+    }
 }

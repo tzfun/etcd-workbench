@@ -67,6 +67,9 @@ export interface SessionData {
     namespace?: string,
     keyCollection?: string[],
     keyMonitorList?: KeyMonitorConfig[],
+    //  客户端自行构造
+    keyCollectionSet?: Set<string>
+    keyMonitor?: KeyMonitor
 }
 
 export interface ErrorPayload {
@@ -80,4 +83,9 @@ export interface KeyMonitorConfig {
     monitorValueChange: boolean,
     monitorCreate: boolean,
     monitorRemove: boolean,
+}
+
+export interface KeyMonitor {
+    list: string[],
+    map: Record<string, KeyMonitorConfig>
 }

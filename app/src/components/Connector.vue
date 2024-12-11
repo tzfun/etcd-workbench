@@ -2,7 +2,14 @@
 import {PropType, reactive, ref, watch} from "vue";
 import {ConnectionForm, ConnectionSshForm, ConnectionTlsForm, DefaultConnection} from "~/common/types.ts";
 import SingleFileSelector from "~/components/SingleFileSelector.vue";
-import {Connection, ConnectionInfo, ErrorPayload, SessionData, SshIdentity} from "~/common/transport/connection.ts";
+import {
+  Connection,
+  ConnectionInfo,
+  ErrorPayload,
+  KeyMonitor,
+  SessionData,
+  SshIdentity
+} from "~/common/transport/connection.ts";
 import {_decodeBytesToString, _encodeStringToBytes, _isEmpty, _nonEmpty} from "~/common/utils.ts";
 import {_connect, _connectTest, _handleError, _saveConnection} from "~/common/services.ts";
 import {_emitLocal, _loading, _tipSuccess, _tipWarn, EventName} from "~/common/events.ts";
@@ -315,6 +322,29 @@ const connect = () => {
     }
     _loading(true, "Connecting")
     _connect(name, connection).then((session: SessionData) => {
+
+      let keyCollection = session.keyCollection
+      if (keyCollection) {
+        session.keyCollectionSet = new Set<string>(keyCollection);
+      } else {
+        session.keyCollection = []
+        session.keyCollectionSet = new Set<string>()
+      }
+
+      let keyMonitorList = session.keyMonitorList
+      let keyMonitor: KeyMonitor = {
+        list: [],
+        map: {}
+      }
+      if (keyMonitorList) {
+        for (let config of keyMonitorList) {
+          keyMonitor.list.push(config.key)
+          keyMonitor.map[config.key] = config
+        }
+      }
+      session.keyMonitorList = undefined
+      session.keyMonitor = keyMonitor
+
       _emitLocal(EventName.NEW_CONNECTION, {name, session})
     }).catch((e: ErrorPayload | string) => {
       _handleError({

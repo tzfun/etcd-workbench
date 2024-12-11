@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {computed, onMounted, ref} from "vue";
+import {computed, onMounted, PropType, ref} from "vue";
 
 import '@ztree/ztree_v3/js/jquery-1.4.4.min';
 import '@ztree/ztree_v3/js/jquery.ztree.core.js';
@@ -7,6 +7,9 @@ import '@ztree/ztree_v3/js/jquery.ztree.excheck.js';
 import '@ztree/ztree_v3/js/jquery.ztree.exhide.js';
 //  @ts-ignore
 import {fuzzySearch} from './ztree-fuzzysearch'
+import {SessionData} from "~/common/transport/connection.ts";
+
+const IDMark_A = "_a"
 
 export type TreeNode = {
   //  节点ID，整棵树一定不能重复
@@ -27,9 +30,11 @@ export type TreeNode = {
   iconOpen?: string,
   //  子节点数组
   children?: TreeNode[],
+  //  初始化节点数据时，由 zTree 增加此属性，请勿提前赋值
+  tId?: string
 }
 
-const emits = defineEmits(['on-click'])
+const emits = defineEmits(['on-click', 'on-click-remove'])
 const props = defineProps({
   treeId: {
     type: String,
@@ -42,6 +47,25 @@ const props = defineProps({
   enableSearch: {
     type: Boolean,
     default: () => true
+  },
+  session: {
+    type: Object as PropType<SessionData>,
+    required: true
+  },
+  showCheckBox: {
+    type: Boolean,
+    default: () => true
+  },
+  initItems: {
+    type: Array<string>
+  },
+  showCollectionStar: {
+    type: Boolean,
+    default: () => true
+  },
+  showHoverRemove: {
+    type: Boolean,
+    default: () => false
   }
 })
 const keyId = computed<string>(() => {
@@ -65,8 +89,60 @@ const onClick = (_e: MouseEvent, _treeId: string, treeNode: TreeNode) => {
   }
 }
 
-const showTitle = (_id: string, node: TreeNode) => {
+const showTitle = (_treeId: string, node: TreeNode) => {
   return !node.isParent
+}
+
+const addDiyDom = (_treeId: string, node: TreeNode) => {
+  if (node.isParent) {
+    return
+  }
+  diyDom(node, false)
+}
+
+const diyDom = (node: TreeNode, withRemove: boolean) => {
+  if (props.showCollectionStar) {
+    if (props.session!.keyCollectionSet!.has(node.id)) {
+      let aObj = $("#" + node.tId + IDMark_A)
+      let star = `<span class="icon-star-filled tree-node-icon"></span>`
+      aObj.append(star)
+    } else if (withRemove) {
+      let dom = $(`#${node.tId}${IDMark_A} .icon-star-filled`)
+      if (dom) {
+        dom.remove()
+      }
+    }
+  }
+}
+
+const addHoverDom = (_treeId: string, node: TreeNode) => {
+  if (node.isParent) {
+    return
+  }
+
+  console.log("add", props.showHoverRemove, node.tId)
+  if (props.showHoverRemove) {
+    let aObj = $("#" + node.tId + IDMark_A);
+
+    let star = `<span class="icon-remove tree-node-icon" id="removeBtn_${node.tId}" onfocus='this.blur();'></span>`
+    aObj.append(star)
+    let btn = $(`#removeBtn_${node.tId}`)
+    if (btn) {
+      btn.bind("click", function () {
+        emits('on-click-remove', node.id)
+      })
+    }
+  }
+}
+
+const removeHoverDom = (_treeId: string, node: TreeNode) => {
+  if (node.isParent) {
+    return
+  }
+  console.log("remove", props.showHoverRemove, node.tId)
+  if (props.showHoverRemove) {
+    $(`#removeBtn_${node.tId}`).unbind().remove()
+  }
 }
 
 const settings = {
@@ -82,9 +158,12 @@ const settings = {
     nameIsHTML: true, //  允许name支持html
     nodeClasses: {add: ['tree-item']},
     showLine: false,
-    showTitle: showTitle,
     dblClickExpand: false,
     selectedMulti: false,
+    showTitle: showTitle,
+    addHoverDom: addHoverDom,
+    removeHoverDom: removeHoverDom,
+    addDiyDom: addDiyDom,
   },
   callback: {
     onClick: onClick
@@ -99,7 +178,13 @@ const settings = {
 }
 
 onMounted(() => {
+  settings.check.enable = props.showCheckBox
   rerender()
+  if (props.initItems) {
+    props.initItems.forEach(key => {
+      addItemToTree(key)
+    })
+  }
 })
 
 /**
@@ -218,22 +303,31 @@ const getSelectedItems = (): string[] => {
   return items
 }
 
+const refreshDiyDom = (key: string) => {
+  let node = getTreeNodeById(key)
+  if (node) {
+    diyDom(node, true)
+  }
+}
+
 defineExpose({
   addItemToTree,
   removeItemFromTree,
   rerender,
-  getSelectedItems
+  getSelectedItems,
+  refreshDiyDom
 })
 
 </script>
 
 <template>
   <div>
-    <div v-if="enableSearch">
+    <div v-if="enableSearch" class="position-relative">
       <v-icon class="search-icon">mdi-magnify</v-icon>
       <input type="text" :id="keyId" value="" class="search-input" placeholder="Type to search"/>
     </div>
-    <div :id="treeId" class="ztree key-tree overflow-auto" :style="`height:${enableSearch ? 'calc(100% - 46px)' : '100%'};`"></div>
+    <div :id="treeId" class="ztree key-tree overflow-auto"
+         :style="`height:${enableSearch ? 'calc(100% - 46px)' : '100%'};`"></div>
   </div>
 </template>
 
@@ -467,6 +561,10 @@ $--search-focus-border-color: rgb(33, 150, 243);
 
     a:hover {
       text-decoration: none;
+    }
+
+    .tree-node-icon {
+      margin: 0 0 0 5px;
     }
   }
 }
