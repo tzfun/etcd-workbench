@@ -32,8 +32,11 @@ export function _connectTest(connection: Connection): Promise<undefined> {
     return invoke('connect_test', {connection})
 }
 
-export function _connect(connection: Connection): Promise<SessionData> {
-    return invoke('connect', {connection: connection})
+export function _connect(name: string, connection: Connection): Promise<SessionData> {
+    return invoke('connect', {
+        name,
+        connection
+    })
 }
 
 export function _disconnect(sessionId: number): Promise<undefined> {
@@ -44,8 +47,11 @@ export function _getConnectionList(): Promise<ConnectionInfo[]> {
     return invoke('get_connection_list')
 }
 
-export function _saveConnection(connection: ConnectionInfo): Promise<undefined> {
-    return invoke("save_connection", {connection: connection})
+export function _saveConnection(name: string, connection: Connection): Promise<undefined> {
+    return invoke("save_connection", {
+        name,
+        connection
+    })
 }
 
 export function _removeConnection(name: string): Promise<undefined> {

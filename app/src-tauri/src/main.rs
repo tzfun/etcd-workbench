@@ -1,10 +1,10 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use api::settings::get_global_store_from_file;
 use log::{debug, info, LevelFilter};
 use tauri::{Manager, PhysicalSize, RunEvent, Size, WindowEvent};
 
-use crate::api::settings::get_setting_from_file;
 // use crate::api::windows::tray_menu_handle;
 use crate::utils::file_util;
 
@@ -35,10 +35,10 @@ fn main() {
     tauri::Builder::default()
         .setup(|app| {
             debug!("loading window size from user setting file");
-            let setting = get_setting_from_file().unwrap();
-            debug!("loading user setting success");
+            let store = get_global_store_from_file().unwrap();
+            debug!("loading global store success");
 
-            let window_init_state = setting.window_init_state;
+            let window_init_state = store.window_init_state;
             for (name, window) in app.windows() {
                 #[cfg(target_os = "windows")]
                 if name.ne("splashscreen") {
@@ -80,13 +80,17 @@ fn main() {
             api::connection::connect_test,
             api::connection::connect,
             api::connection::disconnect,
+            api::connection::save_connection,
+            api::connection::remove_connection,
+            api::connection::get_connection_list,
+            api::connection::export_connection,
+            api::connection::import_connection,
+            api::connection::update_key_collection,
+            api::connection::update_key_monitor_list,
             api::settings::get_settings,
+            api::settings::get_global_store,
             api::settings::save_settings,
-            api::settings::save_connection,
-            api::settings::remove_connection,
-            api::settings::get_connection_list,
-            api::settings::export_connection,
-            api::settings::import_connection,
+            api::settings::save_global_store,
             api::settings::get_app_version,
             api::settings::is_debug_model,
             api::kv::kv_get_all_keys,

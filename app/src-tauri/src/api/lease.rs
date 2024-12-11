@@ -8,16 +8,14 @@ use crate::transport::kv::SerializableLeaseInfo;
 
 #[tauri::command]
 pub async fn leases(session: i32) -> Result<Vec<String>, LogicError> {
-    let lock = etcd::get_connector(&session)?;
-    let mut connector = lock.lock().await;
+    let mut connector = etcd::get_connector(&session)?;
     let leases = connector.leases().await?;
     Ok(leases)
 }
 
 #[tauri::command]
 pub async fn lease_get(session: i32, lease: String) -> Result<SerializableLeaseInfo, LogicError> {
-    let lock = etcd::get_connector(&session)?;
-    let mut connector = lock.lock().await;
+    let mut connector = etcd::get_connector(&session)?;
     let lease = i64::from_str(&lease).map_err(|e| {
         warn!("lease parse error: {e}");
         LogicError::ArgumentError
@@ -28,8 +26,7 @@ pub async fn lease_get(session: i32, lease: String) -> Result<SerializableLeaseI
 
 #[tauri::command]
 pub async fn lease_grant(session: i32, ttl: i64, lease: Option<String>) -> Result<String, LogicError> {
-    let lock = etcd::get_connector(&session)?;
-    let mut connector = lock.lock().await;
+    let mut connector = etcd::get_connector(&session)?;
 
     let lease = if let Some(s) = lease {
         Some(i64::from_str(&s).map_err(|e| {
@@ -46,8 +43,7 @@ pub async fn lease_grant(session: i32, ttl: i64, lease: Option<String>) -> Resul
 
 #[tauri::command]
 pub async fn lease_revoke(session: i32, lease: String) -> Result<(), LogicError> {
-    let lock = etcd::get_connector(&session)?;
-    let mut connector = lock.lock().await;
+    let mut connector = etcd::get_connector(&session)?;
     let lease = i64::from_str(&lease).map_err(|e| {
         warn!("lease parse error: {e}");
         LogicError::ArgumentError

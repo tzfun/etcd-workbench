@@ -16,7 +16,7 @@ import {
   _listenLocal, _loading,
   EventName
 } from "~/common/events.ts";
-import {_loadAppVersion, _loadSettings, _useSettings, _useUpdateInfo} from "~/common/store.ts";
+import {_loadAppVersion, _loadGlobalStore, _loadSettings, _useSettings, _useUpdateInfo} from "~/common/store.ts";
 import {DEFAULT_SETTING_CONFIG} from "~/common/transport/setting.ts";
 import {installUpdate} from "@tauri-apps/api/updater";
 import {_isDebugModel} from "~/common/services.ts";
@@ -41,6 +41,7 @@ const windowLabel = computed<string>(() => {
 
 onMounted(async () => {
   await _loadAppVersion()
+  await _loadGlobalStore()
   let settings = await _loadSettings()
   _setPlatform(await getPlatform())
 

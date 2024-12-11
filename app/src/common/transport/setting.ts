@@ -33,9 +33,6 @@ export interface SettingConfig {
     sshConnectTimeoutSeconds: number | string,
     //  连接存储加密密钥，bytes字符长度必须为16位
     connectionConfEncryptKey: string,
-
-    //  窗口初始化状态
-    windowInitState?: SettingWindowState,
 }
 
 export interface SettingWindowState {
@@ -64,4 +61,21 @@ export const DEFAULT_SETTING_CONFIG: SettingConfig = {
 export interface UpdateInfo {
     valid: boolean,
     latestVersion?: UpdateManifest,
+}
+
+export interface FileFormat {
+    key: string,
+    format: string
+}
+
+export interface GlobalStoreConfig {
+    //  窗口初始化状态
+    windowInitState?: SettingWindowState,
+    fileFormatLog: FileFormat[],
+    fileFormatLogMap: Record<string, string>
+}
+
+export const DEFAULT_GLOBAL_STORE: GlobalStoreConfig = {
+    fileFormatLog: [],
+    fileFormatLogMap: {}
 }

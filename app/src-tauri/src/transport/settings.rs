@@ -133,5 +133,11 @@ pub struct GlobalStoreConfig {
     #[serde(default)]
     pub window_init_state: Option<SettingWindowState>,
     //  value格式化类型记录
-    pub value_format_log: VecDeque<(String, String)>,
+    pub file_format_log: VecDeque<FileFormat>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct FileFormat {
+    pub key: String,
+    pub format: String
 }

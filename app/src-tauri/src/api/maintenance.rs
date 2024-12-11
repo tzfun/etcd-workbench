@@ -18,8 +18,7 @@ lazy_static! {
 
 #[tauri::command]
 pub async fn get_cluster(session: i32) -> Result<SerializableCluster, LogicError> {
-    let lock = etcd::get_connector(&session)?;
-    let mut connector = lock.lock().await;
+    let mut connector = etcd::get_connector(&session)?;
     let cluster = connector.cluster_get().await?;
     Ok(cluster)
 }
@@ -27,8 +26,7 @@ pub async fn get_cluster(session: i32) -> Result<SerializableCluster, LogicError
 
 #[tauri::command]
 pub async fn maintenance_defragment(session: i32) -> Result<(), LogicError> {
-    let lock = etcd::get_connector(&session)?;
-    let mut connector = lock.lock().await;
+    let mut connector = etcd::get_connector(&session)?;
     connector.maintenance_defragment().await?;
     Ok(())
 }
@@ -39,8 +37,7 @@ pub async fn maintenance_create_snapshot_task(
     session: i32,
     filepath: String,
 ) -> Result<SnapshotInfo, LogicError> {
-    let lock = etcd::get_connector(&session)?;
-    let mut connector = lock.lock().await;
+    let mut connector = etcd::get_connector(&session)?;
     let id = SNAPSHOT_TASK_ID_COUNTER.fetch_add(1, Ordering::SeqCst);
 
     let task_id = id.clone();

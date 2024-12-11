@@ -9,7 +9,7 @@ import {SessionData} from "~/common/transport/connection.ts";
 import {appWindow, PhysicalSize} from "@tauri-apps/api/window";
 import {_exitApp, _isMac, _openMainWindow, _updateMaximizeState} from "~/common/windows.ts";
 import {_debounce} from "~/common/utils.ts";
-import {_saveSettings, _useSettings} from "~/common/store.ts";
+import {_saveGlobalStore, _saveSettings, _useGlobalStore, _useSettings} from "~/common/store.ts";
 import {listen} from "@tauri-apps/api/event";
 import {MAIN_WINDOW_MIN_HEIGHT, MAIN_WINDOW_MIN_WIDTH, SettingConfig} from "~/common/transport/setting.ts";
 import {loadModule, trackEvent} from "~/common/analytics.ts";
@@ -65,18 +65,18 @@ onMounted(async () => {
       return
     }
 
-    let setting = _useSettings().value
+    let store = _useGlobalStore().value
     let p1 = appWindow.isFullscreen()
     let p2 = appWindow.isMaximized()
     Promise.all([p1, p2]).then(res => {
-      setting.windowInitState = {
+      store.windowInitState = {
         mainWindowWidth: width,
         mainWindowHeight: height,
         mainWindowFullscreen: res[0],
         mainWindowMaximize: res[1]
       }
 
-      _saveSettings(setting)
+      _saveGlobalStore(store)
       lastWindowSize.width = width
       lastWindowSize.height = height
     }).catch(e => {

@@ -314,7 +314,7 @@ const connect = () => {
       name = fd.host + ":" + fd.port
     }
     _loading(true, "Connecting")
-    _connect(connection).then((session: SessionData) => {
+    _connect(name, connection).then((session: SessionData) => {
       _emitLocal(EventName.NEW_CONNECTION, {name, session})
     }).catch((e: ErrorPayload | string) => {
       _handleError({
@@ -337,10 +337,7 @@ const saveConnection = () => {
     return
   }
   checkForm().then(connection => {
-    _saveConnection({
-      name,
-      connection
-    }).then(() => {
+    _saveConnection(name, connection).then(() => {
       emits('on-save')
     }).catch((e: ErrorPayload | string) => {
       _handleError({e})

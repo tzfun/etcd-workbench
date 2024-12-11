@@ -63,9 +63,10 @@ export interface SessionData {
     id: number,
     user?: string,
     root: boolean,
+    connectionSaved: boolean,
     namespace?: string,
-    keyCollection: string[],
-    keyMonitorList: KeyMonitorConfig[],
+    keyCollection?: string[],
+    keyMonitorList?: KeyMonitorConfig[],
 }
 
 export interface ErrorPayload {
