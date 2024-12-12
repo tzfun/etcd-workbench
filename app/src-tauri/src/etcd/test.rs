@@ -19,7 +19,7 @@ mod test_connect {
 
     #[tokio::test]
     async fn connect() -> Result<(), LogicError> {
-        let connector = get_connector().await?;
+        let mut connector = get_connector().await?;
         let kvs = connector.kv_get_all_keys().await?;
         let mut first = false;
         for kv in kvs {
@@ -37,7 +37,7 @@ mod test_connect {
 
     #[tokio::test]
     async fn get_history_version() -> Result<(), LogicError> {
-        let connector = get_connector().await?;
+        let mut connector = get_connector().await?;
         let history = connector.kv_get_history_versions(String::from("/asda/sdas/dasd/asd"), 8, 41).await?;
         println!("{:?}", history);
         Ok(())
@@ -45,7 +45,7 @@ mod test_connect {
 
     #[tokio::test]
     async fn get_user() -> Result<(), LogicError> {
-        let connector = get_connector().await?;
+        let mut connector = get_connector().await?;
         let user = connector.user_list().await?;
         println!("{:?}", user);
         Ok(())
@@ -53,7 +53,7 @@ mod test_connect {
 
     #[tokio::test]
     async fn get_cluster_info() -> Result<(), LogicError> {
-        let connector = get_connector().await?;
+        let mut connector = get_connector().await?;
         let cluster = connector.cluster_get().await?;
         println!("{:?}", cluster);
         Ok(())
@@ -61,7 +61,7 @@ mod test_connect {
 
     #[tokio::test]
     async fn get_kv_paging() -> Result<(), LogicError> {
-        let connector = get_connector().await?;
+        let mut connector = get_connector().await?;
         let mut cursor = String::new();
         let mut page = 1;
         const LIMIT: i64 = 2;
@@ -86,7 +86,7 @@ mod test_connect {
 
     #[tokio::test]
     async fn put_huge_kvs() -> Result<(), LogicError> {
-        let connector = get_connector().await?;
+        let mut connector = get_connector().await?;
         
         for i in 0..20000 {
             let mut key = String::new();

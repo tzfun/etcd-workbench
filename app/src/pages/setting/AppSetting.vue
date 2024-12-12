@@ -148,7 +148,6 @@ onMounted(async () => {
       return
     }
     _setLocalSettings(setting)
-    _emitGlobal(EventName.SETTING_UPDATE, setting)
   }, {
     deep: true
   })

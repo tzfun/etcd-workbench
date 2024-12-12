@@ -381,37 +381,42 @@ const deleteKeyBatch = () => {
   })
 }
 
-const showKV = (key: string) => {
-  loadingStore.getKey = true
-  _getKV(props.session?.id, key).then((kv) => {
-    let language = tryParseFileNameToType(kv.key)
-    if (!language) {
-      language = tryFileContentToType(_decodeBytesToString(kv.value))
-    }
-    editorConfig.language = language
-    currentKv.value = kv
-    currentKvChanged.value = false
+const showKV = (key: string): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    loadingStore.getKey = true
+    _getKV(props.session?.id, key).then((kv) => {
+      resolve()
+      let language = tryParseFileNameToType(kv.key)
+      if (!language) {
+        language = tryFileContentToType(_decodeBytesToString(kv.value))
+      }
+      editorConfig.language = language
+      currentKv.value = kv
+      currentKvChanged.value = false
 
-    if (kv.leaseInfo) {
-      let timer = setTimeout(() => {
-        keyLeaseListeners.delete(timer)
-        onKeyTimeOver(kv.key)
-      }, kv.leaseInfo.ttl * 1000)
-      keyLeaseListeners.add(timer)
-    }
+      if (kv.leaseInfo) {
+        let timer = setTimeout(() => {
+          keyLeaseListeners.delete(timer)
+          onKeyTimeOver(kv.key)
+        }, kv.leaseInfo.ttl * 1000)
+        keyLeaseListeners.add(timer)
+      }
 
-  }).catch(e => {
-    if (e.errType && e.errType == 'ResourceNotExist') {
-      removeKeysFromTree([key])
-    }
-    _handleError({
-      e,
-      session: props.session
+    }).catch(e => {
+      if (e.errType && e.errType == 'ResourceNotExist') {
+        removeKeysFromTree([key])
+      }
+      _handleError({
+        e,
+        session: props.session
+      })
+      currentKv.value = undefined
+      reject(e)
+    }).finally(() => {
+      loadingStore.getKey = false
     })
-    currentKv.value = undefined
-  }).finally(() => {
-    loadingStore.getKey = false
   })
+
 }
 
 const addCollectionKey = (key: string) => {
@@ -647,8 +652,11 @@ const clearAllKeyLeaseListener = () => {
 
 const onClickKeyCollectionTreeItem = (key: string) => {
   kvTree.value?.cancelSelected()
-  showKV(key)
-  collectionDialog.value = false
+  showKV(key).then(() => {
+    collectionDialog.value = false
+  }).catch(() => {
+  })
+
 }
 
 </script>
@@ -1069,7 +1077,7 @@ const onClickKeyCollectionTreeItem = (key: string) => {
               single-line
               clearable
               placeholder="Enter key to add to collections"
-              @click:append-inner="addCollectionKey(addCollectionKeyForm)"
+              @click:append-inner="addCollectionKey(addCollectionKeyForm); addCollectionKeyForm = '';"
           ></v-text-field>
           <div style="height: calc(100% - 40px);overflow: auto;">
             <Tree ref="kvCollectionTree"

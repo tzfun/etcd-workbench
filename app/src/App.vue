@@ -99,6 +99,7 @@ onMounted(async () => {
         break
       }
     }
+
     tip.id = ++tipsCounter.value
     tip.value = true
     if (idx < 0) {

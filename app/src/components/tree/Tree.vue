@@ -119,10 +119,12 @@ const addDiyDom = (_treeId: string, node: TreeNode) => {
 const diyDom = (node: TreeNode, withRemove: boolean) => {
   if (props.showCollectionStar) {
     if (props.session!.keyCollectionSet!.has(node.id)) {
+      //  @ts-ignore
       let aObj = $("#" + node.tId + IDMark_A)
       let star = `<span class="icon-star-filled tree-node-icon" onfocus='this.blur();'></span>`
       aObj.append(star)
     } else if (withRemove) {
+      //  @ts-ignore
       let dom = $(`#${node.tId}${IDMark_A} .icon-star-filled`)
       if (dom) {
         dom.remove()
@@ -137,13 +139,16 @@ const addHoverDom = (_treeId: string, node: TreeNode) => {
   }
 
   if (props.showHoverRemove) {
+    //  @ts-ignore
     if ($(`#removeBtn_${node.tId}`).length > 0) {
       return;
     }
 
+    //  @ts-ignore
     let aObj = $("#" + node.tId + IDMark_A);
     let star = `<span class="icon-remove tree-node-icon" id="removeBtn_${node.tId}" onfocus='this.blur();' title="Remove from collections"></span>`
     aObj.append(star)
+    //  @ts-ignore
     let btn = $(`#removeBtn_${node.tId}`)
     if (btn) {
       let key = node.id
@@ -160,6 +165,7 @@ const removeHoverDom = (_treeId: string, node: TreeNode) => {
     return
   }
   if (props.showHoverRemove) {
+    //  @ts-ignore
     $(`#removeBtn_${node.tId}`).unbind().remove()
   }
 }

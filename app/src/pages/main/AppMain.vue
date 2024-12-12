@@ -9,9 +9,9 @@ import {SessionData} from "~/common/transport/connection.ts";
 import {appWindow, PhysicalSize} from "@tauri-apps/api/window";
 import {_exitApp, _isMac, _openMainWindow, _updateMaximizeState} from "~/common/windows.ts";
 import {_debounce} from "~/common/utils.ts";
-import {_saveGlobalStore, _saveSettings, _useGlobalStore, _useSettings} from "~/common/store.ts";
+import {_saveGlobalStore, _useGlobalStore, _useSettings} from "~/common/store.ts";
 import {listen} from "@tauri-apps/api/event";
-import {MAIN_WINDOW_MIN_HEIGHT, MAIN_WINDOW_MIN_WIDTH, SettingConfig} from "~/common/transport/setting.ts";
+import {MAIN_WINDOW_MIN_HEIGHT, MAIN_WINDOW_MIN_WIDTH} from "~/common/transport/setting.ts";
 import {loadModule, trackEvent} from "~/common/analytics.ts";
 
 type TabItem = {
@@ -83,28 +83,6 @@ onMounted(async () => {
       console.error(e)
     })
   }, 1000)))
-
-  eventUnListens.push(await listen(EventName.SETTING_UPDATE, (e) => {
-    let setting = JSON.parse(e.payload as string) as SettingConfig
-
-    let p1 = appWindow.isFullscreen()
-    let p2 = appWindow.isMaximized()
-    let p3 = appWindow.innerSize()
-
-    Promise.all([p1, p2, p3]).then(res => {
-      let size = res[2] as PhysicalSize
-      setting.windowInitState = {
-        mainWindowWidth: size.width,
-        mainWindowHeight: size.height,
-        mainWindowFullscreen: res[0],
-        mainWindowMaximize: res[1]
-      }
-
-      _saveSettings(setting)
-    }).catch(e => {
-      console.error(e)
-    })
-  }))
 
   eventUnListens.push(await listen(EventName.CONFIRM_EXIT, () => {
     if (exitConfirmState.value) {
