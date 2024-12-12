@@ -1,7 +1,7 @@
 import {DialogItem, TipsItem} from "~/common/types.ts";
 import {WebviewWindow} from "@tauri-apps/api/window";
 import {emit} from "@tauri-apps/api/event";
-import mitt, {Handler} from "mitt";
+import mitt, {Emitter, EventType, Handler} from "mitt";
 import {checkUpdate, installUpdate, UpdateManifest, UpdateResult} from "@tauri-apps/api/updater";
 import {_useSettings} from "~/common/store.ts";
 import {relaunch} from "@tauri-apps/api/process";
@@ -20,7 +20,12 @@ export enum EventName {
     CONNECTION_IMPORTED = 'connectionImported',
     SNAPSHOT_STATE = 'snapshot_state',
     SNAPSHOT_CREATE = 'snapshotCreate',
-    CONFIRM_EXIT = 'confirm_exit'
+    CONFIRM_EXIT = 'confirm_exit',
+    REMOVE_KEY_COLLECTION = "removeKeyCollection"
+}
+
+export function _useLocalEvents(): Emitter<Record<EventType, any>> {
+    return localEvents
 }
 
 export function _listenLocal(type: EventName, handler: Handler<any>) {

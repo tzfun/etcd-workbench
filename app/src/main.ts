@@ -5,11 +5,14 @@ import '@mdi/font/css/materialdesignicons.css'
 import '~/styles/main.scss'
 import {_onClientError} from "~/common/windows.ts";
 import {_goBrowserPage} from "~/common/utils.ts";
+import {_useLocalEvents} from "~/common/events.ts";
 
 const setup = () => {
     try {
         //  @ts-ignore
         window._goBrowserPage = _goBrowserPage
+        //  @ts-ignore
+        window._localEvent = _useLocalEvents()
         const app = createApp(App)
         app.use(vuetify)
 

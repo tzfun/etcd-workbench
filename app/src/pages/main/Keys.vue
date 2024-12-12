@@ -15,10 +15,12 @@ import {
   _confirm,
   _confirmSystem,
   _copyToClipboard,
+  _listenLocal,
   _loading,
   _tipInfo,
   _tipSuccess,
-  _tipWarn
+  _tipWarn,
+  EventName
 } from "~/common/events.ts";
 import {computed, nextTick, onMounted, onUnmounted, PropType, reactive, ref} from "vue";
 import {ErrorPayload, SessionData} from "~/common/transport/connection.ts";
@@ -61,6 +63,7 @@ const enforceLoadAllKey = ref<boolean>(false)
 const kvTree = ref<InstanceType<typeof Tree>>()
 const kvCollectionTree = ref<InstanceType<typeof Tree>>()
 const collectionDialog = ref<boolean>(false)
+const addCollectionKeyForm = ref<string>("")
 
 const kvCount = ref<number>(0)
 const currentKv = ref<KeyValue>()
@@ -134,6 +137,10 @@ onMounted(() => {
       })
     })
   }, 200)
+
+  _listenLocal(EventName.REMOVE_KEY_COLLECTION, (id) => {
+    removeCollectionKey(id)
+  })
 })
 
 onUnmounted(() => {
@@ -413,6 +420,9 @@ const showKV = (key: string) => {
 }
 
 const addCollectionKey = (key: string) => {
+  if (_isEmpty(key)) {
+    return
+  }
   let set = props.session!.keyCollectionSet!
   if (set.has(key)) {
     return
@@ -424,13 +434,12 @@ const addCollectionKey = (key: string) => {
 }
 
 const removeCollectionKey = (key: string) => {
-  console.log("remove ", key)
-  props.session!.keyCollectionSet!.delete(key)
   let list = props.session!.keyCollection!
   let idx = list.indexOf(key)
   if (idx >= 0) {
     list.splice(idx, 1)
   }
+  props.session!.keyCollectionSet!.delete(key)
   kvCollectionTree.value?.removeItemFromTree(key)
   kvTree.value?.refreshDiyDom(key)
 }
@@ -625,6 +634,7 @@ const clearAllKeyLeaseListener = () => {
 }
 
 const onClickKeyCollectionTreeItem = (key: string) => {
+  kvTree.value?.cancelSelected()
   showKV(key)
   collectionDialog.value = false
 }
@@ -702,7 +712,7 @@ const onClickKeyCollectionTreeItem = (key: string) => {
                 :tree-id="`kv-tree-${new Date().getTime()}`"
                 :key-splitter="KEY_SPLITTER"
                 :session="session"
-                style="height: calc(100% - 30px);"
+                style="height: calc(100% - 30px);width: 100%;"
                 @on-click="showKV"
           ></Tree>
           <v-sheet class="loadMoreArea d-flex align-center justify-center loadMoreArea"
@@ -749,14 +759,14 @@ const onClickKeyCollectionTreeItem = (key: string) => {
               <v-icon
                   v-if="session.keyCollectionSet!.has(currentKv.key)"
                   class="ml-2 mt-2"
-                  color="yellow"
+                  color="#ced10a"
                   @click="removeCollectionKey(currentKv.key)"
                   title="Remove from collections"
               >mdi-star</v-icon>
               <v-icon
                   class="ml-2 mt-2"
                   v-else
-                  color="yellow"
+                  color="#ced10a"
                   title="Add to collections"
                   @click="addCollectionKey(currentKv.key)"
               >mdi-star-outline</v-icon>
@@ -852,7 +862,6 @@ const onClickKeyCollectionTreeItem = (key: string) => {
                            title="Select a key to view its details or edit it"
                            class="mx-auto my-auto user-select-none"
             >
-
             </v-empty-state>
           </div>
         </drag-item>
@@ -1028,12 +1037,28 @@ const onClickKeyCollectionTreeItem = (key: string) => {
         class="collection-drawer"
         contained
     >
+
       <v-card
           :rounded="false"
           title="My Collections"
-          prepend-icon="mdi-star"
       >
-        <v-card-item>
+        <template #prepend>
+          <v-icon color="#ced10a">mdi-star</v-icon>
+        </template>
+        <v-card-item style="height: calc(100% - 64px);">
+          <v-text-field
+              v-model="addCollectionKeyForm"
+              type="text"
+              append-inner-icon="mdi-plus"
+              density="compact"
+              variant="solo-filled"
+              hide-details
+              single-line
+              clearable
+              placeholder="Enter key to add to collections"
+              @click:append-inner="addCollectionKey(addCollectionKeyForm)"
+          ></v-text-field>
+
           <Tree ref="kvCollectionTree"
                 :tree-id="`kv-collection-tree-${new Date().getTime()}`"
                 :key-splitter="KEY_SPLITTER"
@@ -1041,14 +1066,15 @@ const onClickKeyCollectionTreeItem = (key: string) => {
                 :show-collection-star="false"
                 :show-check-box="false"
                 show-hover-remove
-                style="height: 100%"
+                :enable-search="false"
+                :enable-select="false"
+                class="mt-2"
+                style="height: calc(100% - 40px);overflow-x: scroll;"
                 :init-items="session.keyCollection"
                 @on-click="onClickKeyCollectionTreeItem"
-                @on-click-remove="removeCollectionKey"
           ></Tree>
         </v-card-item>
       </v-card>
-
     </v-dialog>
   </div>
 </template>
@@ -1107,5 +1133,9 @@ $--action-area-margin-bottom: 10px;
   right: 0;
   padding: 0;
   border-radius: 0;
+}
+
+.collection-drawer .v-card-item__content {
+  align-self: auto;
 }
 </style>

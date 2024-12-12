@@ -5,9 +5,11 @@ import '@ztree/ztree_v3/js/jquery-1.4.4.min';
 import '@ztree/ztree_v3/js/jquery.ztree.core.js';
 import '@ztree/ztree_v3/js/jquery.ztree.excheck.js';
 import '@ztree/ztree_v3/js/jquery.ztree.exhide.js';
+import '@ztree/ztree_v3/js/jquery.ztree.exedit.js';
 //  @ts-ignore
 import {fuzzySearch} from './ztree-fuzzysearch'
 import {SessionData} from "~/common/transport/connection.ts";
+import {EventName} from "~/common/events.ts";
 
 const IDMark_A = "_a"
 
@@ -34,7 +36,7 @@ export type TreeNode = {
   tId?: string
 }
 
-const emits = defineEmits(['on-click', 'on-click-remove'])
+const emits = defineEmits(['on-click'])
 const props = defineProps({
   treeId: {
     type: String,
@@ -66,6 +68,10 @@ const props = defineProps({
   showHoverRemove: {
     type: Boolean,
     default: () => false
+  },
+  enableSelect: {
+    type: Boolean,
+    default: () => true
   }
 })
 const keyId = computed<string>(() => {
@@ -73,6 +79,10 @@ const keyId = computed<string>(() => {
 })
 const treeRootObj = ref()
 const treeLastSelectedItem = ref<string>()
+
+const beforeClick = (_treeId: string, treeNode: TreeNode) => {
+  return !!treeNode;
+}
 
 const onClick = (_e: MouseEvent, _treeId: string, treeNode: TreeNode) => {
   if (treeNode.isParent) {
@@ -87,6 +97,9 @@ const onClick = (_e: MouseEvent, _treeId: string, treeNode: TreeNode) => {
     treeLastSelectedItem.value = treeNode.id
     emits('on-click', treeNode.id)
   }
+  if (!props.enableSelect) {
+    treeRootObj.value.cancelSelectedNode(treeNode)
+  }
 }
 
 const showTitle = (_treeId: string, node: TreeNode) => {
@@ -94,7 +107,7 @@ const showTitle = (_treeId: string, node: TreeNode) => {
 }
 
 const addDiyDom = (_treeId: string, node: TreeNode) => {
-  if (node.isParent) {
+  if (!node || node.isParent) {
     return
   }
   diyDom(node, false)
@@ -104,7 +117,7 @@ const diyDom = (node: TreeNode, withRemove: boolean) => {
   if (props.showCollectionStar) {
     if (props.session!.keyCollectionSet!.has(node.id)) {
       let aObj = $("#" + node.tId + IDMark_A)
-      let star = `<span class="icon-star-filled tree-node-icon"></span>`
+      let star = `<span class="icon-star-filled tree-node-icon" onfocus='this.blur();'></span>`
       aObj.append(star)
     } else if (withRemove) {
       let dom = $(`#${node.tId}${IDMark_A} .icon-star-filled`)
@@ -116,30 +129,25 @@ const diyDom = (node: TreeNode, withRemove: boolean) => {
 }
 
 const addHoverDom = (_treeId: string, node: TreeNode) => {
-  if (node.isParent) {
+  if (!node || node.isParent) {
     return
   }
 
-  console.log("add", props.showHoverRemove, node.tId)
   if (props.showHoverRemove) {
-    let aObj = $("#" + node.tId + IDMark_A);
-
-    let star = `<span class="icon-remove tree-node-icon" id="removeBtn_${node.tId}" onfocus='this.blur();'></span>`
-    aObj.append(star)
-    let btn = $(`#removeBtn_${node.tId}`)
-    if (btn) {
-      btn.bind("click", function () {
-        emits('on-click-remove', node.id)
-      })
+    if ($(`#removeBtn_${node.tId}`).length > 0) {
+      return;
     }
+
+    let aObj = $("#" + node.tId + IDMark_A);
+    let star = `<span class="icon-remove tree-node-icon" id="removeBtn_${node.tId}" onfocus='this.blur();' title="Remove from collections" onclick="this.blur();window._localEvent.emit('${EventName.REMOVE_KEY_COLLECTION}', '${node.id}');return false;"></span>`
+    aObj.append(star)
   }
 }
 
 const removeHoverDom = (_treeId: string, node: TreeNode) => {
-  if (node.isParent) {
+  if (!node || node.isParent) {
     return
   }
-  console.log("remove", props.showHoverRemove, node.tId)
   if (props.showHoverRemove) {
     $(`#removeBtn_${node.tId}`).unbind().remove()
   }
@@ -166,6 +174,7 @@ const settings = {
     addDiyDom: addDiyDom,
   },
   callback: {
+    beforeClick: beforeClick,
     onClick: onClick
   },
   check: {
@@ -310,12 +319,17 @@ const refreshDiyDom = (key: string) => {
   }
 }
 
+const cancelSelected = () => {
+  treeRootObj.value.cancelSelectedNode()
+}
+
 defineExpose({
   addItemToTree,
   removeItemFromTree,
   rerender,
   getSelectedItems,
-  refreshDiyDom
+  refreshDiyDom,
+  cancelSelected
 })
 
 </script>
@@ -326,8 +340,10 @@ defineExpose({
       <v-icon class="search-icon">mdi-magnify</v-icon>
       <input type="text" :id="keyId" value="" class="search-input" placeholder="Type to search"/>
     </div>
-    <div :id="treeId" class="ztree key-tree overflow-auto"
-         :style="`height:${enableSearch ? 'calc(100% - 46px)' : '100%'};`"></div>
+    <div class="overflow-auto pa-2"
+         :style="`height:${enableSearch ? 'calc(100% - 46px)' : '100%'};`">
+      <div :id="treeId" class="ztree key-tree"></div>
+    </div>
   </div>
 </template>
 
@@ -377,6 +393,8 @@ $--search-focus-border-color: rgb(33, 150, 243);
 }
 
 .key-tree {
+  width: max-content;
+
   .tree-item {
     user-select: none;
     overflow: hidden;
