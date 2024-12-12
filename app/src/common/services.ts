@@ -285,3 +285,10 @@ export function _maintenanceRemoveSnapshotTask(taskId: number):Promise<undefined
 export function _maintenanceListSnapshotTask():Promise<SnapshotInfo[]> {
     return invoke('maintenance_list_snapshot_task')
 }
+
+export function _updateKeyCollection(session: number, keyCollection: string[]): Promise<undefined> {
+    return invoke('update_key_collection', {
+        session,
+        keyCollection
+    })
+}

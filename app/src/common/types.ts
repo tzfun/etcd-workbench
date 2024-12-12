@@ -47,7 +47,8 @@ export type TipsItem = {
     timeout: number,
     icon?: string,
     close?: Function,
-    class?: string
+    class?: string,
+    id?: number
 }
 
 export type FileForm = {

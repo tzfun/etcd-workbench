@@ -9,7 +9,6 @@ import '@ztree/ztree_v3/js/jquery.ztree.exedit.js';
 //  @ts-ignore
 import {fuzzySearch} from './ztree-fuzzysearch'
 import {SessionData} from "~/common/transport/connection.ts";
-import {EventName} from "~/common/events.ts";
 
 const IDMark_A = "_a"
 
@@ -36,7 +35,7 @@ export type TreeNode = {
   tId?: string
 }
 
-const emits = defineEmits(['on-click'])
+const emits = defineEmits(['on-click', 'on-click-remove'])
 const props = defineProps({
   treeId: {
     type: String,
@@ -79,9 +78,13 @@ const keyId = computed<string>(() => {
 })
 const treeRootObj = ref()
 const treeLastSelectedItem = ref<string>()
+const triggerRemovedKey = ref<string>()
 
 const beforeClick = (_treeId: string, treeNode: TreeNode) => {
-  return !!treeNode;
+  if (!treeNode) {
+    return false;
+  }
+  return treeNode.id != triggerRemovedKey.value;
 }
 
 const onClick = (_e: MouseEvent, _treeId: string, treeNode: TreeNode) => {
@@ -139,8 +142,16 @@ const addHoverDom = (_treeId: string, node: TreeNode) => {
     }
 
     let aObj = $("#" + node.tId + IDMark_A);
-    let star = `<span class="icon-remove tree-node-icon" id="removeBtn_${node.tId}" onfocus='this.blur();' title="Remove from collections" onclick="this.blur();window._localEvent.emit('${EventName.REMOVE_KEY_COLLECTION}', '${node.id}');return false;"></span>`
+    let star = `<span class="icon-remove tree-node-icon" id="removeBtn_${node.tId}" onfocus='this.blur();' title="Remove from collections"></span>`
     aObj.append(star)
+    let btn = $(`#removeBtn_${node.tId}`)
+    if (btn) {
+      let key = node.id
+      btn.bind('click', function () {
+        triggerRemovedKey.value = key
+        emits('on-click-remove', key)
+      })
+    }
   }
 }
 
@@ -340,10 +351,8 @@ defineExpose({
       <v-icon class="search-icon">mdi-magnify</v-icon>
       <input type="text" :id="keyId" value="" class="search-input" placeholder="Type to search"/>
     </div>
-    <div class="overflow-auto pa-2"
-         :style="`height:${enableSearch ? 'calc(100% - 46px)' : '100%'};`">
-      <div :id="treeId" class="ztree key-tree"></div>
-    </div>
+    <div :id="treeId" class="ztree key-tree overflow-auto px-1"
+         :style="`height:${enableSearch ? 'calc(100% - 46px)' : '100%'};`"></div>
   </div>
 </template>
 
@@ -393,8 +402,6 @@ $--search-focus-border-color: rgb(33, 150, 243);
 }
 
 .key-tree {
-  width: max-content;
-
   .tree-item {
     user-select: none;
     overflow: hidden;

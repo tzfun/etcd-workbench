@@ -10,10 +10,11 @@ import AppSetting from "~/pages/setting/AppSetting.vue";
 import AppMain from "~/pages/main/AppMain.vue";
 import {
   _alertError,
-  _checkUpdate, _confirm,
-  _confirmSystem, _confirmUpdateApp,
+  _checkUpdate,
+  _confirmUpdateApp,
   _genNewVersionUpdateMessage,
-  _listenLocal, _loading,
+  _listenLocal,
+  _loading,
   EventName
 } from "~/common/events.ts";
 import {_loadAppVersion, _loadGlobalStore, _loadSettings, _useSettings, _useUpdateInfo} from "~/common/store.ts";
@@ -29,6 +30,7 @@ const loading = ref<boolean>(false)
 const loadingText = ref<string>(DEFAULT_LOADING_TEXT)
 
 const dialogs = ref<DialogItem[]>([])
+const tipsCounter = ref<number>(0)
 const tips = ref<TipsItem[]>([])
 
 const theme = useTheme()
@@ -97,7 +99,7 @@ onMounted(async () => {
         break
       }
     }
-
+    tip.id = ++tipsCounter.value
     tip.value = true
     if (idx < 0) {
       tips.value.push(tip)
@@ -293,12 +295,14 @@ const disableWebviewNativeEvents = () => {
     </v-dialog>
 
     <v-snackbar
-        v-for="(item, key) in tips"
-        :key="key"
+        v-for="item in tips"
+        :key="item.id"
         v-model="item.value"
         location="top"
         class="mt-12"
         :content-class="item.class"
+        :timeout="item.timeout"
+        :z-index="2000"
     >
       <v-icon v-if="item.icon" class="mr-2">{{ item.icon }}</v-icon>
       {{ item.content }}

@@ -5,7 +5,7 @@ use std::{fs, io, vec};
 
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
-use log::{debug, warn, info};
+use log::{debug, info, warn};
 
 use crate::error::LogicError;
 use crate::etcd;
@@ -14,7 +14,6 @@ use crate::transport::connection::{Connection, ConnectionInfo, KeyMonitorConfig,
 use crate::utils::{aes_util, file_util, md5};
 
 use super::settings::get_settings;
-
 
 #[tauri::command]
 pub async fn connect_test(connection: Connection) -> Result<(), LogicError> {
@@ -44,9 +43,12 @@ pub fn restore_connections(old_key: &[u8], new_key: &[u8]) -> io::Result<()> {
         for entry in entries {
             let path = entry?.path();
             if !path.is_dir() {
-                let mut file = OpenOptions::new().read(true).write(true).open(path)?;
+                let mut file = File::open(&path)?;
                 let mut content = vec![];
                 file.read_to_end(&mut content)?;
+
+                fs::remove_file(&path)?;
+                let mut file = File::create(&path)?;
 
                 if let Ok(data) = aes_util::reencrypt_128(content, old_key, new_key) {
                     file.write_all(data.as_slice())?;
@@ -72,29 +74,29 @@ pub async fn save_connection(name: String, connection: Connection) -> Result<(),
         name,
         connection,
         key_collection: vec![],
-        key_monitor_list: vec![]
+        key_monitor_list: vec![],
     };
     let file_name = md5(&connection_info.name);
     dir.push(file_name);
 
     //  如果配置已经存在，只更新连接配置项，继承已有的其他配置
-    let mut file = if dir.exists() {
-        let mut f = OpenOptions::new().write(true).open(dir)?;
+    if dir.exists() {
+        let mut file = File::open(&dir)?;
         let mut content = vec![];
-        f.read_to_end(&mut content)?;
+        file.read_to_end(&mut content)?;
         if let Ok(data) = aes_util::decrypt_128(key.as_bytes(), content) {
             if let Ok(info) = serde_json::from_slice::<ConnectionInfo>(data.as_slice()) {
                 connection_info.key_collection = info.key_collection;
                 connection_info.key_monitor_list = info.key_monitor_list;
             }
         }
-        f
-    } else {
-        File::create(dir)?
-    };
+
+        fs::remove_file(&dir)?;
+    }
+    let mut file = File::create(dir)?;
 
     let json = serde_json::to_string(&connection_info)?;
-    
+
     let data = aes_util::encrypt_128(key.as_bytes(), json)?;
 
     file.write_all(data.as_slice())?;
@@ -110,14 +112,14 @@ pub async fn save_connection_info(info: ConnectionInfo) -> Result<(), LogicError
     let file_name = md5(&info.name);
     dir.push(file_name);
 
-    //  如果配置已经存在，只更新连接配置项，继承已有的其他配置
-    let mut file = if dir.exists() {
-        OpenOptions::new().write(true).open(dir)?
-    } else {
-        File::create(dir)?
-    };
+    if dir.exists() {
+        fs::remove_file(&dir)?;
+    }
+
+    let mut file = File::create(dir)?;
 
     let json = serde_json::to_string(&info)?;
+
     let data = aes_util::encrypt_128(key.as_bytes(), json)?;
 
     file.write_all(data.as_slice())?;
@@ -139,7 +141,7 @@ pub fn remove_connection(name: String) -> Result<(), LogicError> {
 }
 
 /// 根据连接名查询已保存的配置
-/// 
+///
 /// 如果存在返回一个 Some(ConnectionInfo)
 /// 如果不存在返回 None
 pub async fn get_connection(name: String) -> Result<Option<ConnectionInfo>, LogicError> {
@@ -156,7 +158,7 @@ pub async fn get_connection(name: String) -> Result<Option<ConnectionInfo>, Logi
 
         if let Ok(data) = aes_util::decrypt_128(key.as_bytes(), content) {
             if let Ok(info) = serde_json::from_slice::<ConnectionInfo>(data.as_slice()) {
-                return Ok(Some(info))
+                return Ok(Some(info));
             }
         }
     }
@@ -185,6 +187,8 @@ pub async fn get_connection_list() -> Result<Vec<ConnectionInfo>, LogicError> {
                     } else {
                         let filepath: String = path.to_string_lossy().to_string();
                         warn!("read connection conf failed with json decode, file will be removed. {}", filepath);
+                        debug!("File content decoded: {}", String::from_utf8(data).unwrap());
+
                         let _ = fs::remove_file(path);
                     }
                 } else {
@@ -245,7 +249,10 @@ pub async fn import_connection(filepath: String) -> Result<(), LogicError> {
 }
 
 #[tauri::command]
-pub async fn update_key_collection(session: i32, key_collection: Vec<String>) -> Result<(), LogicError> {
+pub async fn update_key_collection(
+    session: i32,
+    key_collection: Vec<String>,
+) -> Result<(), LogicError> {
     let result = etcd::get_connection_info_optional(&session);
     if let Some(mut info) = result {
         info.key_collection = key_collection;
@@ -255,7 +262,10 @@ pub async fn update_key_collection(session: i32, key_collection: Vec<String>) ->
 }
 
 #[tauri::command]
-pub async fn update_key_monitor_list(session: i32, key_monitor_list: Vec<KeyMonitorConfig>) -> Result<(), LogicError> {
+pub async fn update_key_monitor_list(
+    session: i32,
+    key_monitor_list: Vec<KeyMonitorConfig>,
+) -> Result<(), LogicError> {
     let result = etcd::get_connection_info_optional(&session);
     if let Some(mut info) = result {
         info.key_monitor_list = key_monitor_list;
