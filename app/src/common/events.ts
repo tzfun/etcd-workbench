@@ -16,6 +16,7 @@ export enum EventName {
     TIP = 'tip',
     CLOSE_TAB = 'closeTab',
     NEW_CONNECTION = 'newConnection',
+    SETTING_UPDATE = 'settingUpdate',
     CONNECTION_IMPORTED = 'connectionImported',
     SNAPSHOT_STATE = 'snapshot_state',
     SNAPSHOT_CREATE = 'snapshotCreate',
