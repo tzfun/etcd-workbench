@@ -77,27 +77,21 @@ const keyId = computed<string>(() => {
   return `key-${props.treeId}`
 })
 const treeRootObj = ref()
-const treeLastSelectedItem = ref<string>()
 const triggerRemovedKey = ref<string>()
 
 const beforeClick = (_treeId: string, treeNode: TreeNode) => {
   if (!treeNode) {
     return false;
   }
+  if (treeNode.isParent) {
+    treeRootObj.value.expandNode(treeNode)
+    return false;
+  }
   return treeNode.id != triggerRemovedKey.value;
 }
 
 const onClick = (_e: MouseEvent, _treeId: string, treeNode: TreeNode) => {
-  if (treeNode.isParent) {
-    treeRootObj.value.expandNode(treeNode)
-    if (treeLastSelectedItem.value) {
-      let node = getTreeNodeById(treeLastSelectedItem.value)
-      if (node) {
-        treeRootObj.value.selectNode(node)
-      }
-    }
-  } else {
-    treeLastSelectedItem.value = treeNode.id
+  if (!treeNode.isParent) {
     emits('on-click', treeNode.id)
   }
   if (!props.enableSelect) {

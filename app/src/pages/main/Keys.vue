@@ -43,6 +43,9 @@ type DiffInfo = {
   content: string
 }
 
+//  自动移除lease失效key的开关
+const AUTO_REMOVE_EXPIRED_KEY = false
+
 const KEY_SPLITTER = computed<string>(() => {
   return _useSettings().value.kvPathSplitter
 })
@@ -394,7 +397,7 @@ const showKV = (key: string): Promise<void> => {
       currentKv.value = kv
       currentKvChanged.value = false
 
-      if (kv.leaseInfo) {
+      if (kv.leaseInfo && AUTO_REMOVE_EXPIRED_KEY) {
         let timer = setTimeout(() => {
           keyLeaseListeners.delete(timer)
           onKeyTimeOver(kv.key)
@@ -643,11 +646,13 @@ const onKeyTimeOver = (key: string) => {
 }
 
 const clearAllKeyLeaseListener = () => {
-  for (let keyLeaseListener of keyLeaseListeners) {
-    clearTimeout(keyLeaseListener)
-  }
+  if (AUTO_REMOVE_EXPIRED_KEY) {
+    for (let keyLeaseListener of keyLeaseListeners) {
+      clearTimeout(keyLeaseListener)
+    }
 
-  keyLeaseListeners.clear()
+    keyLeaseListeners.clear()
+  }
 }
 
 const onClickKeyCollectionTreeItem = (key: string) => {
