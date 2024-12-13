@@ -132,12 +132,13 @@ pub struct GlobalStoreConfig {
     /// 窗口初始化状态
     #[serde(default)]
     pub window_init_state: Option<SettingWindowState>,
-    //  value格式化类型记录
+    /// value格式化类型记录
     pub file_format_log: VecDeque<FileFormat>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct FileFormat {
+    /// key全路径，包含namespace前缀
     pub key: String,
     pub format: String
 }

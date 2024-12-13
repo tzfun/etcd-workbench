@@ -1,4 +1,5 @@
 import {UpdateManifest} from "@tauri-apps/api/updater";
+import {EditorHighlightLanguage} from "~/common/types.ts";
 
 export const MAIN_WINDOW_MIN_HEIGHT = 500;
 export const MAIN_WINDOW_MIN_WIDTH = 900;
@@ -64,15 +65,16 @@ export interface UpdateInfo {
 }
 
 export interface FileFormat {
+    //  key全路径，包含namespace前缀
     key: string,
-    format: string
+    format: EditorHighlightLanguage
 }
 
 export interface GlobalStoreConfig {
     //  窗口初始化状态
     windowInitState?: SettingWindowState,
     fileFormatLog: FileFormat[],
-    fileFormatLogMap: Record<string, string>
+    fileFormatLogMap: Record<string, EditorHighlightLanguage>
 }
 
 export const DEFAULT_GLOBAL_STORE: GlobalStoreConfig = {

@@ -32,7 +32,7 @@ import {EditorConfig, EditorHighlightLanguage} from "~/common/types.ts";
 import {CodeDiff} from "v-code-diff";
 import {useTheme} from "vuetify";
 import CountDownTimer from "~/components/CountDownTimer.vue";
-import {_useSettings} from "~/common/store.ts";
+import {_saveGlobalStore, _useGlobalStore, _useSettings} from "~/common/store.ts";
 import Tree from "~/components/tree/Tree.vue";
 import {_isMac} from "~/common/windows.ts";
 
@@ -389,11 +389,21 @@ const showKV = (key: string): Promise<void> => {
     loadingStore.getKey = true
     _getKV(props.session?.id, key).then((kv) => {
       resolve()
-      let language = tryParseFileNameToType(kv.key)
-      if (!language) {
-        language = tryFileContentToType(_decodeBytesToString(kv.value))
+
+      //  先从记录中读取用户选择的格式
+      let fullKey = props.session?.namespace ? (props.session?.namespace + kv.key) : kv.key
+      let rememberedFormat = _useGlobalStore().value.fileFormatLogMap[fullKey]
+      if (rememberedFormat) {
+        editorConfig.language = rememberedFormat
+        console.debug("Read remembered format", fullKey, "==>", rememberedFormat)
+      } else {
+        let language = tryParseFileNameToType(kv.key)
+        if (!language) {
+          language = tryFileContentToType(_decodeBytesToString(kv.value))
+        }
+        editorConfig.language = language
       }
-      editorConfig.language = language
+
       currentKv.value = kv
       currentKvChanged.value = false
 
@@ -404,7 +414,6 @@ const showKV = (key: string): Promise<void> => {
         }, kv.leaseInfo.ttl * 1000)
         keyLeaseListeners.add(timer)
       }
-
     }).catch(e => {
       if (e.errType && e.errType == 'ResourceNotExist') {
         removeKeysFromTree([key])
@@ -467,6 +476,43 @@ const removeCollectionKey = (key: string) => {
 const editorChange = ({modified}: { data: string, modified: boolean }) => {
   if (currentKv.value) {
     currentKvChanged.value = modified
+  }
+}
+
+const editorChangeLanguage = (lang: EditorHighlightLanguage) => {
+  if (currentKv.value) {
+    let namespace = props.session!.namespace
+    let fullKey = (namespace ? namespace : "") + currentKv.value.key
+    let store = _useGlobalStore().value
+    //  保存用户变更的文件格式类型
+    let existFormat = store.fileFormatLogMap[fullKey]
+    store.fileFormatLogMap[fullKey] = lang
+    //  已存在记录，只需修改
+    if (existFormat) {
+      for (let i = store.fileFormatLog.length - 1; i >= 0; i--) {
+        let fileFormat = store.fileFormatLog[i]
+        if (fileFormat.key == fullKey) {
+          fileFormat.format = lang
+          break
+        }
+      }
+    } else {
+      let len = store.fileFormatLog.push({
+        key: fullKey,
+        format: lang
+      })
+      //  最多保存100条记录
+      const LOG_LIMIT_SIZE = 100
+      //  缓冲20条
+      if (len > LOG_LIMIT_SIZE + 20) {
+        let removed = store.fileFormatLog.splice(0, len - LOG_LIMIT_SIZE)
+        for (let fileFormat of removed) {
+          delete store.fileFormatLogMap[fileFormat.key]
+        }
+      }
+    }
+
+    _saveGlobalStore(store)
   }
 }
 
@@ -851,6 +897,7 @@ const onClickKeyCollectionTreeItem = (key: string) => {
                       :value="_decodeBytesToString(currentKv.value)"
                       :config="editorConfig"
                       @change="editorChange"
+                      @change-language="editorChangeLanguage"
                       @save="editorSave">
                 <template #footer>
                   <span class="editor-footer-item ml-0" v-if="currentKv.leaseInfo">

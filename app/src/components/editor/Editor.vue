@@ -49,7 +49,7 @@ const props = defineProps({
   }
 })
 
-const emits = defineEmits(["change", "save"])
+const emits = defineEmits(["change", "save", "change-language"])
 
 const enabledFormatLanguage = new Set([
   'json',
@@ -257,6 +257,8 @@ const onKeyDown = (event: KeyboardEvent) => {
 const changeLanguage = (lang: EditorHighlightLanguage) => {
   propsConfig.value.language = lang
   showLanguageSelection.value = false
+
+  emits('change-language', lang)
 }
 
 //  对当前内容进行格式化
