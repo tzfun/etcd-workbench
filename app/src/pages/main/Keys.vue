@@ -782,10 +782,10 @@ const onClickKeyCollectionTreeItem = (key: string) => {
                 :tree-id="`kv-tree-${new Date().getTime()}`"
                 :key-splitter="KEY_SPLITTER"
                 :session="session"
-                style="height: calc(100% - 30px);"
+                class="kvTree"
                 @on-click="showKV"
           ></Tree>
-          <v-sheet class="loadMoreArea d-flex align-center justify-center loadMoreArea"
+          <v-sheet class="loadMoreArea d-flex align-center justify-center"
           >
             <v-btn
                 v-if="paginationKeyCursor != undefined"
@@ -841,6 +841,21 @@ const onClickKeyCollectionTreeItem = (key: string) => {
                   title="Add to collections"
                   @click="addCollectionKey(currentKv.key)"
               >mdi-star-outline
+              </v-icon>
+
+              <v-icon
+                  v-if="session.keyMonitor!.map[currentKv.key]"
+                  class="ml-2 mt-2"
+                  color="primary"
+                  title="Edit monitor rule"
+              >mdi-eye-check
+              </v-icon>
+              <v-icon
+                  v-else
+                  class="ml-2 mt-2"
+                  color="primary"
+                  title="Add to monitor list"
+              >mdi-eye-plus
               </v-icon>
 
               <v-spacer></v-spacer>
@@ -1157,6 +1172,7 @@ const onClickKeyCollectionTreeItem = (key: string) => {
 <style scoped lang="scss">
 $--action-area-height: 60px;
 $--action-area-margin-bottom: 10px;
+$--load-more-area-height: 32px;
 
 .action-area {
   height: $--action-area-height;
@@ -1186,8 +1202,12 @@ $--action-area-margin-bottom: 10px;
   line-height: 48px;
 }
 
+.kvTree {
+  height: calc(100% - $--load-more-area-height);
+}
+
 .loadMoreArea {
-  $--load-more-area-height: 30px;
+
   height: $--load-more-area-height;
 
   .count {
