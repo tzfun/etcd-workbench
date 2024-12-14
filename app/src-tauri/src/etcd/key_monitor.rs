@@ -6,6 +6,7 @@ use log::{error, info};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
+use std::vec;
 use tokio::sync::Mutex;
 use tokio::time::{interval, interval_at, Instant};
 
@@ -89,8 +90,8 @@ impl MonitorTask {
                 }
 
                 if config.monitor_value_change {
-                    let previous_value = self.previous_value.as_ref().unwrap_or(&vec![]);
-                    let current_value = response.kvs().to_vec();
+                    let previous_value = self.previous_value.as_ref().unwrap();
+                    let current_value = kv.value().to_vec();
                     if previous_value.ne(&current_value) {
                         //  TODO 通知值变更事件
                     }
@@ -126,7 +127,8 @@ impl KeyMonitor {
             running: true,
         }
     }
-    pub fn start(self: Arc<Mutex<Self>>) {
+
+    pub fn start(lock: Arc<Mutex<Self>>) {
         tokio::spawn(async move {
             let mut interval = interval_at(
                 Instant::now() + Duration::from_secs(1),
@@ -135,45 +137,48 @@ impl KeyMonitor {
             loop {
                 interval.tick().await;
 
-                let mut monitor = self.lock().await;
+                let mut monitor = lock.lock().await;
 
                 if !monitor.running {
+                    info!("Key monitor stopped. session: {}", monitor.session_id);
                     break;
                 }
 
-                let connector_op = get_connector_optional(&monitor.session_id);
-                if connector_op.is_none() {
-                    break;
-                }
-                let mut connector = connector_op.unwrap();
+                
+                let session_id = monitor.session_id;
                 let now = Instant::now();
                 let mut tasks = vec![];
 
                 for (key, task) in monitor.config_map.iter_mut() {
                     if now >= task.next_execute_time {
                         tasks.push(task);
+                        
                     }
                 }
 
                 if !tasks.is_empty() {
+                    let connector_op = get_connector_optional(&session_id);
+                    if connector_op.is_none() {
+                        info!("Connector not found, key monitor will be stopped. session: {}", session_id);
+                        break;
+                    }
+                    let mut connector = connector_op.unwrap();
                     for task in tasks {
                         task.run(&mut connector);
                     }
                 }
-                drop(connector);
             }
 
-            info!("Key monitor stopped. session: {}", self.session_id);
         });
     }
 
-    pub async fn stop(self: Arc<Mutex<Self>>) {
-        let mut monitor = self.lock().await;
+    pub async fn stop(lock: Arc<Mutex<Self>>) {
+        let mut monitor = lock.lock().await;
         monitor.running = false;
     }
 
-    pub async fn set_config(self: Arc<Mutex<Self>>, config: KeyMonitorConfig) {
-        let monitor = self.lock().await;
+    pub async fn set_config(lock: Arc<Mutex<Self>>, config: KeyMonitorConfig) {
+        let mut monitor = lock.lock().await;
         let exist_task = monitor.config_map.get_mut(&config.key);
         if let Some(task) = exist_task {
             task.update_config(config);
@@ -182,6 +187,5 @@ impl KeyMonitor {
                 .config_map
                 .insert((&config.key).clone(), MonitorTask::new(config));
         }
-        drop(monitor);
     }
 }
