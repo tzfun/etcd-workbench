@@ -6,7 +6,7 @@ import {
   Connection,
   ConnectionInfo,
   ErrorPayload,
-  KeyMonitor,
+  KeyMonitorConfig,
   SessionData,
   SshIdentity
 } from "~/common/transport/connection.ts";
@@ -332,18 +332,14 @@ const connect = () => {
       }
 
       let keyMonitorList = session.keyMonitorList
-      let keyMonitor: KeyMonitor = {
-        list: [],
-        map: {}
-      }
+      let keyMonitorMap:Record<string, KeyMonitorConfig> = {}
       if (keyMonitorList) {
         for (let config of keyMonitorList) {
-          keyMonitor.list.push(config.key)
-          keyMonitor.map[config.key] = config
+          keyMonitorMap[config.key] = config
         }
       }
       session.keyMonitorList = undefined
-      session.keyMonitor = keyMonitor
+      session.keyMonitorMap = keyMonitorMap
 
       _emitLocal(EventName.NEW_CONNECTION, {name, session})
     }).catch((e: ErrorPayload | string) => {

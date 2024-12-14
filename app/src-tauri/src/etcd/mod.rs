@@ -3,7 +3,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicI32, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use dashmap::mapref::one::RefMut;
+use dashmap::mapref::one::{Ref, RefMut};
 use dashmap::DashMap;
 use etcd_client::Error;
 use lazy_static::lazy_static;
@@ -17,14 +17,14 @@ use crate::transport::connection::{Connection, ConnectionInfo, SessionData};
 pub mod etcd_connector;
 mod wrapped_etcd_client;
 mod test;
-mod key_monitor;
+pub mod key_monitor;
 
 static CONNECTION_ID_COUNTER: AtomicI32 = AtomicI32::new(1);
 
 lazy_static! {
     static ref CONNECTION_POOL:DashMap<i32, EtcdConnector> = DashMap::with_capacity(2);
     static ref CONNECTION_INFO_POOL: DashMap<i32, ConnectionInfo> = DashMap::new();
-    static ref CONNECTION_MONITORS: DashMap<i32, KeyMonitor> = DashMap::new();
+    static ref CONNECTION_KEY_MONITORS: DashMap<i32, Arc<Mutex<KeyMonitor>>> = DashMap::new();
 }
 
 fn gen_connection_id() -> i32 {
@@ -57,6 +57,8 @@ pub async fn new_connector(name: String, connection: Connection) -> Result<Sessi
     let connector_id = gen_connection_id();
     CONNECTION_POOL.insert(connector_id, connector);
 
+    let mut key_monitor = KeyMonitor::new(connector_id);
+
     let info_result = connection::get_connection(name).await?;
     
     let mut connection_saved = false;
@@ -69,6 +71,22 @@ pub async fn new_connector(name: String, connection: Connection) -> Result<Sessi
         
         CONNECTION_INFO_POOL.insert(connector_id, info);
     }
+
+    let mut has_key_monitor = false;
+    if let Some(monitor_list) = &key_monitor_list {
+        for config in monitor_list {
+            key_monitor.add_config(config.clone());
+        }
+        has_key_monitor = !monitor_list.is_empty();
+    }
+
+    let key_monitor_lock = Arc::new(Mutex::new(key_monitor));
+    if has_key_monitor {
+        KeyMonitor::start(Arc::clone(&key_monitor_lock));
+        log::info!("Started key monitor when create: {}", connector_id);
+    }
+    CONNECTION_KEY_MONITORS.insert(connector_id, key_monitor_lock);
+
 
     Ok(SessionData {
         id: connector_id,
@@ -93,7 +111,7 @@ pub fn get_connection_info_optional(id: &i32) -> Option<RefMut<'_, i32, Connecti
     CONNECTION_INFO_POOL.get_mut(id)
 }
 
-pub fn remove_connector(id: &i32) {
+pub async fn remove_connector(id: &i32) {
     if let Some((_, connector)) = CONNECTION_POOL.remove(id) {
         drop(connector)
     }
@@ -101,4 +119,12 @@ pub fn remove_connector(id: &i32) {
     if let Some((_, info)) = CONNECTION_INFO_POOL.remove(id) {
         drop(info)
     }
+    
+    let lock_ref = get_key_monitor(id);
+    let lock = lock_ref.value().clone();
+    KeyMonitor::stop(lock).await;
+}
+
+pub fn get_key_monitor(id: &i32) -> Ref<'_, i32, Arc<Mutex<KeyMonitor>>> {
+    CONNECTION_KEY_MONITORS.get(id).unwrap()
 }

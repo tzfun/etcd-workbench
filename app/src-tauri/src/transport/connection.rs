@@ -92,6 +92,16 @@ pub struct KeyMonitorConfig {
     pub monitor_remove: bool,
 }
 
+impl KeyMonitorConfig {
+    pub fn merge(&mut self, other: &KeyMonitorConfig) {
+        self.interval_seconds = other.interval_seconds;
+        self.monitor_lease_change = other.monitor_lease_change;
+        self.monitor_value_change = other.monitor_value_change;
+        self.monitor_create = other.monitor_create;
+        self.monitor_remove = other.monitor_remove;
+    }
+}
+
 fn default_key_collection() -> Vec<String> {
     vec![]
 }

@@ -712,8 +712,8 @@ const onClickKeyCollectionTreeItem = (key: string) => {
 }
 
 const editKeyMonitor = (key: string) => {
-  let monitor: KeyMonitorConfig = props.session?.keyMonitor!.map[key]
-  if (!monitor) {
+  let monitor: KeyMonitorConfig = props.session?.keyMonitorMap![key]
+  if (monitor) {
     _emitLocal(EventName.EDIT_KEY_MONITOR, {
       edit: true,
       monitor
@@ -862,7 +862,7 @@ const addKeyMonitor = (key: string) => {
               </v-icon>
 
               <v-icon
-                  v-if="session.keyMonitor!.map[currentKv.key]"
+                  v-if="session.keyMonitorMap![currentKv.key]"
                   class="ml-2 mt-2"
                   color="primary"
                   title="Edit monitor rule"

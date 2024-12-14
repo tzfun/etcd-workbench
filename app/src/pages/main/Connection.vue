@@ -7,7 +7,9 @@ import Users from "~/pages/main/Users.vue";
 import Roles from "~/pages/main/Roles.vue";
 import Leases from "~/pages/main/Leases.vue";
 import KeyMonitor from "~/pages/main/KeyMonitor.vue";
-import {_listenLocal, EventName} from "~/common/events.ts";
+import {_listenLocal, _tipWarn, EventName} from "~/common/events.ts";
+import {_handleError, _removeKeyMonitor, _setKeyMonitor} from "~/common/services.ts";
+import {_isEmpty} from "~/common/utils.ts";
 
 const props = defineProps({
   session: {
@@ -35,6 +37,7 @@ const keyMonitorDialog = reactive({
 
 onMounted(() => {
   _listenLocal(EventName.EDIT_KEY_MONITOR, (e) => {
+    console.log("==>",e)
     if (e.edit) {
       keyMonitorDialog.edit = true
       keyMonitorDialog.monitor = e.monitor as KeyMonitorConfig;
@@ -67,11 +70,39 @@ const clickList = (page: string) => {
 }
 
 const keyMonitorConfirm = () => {
+  let config = keyMonitorDialog.monitor
+  if (_isEmpty(config.key)) {
+    _tipWarn("Key cannot be empty")
+    return
+  }
 
+  if (config.intervalSeconds <= 0) {
+    _tipWarn("Invalid interval")
+    return;
+  }
+
+  _setKeyMonitor(props.session?.id, config).then(() => {
+    props.session!.keyMonitorMap![config.key] = config
+    keyMonitorDialog.show = false
+  }).catch(e => {
+    _handleError({
+      e,
+      session: props.session
+    })
+  })
 }
 
 const keyMonitorRemove = () => {
-
+  let key = keyMonitorDialog.monitor.key
+  _removeKeyMonitor(props.session?.id, key).then(() => {
+    delete props.session!.keyMonitorMap![key]
+    keyMonitorDialog.show = false
+  }).catch((e) => {
+    _handleError({
+      e,
+      session: props.session
+    })
+  })
 }
 
 </script>
@@ -268,7 +299,7 @@ const keyMonitorRemove = () => {
                  v-if="keyMonitorDialog.edit"
                  variant="flat"
                  class="text-none"
-                 color="danger"
+                 color="red"
                  @click="keyMonitorRemove"
           ></v-btn>
           <v-btn :text="keyMonitorDialog.edit ? 'Confirm' : 'Add Monitor'"

@@ -10,6 +10,7 @@ use log::{debug, info, warn};
 use crate::error::LogicError;
 use crate::etcd;
 use crate::etcd::etcd_connector::EtcdConnector;
+use crate::etcd::key_monitor::KeyMonitor;
 use crate::transport::connection::{Connection, ConnectionInfo, KeyMonitorConfig, SessionData};
 use crate::utils::{aes_util, file_util, md5};
 
@@ -31,7 +32,7 @@ pub async fn connect(name: String, connection: Connection) -> Result<SessionData
 
 #[tauri::command]
 pub async fn disconnect(session: i32) -> Result<(), LogicError> {
-    etcd::remove_connector(&session);
+    etcd::remove_connector(&session).await;
     info!("Removed connection: {}", session);
     Ok(())
 }
@@ -262,27 +263,48 @@ pub async fn update_key_collection(
 }
 
 #[tauri::command]
-pub async fn update_key_monitor_list(
+pub async fn set_key_monitor(
     session: i32,
-    key_monitor_list: Vec<KeyMonitorConfig>,
+    key_monitor: KeyMonitorConfig,
 ) -> Result<(), LogicError> {
+
     let result = etcd::get_connection_info_optional(&session);
     if let Some(mut info) = result {
-        info.key_monitor_list = key_monitor_list;
+        let mut found = false;
+        for km in info.key_monitor_list.iter_mut() {
+            if km.key.eq(&key_monitor.key) {
+                km.merge(&key_monitor);
+                found = true;
+                break;
+            }
+        }
+
+        if !found {
+            info.key_monitor_list.push(key_monitor.clone());
+        }
         save_connection_info(info.value().clone()).await?;
     }
+
+    let lock_ref = etcd::get_key_monitor(&session);
+    let lock = lock_ref.value().clone();
+    KeyMonitor::set_config(lock, key_monitor).await;
     Ok(())
 }
 
 #[tauri::command]
-pub async fn add_key_monitor(
+pub async fn remove_key_monitor(
     session: i32,
-    key_monitor: KeyMonitorConfig,
+    key: String,
 ) -> Result<(), LogicError> {
     let result = etcd::get_connection_info_optional(&session);
     if let Some(mut info) = result {
-        info.key_monitor_list = key_monitor_list;
+        info.key_monitor_list.retain(|c| c.key.ne(&key));
+        
         save_connection_info(info.value().clone()).await?;
     }
+
+    let lock_ref = etcd::get_key_monitor(&session);
+    let lock = lock_ref.value().clone();
+    KeyMonitor::remove_config(lock, &key).await;
     Ok(())
 }

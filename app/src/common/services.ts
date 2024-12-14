@@ -1,5 +1,5 @@
 import {invoke} from "@tauri-apps/api";
-import {Connection, ConnectionInfo, SessionData} from "~/common/transport/connection.ts";
+import {Connection, ConnectionInfo, KeyMonitorConfig, SessionData} from "~/common/transport/connection.ts";
 import {Cluster, SnapshotInfo} from "~/common/transport/maintenance.ts";
 import {KeyValue, LeaseInfo} from "~/common/transport/kv.ts";
 import {_emitLocal, _tipError, EventName} from "~/common/events.ts";
@@ -290,5 +290,19 @@ export function _updateKeyCollection(session: number, keyCollection: string[]): 
     return invoke('update_key_collection', {
         session,
         keyCollection
+    })
+}
+
+export function _setKeyMonitor(session: number, keyMonitor: KeyMonitorConfig): Promise<undefined> {
+    return invoke('set_key_monitor', {
+        session,
+        keyMonitor
+    })
+}
+
+export function _removeKeyMonitor(session: number, key: string): Promise<undefined> {
+    return invoke('remove_key_monitor', {
+        session,
+        key
     })
 }
