@@ -166,6 +166,16 @@ impl EtcdConnector {
         Ok(arr)
     }
 
+    /// 请求Key-Value
+    pub async fn kv_get_request(
+        &mut self,
+        key: impl Into<Vec<u8>>,
+        option: Option<GetOptions>,
+    ) -> Result<GetResponse, Error> {
+        let path = self.prefix_namespace(key);
+        self.client.kv_get_request(path, option).await
+    }
+
     /// 获取键值对详情
     pub async fn kv_get(
         &mut self,
@@ -470,26 +480,24 @@ impl EtcdConnector {
     }
 
     /// 修改用户密码
-    pub async fn user_change_password(&mut self, user: String, password: String) -> Result<(), Error> {
-        self.client
-            .user_change_password(user, password)
-            .await?;
+    pub async fn user_change_password(
+        &mut self,
+        user: String,
+        password: String,
+    ) -> Result<(), Error> {
+        self.client.user_change_password(user, password).await?;
         Ok(())
     }
 
     /// 给用户授权角色
     pub async fn user_grant_role(&mut self, user: String, role: String) -> Result<(), Error> {
-        self.client
-            .user_grant_role(user, role)
-            .await?;
+        self.client.user_grant_role(user, role).await?;
         Ok(())
     }
 
     /// 回收用户的角色
     pub async fn user_revoke_role(&mut self, user: String, role: String) -> Result<(), Error> {
-        self.client
-            .user_revoke_role(user, role)
-            .await?;
+        self.client.user_revoke_role(user, role).await?;
         Ok(())
     }
 

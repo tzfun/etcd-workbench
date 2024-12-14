@@ -417,7 +417,7 @@ const grantPerm = () => {
             <div class="grant-form-label">Key:</div>
             <v-text-field v-model="grantPermDialog.perm.key"
                           density="comfortable"
-                          prepend-inner-icon="mdi-key"
+                          prepend-inner-icon="mdi-file-document"
                           placeholder="Key path"
                           hint="The key here is for the full path and is not related to the namespace of the current connection."
                           persistent-hint

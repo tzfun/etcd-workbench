@@ -16,13 +16,15 @@ import {
   _confirm,
   _confirmSystem,
   _copyToClipboard,
+  _emitLocal,
   _loading,
   _tipInfo,
   _tipSuccess,
-  _tipWarn
+  _tipWarn,
+  EventName
 } from "~/common/events.ts";
 import {computed, nextTick, onMounted, onUnmounted, PropType, reactive, ref} from "vue";
-import {ErrorPayload, SessionData} from "~/common/transport/connection.ts";
+import {ErrorPayload, KeyMonitorConfig, SessionData} from "~/common/transport/connection.ts";
 import DragBox from "~/components/drag-area/DragBox.vue";
 import DragItem from "~/components/drag-area/DragItem.vue";
 import {KeyValue} from "~/common/transport/kv.ts";
@@ -707,7 +709,23 @@ const onClickKeyCollectionTreeItem = (key: string) => {
     collectionDialog.value = false
   }).catch(() => {
   })
+}
 
+const editKeyMonitor = (key: string) => {
+  let monitor: KeyMonitorConfig = props.session?.keyMonitor!.map[key]
+  if (!monitor) {
+    _emitLocal(EventName.EDIT_KEY_MONITOR, {
+      edit: true,
+      monitor
+    })
+  }
+}
+
+const addKeyMonitor = (key: string) => {
+  _emitLocal(EventName.EDIT_KEY_MONITOR, {
+    edit: false,
+    key
+  })
 }
 
 </script>
@@ -848,6 +866,7 @@ const onClickKeyCollectionTreeItem = (key: string) => {
                   class="ml-2 mt-2"
                   color="primary"
                   title="Edit monitor rule"
+                  @click="editKeyMonitor(currentKv.key)"
               >mdi-eye-check
               </v-icon>
               <v-icon
@@ -855,6 +874,7 @@ const onClickKeyCollectionTreeItem = (key: string) => {
                   class="ml-2 mt-2"
                   color="primary"
                   title="Add to monitor list"
+                  @click="addKeyMonitor(currentKv.key)"
               >mdi-eye-plus
               </v-icon>
 
@@ -1035,7 +1055,7 @@ const onClickKeyCollectionTreeItem = (key: string) => {
             <span class="new-key-form-label">From Key: </span>
             <v-text-field v-model="newKeyDialog.fromKey"
                           density="comfortable"
-                          prepend-inner-icon="mdi-key"
+                          prepend-inner-icon="mdi-file-document"
                           :prefix="session.namespace"
                           hide-details
                           readonly
@@ -1045,7 +1065,7 @@ const onClickKeyCollectionTreeItem = (key: string) => {
             <span class="new-key-form-label">Key: </span>
             <v-text-field v-model="newKeyDialog.key"
                           density="comfortable"
-                          prepend-inner-icon="mdi-key"
+                          prepend-inner-icon="mdi-file-document"
                           :prefix="session.namespace"
                           hint="The key under namespace (if it exists)"
                           persistent-hint

@@ -21,6 +21,7 @@ export enum EventName {
     SNAPSHOT_STATE = 'snapshot_state',
     SNAPSHOT_CREATE = 'snapshotCreate',
     CONFIRM_EXIT = 'confirm_exit',
+    EDIT_KEY_MONITOR = 'editKeyMonitor',
 }
 
 export function _useLocalEvents(): Emitter<Record<EventType, any>> {

@@ -11,17 +11,20 @@ use tokio::sync::Mutex;
 use crate::api::connection;
 use crate::error::LogicError;
 use crate::etcd::etcd_connector::EtcdConnector;
+use crate::etcd::key_monitor::KeyMonitor;
 use crate::transport::connection::{Connection, ConnectionInfo, SessionData};
 
 pub mod etcd_connector;
 mod wrapped_etcd_client;
 mod test;
+mod key_monitor;
 
 static CONNECTION_ID_COUNTER: AtomicI32 = AtomicI32::new(1);
 
 lazy_static! {
     static ref CONNECTION_POOL:DashMap<i32, EtcdConnector> = DashMap::with_capacity(2);
     static ref CONNECTION_INFO_POOL: DashMap<i32, ConnectionInfo> = DashMap::new();
+    static ref CONNECTION_MONITORS: DashMap<i32, KeyMonitor> = DashMap::new();
 }
 
 fn gen_connection_id() -> i32 {

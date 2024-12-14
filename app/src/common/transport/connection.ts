@@ -79,6 +79,7 @@ export interface ErrorPayload {
 
 export interface KeyMonitorConfig {
     key: string,
+    intervalSeconds: number,
     monitorLeaseChange: boolean,
     monitorValueChange: boolean,
     monitorCreate: boolean,

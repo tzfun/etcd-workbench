@@ -85,6 +85,7 @@ pub struct SessionData {
 pub struct KeyMonitorConfig {
     //  key值（全路径）
     pub key: String,
+    pub interval_seconds: u64,
     pub monitor_lease_change: bool,
     pub monitor_value_change: bool,
     pub monitor_create: bool,

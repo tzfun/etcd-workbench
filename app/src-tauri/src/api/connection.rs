@@ -273,3 +273,16 @@ pub async fn update_key_monitor_list(
     }
     Ok(())
 }
+
+#[tauri::command]
+pub async fn add_key_monitor(
+    session: i32,
+    key_monitor: KeyMonitorConfig,
+) -> Result<(), LogicError> {
+    let result = etcd::get_connection_info_optional(&session);
+    if let Some(mut info) = result {
+        info.key_monitor_list = key_monitor_list;
+        save_connection_info(info.value().clone()).await?;
+    }
+    Ok(())
+}
