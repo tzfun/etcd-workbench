@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {onActivated, onMounted, PropType, reactive, ref} from "vue";
+import {onActivated, onMounted, onUnmounted, PropType, reactive, ref} from "vue";
 import {KeyMonitorConfig, SessionData} from "~/common/transport/connection.ts";
 import Cluster from "~/pages/main/Cluster.vue";
 import Keys from "~/pages/main/Keys.vue";
@@ -7,9 +7,11 @@ import Users from "~/pages/main/Users.vue";
 import Roles from "~/pages/main/Roles.vue";
 import Leases from "~/pages/main/Leases.vue";
 import KeyMonitor from "~/pages/main/KeyMonitor.vue";
-import {_listenLocal, _tipWarn, EventName} from "~/common/events.ts";
+import {_listenLocal, _tipWarn, EventName, KeyMonitorEvent} from "~/common/events.ts";
 import {_handleError, _removeKeyMonitor, _setKeyMonitor} from "~/common/services.ts";
 import {_isEmpty} from "~/common/utils.ts";
+import {appWindow} from "@tauri-apps/api/window";
+import {_updateMaximizeState} from "~/common/windows.ts";
 
 const props = defineProps({
   session: {
@@ -17,6 +19,8 @@ const props = defineProps({
     required: true
   }
 })
+
+const eventUnListens = reactive<Function[]>([])
 
 let activeListItem = ref<string>('cluster')
 const visited = ref<Record<string, boolean>>({
@@ -35,7 +39,7 @@ const keyMonitorDialog = reactive({
   },
 })
 
-onMounted(() => {
+onMounted(async () => {
   _listenLocal(EventName.EDIT_KEY_MONITOR, (e) => {
     console.log("==>",e)
     if (e.edit) {
@@ -53,6 +57,17 @@ onMounted(() => {
 
     keyMonitorDialog.show = true
   })
+
+  eventUnListens.push(await appWindow.listen(EventName.KEY_MONITOR_CHANGE, e => {
+    let event = e.payload as KeyMonitorEvent
+    console.log("==>", event)
+  }))
+})
+
+onUnmounted(() => {
+  for (let eventUnListen of eventUnListens) {
+    eventUnListen()
+  }
 })
 
 onActivated(() => {

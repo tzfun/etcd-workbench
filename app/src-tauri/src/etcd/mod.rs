@@ -7,6 +7,7 @@ use dashmap::mapref::one::{Ref, RefMut};
 use dashmap::DashMap;
 use etcd_client::Error;
 use lazy_static::lazy_static;
+use tauri::Window;
 use tokio::sync::Mutex;
 use crate::api::connection;
 use crate::error::LogicError;
@@ -38,7 +39,7 @@ pub fn now_timestamp() -> u128 {
         .as_millis()
 }
 
-pub async fn new_connector(name: String, connection: Connection) -> Result<SessionData, LogicError> {
+pub async fn new_connector(name: String, connection: Connection, window: Window) -> Result<SessionData, LogicError> {
     let user = if let Some(u) = &connection.user {
         Some(u.username.clone())
     } else {
@@ -57,7 +58,7 @@ pub async fn new_connector(name: String, connection: Connection) -> Result<Sessi
     let connector_id = gen_connection_id();
     CONNECTION_POOL.insert(connector_id, connector);
 
-    let mut key_monitor = KeyMonitor::new(connector_id);
+    let mut key_monitor = KeyMonitor::new(connector_id, window);
 
     let info_result = connection::get_connection(name).await?;
     
@@ -86,7 +87,6 @@ pub async fn new_connector(name: String, connection: Connection) -> Result<Sessi
         log::info!("Started key monitor when create: {}", connector_id);
     }
     CONNECTION_KEY_MONITORS.insert(connector_id, key_monitor_lock);
-
 
     Ok(SessionData {
         id: connector_id,

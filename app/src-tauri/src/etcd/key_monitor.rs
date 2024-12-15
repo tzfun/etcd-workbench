@@ -3,12 +3,54 @@ use crate::etcd::get_connector_optional;
 use crate::transport::connection::KeyMonitorConfig;
 use etcd_client::{GetOptions, GetResponse};
 use log::{debug, error, info};
+use serde::{Deserialize, Serialize};
+use std::any::Any;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 use std::vec;
+use tauri::Window;
 use tokio::sync::Mutex;
 use tokio::time::{interval, interval_at, Instant, MissedTickBehavior};
+
+#[repr(i8)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub enum KeyMonitorEventType {
+    Remove = 1,
+    Create = 2,
+    LeaseChange = 3,
+    ValueChange = 4,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct KeyMonitorEvent<T: Serialize + Clone> {
+    pub event_type: KeyMonitorEventType,
+    pub previous: Option<T>,
+    pub current: Option<T>,
+}
+
+impl<T: Serialize + Clone> KeyMonitorEvent<T> {
+    pub fn with(event_type: KeyMonitorEventType) -> Self {
+        Self {
+            event_type,
+            previous: None,
+            current: None,
+        }
+    }
+
+    pub fn with_value(
+        event_type: KeyMonitorEventType,
+        previous: T,
+        current: T,
+    ) -> Self {
+        Self {
+            event_type,
+            previous: Some(previous),
+            current: Some(current),
+        }
+    }
+}
 
 struct MonitorTask {
     config: KeyMonitorConfig,
@@ -35,7 +77,7 @@ impl MonitorTask {
         }
     }
 
-    async fn run(&mut self, connector: &mut EtcdConnector) {
+    async fn run(&mut self, connector: &mut EtcdConnector, window: &Window) {
         let response = connector
             .kv_get_request(self.config.key.clone(), None)
             .await;
@@ -69,16 +111,15 @@ impl MonitorTask {
 
             if config.monitor_create {
                 if !self.previous_exist.unwrap_or(false) && exist {
-                    //  TODO 通知创建事件
                     debug!("Key create: {}", config.key);
+                    self.on_event(window, KeyMonitorEvent::<i32>::with(KeyMonitorEventType::Create));
                 }
-
             }
 
             if config.monitor_remove {
                 if self.previous_exist.unwrap_or(false) && !exist {
-                    //  TODO 通知移除事件
                     debug!("Key removed: {}", config.key);
+                    self.on_event(window, KeyMonitorEvent::<i32>::with(KeyMonitorEventType::Remove));
                 }
             }
 
@@ -90,8 +131,15 @@ impl MonitorTask {
                     let previous_lease = self.previous_lease.unwrap_or(0);
                     let current_lease = kv.lease();
                     if previous_lease != current_lease {
-                        //  TODO 通知Lease变更事件
-                        debug!("Key lease changed: {}, {} -> {}", config.key, previous_lease, current_lease);
+                        debug!(
+                            "Key lease changed: {}, {} -> {}",
+                            config.key, previous_lease, current_lease
+                        );
+                        self.on_event(window, KeyMonitorEvent::<String>::with_value(
+                            KeyMonitorEventType::LeaseChange,
+                            previous_lease.to_string(),
+                            current_lease.to_string()
+                        ));
                     }
 
                     self.previous_lease = Some(current_lease);
@@ -101,8 +149,12 @@ impl MonitorTask {
                     let previous_value = self.previous_value.as_ref().unwrap();
                     let current_value = kv.value().to_vec();
                     if previous_value.ne(&current_value) {
-                        //  TODO 通知值变更事件
-                    debug!("Key value changed: {}", config.key);
+                        debug!("Key value changed: {}", config.key);
+                        self.on_event(window, KeyMonitorEvent::<Vec<u8>>::with_value(
+                            KeyMonitorEventType::ValueChange,
+                            previous_value.clone(),
+                            current_value.clone()
+                        ));
                     }
 
                     self.previous_value = Some(current_value);
@@ -122,20 +174,26 @@ impl MonitorTask {
         self.first_run = true;
         self.update_next_execute_time();
     }
+
+    fn on_event<T: Serialize + Clone>(&self, window: &Window, event: KeyMonitorEvent<T>) {
+        window.emit("key_monitor", event);
+    }
 }
 
 pub struct KeyMonitor {
     session_id: i32,
     config_map: HashMap<String, MonitorTask>,
     running: bool,
+    window: Window,
 }
 
 impl KeyMonitor {
-    pub fn new(session_id: i32) -> Self {
+    pub fn new(session_id: i32, window: Window) -> Self {
         Self {
             session_id,
             config_map: HashMap::new(),
             running: false,
+            window,
         }
     }
 
@@ -166,8 +224,9 @@ impl KeyMonitor {
                     monitor.running = false;
                     break;
                 }
-                
+
                 let session_id = monitor.session_id;
+                let window = monitor.window.clone();
                 let now = Instant::now();
                 let mut tasks = vec![];
 
@@ -179,15 +238,18 @@ impl KeyMonitor {
 
                 if !tasks.is_empty() {
                     let connector_op = get_connector_optional(&session_id);
-                    
+
                     if connector_op.is_none() {
-                        info!("Connector not found, key monitor will be stopped. session: {}", session_id);
+                        info!(
+                            "Connector not found, key monitor will be stopped. session: {}",
+                            session_id
+                        );
                         monitor.running = false;
                         break;
                     }
                     let mut connector = connector_op.unwrap();
                     for task in tasks {
-                        task.run(&mut connector).await;
+                        task.run(&mut connector, &window).await;
                     }
                 }
             }
@@ -227,6 +289,7 @@ impl KeyMonitor {
     }
 
     pub fn add_config(&mut self, config: KeyMonitorConfig) {
-        self.config_map.insert((&config.key).clone(), MonitorTask::new(config));
+        self.config_map
+            .insert((&config.key).clone(), MonitorTask::new(config));
     }
 }

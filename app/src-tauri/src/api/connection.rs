@@ -6,6 +6,7 @@ use std::{fs, io, vec};
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
 use log::{debug, info, warn};
+use tauri::Window;
 
 use crate::error::LogicError;
 use crate::etcd;
@@ -24,8 +25,8 @@ pub async fn connect_test(connection: Connection) -> Result<(), LogicError> {
 }
 
 #[tauri::command]
-pub async fn connect(name: String, connection: Connection) -> Result<SessionData, LogicError> {
-    let session = etcd::new_connector(name, connection).await?;
+pub async fn connect(name: String, connection: Connection, window: Window) -> Result<SessionData, LogicError> {
+    let session = etcd::new_connector(name, connection, window).await?;
     info!("New connection: {}", session.id);
     Ok(session)
 }
