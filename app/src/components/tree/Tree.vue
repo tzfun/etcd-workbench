@@ -60,7 +60,7 @@ const props = defineProps({
   initItems: {
     type: Array<string>
   },
-  showCollectionStar: {
+  showNodeSuffix: {
     type: Boolean,
     default: () => true
   },
@@ -110,18 +110,60 @@ const addDiyDom = (_treeId: string, node: TreeNode) => {
   diyDom(node, false)
 }
 
-const diyDom = (node: TreeNode, withRemove: boolean) => {
-  if (props.showCollectionStar) {
-    if (props.session!.keyCollectionSet!.has(node.id)) {
+const diyDom = (node: TreeNode, refresh: boolean) => {
+  if (props.showNodeSuffix) {
+    //  刷新，动态判断已有的按钮是否应该存在
+    if (refresh) {
+      let aObj
       //  @ts-ignore
-      let aObj = $("#" + node.tId + IDMark_A)
-      let star = `<span class="icon-star-filled tree-node-icon" onfocus='this.blur();'></span>`
-      aObj.append(star)
-    } else if (withRemove) {
+      let starDom = $(`#${node.tId}${IDMark_A} .icon-star-filled`)
+
+      if (props.session!.keyCollectionSet!.has(node.id)) {
+        if (!starDom || starDom.length == 0) {
+          //  @ts-ignore
+          aObj = $("#" + node.tId + IDMark_A)
+          let star = `<span class="icon-star-filled tree-node-icon" onfocus='this.blur();'></span>`
+          aObj.append(star)
+        }
+      } else {
+        if (starDom) {
+          starDom.remove()
+        }
+      }
+
       //  @ts-ignore
-      let dom = $(`#${node.tId}${IDMark_A} .icon-star-filled`)
-      if (dom) {
-        dom.remove()
+      let monitorDom = $(`#${node.tId}${IDMark_A} .icon-monitor`)
+      if (props.session!.keyMonitorMap![node.id]) {
+        if (!monitorDom || monitorDom.length == 0) {
+          if (!aObj) {
+            //  @ts-ignore
+            aObj = $("#" + node.tId + IDMark_A)
+          }
+          let monitor = `<span class="icon-monitor tree-node-icon" onfocus='this.blur();'></span>`
+          aObj.append(monitor)
+        }
+      } else {
+        if (monitorDom) {
+          monitorDom.remove()
+        }
+      }
+    } else {
+      //  只添加
+      let aObj
+      if (props.session!.keyCollectionSet!.has(node.id)) {
+        //  @ts-ignore
+        aObj = $("#" + node.tId + IDMark_A)
+        let star = `<span class="icon-star-filled tree-node-icon" onfocus='this.blur();'></span>`
+        aObj.append(star)
+      }
+
+      if (props.session!.keyMonitorMap![node.id]) {
+        if (!aObj) {
+          //  @ts-ignore
+          aObj = $("#" + node.tId + IDMark_A)
+        }
+        let monitor = `<span class="icon-monitor tree-node-icon" onfocus='this.blur();'></span>`
+        aObj.append(monitor)
       }
     }
   }

@@ -22,15 +22,21 @@ export enum EventName {
     SNAPSHOT_CREATE = 'snapshotCreate',
     CONFIRM_EXIT = 'confirm_exit',
     EDIT_KEY_MONITOR = 'editKeyMonitor',
-    KEY_MONITOR_CHANGE = 'key_monitor',
+    KEY_MONITOR_CHANGE = 'keyMonitorChange',
+    KEY_MONITOR_EVENT = 'key_monitor',
 }
 
 export type KeyMonitorEventType = "Remove" | "Create" | "LeaseChange" | "ValueChange"
 
 export interface KeyMonitorEvent {
+    session: number,
+    key: string,
     eventType: KeyMonitorEventType,
+    eventTime: number,
     previous: null | any,
     current: null | any,
+    read?: boolean,
+    id?: number
 }
 
 export function _useLocalEvents(): Emitter<Record<EventType, any>> {

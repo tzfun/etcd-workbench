@@ -6,10 +6,12 @@ use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
 use std::any::Any;
 use std::collections::HashMap;
+use std::sync::atomic::AtomicI32;
 use std::sync::Arc;
-use std::time::Duration;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use std::vec;
-use tauri::Window;
+use tauri::api::notification::Notification;
+use tauri::{Manager, Window};
 use tokio::sync::Mutex;
 use tokio::time::{interval, interval_at, Instant, MissedTickBehavior};
 
@@ -22,30 +24,58 @@ pub enum KeyMonitorEventType {
     ValueChange = 4,
 }
 
+impl KeyMonitorEventType {
+    pub fn desc(&self) -> String {
+        match self {
+            Self::Remove => String::from("removed"),
+            Self::Create => String::from("created"),
+            Self::LeaseChange => String::from("lease changed"),
+            Self::ValueChange => String::from("value changed"),
+        }
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct KeyMonitorEvent<T: Serialize + Clone> {
+    pub session: i32,
+    pub key: String,
     pub event_type: KeyMonitorEventType,
+    pub event_time: u64,
     pub previous: Option<T>,
     pub current: Option<T>,
 }
 
 impl<T: Serialize + Clone> KeyMonitorEvent<T> {
-    pub fn with(event_type: KeyMonitorEventType) -> Self {
+    pub fn with(session: i32, key: String, event_type: KeyMonitorEventType) -> Self {
         Self {
+            session,
+            key,
             event_type,
+            event_time: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_millis() as u64,
             previous: None,
             current: None,
         }
     }
 
     pub fn with_value(
+        session: i32,
+        key: String,
         event_type: KeyMonitorEventType,
         previous: T,
         current: T,
     ) -> Self {
         Self {
+            session,
+            key,
             event_type,
+            event_time: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_millis() as u64,
             previous: Some(previous),
             current: Some(current),
         }
@@ -77,9 +107,17 @@ impl MonitorTask {
         }
     }
 
-    async fn run(&mut self, connector: &mut EtcdConnector, window: &Window) {
+    async fn run(&mut self, session: i32, connector: &mut EtcdConnector, window: &Window) {
+        let config = &self.config;
+        debug!("Run monitor task: {}", config.key);
+
+        let mut options = GetOptions::new().with_limit(1);
+        if !config.monitor_value_change {
+            options = options.with_keys_only();
+        }
+
         let response = connector
-            .kv_get_request(self.config.key.clone(), None)
+            .kv_get_request(self.config.key.clone(), Some(options))
             .await;
         if let Err(ref e) = response {
             error!(
@@ -89,7 +127,6 @@ impl MonitorTask {
             return;
         }
         let response = response.unwrap();
-        let config = &self.config;
         if self.first_run {
             let exist = response.kvs().len() > 0;
             //  首次执行只存值，不判断
@@ -112,14 +149,28 @@ impl MonitorTask {
             if config.monitor_create {
                 if !self.previous_exist.unwrap_or(false) && exist {
                     debug!("Key create: {}", config.key);
-                    self.on_event(window, KeyMonitorEvent::<i32>::with(KeyMonitorEventType::Create));
+                    self.on_event(
+                        window,
+                        KeyMonitorEvent::<i32>::with(
+                            session,
+                            config.key.clone(),
+                            KeyMonitorEventType::Create,
+                        ),
+                    );
                 }
             }
 
             if config.monitor_remove {
                 if self.previous_exist.unwrap_or(false) && !exist {
                     debug!("Key removed: {}", config.key);
-                    self.on_event(window, KeyMonitorEvent::<i32>::with(KeyMonitorEventType::Remove));
+                    self.on_event(
+                        window,
+                        KeyMonitorEvent::<i32>::with(
+                            session,
+                            config.key.clone(),
+                            KeyMonitorEventType::Remove,
+                        ),
+                    );
                 }
             }
 
@@ -135,26 +186,36 @@ impl MonitorTask {
                             "Key lease changed: {}, {} -> {}",
                             config.key, previous_lease, current_lease
                         );
-                        self.on_event(window, KeyMonitorEvent::<String>::with_value(
-                            KeyMonitorEventType::LeaseChange,
-                            previous_lease.to_string(),
-                            current_lease.to_string()
-                        ));
+                        self.on_event(
+                            window,
+                            KeyMonitorEvent::<String>::with_value(
+                                session,
+                                config.key.clone(),
+                                KeyMonitorEventType::LeaseChange,
+                                previous_lease.to_string(),
+                                current_lease.to_string(),
+                            ),
+                        );
                     }
 
                     self.previous_lease = Some(current_lease);
                 }
 
                 if config.monitor_value_change {
-                    let previous_value = self.previous_value.as_ref().unwrap();
+                    let previous_value = self.previous_value.clone().unwrap_or(vec![]);
                     let current_value = kv.value().to_vec();
                     if previous_value.ne(&current_value) {
                         debug!("Key value changed: {}", config.key);
-                        self.on_event(window, KeyMonitorEvent::<Vec<u8>>::with_value(
-                            KeyMonitorEventType::ValueChange,
-                            previous_value.clone(),
-                            current_value.clone()
-                        ));
+                        self.on_event(
+                            window,
+                            KeyMonitorEvent::<Vec<u8>>::with_value(
+                                session,
+                                config.key.clone(),
+                                KeyMonitorEventType::ValueChange,
+                                previous_value,
+                                current_value.clone(),
+                            ),
+                        );
                     }
 
                     self.previous_value = Some(current_value);
@@ -176,6 +237,12 @@ impl MonitorTask {
     }
 
     fn on_event<T: Serialize + Clone>(&self, window: &Window, event: KeyMonitorEvent<T>) {
+        if !window.is_focused().unwrap() {
+            let _ = Notification::new("")
+                .title(format!("Key {}", event.event_type.desc()))
+                .body(event.key.clone())
+                .show();
+        }
         window.emit("key_monitor", event);
     }
 }
@@ -249,7 +316,7 @@ impl KeyMonitor {
                     }
                     let mut connector = connector_op.unwrap();
                     for task in tasks {
-                        task.run(&mut connector, &window).await;
+                        task.run(session_id, &mut connector, &window).await;
                     }
                 }
             }

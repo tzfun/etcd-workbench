@@ -1,5 +1,7 @@
 import {open} from '@tauri-apps/api/shell'
 import {_alertError} from "~/common/events.ts";
+import {EditorHighlightLanguage} from "~/common/types.ts";
+import {_useGlobalStore} from "~/common/store.ts";
 
 const TEXT_DECODER = new TextDecoder();
 const TEXT_ENCODER = new TextEncoder();
@@ -178,4 +180,103 @@ export function _pointInRect(point: { x: number, y: number }, rect: DOMRect) {
     const {x, y} = point;
     const dx = rect.x, dy = rect.y, width = rect.width, height = rect.height;
     return x >= dx && x <= dx + width && y >= dy && y <= dy + height;
+}
+
+export function _tryParseEditorLanguage(key: string, content: number[] | string, namespace?: string): EditorHighlightLanguage {
+    //  先从记录中读取用户选择的格式
+    let fullKey = namespace ? (namespace + key) : key
+
+    let rememberedFormat = _useGlobalStore().value.fileFormatLogMap[fullKey]
+    if (rememberedFormat) {
+        console.debug("Read remembered format", fullKey, "==>", rememberedFormat)
+        return rememberedFormat
+    } else {
+        let language = _tryParseEditorLanguageByName(key)
+        if (!language) {
+            let contentStr = typeof content == 'string' ? content : _decodeBytesToString(content)
+            language = _tryParseEditorLanguageByContent(contentStr)
+        }
+        return language
+    }
+}
+
+export function _tryParseDiffLanguage(editorLanguage: EditorHighlightLanguage): string {
+    switch (editorLanguage) {
+        case 'text':
+            return 'plaintext'
+        case 'sql':
+            return 'SQL'
+        case 'markdown':
+            return 'Markdown'
+        case 'xml':
+            return 'HTML'
+        case 'json':
+            return 'Json'
+        case 'yaml':
+            return 'YAML'
+        default:
+            return 'plaintext'
+    }
+}
+
+function _tryParseEditorLanguageByContent(content: string): EditorHighlightLanguage {
+    let lang: EditorHighlightLanguage = 'text'
+    content = content.trimStart()
+    if (content.startsWith('<')) {
+        lang = 'xml'
+    } else if (content.startsWith('{') || content.startsWith('[')) {
+        lang = 'json'
+    } else if (content.startsWith('---')) {
+        lang = 'yaml'
+    } else if (content.startsWith("--")) {
+        lang = "sql"
+    } else if (content.startsWith("#!")) {
+        lang = "shell"
+    }
+    return lang
+}
+
+function _tryParseEditorLanguageByName(fileName: string, defaultType?: EditorHighlightLanguage): EditorHighlightLanguage | undefined {
+    let dotIdx = fileName.lastIndexOf(".")
+    if (dotIdx >= 0) {
+        let type = fileName.substring(dotIdx + 1).toLowerCase()
+        switch (type) {
+            case 'json':
+                return 'json'
+            case 'sql':
+                return 'sql'
+            case 'xml':
+            case 'html':
+            case 'htm':
+                return 'xml'
+            case 'yml':
+            case 'yaml':
+                return 'yaml'
+            case 'ts':
+            case 'typescript':
+                return 'ts'
+            case 'js':
+            case 'javascript':
+                return 'js'
+            case 'md':
+            case 'markdown':
+                return 'markdown'
+            case 'ini':
+            case 'properties':
+                return 'properties'
+            case 'conf':
+            case 'nginx':
+            case 'nginxconf':
+                return 'nginx'
+            case 'dockerfile':
+            case 'docker':
+                return 'dockerfile'
+            case 'sh':
+                return 'shell'
+            default:
+                return defaultType
+        }
+    }
+
+    return defaultType
 }

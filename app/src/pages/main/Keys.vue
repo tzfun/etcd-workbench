@@ -17,6 +17,7 @@ import {
   _confirmSystem,
   _copyToClipboard,
   _emitLocal,
+  _listenLocal,
   _loading,
   _tipInfo,
   _tipSuccess,
@@ -29,7 +30,7 @@ import DragBox from "~/components/drag-area/DragBox.vue";
 import DragItem from "~/components/drag-area/DragItem.vue";
 import {KeyValue} from "~/common/transport/kv.ts";
 import Editor from "~/components/editor/Editor.vue";
-import {_decodeBytesToString, _isEmpty} from "~/common/utils.ts";
+import {_decodeBytesToString, _isEmpty, _tryParseDiffLanguage, _tryParseEditorLanguage} from "~/common/utils.ts";
 import {EditorConfig, EditorHighlightLanguage} from "~/common/types.ts";
 import {CodeDiff} from "v-code-diff";
 import {useTheme} from "vuetify";
@@ -141,6 +142,11 @@ onMounted(() => {
       })
     })
   }, 200)
+
+  _listenLocal(EventName.KEY_MONITOR_CHANGE, e => {
+    let key = e.key as string
+    kvTree.value?.refreshDiyDom(key)
+  })
 })
 
 onUnmounted(() => {
@@ -215,68 +221,6 @@ const removeKeysFromTree = (keys: string[]) => {
       currentKv.value = undefined
     }
   }
-}
-
-const tryParseFileNameToType = (fileName: string, defaultType?: EditorHighlightLanguage): EditorHighlightLanguage | undefined => {
-  let dotIdx = fileName.lastIndexOf(".")
-  if (dotIdx >= 0) {
-    let type = fileName.substring(dotIdx + 1).toLowerCase()
-    switch (type) {
-      case 'json':
-        return 'json'
-      case 'sql':
-        return 'sql'
-      case 'xml':
-      case 'html':
-      case 'htm':
-        return 'xml'
-      case 'yml':
-      case 'yaml':
-        return 'yaml'
-      case 'ts':
-      case 'typescript':
-        return 'ts'
-      case 'js':
-      case 'javascript':
-        return 'js'
-      case 'md':
-      case 'markdown':
-        return 'markdown'
-      case 'ini':
-      case 'properties':
-        return 'properties'
-      case 'conf':
-      case 'nginx':
-      case 'nginxconf':
-        return 'nginx'
-      case 'dockerfile':
-      case 'docker':
-        return 'dockerfile'
-      case 'sh':
-        return 'shell'
-      default:
-        return defaultType
-    }
-  }
-
-  return defaultType
-}
-
-const tryFileContentToType = (content: string): EditorHighlightLanguage => {
-  let lang: EditorHighlightLanguage = 'text'
-  content = content.trimStart()
-  if (content.startsWith('<')) {
-    lang = 'xml'
-  } else if (content.startsWith('{') || content.startsWith('[')) {
-    lang = 'json'
-  } else if (content.startsWith('---')) {
-    lang = 'yaml'
-  } else if (content.startsWith("--")) {
-    lang = "sql"
-  } else if (content.startsWith("#!")) {
-    lang = "shell"
-  }
-  return lang
 }
 
 const showNewKeyDialog = () => {
@@ -392,19 +336,7 @@ const showKV = (key: string): Promise<void> => {
     _getKV(props.session?.id, key).then((kv) => {
       resolve()
 
-      //  先从记录中读取用户选择的格式
-      let fullKey = props.session?.namespace ? (props.session?.namespace + kv.key) : kv.key
-      let rememberedFormat = _useGlobalStore().value.fileFormatLogMap[fullKey]
-      if (rememberedFormat) {
-        editorConfig.language = rememberedFormat
-        console.debug("Read remembered format", fullKey, "==>", rememberedFormat)
-      } else {
-        let language = tryParseFileNameToType(kv.key)
-        if (!language) {
-          language = tryFileContentToType(_decodeBytesToString(kv.value))
-        }
-        editorConfig.language = language
-      }
+      editorConfig.language = _tryParseEditorLanguage(kv.key, kv.value, props.session?.namespace)
 
       currentKv.value = kv
       currentKvChanged.value = false
@@ -575,24 +507,8 @@ const loadVersionDiff = () => {
     versionDiffInfo.B.version = versionDiffInfo.modRevision
     versionDiffInfo.B.content = _decodeBytesToString(dataB!.value)
 
-    let lang = tryParseFileNameToType(dataB.key)
-    if (!lang) {
-      lang = tryFileContentToType(versionDiffInfo.B.content)
-    }
-
-    switch (lang) {
-      case 'text':
-        versionDiffInfo.language = 'plaintext'
-        break
-      case 'sql':
-        versionDiffInfo.language = 'SQL'
-        break
-      case 'markdown':
-        versionDiffInfo.language = 'Markdown'
-        break
-      default:
-        versionDiffInfo.language = lang.substring(0, 1).toUpperCase() + lang.substring(1)
-    }
+    let lang = _tryParseEditorLanguage(dataB.key, versionDiffInfo.B.content, props.session?.namespace)
+    versionDiffInfo.language = _tryParseDiffLanguage(lang)
 
     _getKVHistoryVersions(
         props.session?.id,
@@ -844,39 +760,55 @@ const addKeyMonitor = (key: string) => {
 
           <div v-if="currentKv" class="fill-height">
             <v-layout class="editor-header">
-              <v-icon
+              <v-chip
                   v-if="session.keyCollectionSet!.has(currentKv.key)"
                   class="ml-2 mt-2"
-                  color="#ced10a"
+                  density="compact"
                   @click="removeCollectionKey(currentKv.key)"
                   title="Remove from collections"
-              >mdi-star
-              </v-icon>
-              <v-icon
-                  class="ml-2 mt-2"
+                  text="Remove"
+              >
+                <template #prepend>
+                  <v-icon color="#ced10a" class="mr-2">mdi-star</v-icon>
+                </template>
+              </v-chip>
+              <v-chip
                   v-else
-                  color="#ced10a"
+                  class="ml-2 mt-2"
+                  density="compact"
                   title="Add to collections"
                   @click="addCollectionKey(currentKv.key)"
-              >mdi-star-outline
-              </v-icon>
+                  text="Collect"
+              >
+                <template #prepend>
+                  <v-icon color="#ced10a" class="mr-2">mdi-star-outline</v-icon>
+                </template>
+              </v-chip>
 
-              <v-icon
+              <v-chip
                   v-if="session.keyMonitorMap![currentKv.key]"
                   class="ml-2 mt-2"
-                  color="primary"
+                  density="compact"
                   title="Edit monitor rule"
                   @click="editKeyMonitor(currentKv.key)"
-              >mdi-eye-check
-              </v-icon>
-              <v-icon
+                  text="Edit"
+              >
+                <template #prepend>
+                  <v-icon color="#cc8f53" class="mr-2">mdi-robot</v-icon>
+                </template>
+              </v-chip>
+              <v-chip
                   v-else
                   class="ml-2 mt-2"
-                  color="primary"
+                  density="compact"
                   title="Add to monitor list"
                   @click="addKeyMonitor(currentKv.key)"
-              >mdi-eye-plus
-              </v-icon>
+                  text="Add"
+              >
+                <template #prepend>
+                  <v-icon color="#cc8f53" class="mr-2">mdi-robot-outline</v-icon>
+                </template>
+              </v-chip>
 
               <v-spacer></v-spacer>
 
@@ -1171,7 +1103,7 @@ const addKeyMonitor = (key: string) => {
                   :tree-id="`kv-collection-tree-${new Date().getTime()}`"
                   :key-splitter="KEY_SPLITTER"
                   :session="session"
-                  :show-collection-star="false"
+                  :show-node-suffix="false"
                   :show-check-box="false"
                   show-hover-remove
                   :enable-search="false"

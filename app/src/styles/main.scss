@@ -113,7 +113,8 @@ button {
 
 .icon-star-filled,
 .icon-star,
-.icon-remove {
+.icon-remove,
+.icon-monitor {
   display: inline-block;
   width: 18px;
   height: 18px !important;
@@ -131,4 +132,8 @@ button {
 
 .icon-remove {
   background: url("/remove.png") no-repeat scroll 0 0 transparent;
+}
+
+.icon-monitor {
+  background: url("/monitor.png") no-repeat scroll 0 0 transparent;
 }

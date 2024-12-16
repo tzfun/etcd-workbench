@@ -7,11 +7,10 @@ import Users from "~/pages/main/Users.vue";
 import Roles from "~/pages/main/Roles.vue";
 import Leases from "~/pages/main/Leases.vue";
 import KeyMonitor from "~/pages/main/KeyMonitor.vue";
-import {_listenLocal, _tipWarn, EventName, KeyMonitorEvent} from "~/common/events.ts";
-import {_handleError, _removeKeyMonitor, _setKeyMonitor} from "~/common/services.ts";
+import {_emitLocal, _listenLocal, _tipWarn, EventName, KeyMonitorEvent} from "~/common/events.ts";
+import {_disconnect, _handleError, _removeKeyMonitor, _setKeyMonitor} from "~/common/services.ts";
 import {_isEmpty} from "~/common/utils.ts";
 import {appWindow} from "@tauri-apps/api/window";
-import {_updateMaximizeState} from "~/common/windows.ts";
 
 const props = defineProps({
   session: {
@@ -29,7 +28,7 @@ const visited = ref<Record<string, boolean>>({
 const keyMonitorDialog = reactive({
   show: false,
   edit: false,
-  monitor: <KeyMonitorConfig> {
+  monitor: <KeyMonitorConfig>{
     key: "",
     intervalSeconds: 5,
     monitorLeaseChange: true,
@@ -39,9 +38,14 @@ const keyMonitorDialog = reactive({
   },
 })
 
+const keyMonitorEventLog = reactive({
+  idCounter: 1,
+  unreadNum: 0,
+  logs: <KeyMonitorEvent[]>[]
+})
+
 onMounted(async () => {
   _listenLocal(EventName.EDIT_KEY_MONITOR, (e) => {
-    console.log("==>",e)
     if (e.edit) {
       keyMonitorDialog.edit = true
       keyMonitorDialog.monitor = e.monitor as KeyMonitorConfig;
@@ -58,9 +62,15 @@ onMounted(async () => {
     keyMonitorDialog.show = true
   })
 
-  eventUnListens.push(await appWindow.listen(EventName.KEY_MONITOR_CHANGE, e => {
+  eventUnListens.push(await appWindow.listen(EventName.KEY_MONITOR_EVENT, e => {
     let event = e.payload as KeyMonitorEvent
-    console.log("==>", event)
+    if (props.session!.id == event.session) {
+      event.id = keyMonitorEventLog.idCounter++
+      keyMonitorEventLog.unreadNum++
+      keyMonitorEventLog.logs.push(event)
+
+      console.log("==>", event)
+    }
   }))
 })
 
@@ -68,6 +78,8 @@ onUnmounted(() => {
   for (let eventUnListen of eventUnListens) {
     eventUnListen()
   }
+
+  _disconnect(props.session?.id)
 })
 
 onActivated(() => {
@@ -99,6 +111,12 @@ const keyMonitorConfirm = () => {
   _setKeyMonitor(props.session?.id, config).then(() => {
     props.session!.keyMonitorMap![config.key] = config
     keyMonitorDialog.show = false
+    if (!keyMonitorDialog.edit) {
+      _emitLocal(EventName.KEY_MONITOR_CHANGE, {
+        key: keyMonitorDialog.monitor.key,
+        type: 'create'
+      })
+    }
   }).catch(e => {
     _handleError({
       e,
@@ -112,12 +130,24 @@ const keyMonitorRemove = () => {
   _removeKeyMonitor(props.session?.id, key).then(() => {
     delete props.session!.keyMonitorMap![key]
     keyMonitorDialog.show = false
+    _emitLocal(EventName.KEY_MONITOR_CHANGE, {
+      key: keyMonitorDialog.monitor.key,
+      type: 'remove'
+    })
   }).catch((e) => {
     _handleError({
       e,
       session: props.session
     })
   })
+}
+
+const onReadKeyMonitorLog = (num: number) => {
+  if (num > 0) {
+    keyMonitorEventLog.unreadNum = Math.max(0, keyMonitorEventLog.unreadNum - 1)
+  } else {
+    keyMonitorEventLog.unreadNum = 0
+  }
 }
 
 </script>
@@ -171,9 +201,22 @@ const keyMonitorRemove = () => {
             <v-list-item title="Key Monitor"
                          v-bind="props"
                          value="keyMonitor"
-                         prepend-icon="mdi-file-eye"
+                         prepend-icon="mdi-robot"
                          @click="clickList('keyMonitor')"
-            ></v-list-item>
+            >
+              <template #prepend>
+                <v-badge
+                    v-if="keyMonitorEventLog.unreadNum > 0"
+                    class="text-none"
+                    color="green"
+                    :content="keyMonitorEventLog.unreadNum"
+                >
+                  <v-icon>mdi-robot</v-icon>
+                </v-badge>
+                <v-icon v-else>mdi-robot</v-icon>
+              </template>
+
+            </v-list-item>
           </template>
         </v-tooltip>
         <v-tooltip location="end center"
@@ -227,7 +270,11 @@ const keyMonitorRemove = () => {
         <Keys :session="session" v-if="visited['keys']"></Keys>
       </div>
       <div v-show="activeListItem == 'keyMonitor'" class="fill-height">
-        <KeyMonitor :session="session" v-if="visited['keyMonitor']"></KeyMonitor>
+        <KeyMonitor :session="session"
+                    v-if="visited['keyMonitor']"
+                    :events="keyMonitorEventLog.logs"
+                    @on-read="onReadKeyMonitorLog"
+        ></KeyMonitor>
       </div>
       <div v-show="activeListItem == 'leases'" class="fill-height">
         <Leases :session="session" v-if="visited['leases']"></Leases>
@@ -248,8 +295,11 @@ const keyMonitorRemove = () => {
         scrollable
     >
       <v-card title="Key Monitor"
-              prepend-icon="mdi-file-eye"
+              prepend-icon="mdi-robot"
       >
+        <template v-slot:append>
+          <v-icon class="cursor-pointer" @click="keyMonitorDialog.show = false">mdi-close</v-icon>
+        </template>
         <v-card-item>
           <v-layout class="mb-5">
             <span class="grant-form-label">Key: </span>
@@ -305,11 +355,6 @@ const keyMonitorRemove = () => {
 
         </v-card-item>
         <v-card-actions>
-          <v-btn text="Cancel"
-                 variant="text"
-                 class="text-none"
-                 @click="keyMonitorDialog.show = false"
-          ></v-btn>
           <v-btn text="Remove Monitor"
                  v-if="keyMonitorDialog.edit"
                  variant="flat"
