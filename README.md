@@ -50,7 +50,7 @@ Please go to [website](https://tzfun.github.io/etcd-workbench/) to download the 
 
 Web supports **jar** package deployment and **Docker** deployment, manages etcd server in the browser, and supports multiple account logins.
 
-The Web version has been marked as **archived** and will not be maintained. For the usage documentation of the Web version, please go to: [etcd-workbench-web](https://github.com/tzfun/etcd-workbench-web/) repository.
+> The Web version has been marked as **archived** and will not be maintained. For the usage documentation of the Web version, please go to: [etcd-workbench-web](https://github.com/tzfun/etcd-workbench-web/) repository.
 
 # Screenshot
 
