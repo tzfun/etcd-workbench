@@ -241,7 +241,7 @@ impl MonitorTask {
 
     fn on_event<T: Serialize + Clone>(&self, window: &Window, event: KeyMonitorEvent<T>) {
         if !window.is_focused().unwrap() {
-            let _ = Notification::new("")
+            let _ = Notification::new("com.beifengtz.etcdworkbench")
                 .title(format!("Key {}", event.event_type.desc()))
                 .body(event.key.clone())
                 .show();
