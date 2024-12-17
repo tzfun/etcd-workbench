@@ -143,7 +143,7 @@ onMounted(() => {
     })
   }, 200)
 
-  _listenLocal(EventName.KEY_MONITOR_CHANGE, e => {
+  _listenLocal(EventName.KEY_MONITOR_CONFIG_CHANGE, e => {
     let key = e.key as string
     kvTree.value?.refreshDiyDom(key)
   })

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import {computed, PropType, reactive} from "vue";
+import {computed, onMounted, PropType, reactive, ref} from "vue";
 import {SessionData} from "~/common/transport/connection.ts";
-import {_confirmSystem, KeyMonitorEvent} from "~/common/events.ts";
+import {_confirmSystem, _emitLocal, _listenLocal, EventName, KeyMonitorEvent} from "~/common/events.ts";
 import {
   _decodeBytesToString,
   _isEmpty,
@@ -11,6 +11,9 @@ import {
 } from "~/common/utils.ts";
 import {CodeDiff} from "v-code-diff";
 import {useTheme} from "vuetify";
+import Tree from "~/components/tree/Tree.vue";
+import {_useSettings} from "~/common/store.ts";
+import {_handleError, _removeKeyMonitor} from "~/common/services.ts";
 
 const theme = useTheme()
 
@@ -21,8 +24,13 @@ const valueDiffDialog = reactive({
   afterValue: <string>"",
   language: <string>""
 })
+const monitorTreeDialog = ref(false)
+const kvMonitorTree = ref<InstanceType<typeof Tree>>()
 const isDarkTheme = computed<boolean>(() => {
   return theme.global.name.value === 'dark'
+})
+const KEY_SPLITTER = computed<string>(() => {
+  return _useSettings().value.kvPathSplitter
 })
 
 const emits = defineEmits(['on-read'])
@@ -35,6 +43,17 @@ const props = defineProps({
     type: Array<KeyMonitorEvent>,
     required: true,
   }
+})
+
+onMounted(() => {
+  _listenLocal(EventName.KEY_MONITOR_CONFIG_CHANGE, e => {
+    let key = e.key as string
+    if (e.type == 'create') {
+      kvMonitorTree.value?.addItemToTree(key)
+    } else if (e.type == 'remove') {
+      kvMonitorTree.value?.removeItemFromTree(key)
+    }
+  })
 })
 
 const markAllRead = () => {
@@ -66,12 +85,34 @@ const clearHistory = () => {
   _confirmSystem("Are you sure you want to clear all history?").then(() => {
     let len = props.events?.length
     if (len > 0) {
-      props.events?.slice(0, len)
+      props.events?.splice(0, len)
     }
     markAllRead()
   }).catch(() => {
   })
 }
+
+const removeMonitor = (key: string) => {
+  _removeKeyMonitor(props.session?.id, key).then(() => {
+    delete props.session!.keyMonitorMap![key]
+    _emitLocal(EventName.KEY_MONITOR_CONFIG_CHANGE, {
+      key: key,
+      type: 'remove'
+    })
+  }).catch((e) => {
+    _handleError({
+      e,
+      session: props.session
+    })
+  })
+}
+
+const addMonitor = () => {
+  _emitLocal(EventName.EDIT_KEY_MONITOR, {
+    edit: false
+  })
+}
+
 </script>
 
 <template>
@@ -79,15 +120,23 @@ const clearHistory = () => {
     <div>
       <v-btn class="text-none"
              prepend-icon="mdi-checkbox-marked-circle-auto-outline"
+             :disabled="events.length == 0"
              @click="markAllRead"
              color="primary"
       >Mark All Read
       </v-btn>
       <v-btn class="text-none ml-2"
              prepend-icon="mdi-delete-circle-outline"
+             :disabled="events.length == 0"
              @click="clearHistory"
              color="red"
       >Clear History
+      </v-btn>
+      <v-btn class="text-none ml-2"
+             prepend-icon="mdi-robot"
+             @click="monitorTreeDialog = true"
+             color="#cc8f53"
+      >My Monitors
       </v-btn>
     </div>
     <div>
@@ -154,6 +203,52 @@ const clearHistory = () => {
               :language="valueDiffDialog.language"
               output-format="side-by-side"/>
         </v-card-text>
+      </v-card>
+    </v-dialog>
+
+    <!--   key monitor-->
+    <v-dialog
+        v-model="monitorTreeDialog"
+        eager
+        transition="slide-x-reverse-transition"
+        scrollable
+        class="collection-drawer"
+        contained
+    >
+
+      <v-card
+          :rounded="false"
+          title="My Monitors"
+      >
+        <template #prepend>
+          <v-icon color="#cc8f53">mdi-robot</v-icon>
+        </template>
+        <template #append>
+          <v-btn @click="addMonitor"
+                 color="primary"
+                 text="Add"
+                 density="comfortable"
+                 class="text-none"
+                 prepend-icon="mdi-plus"
+          ></v-btn>
+        </template>
+        <v-card-item style="height: calc(100% - 64px);">
+          <div style="height: 100%;overflow: auto;">
+            <Tree ref="kvMonitorTree"
+                  :tree-id="`kv-collection-tree-${new Date().getTime()}`"
+                  :key-splitter="KEY_SPLITTER"
+                  :session="session"
+                  :show-node-suffix="false"
+                  :show-check-box="false"
+                  show-hover-remove
+                  :enable-search="false"
+                  :enable-select="false"
+                  style="width: max-content;"
+                  :init-items="Object.keys(session.keyMonitorMap!)"
+                  @on-click-remove="removeMonitor"
+            ></Tree>
+          </div>
+        </v-card-item>
       </v-card>
     </v-dialog>
   </div>

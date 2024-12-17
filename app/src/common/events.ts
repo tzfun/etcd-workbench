@@ -22,7 +22,7 @@ export enum EventName {
     SNAPSHOT_CREATE = 'snapshotCreate',
     CONFIRM_EXIT = 'confirm_exit',
     EDIT_KEY_MONITOR = 'editKeyMonitor',
-    KEY_MONITOR_CHANGE = 'keyMonitorChange',
+    KEY_MONITOR_CONFIG_CHANGE = 'keyMonitorChange',
     KEY_MONITOR_EVENT = 'key_monitor',
 }
 

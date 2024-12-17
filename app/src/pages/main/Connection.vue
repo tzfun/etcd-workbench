@@ -51,7 +51,7 @@ onMounted(async () => {
       keyMonitorDialog.monitor = e.monitor as KeyMonitorConfig;
     } else {
       keyMonitorDialog.edit = false
-      keyMonitorDialog.monitor.key = e.key as string
+      keyMonitorDialog.monitor.key = e.key ? (e.key as string) : ''
       keyMonitorDialog.monitor.intervalSeconds = 5
       keyMonitorDialog.monitor.monitorLeaseChange = true
       keyMonitorDialog.monitor.monitorValueChange = true
@@ -112,9 +112,10 @@ const keyMonitorConfirm = () => {
     props.session!.keyMonitorMap![config.key] = config
     keyMonitorDialog.show = false
     if (!keyMonitorDialog.edit) {
-      _emitLocal(EventName.KEY_MONITOR_CHANGE, {
+      _emitLocal(EventName.KEY_MONITOR_CONFIG_CHANGE, {
         key: keyMonitorDialog.monitor.key,
-        type: 'create'
+        type: 'create',
+        config
       })
     }
   }).catch(e => {
@@ -130,7 +131,7 @@ const keyMonitorRemove = () => {
   _removeKeyMonitor(props.session?.id, key).then(() => {
     delete props.session!.keyMonitorMap![key]
     keyMonitorDialog.show = false
-    _emitLocal(EventName.KEY_MONITOR_CHANGE, {
+    _emitLocal(EventName.KEY_MONITOR_CONFIG_CHANGE, {
       key: keyMonitorDialog.monitor.key,
       type: 'remove'
     })
@@ -301,7 +302,13 @@ const onReadKeyMonitorLog = (num: number) => {
           <v-icon class="cursor-pointer" @click="keyMonitorDialog.show = false">mdi-close</v-icon>
         </template>
         <v-card-item>
-          <v-layout class="mb-5">
+          <v-alert
+              density="compact"
+              text="The monitor is bound to the connection, and it will stop running when the connection session is closed. The shorter the monitor interval, the more computer resources will be consumed."
+              title="Notice"
+              type="warning"
+          ></v-alert>
+          <v-layout class="mb-5 mt-5">
             <span class="grant-form-label">Key: </span>
             <v-text-field v-model="keyMonitorDialog.monitor.key"
                           type="text"
@@ -352,7 +359,6 @@ const onReadKeyMonitorLog = (num: number) => {
                           max-width="200px"
             ></v-text-field>
           </v-layout>
-
         </v-card-item>
         <v-card-actions>
           <v-btn text="Remove Monitor"
