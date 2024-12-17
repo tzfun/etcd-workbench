@@ -8,7 +8,7 @@
       "url": "https://github.com/tzfun/etcd-workbench/releases/download/App-1.1.0/etcd-workbench-1.1.0-macos-x86_64.app.tar.gz"
     },
     "darwin-aarch64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K0VkY2h5dDVISE1lN0lGRitaakJPeWhzSnVmdkRVL01jeTN2d1ZGbFJOSmpXaTUwZzRDK3RmdWplTG1HZitwcnhqclJNYjQwM2pjcEdiQlk2aVVRcVFFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzM0NDM3ODM0CWZpbGU6RXRjZCBXb3JrYmVuY2guYXBwLnRhci5negpuZjYvLzVXVTc0RjBnTmNpNWZvVE5KQjdGV2cyYitlRFFDbDdPVjNyS0NNSDhMQ0dsUkp4a2liYURRUExwU1cwaDVRWTFPaWVTUE5jbWtlZ1d2SzdDZz09Cg==",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K0t6aDNxYm9uR0NlZ0RtM3ZncTdLWUNlNE1JUXVlYmdsdS92T1Q4T0c1SWNCRmQ4QUMrZE4xZlR6S0o3ZjdkalhZNFFZTWswSlFiZDlSZllTOExMeEFzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzM0NDQ5NzE1CWZpbGU6RXRjZCBXb3JrYmVuY2guYXBwLnRhci5negozd0V1Y0lKQXFWL3VTT0lTQXphcGg2QVNYdk1qNGpGMHVMZ250bDFFYUZGMEtMYW1Rc0txMlp6aWIvdWg5TjlaakcrOTBPS1RIM0VmeFlzUFJLbVlBdz09Cg==",
       "url": "https://github.com/tzfun/etcd-workbench/releases/download/App-1.1.0/etcd-workbench-1.1.0-macos-aarch64.app.tar.gz"
     },
     "windows-x86_64": {
