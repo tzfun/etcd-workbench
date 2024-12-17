@@ -170,3 +170,37 @@ def build_web(bin_name, skip_merge_jar = False):
         shutil.rmtree(to_dir)
 
     shutil.copytree(os.path.join(root_path, 'server/build/libs'), to_dir)
+
+
+def build_docs():
+    print("Building docs...")
+    os.chdir('../')
+    root_path = os.getcwd()
+
+    os.chdir('doc-source')
+    doc_src_path = os.getcwd()
+
+    # execute("nvm use 22")
+    execute("pnpm install")
+    execute("pnpm run docs:build")
+
+    dist_path = os.path.join(doc_src_path, 'docs', '.vitepress', 'dist')
+
+    os.chdir('../docs')
+    docs_path = os.getcwd()
+    for file in os.listdir(docs_path):
+        if file!='etcd-workbench-update.json':
+            path = os.path.join(docs_path, file)
+            if os.path.isfile(path):
+                os.unlink(path)
+            else:
+                shutil.rmtree(path)
+    
+    for file in os.listdir(dist_path):
+        path = os.path.join(dist_path, file)
+        if os.path.isfile(path):
+            shutil.copy(path, docs_path)
+        else: 
+            shutil.copytree(path, os.path.join(docs_path, file))
+    
+    print("Copied files")
