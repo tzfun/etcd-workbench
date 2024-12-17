@@ -16,7 +16,6 @@ import {_emitLocal, _loading, _tipSuccess, _tipWarn, EventName} from "~/common/e
 import {VForm} from "vuetify/components";
 import EtcdLogo from "~/components/EtcdLogo.vue";
 import {trackEvent} from "~/common/analytics.ts";
-import { off } from "process";
 
 const emits = defineEmits(['on-save'])
 const props = defineProps({
