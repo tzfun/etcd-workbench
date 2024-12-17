@@ -5,7 +5,7 @@ import SingleFileSelector from "~/components/SingleFileSelector.vue";
 import {
   Connection,
   ConnectionInfo,
-  ErrorPayload,
+  ErrorPayload, HashAlgorithm,
   KeyMonitorConfig,
   SessionData,
   SshIdentity
@@ -16,6 +16,7 @@ import {_emitLocal, _loading, _tipSuccess, _tipWarn, EventName} from "~/common/e
 import {VForm} from "vuetify/components";
 import EtcdLogo from "~/components/EtcdLogo.vue";
 import {trackEvent} from "~/common/analytics.ts";
+import { off } from "process";
 
 const emits = defineEmits(['on-save'])
 const props = defineProps({
@@ -200,6 +201,7 @@ watch(() => props.modelValue, (info: ConnectionInfo) => {
         if (identity.password) {
           form.ssh.identity.model = 'password'
           form.ssh.identity.password = identity.password
+
         } else if (identity.key) {
           form.ssh.identity.model = 'key'
           form.ssh.identity.key.key.content = _decodeBytesToString(identity.key.key)
@@ -207,6 +209,12 @@ watch(() => props.modelValue, (info: ConnectionInfo) => {
           let passphrase = identity.key.passphrase
           if (passphrase) {
             form.ssh.identity.key.passphrase = passphrase
+          }
+          let hashAlgorithm = identity.key.hashAlgorithm
+          if (_isEmpty(hashAlgorithm)) {
+            form.ssh.identity.key.hashAlgorithm = ""
+          } else {
+            form.ssh.identity.key.hashAlgorithm = hashAlgorithm
           }
         }
       } else {
@@ -269,7 +277,8 @@ const checkForm = async (): Promise<Connection> => {
         case "key":
           let identity: SshIdentity = {
             key: {
-              key: _encodeStringToBytes(sshForm.identity.key.key.content)
+              key: _encodeStringToBytes(sshForm.identity.key.key.content),
+              hashAlgorithm: _isEmpty(sshForm.identity.key.hashAlgorithm) ? undefined : sshForm.identity.key.hashAlgorithm as HashAlgorithm
             }
           }
 
@@ -640,6 +649,29 @@ const saveConnection = () => {
                                           :max-size="128*1024"
                                           prompt-text="Supported private key formats: Openssh, RSA, PKCS8, PKCS8 Encrypted. Less than 128KB."
                       ></SingleFileSelector>
+
+                      <div  class="mt-10 mb-3">
+                        <p>Hash algorithm for RSA key</p>
+                        <v-radio-group v-model="formData.ssh.identity.key.hashAlgorithm"
+                                       inline
+                        >
+                          <v-radio
+                              class="ml-0"
+                              label="Sha256"
+                              value="sha256"
+                          ></v-radio>
+                          <v-radio
+                              class="ml-2"
+                              label="Sha512"
+                              value="sha512"
+                          ></v-radio>
+                          <v-radio
+                              class="ml-2"
+                              label="Other"
+                              value=""
+                          ></v-radio>
+                        </v-radio-group>
+                      </div>
 
                       <v-text-field
                           v-model="formData.ssh.identity.key.passphrase"

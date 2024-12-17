@@ -24,6 +24,7 @@ static CONNECTION_ID_COUNTER: AtomicI32 = AtomicI32::new(1);
 
 lazy_static! {
     static ref CONNECTION_POOL:DashMap<i32, EtcdConnector> = DashMap::with_capacity(2);
+    static ref CONNECTION_CONFIG:DashMap<i32, Connection> = DashMap::with_capacity(2);
     static ref CONNECTION_INFO_POOL: DashMap<i32, ConnectionInfo> = DashMap::new();
     static ref CONNECTION_KEY_MONITORS: DashMap<i32, Arc<Mutex<KeyMonitor>>> = DashMap::new();
 }
@@ -58,8 +59,8 @@ pub async fn new_connector(name: String, connection: Connection, window: Window)
     let connector_id = gen_connection_id();
     CONNECTION_POOL.insert(connector_id, connector);
 
-    let mut key_monitor_connector = EtcdConnector::new(connection.clone()).await?;
-    let mut key_monitor = KeyMonitor::new(connector_id, key_monitor_connector, window);
+    CONNECTION_CONFIG.insert(connector_id, connection);
+
 
     let info_result = connection::get_connection(name).await?;
     
@@ -74,6 +75,7 @@ pub async fn new_connector(name: String, connection: Connection, window: Window)
         CONNECTION_INFO_POOL.insert(connector_id, info);
     }
 
+    let mut key_monitor = KeyMonitor::new(connector_id, window);
     let mut has_key_monitor = false;
     if let Some(monitor_list) = &key_monitor_list {
         for config in monitor_list {
@@ -108,6 +110,10 @@ pub fn get_connector_optional(id: &i32) -> Option<RefMut<'_, i32, EtcdConnector>
     CONNECTION_POOL.get_mut(id)
 }
 
+pub fn get_connection_config(id: &i32) -> Option<Ref<'_, i32, Connection>> {
+    CONNECTION_CONFIG.get(id)
+}
+
 pub fn get_connection_info_optional(id: &i32) -> Option<RefMut<'_, i32, ConnectionInfo>> {
     CONNECTION_INFO_POOL.get_mut(id)
 }
@@ -120,6 +126,8 @@ pub async fn remove_connector(id: &i32) {
     if let Some((_, connector)) = CONNECTION_POOL.remove(id) {
         drop(connector)
     }
+
+    CONNECTION_CONFIG.remove(id);
 
     if let Some((_, info)) = CONNECTION_INFO_POOL.remove(id) {
         drop(info)

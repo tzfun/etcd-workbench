@@ -103,7 +103,7 @@ const keyMonitorConfirm = () => {
     return
   }
 
-  if (config.intervalSeconds <= 0) {
+  if (config.intervalSeconds < 1) {
     _tipWarn("Invalid interval")
     return;
   }

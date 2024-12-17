@@ -10,7 +10,6 @@ pub type TlsCertificate = Vec<u8>;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TlsIdentity {
-
     pub cert: TlsCertificate,
     pub key: Vec<u8>,
 }
@@ -23,9 +22,13 @@ pub struct ConnectionTls {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all="camelCase")]
 pub struct SshPrivateKey {
     pub key: Vec<u8>,
     pub passphrase: Option<String>,
+    /// ssh_key::algorithm::HashAlg
+    #[serde(default = "default_private_key_hash_alg")]
+    pub hash_algorithm: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -100,6 +103,10 @@ impl KeyMonitorConfig {
         self.monitor_create = other.monitor_create;
         self.monitor_remove = other.monitor_remove;
     }
+}
+
+fn default_private_key_hash_alg() -> Option<String> {
+    None
 }
 
 fn default_key_collection() -> Vec<String> {

@@ -1,4 +1,4 @@
-import {ErrorPayload, SessionData} from "~/common/transport/connection.ts";
+import {ErrorPayload, HashAlgorithm, SessionData} from "~/common/transport/connection.ts";
 
 export type EditorHighlightLanguage = EditorSupportedHighlightLanguage | EditorNotSupportedHighlightLanguage
 
@@ -87,7 +87,8 @@ export type ConnectionTlsForm = {
 
 export type ConnectionSshKey = {
     key: FileForm,
-    passphrase: string
+    passphrase: string,
+    hashAlgorithm?: HashAlgorithm | ""
 }
 
 export type ConnectionSshIdentity = {
@@ -144,9 +145,10 @@ export const DefaultConnection: ConnectionForm = {
             key: {
                 key: {
                     file: undefined,
-                    content: undefined
+                    content: undefined,
                 },
-                passphrase: ''
+                passphrase: '',
+                hashAlgorithm: ''
             }
         }
     }

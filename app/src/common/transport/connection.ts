@@ -14,9 +14,12 @@ export interface ConnectionTls {
     identity?: TlsIdentity
 }
 
+export type HashAlgorithm = "sha256" | "sha512"
+
 export interface SshPrivateKey {
     key: number[],
-    passphrase?: string
+    passphrase?: string,
+    hashAlgorithm?: HashAlgorithm
 }
 
 export interface SshIdentity {

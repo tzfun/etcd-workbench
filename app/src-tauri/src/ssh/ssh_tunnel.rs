@@ -5,8 +5,8 @@ use std::time::Duration;
 use log::{debug, error, info, warn};
 use russh::client;
 use russh::client::Handle;
-use russh::keys::decode_secret_key;
 use russh::keys::key::PrivateKeyWithHashAlg;
+use russh::keys::{decode_secret_key, HashAlg};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::{oneshot, watch};
 use tokio::time::timeout;
@@ -24,7 +24,7 @@ pub struct SshTunnel {
 
 impl SshTunnel {
     pub async fn new(
-        remote: ConnectionSsh,
+        ssh_config: ConnectionSsh,
         forward_host: &'static str,
         forward_port: u16,
     ) -> Result<Self, LogicError> {
@@ -36,9 +36,12 @@ impl SshTunnel {
         };
         let config = Arc::new(config);
 
-        let ssh_simple_info = format!("{}@{}:{}", remote.user, remote.host, remote.port);
+        let ssh_simple_info = format!(
+            "{}@{}:{}",
+            ssh_config.user, ssh_config.host, ssh_config.port
+        );
         let client = SshClient::new(ssh_simple_info.clone());
-        let addr = format!("{}:{}", remote.host, remote.port);
+        let addr = format!("{}:{}", ssh_config.host, ssh_config.port);
 
         let settings = get_settings().await?;
 
@@ -51,21 +54,23 @@ impl SshTunnel {
 
         let mut session = client::connect_stream(config, stream, client).await?;
 
-        if let Some(identity) = remote.identity {
+        if let Some(identity) = ssh_config.identity {
             if let Some(key) = identity.key {
                 let passphrase = if let Some(ref p) = key.passphrase {
                     Some(p.as_str())
                 } else {
                     None
                 };
+                let hash_alg = key
+                    .hash_algorithm
+                    .clone()
+                    .map(|s| HashAlg::new(s.as_str()).unwrap());
+
                 match decode_secret_key(String::from_utf8(key.key)?.as_str(), passphrase) {
                     Ok(key_pair) => {
-                        let private_key = PrivateKeyWithHashAlg::new(Arc::new(key_pair), None)?;
+                        let private_key = PrivateKeyWithHashAlg::new(Arc::new(key_pair), hash_alg)?;
                         let res = session
-                            .authenticate_publickey(
-                                remote.user,
-                                private_key,
-                            )
+                            .authenticate_publickey(ssh_config.user, private_key)
                             .await?;
                         if !res {
                             return Err(LogicError::IoError(Error::new(
@@ -83,7 +88,9 @@ impl SshTunnel {
                     }
                 }
             } else if let Some(password) = identity.password {
-                let res = session.authenticate_password(remote.user, password).await?;
+                let res = session
+                    .authenticate_password(ssh_config.user, password)
+                    .await?;
                 if !res {
                     return Err(LogicError::IoError(Error::new(
                         ErrorKind::ConnectionAborted,

@@ -21,6 +21,10 @@ html, body, #app {
   top: 28px;
 }
 
+.v-overlay-container .v-overlay__content {
+  max-height: 90%;
+}
+
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;

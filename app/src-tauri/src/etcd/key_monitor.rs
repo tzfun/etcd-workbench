@@ -15,6 +15,8 @@ use tauri::{Manager, Window};
 use tokio::sync::Mutex;
 use tokio::time::{interval, interval_at, Instant, MissedTickBehavior};
 
+use super::get_connection_config;
+
 #[repr(i8)]
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum KeyMonitorEventType {
@@ -250,7 +252,7 @@ impl MonitorTask {
 
 pub struct KeyMonitor {
     session_id: i32,
-    etcd_connector: EtcdConnector,
+    etcd_connector: Option<EtcdConnector>,
     config_map: HashMap<String, MonitorTask>,
     running: bool,
     window: Window,
@@ -263,10 +265,10 @@ impl Drop for KeyMonitor {
 }
 
 impl KeyMonitor {
-    pub fn new(session_id: i32, etcd_connector: EtcdConnector, window: Window) -> Self {
+    pub fn new(session_id: i32, window: Window) -> Self {
         Self {
             session_id,
-            etcd_connector,
+            etcd_connector: None,
             config_map: HashMap::new(),
             running: false,
             window,
@@ -313,9 +315,18 @@ impl KeyMonitor {
                 if !dirty_tasks.is_empty() {
                     let session_id = monitor.session_id;
                     let window = monitor.window.clone();
+
+                    let connector = monitor.init_connector().await;
+                    if connector.is_none() {
+                        info!("Unable to initialize etcd connection, terminating monitor: {}", monitor.session_id);
+                        monitor.running = false;
+                        break;
+                    }
+
+                    let connector = connector.unwrap();
                     
                     for task in dirty_tasks.iter_mut() {
-                        task.run(session_id, &mut monitor.etcd_connector, &window).await;
+                        task.run(session_id, connector, &window).await;
                     }
 
                     for task in dirty_tasks {
@@ -362,4 +373,28 @@ impl KeyMonitor {
         self.config_map
             .insert((&config.key).clone(), MonitorTask::new(config));
     }
-}
+
+    async fn init_connector(&mut self) -> Option<&mut EtcdConnector> {
+        let not_init = self.etcd_connector.is_none();
+        if not_init {
+            let session_id = self.session_id;
+            let config = get_connection_config(&session_id);
+            if let Some(connection) = config {
+                let result = EtcdConnector::new(connection.value().clone()).await;
+                match result {
+                    Ok(connector) => {
+                        self.etcd_connector = Some(connector);
+                    },
+                    Err(e) => {
+                        error!("Failed to init connector: {:?}", e);
+                        return None
+                    }
+                }
+            } else {
+                return None
+            }
+        }
+
+        return self.etcd_connector.as_mut()
+    }
+ }
