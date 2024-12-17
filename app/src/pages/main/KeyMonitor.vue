@@ -139,40 +139,42 @@ const addMonitor = () => {
       >My Monitors
       </v-btn>
     </div>
-    <div>
-      <v-list class="my-5 pa-0"
+    <div style="height: calc(100% - 56px); overflow-y: auto;" class="mt-5">
+      <v-list class="pa-0 overflow-hidden"
               :selectable="false"
               lines="two"
               v-if="events.length > 0"
       >
-        <v-list-item
-            v-for="e in events"
-            :key="e.id"
-            :title="e.key"
-            :subtitle="_timeFormat(e.eventTime)"
-            @click="read(e)"
-            density="comfortable"
-            :variant="e.read ? 'plain' : 'tonal'"
-        >
-          <template #prepend>
-            <v-icon v-if="e.eventType == 'Create'">mdi-folder-plus-outline</v-icon>
-            <v-icon v-else-if="e.eventType == 'Remove'">mdi-folder-remove-outline</v-icon>
-            <v-icon v-else-if="e.eventType == 'LeaseChange'">mdi-clock-time-nine</v-icon>
-            <v-icon v-else-if="e.eventType == 'ValueChange'">mdi-content-save-all-outline</v-icon>
-          </template>
+        <transition-group name="event-list">
+          <v-list-item
+              v-for="e in events"
+              :key="e.id"
+              :title="e.key"
+              :subtitle="_timeFormat(e.eventTime)"
+              @click="read(e)"
+              density="comfortable"
+              :variant="e.read ? 'plain' : 'tonal'"
+          >
+            <template #prepend>
+              <v-icon v-if="e.eventType == 'Create'">mdi-folder-plus-outline</v-icon>
+              <v-icon v-else-if="e.eventType == 'Remove'">mdi-folder-remove-outline</v-icon>
+              <v-icon v-else-if="e.eventType == 'LeaseChange'">mdi-clock-time-nine</v-icon>
+              <v-icon v-else-if="e.eventType == 'ValueChange'">mdi-content-save-all-outline</v-icon>
+            </template>
 
-          <template #append>
-            <span v-if="e.eventType == 'Create'" class="text-medium-emphasis">Created</span>
-            <span v-else-if="e.eventType == 'Remove'" class="text-medium-emphasis">Removed</span>
-            <span v-else-if="e.eventType == 'LeaseChange'" class="text-medium-emphasis">Lease Changed</span>
-            <span v-else-if="e.eventType == 'ValueChange'" class="text-medium-emphasis">Value Changed</span>
-          </template>
-        </v-list-item>
+            <template #append>
+              <span v-if="e.eventType == 'Create'" class="text-medium-emphasis">Created</span>
+              <span v-else-if="e.eventType == 'Remove'" class="text-medium-emphasis">Removed</span>
+              <span v-else-if="e.eventType == 'LeaseChange'" class="text-medium-emphasis">Lease Changed</span>
+              <span v-else-if="e.eventType == 'ValueChange'" class="text-medium-emphasis">Value Changed</span>
+            </template>
+          </v-list-item>
+        </transition-group>
       </v-list>
 
       <v-empty-state v-else
                      icon="mdi-package-variant"
-                     headline="No Monitor Event"
+                     headline="No Notification"
                      class="user-select-none"
       ></v-empty-state>
     </div>
@@ -255,5 +257,13 @@ const addMonitor = () => {
 </template>
 
 <style scoped lang="scss">
-
+.event-list-enter-active,
+.event-list-leave-active {
+  transition: all 0.5s ease;
+}
+.event-list-enter-from,
+.event-list-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
+}
 </style>

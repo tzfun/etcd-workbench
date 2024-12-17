@@ -29,10 +29,10 @@ pub enum KeyMonitorEventType {
 impl KeyMonitorEventType {
     pub fn desc(&self) -> String {
         match self {
-            Self::Remove => String::from("removed"),
-            Self::Create => String::from("created"),
-            Self::LeaseChange => String::from("lease changed"),
-            Self::ValueChange => String::from("value changed"),
+            Self::Remove => String::from("The key is removed"),
+            Self::Create => String::from("The key is created"),
+            Self::LeaseChange => String::from("The lease of key has changed"),
+            Self::ValueChange => String::from("The value of key has changed"),
         }
     }
 }
@@ -182,47 +182,52 @@ impl MonitorTask {
             if exist {
                 let kv = &response.kvs()[0];
                 if config.monitor_lease_change {
-                    let previous_lease = self.previous_lease.unwrap_or(0);
-                    let current_lease = kv.lease();
-                    if previous_lease != current_lease {
-                        debug!(
-                            "Key lease changed: {}, {} -> {}",
-                            config.key, previous_lease, current_lease
-                        );
-                        self.on_event(
-                            window,
-                            KeyMonitorEvent::<String>::with_value(
-                                session,
-                                config.key.clone(),
-                                KeyMonitorEventType::LeaseChange,
-                                previous_lease.to_string(),
-                                current_lease.to_string(),
-                            ),
-                        );
+                    if let Some(previous_lease) = self.previous_lease {
+                        let current_lease = kv.lease();
+                        if previous_lease != current_lease {
+                            debug!(
+                                "Key lease changed: {}, {} -> {}",
+                                config.key, previous_lease, current_lease
+                            );
+                            self.on_event(
+                                window,
+                                KeyMonitorEvent::<String>::with_value(
+                                    session,
+                                    config.key.clone(),
+                                    KeyMonitorEventType::LeaseChange,
+                                    previous_lease.to_string(),
+                                    current_lease.to_string(),
+                                ),
+                            );
+                        }
                     }
 
-                    self.previous_lease = Some(current_lease);
+                    self.previous_lease = Some(kv.lease());
                 }
 
                 if config.monitor_value_change {
-                    let previous_value = self.previous_value.clone().unwrap_or(vec![]);
-                    let current_value = kv.value().to_vec();
-                    if previous_value.ne(&current_value) {
-                        debug!("Key value changed: {}", config.key);
-                        self.on_event(
-                            window,
-                            KeyMonitorEvent::<Vec<u8>>::with_value(
-                                session,
-                                config.key.clone(),
-                                KeyMonitorEventType::ValueChange,
-                                previous_value,
-                                current_value.clone(),
-                            ),
-                        );
+                    if let Some(previous_value) = self.previous_value.clone() {
+                        let current_value = kv.value().to_vec();
+                        if previous_value.ne(&current_value) {
+                            debug!("Key value changed: {}", config.key);
+                            self.on_event(
+                                window,
+                                KeyMonitorEvent::<Vec<u8>>::with_value(
+                                    session,
+                                    config.key.clone(),
+                                    KeyMonitorEventType::ValueChange,
+                                    previous_value,
+                                    current_value.clone(),
+                                ),
+                            );
+                        }
                     }
 
-                    self.previous_value = Some(current_value);
+                    self.previous_value = Some(kv.value().to_vec());
                 }
+            } else {
+                self.previous_value = None;
+                self.previous_lease = None;
             }
         }
 
@@ -242,7 +247,7 @@ impl MonitorTask {
     fn on_event<T: Serialize + Clone>(&self, window: &Window, event: KeyMonitorEvent<T>) {
         if !window.is_focused().unwrap() {
             let _ = Notification::new("com.beifengtz.etcdworkbench")
-                .title(format!("Key {}", event.event_type.desc()))
+                .title(event.event_type.desc())
                 .body(event.key.clone())
                 .show();
         }

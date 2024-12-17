@@ -67,7 +67,7 @@ onMounted(async () => {
     if (props.session!.id == event.session) {
       event.id = keyMonitorEventLog.idCounter++
       keyMonitorEventLog.unreadNum++
-      keyMonitorEventLog.logs.push(event)
+      keyMonitorEventLog.logs.unshift(event)
 
       console.log("==>", event)
     }
@@ -292,21 +292,23 @@ const onReadKeyMonitorLog = (num: number) => {
     <v-dialog
         v-model="keyMonitorDialog.show"
         persistent
-        width="800px"
+        width="80%"
+        max-width="900px"
         scrollable
     >
       <v-card title="Key Monitor"
               prepend-icon="mdi-robot"
       >
+        <template #prepend>
+          <v-icon color="#cc8f53">mdi-robot</v-icon>
+        </template>
         <template v-slot:append>
           <v-icon class="cursor-pointer" @click="keyMonitorDialog.show = false">mdi-close</v-icon>
         </template>
         <v-card-item>
           <v-alert
               density="compact"
-              text="The monitor is bound to the connection, and it will stop running when the connection session is closed. The shorter the monitor interval, the more computer resources will be consumed."
-              title="Notice"
-              type="warning"
+              text="The monitor is bound to the connection, and it will stop running when the connection session is closed."
           ></v-alert>
           <v-layout class="mb-5 mt-5">
             <span class="grant-form-label">Key: </span>
@@ -358,6 +360,21 @@ const onReadKeyMonitorLog = (num: number) => {
                           suffix="S"
                           max-width="200px"
             ></v-text-field>
+
+            <v-tooltip location="end center"
+                       origin="start center"
+                       no-click-animation>
+              <template #default>
+                <p>Periodically query the key information from the etcd server.</p>
+                <p>The shorter the monitoring interval, the more computer resources are consumed and the higher the accuracy.</p>
+              </template>
+              <template v-slot:activator="{ props }">
+                <v-icon v-bind="props"
+                        class="ma-3 cursor-pointer"
+                >mdi-help-circle</v-icon>
+              </template>
+            </v-tooltip>
+
           </v-layout>
         </v-card-item>
         <v-card-actions>
