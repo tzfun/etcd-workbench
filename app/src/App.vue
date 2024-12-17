@@ -36,6 +36,7 @@ const tips = ref<TipsItem[]>([])
 const theme = useTheme()
 
 const eventUnListens = reactive<Function[]>([])
+const checkUpdateTimer = ref<number>()
 
 const windowLabel = computed<string>(() => {
   return appWindow.label
@@ -119,36 +120,9 @@ onMounted(async () => {
       }
     })
 
-    let updateInfo = _useUpdateInfo().value
-    // 检查更新
-    _checkUpdate().then(async (manifest) => {
-      updateInfo.valid = true
-      updateInfo.latestVersion = manifest
+    checkUpdate(settings.autoUpdate)
 
-      if (settings.autoUpdate) {
-        let message = _genNewVersionUpdateMessage(manifest)
-        _confirmUpdateApp(message).then(() => {
-          _loading(true, "Installing...")
-          installUpdate().then(() => {
-            _loading(true, "Restarting...")
-            relaunch().catch((e:string) => {
-              console.error(e)
-              _alertError("Unable to relaunch, please relaunch manually.")
-            }).finally(() => {
-              _loading(false)
-            })
-          }).catch(e => {
-            _loading(false)
-            console.error(e)
-            _alertError("Update failed, please update manually or go to GitHub to download the latest version.")
-          })
-        }).catch(() => {
-        })
-      }
-    }).catch(e => {
-      console.error("Failed to check update", e)
-      updateInfo.valid = false
-    })
+    startCheckUpdateTimer()
   }
 })
 
@@ -156,7 +130,55 @@ onUnmounted(() => {
   for (let eventUnListen of eventUnListens) {
     eventUnListen()
   }
+  stopCheckUpdateTimer()
 })
+
+const checkUpdate = (autoUpdate: boolean) => {
+  let updateInfo = _useUpdateInfo().value
+  // 检查更新
+  _checkUpdate().then(async (manifest) => {
+    updateInfo.valid = true
+    updateInfo.latestVersion = manifest
+
+    if (autoUpdate) {
+      let message = _genNewVersionUpdateMessage(manifest)
+      _confirmUpdateApp(message).then(() => {
+        _loading(true, "Installing...")
+        installUpdate().then(() => {
+          _loading(true, "Restarting...")
+          relaunch().catch((e: string) => {
+            console.error(e)
+            _alertError("Unable to relaunch, please relaunch manually.")
+          }).finally(() => {
+            _loading(false)
+          })
+        }).catch(e => {
+          _loading(false)
+          console.error(e)
+          _alertError("Update failed, please update manually or go to GitHub to download the latest version.")
+        })
+      }).catch(() => {
+      })
+    }
+  }).catch(e => {
+    console.error("Failed to check update", e)
+    updateInfo.valid = false
+  })
+}
+
+const startCheckUpdateTimer = () => {
+  stopCheckUpdateTimer()
+  //  每1小时检查一次更新
+  checkUpdateTimer.value = window.setInterval(() => {
+    checkUpdate(false)
+  }, 3600_000)
+}
+
+const stopCheckUpdateTimer = () => {
+  if (checkUpdateTimer.value) {
+    clearInterval(checkUpdateTimer.value)
+  }
+}
 
 const setAppTheme = (appTheme: AppTheme) => {
   if (appTheme == 'auto') {
