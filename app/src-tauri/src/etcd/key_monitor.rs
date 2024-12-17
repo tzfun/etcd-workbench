@@ -1,10 +1,10 @@
 use crate::etcd::etcd_connector::EtcdConnector;
-use crate::etcd::get_connector_optional;
 use crate::transport::connection::KeyMonitorConfig;
 use etcd_client::{GetOptions, GetResponse};
 use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
 use std::any::Any;
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::atomic::AtomicI32;
 use std::sync::Arc;
@@ -82,6 +82,7 @@ impl<T: Serialize + Clone> KeyMonitorEvent<T> {
     }
 }
 
+#[derive(Clone)]
 struct MonitorTask {
     config: KeyMonitorConfig,
     next_execute_time: Instant,
@@ -249,15 +250,23 @@ impl MonitorTask {
 
 pub struct KeyMonitor {
     session_id: i32,
+    etcd_connector: EtcdConnector,
     config_map: HashMap<String, MonitorTask>,
     running: bool,
     window: Window,
 }
 
+impl Drop for KeyMonitor {
+    fn drop(&mut self) {
+        debug!("drop key monitor: {}", self.session_id);
+    }
+}
+
 impl KeyMonitor {
-    pub fn new(session_id: i32, window: Window) -> Self {
+    pub fn new(session_id: i32, etcd_connector: EtcdConnector, window: Window) -> Self {
         Self {
             session_id,
+            etcd_connector,
             config_map: HashMap::new(),
             running: false,
             window,
@@ -292,31 +301,25 @@ impl KeyMonitor {
                     break;
                 }
 
-                let session_id = monitor.session_id;
-                let window = monitor.window.clone();
                 let now = Instant::now();
-                let mut tasks = vec![];
+                let mut dirty_tasks = vec![];
 
-                for (key, task) in monitor.config_map.iter_mut() {
+                for (_, task) in monitor.config_map.iter() {
                     if now >= task.next_execute_time {
-                        tasks.push(task);
+                        dirty_tasks.push(task.clone());
                     }
                 }
 
-                if !tasks.is_empty() {
-                    let connector_op = get_connector_optional(&session_id);
-
-                    if connector_op.is_none() {
-                        info!(
-                            "Connector not found, key monitor will be stopped. session: {}",
-                            session_id
-                        );
-                        monitor.running = false;
-                        break;
+                if !dirty_tasks.is_empty() {
+                    let session_id = monitor.session_id;
+                    let window = monitor.window.clone();
+                    
+                    for task in dirty_tasks.iter_mut() {
+                        task.run(session_id, &mut monitor.etcd_connector, &window).await;
                     }
-                    let mut connector = connector_op.unwrap();
-                    for task in tasks {
-                        task.run(session_id, &mut connector, &window).await;
+
+                    for task in dirty_tasks {
+                        monitor.config_map.insert(task.config.key.clone(), task);
                     }
                 }
             }

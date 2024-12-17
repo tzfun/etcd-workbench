@@ -15,7 +15,8 @@ mod ssh;
 mod error;
 mod utils;
 
-fn main() {
+#[tokio::main(flavor = "multi_thread", worker_threads = 10)]
+async fn main() {
     let mut log_level = LevelFilter::Info;
     if api::settings::is_debug_model() {
         log_level = LevelFilter::Debug;

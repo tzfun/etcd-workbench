@@ -46,7 +46,7 @@ pub async fn new_connector(name: String, connection: Connection, window: Window)
         None
     };
     let namespace = connection.namespace.clone();
-    let mut connector = EtcdConnector::new(connection).await?;
+    let mut connector = EtcdConnector::new(connection.clone()).await?;
     connector.test_connection().await?;
 
     let root = if let Some(u) = &user {
@@ -58,7 +58,8 @@ pub async fn new_connector(name: String, connection: Connection, window: Window)
     let connector_id = gen_connection_id();
     CONNECTION_POOL.insert(connector_id, connector);
 
-    let mut key_monitor = KeyMonitor::new(connector_id, window);
+    let mut key_monitor_connector = EtcdConnector::new(connection.clone()).await?;
+    let mut key_monitor = KeyMonitor::new(connector_id, key_monitor_connector, window);
 
     let info_result = connection::get_connection(name).await?;
     
@@ -111,6 +112,10 @@ pub fn get_connection_info_optional(id: &i32) -> Option<RefMut<'_, i32, Connecti
     CONNECTION_INFO_POOL.get_mut(id)
 }
 
+pub fn get_key_monitor(id: &i32) -> Ref<'_, i32, Arc<Mutex<KeyMonitor>>> {
+    CONNECTION_KEY_MONITORS.get(id).unwrap()
+}
+
 pub async fn remove_connector(id: &i32) {
     if let Some((_, connector)) = CONNECTION_POOL.remove(id) {
         drop(connector)
@@ -119,12 +124,8 @@ pub async fn remove_connector(id: &i32) {
     if let Some((_, info)) = CONNECTION_INFO_POOL.remove(id) {
         drop(info)
     }
-    
-    let lock_ref = get_key_monitor(id);
-    let lock = lock_ref.value().clone();
-    KeyMonitor::stop(lock).await;
-}
 
-pub fn get_key_monitor(id: &i32) -> Ref<'_, i32, Arc<Mutex<KeyMonitor>>> {
-    CONNECTION_KEY_MONITORS.get(id).unwrap()
+    if let Some((_, lock)) = CONNECTION_KEY_MONITORS.remove(id) {
+        KeyMonitor::stop(lock).await;
+    }
 }

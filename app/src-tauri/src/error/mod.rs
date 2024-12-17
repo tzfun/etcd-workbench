@@ -16,6 +16,8 @@ enum ErrorType {
     EtcdClientError,
     /// ssh隧道异常
     SshClientError,
+    /// ssh隧道异常
+    SshKeysError,
     /// 应用异常，一般是代码级的错误
     AppError,
     /// 参数错误
@@ -40,6 +42,7 @@ pub enum LogicError<> {
     ResourceNotExist(&'static str),
     EtcdClientError(etcd_client::Error),
     SshError(russh::Error),
+    SshKeysError(russh::keys::Error),
     IoError(io::Error),
     SerdeError(serde_json::Error),
     AesError(AesError),
@@ -115,6 +118,14 @@ impl Serialize for LogicError {
                     err_msg: msg.as_str(),
                 }.serialize(serializer)
             }
+            LogicError::SshKeysError(e) => {
+                error!("[SSH Key] {:?}", e);
+                let msg = e.to_string();
+                ErrorPayload {
+                    err_type: ErrorType::SshKeysError,
+                    err_msg: msg.as_str(),
+                }.serialize(serializer)
+            }
             LogicError::IoError(e) => {
                 error!("[IO] {:?}", e);
                 let msg = e.to_string();
@@ -184,6 +195,12 @@ impl From<etcd_client::Error> for LogicError {
 impl From<russh::Error> for LogicError {
     fn from(value: russh::Error) -> Self {
         LogicError::SshError(value)
+    }
+}
+
+impl From<russh::keys::Error> for LogicError {
+    fn from(value: russh::keys::Error) -> Self {
+        LogicError::SshKeysError(value)
     }
 }
 
