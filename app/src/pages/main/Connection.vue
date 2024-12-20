@@ -46,20 +46,22 @@ const keyMonitorEventLog = reactive({
 
 onMounted(async () => {
   _listenLocal(EventName.EDIT_KEY_MONITOR, (e) => {
-    if (e.edit) {
-      keyMonitorDialog.edit = true
-      keyMonitorDialog.monitor = e.monitor as KeyMonitorConfig;
-    } else {
-      keyMonitorDialog.edit = false
-      keyMonitorDialog.monitor.key = e.key ? (e.key as string) : ''
-      keyMonitorDialog.monitor.intervalSeconds = 5
-      keyMonitorDialog.monitor.monitorLeaseChange = true
-      keyMonitorDialog.monitor.monitorValueChange = true
-      keyMonitorDialog.monitor.monitorCreate = true
-      keyMonitorDialog.monitor.monitorRemove = true
-    }
+    if (e.session == props.session?.id) {
+      if (e.edit) {
+        keyMonitorDialog.edit = true
+        keyMonitorDialog.monitor = e.monitor as KeyMonitorConfig;
+      } else {
+        keyMonitorDialog.edit = false
+        keyMonitorDialog.monitor.key = e.key ? (e.key as string) : ''
+        keyMonitorDialog.monitor.intervalSeconds = 5
+        keyMonitorDialog.monitor.monitorLeaseChange = true
+        keyMonitorDialog.monitor.monitorValueChange = true
+        keyMonitorDialog.monitor.monitorCreate = true
+        keyMonitorDialog.monitor.monitorRemove = true
+      }
 
-    keyMonitorDialog.show = true
+      keyMonitorDialog.show = true
+    }
   })
 
   eventUnListens.push(await appWindow.listen(EventName.KEY_MONITOR_EVENT, e => {
@@ -68,8 +70,6 @@ onMounted(async () => {
       event.id = keyMonitorEventLog.idCounter++
       keyMonitorEventLog.unreadNum++
       keyMonitorEventLog.logs.unshift(event)
-
-      console.log("==>", event)
     }
   }))
 })
@@ -113,6 +113,7 @@ const keyMonitorConfirm = () => {
     keyMonitorDialog.show = false
     if (!keyMonitorDialog.edit) {
       _emitLocal(EventName.KEY_MONITOR_CONFIG_CHANGE, {
+        session: props.session?.id,
         key: keyMonitorDialog.monitor.key,
         type: 'create',
         config
@@ -132,6 +133,7 @@ const keyMonitorRemove = () => {
     delete props.session!.keyMonitorMap![key]
     keyMonitorDialog.show = false
     _emitLocal(EventName.KEY_MONITOR_CONFIG_CHANGE, {
+      session: props.session?.id,
       key: keyMonitorDialog.monitor.key,
       type: 'remove'
     })

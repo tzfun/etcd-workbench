@@ -47,12 +47,15 @@ const props = defineProps({
 
 onMounted(() => {
   _listenLocal(EventName.KEY_MONITOR_CONFIG_CHANGE, e => {
-    let key = e.key as string
-    if (e.type == 'create') {
-      kvMonitorTree.value?.addItemToTree(key)
-    } else if (e.type == 'remove') {
-      kvMonitorTree.value?.removeItemFromTree(key)
+    if (e.session == props.session?.id) {
+      let key = e.key as string
+      if (e.type == 'create') {
+        kvMonitorTree.value?.addItemToTree(key)
+      } else if (e.type == 'remove') {
+        kvMonitorTree.value?.removeItemFromTree(key)
+      }
     }
+
   })
 })
 
@@ -96,6 +99,7 @@ const removeMonitor = (key: string) => {
   _removeKeyMonitor(props.session?.id, key).then(() => {
     delete props.session!.keyMonitorMap![key]
     _emitLocal(EventName.KEY_MONITOR_CONFIG_CHANGE, {
+      session: props.session?.id,
       key: key,
       type: 'remove'
     })
@@ -109,6 +113,7 @@ const removeMonitor = (key: string) => {
 
 const addMonitor = () => {
   _emitLocal(EventName.EDIT_KEY_MONITOR, {
+    session: props.session?.id,
     edit: false
   })
 }

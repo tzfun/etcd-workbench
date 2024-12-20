@@ -144,8 +144,10 @@ onMounted(() => {
   }, 200)
 
   _listenLocal(EventName.KEY_MONITOR_CONFIG_CHANGE, e => {
-    let key = e.key as string
-    kvTree.value?.refreshDiyDom(key)
+    if (e.session == props.session?.id) {
+      let key = e.key as string
+      kvTree.value?.refreshDiyDom(key)
+    }
   })
 })
 
@@ -631,6 +633,7 @@ const editKeyMonitor = (key: string) => {
   let monitor: KeyMonitorConfig = props.session?.keyMonitorMap![key]
   if (monitor) {
     _emitLocal(EventName.EDIT_KEY_MONITOR, {
+      session: props.session?.id,
       edit: true,
       monitor
     })
@@ -639,6 +642,7 @@ const editKeyMonitor = (key: string) => {
 
 const addKeyMonitor = (key: string) => {
   _emitLocal(EventName.EDIT_KEY_MONITOR, {
+    session: props.session?.id,
     edit: false,
     key
   })
