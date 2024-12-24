@@ -1,9 +1,10 @@
+use std::borrow::Cow;
 use std::io::{Error, ErrorKind};
 use std::sync::Arc;
 use std::time::Duration;
 
 use log::{debug, error, info, warn};
-use russh::client;
+use russh::{client, kex, Preferred};
 use russh::client::Handle;
 use russh::keys::key::PrivateKeyWithHashAlg;
 use russh::keys::{decode_secret_key, HashAlg};
@@ -32,6 +33,24 @@ impl SshTunnel {
             inactivity_timeout: Some(Duration::from_secs(10)),
             keepalive_interval: Some(Duration::from_secs(5)),
             keepalive_max: 6,
+            preferred: Preferred {
+                kex: Cow::Borrowed(&[
+                    kex::CURVE25519,
+                    kex::CURVE25519_PRE_RFC_8731,
+                    kex::DH_G1_SHA1,
+                    kex::DH_G14_SHA1,
+                    kex::DH_G16_SHA512,
+                    kex::DH_G14_SHA256,
+                    kex::ECDH_SHA2_NISTP256,
+                    kex::ECDH_SHA2_NISTP384,
+                    kex::ECDH_SHA2_NISTP521,
+                    kex::EXTENSION_SUPPORT_AS_CLIENT,
+                    kex::EXTENSION_SUPPORT_AS_SERVER,
+                    kex::EXTENSION_OPENSSH_STRICT_KEX_AS_CLIENT,
+                    kex::EXTENSION_OPENSSH_STRICT_KEX_AS_SERVER,
+                ]),
+                ..<_>::default()
+            },
             ..<_>::default()
         };
         let config = Arc::new(config);
