@@ -55,6 +55,7 @@ impl Serialize for LogicError {
     where
         S: Serializer,
     {
+        error!("{:?}", self);
         match self {
             LogicError::MsgError(e) => {
                 ErrorPayload {
