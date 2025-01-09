@@ -14,6 +14,7 @@ mod etcd;
 mod ssh;
 mod error;
 mod utils;
+mod proto;
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 10)]
 async fn main() {

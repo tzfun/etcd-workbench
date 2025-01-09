@@ -1,6 +1,22 @@
 use etcd_client::KeyValue;
 use serde::{Deserialize, Serialize};
 
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all="camelCase")]
+pub enum FormatKind {
+    Json
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all="camelCase")]
+pub struct FormattedValue {
+    //  格式化类型
+    pub kind: FormatKind,
+    //  格式化内容
+    pub value: String,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all="camelCase")]
 pub struct SerializableKeyValue {
@@ -10,7 +26,8 @@ pub struct SerializableKeyValue {
     pub version: i64,
     pub value: Vec<u8>,
     pub lease: String,
-    pub lease_info: Option<SerializableLeaseSimpleInfo>
+    pub lease_info: Option<SerializableLeaseSimpleInfo>,
+    pub formatted_value: Option<FormattedValue>
 }
 
 impl From<KeyValue> for SerializableKeyValue {
@@ -29,7 +46,8 @@ impl From<KeyValue> for SerializableKeyValue {
                 mod_revision,
                 version,
                 lease,
-                lease_info: None
+                lease_info: None,
+                formatted_value: None
             }
         }
     }

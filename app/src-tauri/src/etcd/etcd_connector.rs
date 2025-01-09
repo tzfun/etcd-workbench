@@ -21,6 +21,7 @@ use crate::transport::maintenance::{
     SnapshotState,
 };
 use crate::transport::user::{SerializablePermission, SerializableUser};
+use crate::utils::k8s_formatter;
 use etcd_client::{
     AlarmAction, AlarmType, Certificate, Client, ConnectOptions, Error, GetOptions, GetResponse,
     Identity, LeaseGrantOptions, LeaseTimeToLiveOptions, PutOptions, RoleRevokePermissionOptions,
@@ -211,9 +212,12 @@ impl EtcdConnector {
             ))
         } else {
             let mut s_kv = kv[0].clone();
+            let full_key = s_kv.key.clone();
             if let Some(namespace) = &self.namespace {
                 s_kv.remove_prefix(namespace);
             }
+
+            s_kv.formatted_value = k8s_formatter::try_format_value(&full_key, &s_kv.value);
             Ok(s_kv)
         }
     }
