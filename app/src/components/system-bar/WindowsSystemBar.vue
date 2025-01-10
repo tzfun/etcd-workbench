@@ -110,7 +110,7 @@ const snapshotListShowChanged = (show: boolean) => {
              density="comfortable"
              title="Settings"
              :ripple="false"
-             @click="_openSettingWindow"
+             @click="_openSettingWindow()"
       ></v-btn>
     </div>
     <v-divider vertical

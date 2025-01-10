@@ -38,7 +38,6 @@ onMounted(() => {
 })
 
 watch( () => props.modelValue, (newVal) => {
-  console.log("change", newVal)
   modelValueMirror.value = newVal
   if (newVal?.content) {
     fileReadStatus.value = 'success'

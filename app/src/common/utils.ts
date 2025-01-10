@@ -2,6 +2,7 @@ import {open} from '@tauri-apps/api/shell'
 import {_alertError} from "~/common/events.ts";
 import {EditorHighlightLanguage} from "~/common/types.ts";
 import {_useGlobalStore} from "~/common/store.ts";
+import {FormattedValue} from "~/common/transport/kv.ts";
 
 const TEXT_DECODER = new TextDecoder();
 const TEXT_ENCODER = new TextEncoder();
@@ -36,7 +37,12 @@ export const fileTypeIcon: Record<string, string> = {
     blob: 'mdi-alpha-b',
     shell: 'mdi-powershell',
     dockerfile: 'mdi-docker',
-    nginx: 'mdi-alpha-n-box'
+    nginx: 'mdi-alpha-n-box',
+    kubernetes: 'mdi-kubernetes'
+}
+
+export const EditorMappedLanguage: Record<EditorHighlightLanguage, EditorHighlightLanguage> = {
+    "kubernetes": "json"
 }
 
 export function _goBrowserPage(address: string) {
@@ -182,7 +188,15 @@ export function _pointInRect(point: { x: number, y: number }, rect: DOMRect) {
     return x >= dx && x <= dx + width && y >= dy && y <= dy + height;
 }
 
-export function _tryParseEditorLanguage(key: string, content: number[] | string, namespace?: string): EditorHighlightLanguage {
+export function _tryParseEditorLanguage(
+    key: string,
+    content: number[] | string,
+    formattedValue?: FormattedValue,
+    namespace?: string
+): EditorHighlightLanguage {
+    if (formattedValue) {
+        return formattedValue.source as EditorHighlightLanguage
+    }
     //  先从记录中读取用户选择的格式
     let fullKey = namespace ? (namespace + key) : key
 
@@ -201,7 +215,8 @@ export function _tryParseEditorLanguage(key: string, content: number[] | string,
 }
 
 export function _tryParseDiffLanguage(editorLanguage: EditorHighlightLanguage): string {
-    switch (editorLanguage) {
+    const lang = EditorMappedLanguage[editorLanguage] || editorLanguage
+    switch (lang) {
         case 'text':
             return 'plaintext'
         case 'sql':

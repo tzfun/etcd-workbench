@@ -78,7 +78,7 @@ const read = (e: KeyMonitorEvent) => {
     valueDiffDialog.afterValue = _decodeBytesToString(e.current)
 
     let validContent = _isEmpty(valueDiffDialog.beforeValue) ? valueDiffDialog.afterValue : valueDiffDialog.beforeValue
-    let editorLang = _tryParseEditorLanguage(e.key, validContent, props.session?.namespace)
+    let editorLang = _tryParseEditorLanguage(e.key, validContent, undefined, props.session?.namespace)
     valueDiffDialog.language = _tryParseDiffLanguage(editorLang)
     valueDiffDialog.show = true
   }

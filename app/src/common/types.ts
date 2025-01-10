@@ -13,6 +13,7 @@ export type EditorSupportedHighlightLanguage =
     | 'shell'
     | 'dockerfile'
     | 'nginx'
+    | 'kubernetes'
 
 export type EditorNotSupportedHighlightLanguage = 'markdown' | 'js' | 'ts'
 

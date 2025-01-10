@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import Skeleton from "~/components/Skeleton.vue";
-import {onMounted, reactive, ref, watch} from "vue";
+import {onUnmounted, onMounted, reactive, ref, watch} from "vue";
 import EditorExample from "~/components/editor/EditorExample.vue";
 import {AppTheme} from "~/common/types.ts";
 import {
@@ -16,6 +16,7 @@ import {_debounce, _encodeStringToBytes, _goBrowserPage} from "~/common/utils.ts
 import WorkbenchLogo from "~/components/WorkbenchLogo.vue";
 import {_loadAppVersion, _loadSettings, _setLocalSettings, _useSettings} from "~/common/store.ts";
 import {appWindow} from "@tauri-apps/api/window";
+import {listen} from "@tauri-apps/api/event";
 import {useTheme} from "vuetify";
 import {open, save} from "@tauri-apps/api/dialog";
 import {_exportConnection, _handleError, _importConnection} from "~/common/services.ts";
@@ -124,6 +125,8 @@ const connectionConfEncryptKeyRule = [
   }
 ]
 
+const eventUnListens = reactive<Function[]>([])
+
 onMounted(async () => {
   await _loadSettings()
   settingForm.value = JSON.parse(JSON.stringify(_useSettings().value))
@@ -153,6 +156,18 @@ onMounted(async () => {
     deep: true
   })
 
+  console.log(appWindow.label)
+  eventUnListens.push(await listen(EventName.SET_SETTING_ANCHOR, (e) => {
+    const anchor = e.payload as string
+    console.log(anchor)
+  }))
+
+})
+
+onUnmounted(() => {
+  for (let eventUnListen of eventUnListens) {
+    eventUnListen()
+  }
 })
 
 const setAppTheme = (appTheme: AppTheme) => {

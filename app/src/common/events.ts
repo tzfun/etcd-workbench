@@ -24,6 +24,7 @@ export enum EventName {
     EDIT_KEY_MONITOR = 'editKeyMonitor',
     KEY_MONITOR_CONFIG_CHANGE = 'keyMonitorChange',
     KEY_MONITOR_EVENT = 'key_monitor',
+    SET_SETTING_ANCHOR = 'setSettingAnchor'
 }
 
 export type KeyMonitorEventType = "Remove" | "Create" | "LeaseChange" | "ValueChange"
@@ -58,13 +59,14 @@ export function _emitGlobal(eventName: EventName, eventPayload?: any) {
     })
 }
 
-export function _emitWindow(windowLabel: EventName, eventName: string, eventPayload?: any) {
+export function _emitWindow(windowLabel: string, eventName: EventName, eventPayload?: any) {
     let window = WebviewWindow.getByLabel(windowLabel);
     if (!window) {
-        window = new WebviewWindow(windowLabel)
+        return
     }
 
     window.emit(eventName, eventPayload).then(() => {
+        console.log("emit success", window.label, eventName, eventPayload)
     }).catch(e => {
         console.error(e)
     })

@@ -37,7 +37,7 @@ import {useTheme} from "vuetify";
 import CountDownTimer from "~/components/CountDownTimer.vue";
 import {_saveGlobalStore, _useGlobalStore, _useSettings} from "~/common/store.ts";
 import Tree from "~/components/tree/Tree.vue";
-import {_isMac} from "~/common/windows.ts";
+import {_isMac, _openSettingWindow} from "~/common/windows.ts";
 
 const theme = useTheme()
 
@@ -73,8 +73,14 @@ const addCollectionKeyForm = ref<string>("")
 const kvCount = ref<number>(0)
 const currentKv = ref<KeyValue>()
 const currentKvChanged = ref<boolean>(false)
+const showFormattedValue = ref<boolean>(false)
 const keyLeaseListeners = reactive<Set<any>>(new Set())
 const paginationKeyCursor = ref<string | undefined>("")
+const editorAlert = reactive({
+  enable: false,
+  show: true,
+  type: ''
+})
 
 const kvEditorContainerRef = ref()
 const editorRef = ref<InstanceType<typeof Editor>>()
@@ -130,6 +136,21 @@ const versionDiffInfo = reactive({
 })
 const isDarkTheme = computed<boolean>(() => {
   return theme.global.name.value === 'dark'
+})
+
+const editorContent = computed<string>(() => {
+  if (currentKv.value) {
+    if (currentKv.value.formattedValue) {
+      if (showFormattedValue.value) {
+        return currentKv.value.formattedValue!.value
+      } else {
+        return _decodeBytesToString(currentKv.value.value)
+      }
+    } else {
+      return _decodeBytesToString(currentKv.value.value)
+    }
+  }
+  return ""
 })
 
 onMounted(() => {
@@ -338,10 +359,14 @@ const showKV = (key: string): Promise<void> => {
     _getKV(props.session?.id, key).then((kv) => {
       resolve()
 
-      editorConfig.language = _tryParseEditorLanguage(kv.key, kv.value, props.session?.namespace)
+      editorConfig.language = _tryParseEditorLanguage(kv.key, kv.value, kv.formattedValue, props.session?.namespace)
+      editorConfig.disabled = kv.formattedValue != undefined;
+      editorAlert.enable = kv.formattedValue != undefined;
+      editorAlert.type = kv.formattedValue == undefined ? '' : kv.formattedValue.source
 
       currentKv.value = kv
       currentKvChanged.value = false
+      showFormattedValue.value = true
 
       if (kv.leaseInfo && AUTO_REMOVE_EXPIRED_KEY) {
         let timer = setTimeout(() => {
@@ -509,7 +534,7 @@ const loadVersionDiff = () => {
     versionDiffInfo.B.version = versionDiffInfo.modRevision
     versionDiffInfo.B.content = _decodeBytesToString(dataB!.value)
 
-    let lang = _tryParseEditorLanguage(dataB.key, versionDiffInfo.B.content, props.session?.namespace)
+    let lang = _tryParseEditorLanguage(dataB.key, versionDiffInfo.B.content, dataB.formattedValue, props.session?.namespace)
     versionDiffInfo.language = _tryParseDiffLanguage(lang)
 
     _getKVHistoryVersions(
@@ -863,9 +888,30 @@ const addKeyMonitor = (key: string) => {
             </v-layout>
 
             <div class="editor-body">
+              <div class="editor-alert" v-if="editorAlert.enable">
+                <v-alert v-if="editorAlert.type === 'kubernetes'" 
+                        density="compact"
+                        :rounded="false"
+                        class="px-1 py-0 text-medium-emphasis editor-alert-item"
+                        :style="`height: ${editorAlert.show ? 'unset' : '0'};`"
+                        >
+                  <v-layout>
+                    <p>The kubernetes storage format is protobuf and is automatically formatted into a <strong>read-only</strong> json format.
+                    <span class="editor-alert-link" @click="_openSettingWindow('autoFormatKubernetes')">setting&gt;&gt;</span></p>
+                    <v-spacer></v-spacer>
+                    
+                    <span class="editor-alert-link" @click="showFormattedValue = !showFormattedValue">Recover</span>
+                    <v-icon @click="editorAlert.show = false" class="mr-2">mdi-chevron-double-up</v-icon>
+                  </v-layout>
+                </v-alert>
+                <v-icon class="editor-alert-expend-link text-medium-emphasis"
+                        v-show="!editorAlert.show"
+                        @click="editorAlert.show = true"
+                >mdi-chevron-double-down</v-icon>
+              </div>
               <editor ref="editorRef"
                       :key="currentKv.key"
-                      :value="_decodeBytesToString(currentKv.value)"
+                      :value="editorContent"
                       :config="editorConfig"
                       @change="editorChange"
                       @change-language="editorChangeLanguage"
@@ -1147,7 +1193,33 @@ $--load-more-area-height: 32px;
   }
 
   .editor-body {
+    position: relative;
     height: calc(100% - $--editor-header-height);
+
+    .editor-alert {
+      position: absolute;
+      height: max-content;
+      width:100%;
+      top:0;
+      z-index: 100;
+      .editor-alert-item {
+        font-size: 0.9em;
+        .editor-alert-link {
+          color: #9d9cf3;
+          cursor: pointer;
+          margin-right: 5px;
+        }
+
+        .editor-alert-link:hover {
+          text-decoration: underline;
+        }
+      }
+
+      .editor-alert-expend-link {
+        position: absolute;
+        right: 11px;
+      }
+    }
   }
 
 }

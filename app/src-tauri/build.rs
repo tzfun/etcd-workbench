@@ -24,7 +24,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     config.out_dir(out_dir);
 
-
     config.compile_protos(&["proto/k8s.io/api/apps/v1/generated.proto"], &["src"])?;
     config.compile_protos(&["proto/k8s.io/api/core/v1/generated.proto"], &["src"])?;
     config.compile_protos(&["proto/k8s.io/api/rbac/v1/generated.proto"], &["src"])?;
@@ -36,24 +35,65 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     config.compile_protos(&["proto/k8s.io/apimachinery/pkg/util/intstr/generated.proto"], &["src"])?;
     config.compile_protos(&["proto/k8s.io/apimachinery/pkg/api/resource/generated.proto"], &["src"])?;
 
-    let mut mod_content = String::new();
+    let mut file_vec = vec![];
     for entry in fs::read_dir(out_dir)? {
         let path = entry?.path();
-        let file_name = path.file_name().unwrap().to_str().unwrap();
+        let file_name = path
+        .file_name()
+        .unwrap()
+        .to_str()
+        .unwrap();
+
         let prefix = &file_name[0..file_name.len() - 3];
-        let mod_name = prefix.replace(".", "_");
 
-        let rename = format!("{}.rs", mod_name);
-        let rename_file = PathBuf::from(out_dir).join(rename.clone());
-        fs::rename(path, rename_file)?;
-
-        mod_content.push_str("pub mod ");
-        mod_content.push_str(mod_name.as_str());
-        mod_content.push_str(";\n");
+        file_vec.push(String::from(prefix));
     }
+
+    for file in file_vec {
+        let mut to = PathBuf::from(out_dir);
+
+        for ele in file.split(".") {
+            to = to.join(ele);
+        }
+
+        println!("mkdirs {:?}", to);
+        fs::create_dir_all(&to)?;
+        to = to.join("mod.rs");
+
+        let from = PathBuf::from(out_dir)
+            .join(format!("{}.rs", file));
+
+        File::create_new(&to)?;
+        fs::copy(from.clone(), to)?;
+
+        fs::remove_file(from)?;
+    }
+
+    add_mod(out_dir.into())?;
     
-    let mut mod_file = File::create_new(PathBuf::from(out_dir).join("mod.rs"))?;
-    mod_file.write(mod_content.as_bytes())?;
-    mod_file.flush()?;
+    Ok(())
+}
+
+
+fn add_mod(path: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
+    let mut mod_content = String::new();
+    for entry in fs::read_dir(&path)? {
+        let en_path = entry?.path();
+        if en_path.is_dir() {
+            let file_name = en_path.file_name().unwrap().to_str().unwrap();
+
+            mod_content.push_str(format!("pub mod {};\n", file_name).as_str());
+
+            add_mod(en_path)?;
+        }
+    }
+
+    if !mod_content.is_empty() {
+        
+        let mut mod_file = File::create_new(path.join("mod.rs"))?;
+        mod_file.write(mod_content.as_bytes())?;
+        mod_file.flush()?;
+    }
+
     Ok(())
 }

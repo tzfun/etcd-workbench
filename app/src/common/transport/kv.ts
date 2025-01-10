@@ -1,3 +1,17 @@
+export enum FormatSource {
+    Kubernetes = "kubernetes",
+}
+
+export enum FormatLanguage {
+    Json = "json",
+}
+
+export interface FormattedValue {
+    source: FormatSource,
+    language: FormatLanguage,
+    value: string
+}
+
 export interface KeyValue {
     key: string,
     createRevision: number,
@@ -5,7 +19,8 @@ export interface KeyValue {
     version: number,
     value: number[],
     lease: string,
-    leaseInfo?: LeaseSimpleInfo
+    leaseInfo?: LeaseSimpleInfo,
+    formattedValue?: FormattedValue
 }
 
 export interface LeaseInfo {

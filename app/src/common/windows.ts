@@ -3,6 +3,7 @@ import {ref} from "vue";
 import {trackEvent} from "~/common/analytics.ts";
 import {appWindow} from "@tauri-apps/api/window";
 import {ask} from "@tauri-apps/api/dialog";
+import { _emitWindow, EventName } from "./events";
 
 const platform = ref<PlatformType>()
 export const isMaximizeState = ref<boolean>(false)
@@ -77,9 +78,13 @@ export function _openMainWindow() {
     })
 }
 
-export function _openSettingWindow() {
+export function _openSettingWindow(anchor?: string) {
     trackEvent('open_setting')
-    invoke('open_setting_window').catch(e => {
+    invoke('open_setting_window').then(() => {
+        if(anchor) {
+            _emitWindow('setting', EventName.SET_SETTING_ANCHOR, anchor)
+        }
+    }).catch(e => {
         console.error(e)
     })
 }

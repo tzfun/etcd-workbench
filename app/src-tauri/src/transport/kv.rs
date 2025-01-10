@@ -4,15 +4,22 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all="camelCase")]
-pub enum FormatKind {
+pub enum FormatLanguage {
     Json
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all="camelCase")]
+pub enum FormatSource {
+    Kubernetes
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all="camelCase")]
 pub struct FormattedValue {
+    pub source: FormatSource,
     //  格式化类型
-    pub kind: FormatKind,
+    pub language: FormatLanguage,
     //  格式化内容
     pub value: String,
 }

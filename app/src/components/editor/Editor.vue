@@ -15,7 +15,7 @@ import {
   _encodeStringToBytes,
   _pointInRect,
   _strArrToNumArr,
-  _upperCaseFirst,
+  _upperCaseFirst, EditorMappedLanguage,
   fileTypeIcon
 } from "~/common/utils.ts";
 import {Codemirror} from "vue-codemirror";
@@ -55,7 +55,7 @@ const enabledFormatLanguage = new Set([
   'json',
   'yaml',
   'xml',
-  'sql',
+  'sql'
 ])
 
 const allLanguages = reactive<Array<EditorSupportedHighlightLanguage>>([
@@ -68,7 +68,8 @@ const allLanguages = reactive<Array<EditorSupportedHighlightLanguage>>([
   'properties',
   'shell',
   'dockerfile',
-  'nginx'
+  'nginx',
+  'kubernetes'
 ])
 const showLanguageSelection = ref<boolean>(false)
 const consolePanelData = reactive({
@@ -163,7 +164,8 @@ const formatData = (content: string, fromFormat: ContentFormatType, toFormat: Co
 
 const extensions = computed(() => {
   const result = []
-  switch (props.config.language) {
+  const lang = EditorMappedLanguage[props.config.language] || props.config.language
+  switch (lang) {
     case 'json':
       result.push(jsonLanguage())
       break
@@ -280,6 +282,7 @@ const formatContent = () => {
 //  尝试格式化，但并不会实际修改当前值
 const tryFormatContent = (): Promise<string | undefined> => {
   let language = props.config?.language
+  language = EditorMappedLanguage[language] || language
   if (!enabledFormatLanguage.has(language)) {
     return Promise.resolve(undefined)
   }
