@@ -10,6 +10,7 @@ pub struct AggregationRule {
     /// +optional
     /// +listType=atomic
     #[prost(message, repeated, tag = "1")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub cluster_role_selectors: ::prost::alloc::vec::Vec<
         super::super::super::apimachinery::pkg::apis::meta::v1::LabelSelector,
     >,
@@ -23,6 +24,7 @@ pub struct ClusterRole {
     /// Standard object's metadata.
     /// +optional
     #[prost(message, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub metadata: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::ObjectMeta,
     >,
@@ -30,12 +32,14 @@ pub struct ClusterRole {
     /// +optional
     /// +listType=atomic
     #[prost(message, repeated, tag = "2")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub rules: ::prost::alloc::vec::Vec<PolicyRule>,
     /// AggregationRule is an optional field that describes how to build the Rules for this ClusterRole.
     /// If AggregationRule is set, then the Rules are controller managed and direct changes to Rules will be
     /// stomped by the controller.
     /// +optional
     #[prost(message, optional, tag = "3")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub aggregation_rule: ::core::option::Option<AggregationRule>,
 }
 /// ClusterRoleBinding references a ClusterRole, but not contain it.  It can reference a ClusterRole in the global namespace,
@@ -48,6 +52,7 @@ pub struct ClusterRoleBinding {
     /// Standard object's metadata.
     /// +optional
     #[prost(message, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub metadata: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::ObjectMeta,
     >,
@@ -55,11 +60,13 @@ pub struct ClusterRoleBinding {
     /// +optional
     /// +listType=atomic
     #[prost(message, repeated, tag = "2")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub subjects: ::prost::alloc::vec::Vec<Subject>,
     /// RoleRef can only reference a ClusterRole in the global namespace.
     /// If the RoleRef cannot be resolved, the Authorizer must return an error.
     /// This field is immutable.
     #[prost(message, optional, tag = "3")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub role_ref: ::core::option::Option<RoleRef>,
 }
 /// ClusterRoleBindingList is a collection of ClusterRoleBindings
@@ -71,11 +78,13 @@ pub struct ClusterRoleBindingList {
     /// Standard object's metadata.
     /// +optional
     #[prost(message, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub metadata: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::ListMeta,
     >,
     /// Items is a list of ClusterRoleBindings
     #[prost(message, repeated, tag = "2")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub items: ::prost::alloc::vec::Vec<ClusterRoleBinding>,
 }
 /// ClusterRoleList is a collection of ClusterRoles
@@ -87,11 +96,13 @@ pub struct ClusterRoleList {
     /// Standard object's metadata.
     /// +optional
     #[prost(message, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub metadata: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::ListMeta,
     >,
     /// Items is a list of ClusterRoles
     #[prost(message, repeated, tag = "2")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub items: ::prost::alloc::vec::Vec<ClusterRole>,
 }
 /// PolicyRule holds information that describes a policy rule, but does not contain information
@@ -104,22 +115,26 @@ pub struct PolicyRule {
     /// Verbs is a list of Verbs that apply to ALL the ResourceKinds contained in this rule. '*' represents all verbs.
     /// +listType=atomic
     #[prost(string, repeated, tag = "1")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub verbs: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// APIGroups is the name of the APIGroup that contains the resources.  If multiple API groups are specified, any action requested against one of
     /// the enumerated resources in any API group will be allowed. "" represents the core API group and "*" represents all API groups.
     /// +optional
     /// +listType=atomic
     #[prost(string, repeated, tag = "2")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub api_groups: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// Resources is a list of resources this rule applies to. '*' represents all resources.
     /// +optional
     /// +listType=atomic
     #[prost(string, repeated, tag = "3")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub resources: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// ResourceNames is an optional white list of names that the rule applies to.  An empty set means that everything is allowed.
     /// +optional
     /// +listType=atomic
     #[prost(string, repeated, tag = "4")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub resource_names: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// NonResourceURLs is a set of partial urls that a user should have access to.  *s are allowed, but only as the full, final step in the path
     /// Since non-resource URLs are not namespaced, this field is only applicable for ClusterRoles referenced from a ClusterRoleBinding.
@@ -127,6 +142,7 @@ pub struct PolicyRule {
     /// +optional
     /// +listType=atomic
     #[prost(string, repeated, tag = "5")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub non_resource_ur_ls: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 /// Role is a namespaced, logical grouping of PolicyRules that can be referenced as a unit by a RoleBinding.
@@ -138,6 +154,7 @@ pub struct Role {
     /// Standard object's metadata.
     /// +optional
     #[prost(message, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub metadata: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::ObjectMeta,
     >,
@@ -145,6 +162,7 @@ pub struct Role {
     /// +optional
     /// +listType=atomic
     #[prost(message, repeated, tag = "2")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub rules: ::prost::alloc::vec::Vec<PolicyRule>,
 }
 /// RoleBinding references a role, but does not contain it.  It can reference a Role in the same namespace or a ClusterRole in the global namespace.
@@ -158,6 +176,7 @@ pub struct RoleBinding {
     /// Standard object's metadata.
     /// +optional
     #[prost(message, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub metadata: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::ObjectMeta,
     >,
@@ -165,11 +184,13 @@ pub struct RoleBinding {
     /// +optional
     /// +listType=atomic
     #[prost(message, repeated, tag = "2")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub subjects: ::prost::alloc::vec::Vec<Subject>,
     /// RoleRef can reference a Role in the current namespace or a ClusterRole in the global namespace.
     /// If the RoleRef cannot be resolved, the Authorizer must return an error.
     /// This field is immutable.
     #[prost(message, optional, tag = "3")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub role_ref: ::core::option::Option<RoleRef>,
 }
 /// RoleBindingList is a collection of RoleBindings
@@ -181,11 +202,13 @@ pub struct RoleBindingList {
     /// Standard object's metadata.
     /// +optional
     #[prost(message, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub metadata: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::ListMeta,
     >,
     /// Items is a list of RoleBindings
     #[prost(message, repeated, tag = "2")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub items: ::prost::alloc::vec::Vec<RoleBinding>,
 }
 /// RoleList is a collection of Roles
@@ -197,11 +220,13 @@ pub struct RoleList {
     /// Standard object's metadata.
     /// +optional
     #[prost(message, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub metadata: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::ListMeta,
     >,
     /// Items is a list of Roles
     #[prost(message, repeated, tag = "2")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub items: ::prost::alloc::vec::Vec<Role>,
 }
 /// RoleRef contains information that points to the role being used
@@ -213,12 +238,15 @@ pub struct RoleList {
 pub struct RoleRef {
     /// APIGroup is the group for the resource being referenced
     #[prost(string, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub api_group: ::core::option::Option<::prost::alloc::string::String>,
     /// Kind is the type of resource being referenced
     #[prost(string, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub kind: ::core::option::Option<::prost::alloc::string::String>,
     /// Name is the name of resource being referenced
     #[prost(string, optional, tag = "3")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub name: ::core::option::Option<::prost::alloc::string::String>,
 }
 /// Subject contains a reference to the object or user identities a role binding applies to.  This can either hold a direct API object reference,
@@ -232,19 +260,23 @@ pub struct Subject {
     /// Kind of object being referenced. Values defined by this API group are "User", "Group", and "ServiceAccount".
     /// If the Authorizer does not recognized the kind value, the Authorizer should report an error.
     #[prost(string, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub kind: ::core::option::Option<::prost::alloc::string::String>,
     /// APIGroup holds the API group of the referenced subject.
     /// Defaults to "" for ServiceAccount subjects.
     /// Defaults to "rbac.authorization.k8s.io" for User and Group subjects.
     /// +optional
     #[prost(string, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub api_group: ::core::option::Option<::prost::alloc::string::String>,
     /// Name of the object being referenced.
     #[prost(string, optional, tag = "3")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub name: ::core::option::Option<::prost::alloc::string::String>,
     /// Namespace of the referenced object.  If the object kind is non-namespace, such as "User" or "Group", and this value is not empty
     /// the Authorizer should report an error.
     /// +optional
     #[prost(string, optional, tag = "4")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub namespace: ::core::option::Option<::prost::alloc::string::String>,
 }

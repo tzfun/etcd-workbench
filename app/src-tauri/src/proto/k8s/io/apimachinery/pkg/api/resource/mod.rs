@@ -74,6 +74,7 @@
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Quantity {
     #[prost(string, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub string: ::core::option::Option<::prost::alloc::string::String>,
 }
 /// QuantityValue makes it possible to use a Quantity as value for a command
@@ -90,5 +91,6 @@ pub struct Quantity {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct QuantityValue {
     #[prost(string, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub string: ::core::option::Option<::prost::alloc::string::String>,
 }

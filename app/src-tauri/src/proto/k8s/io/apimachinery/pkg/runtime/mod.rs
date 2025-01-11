@@ -58,6 +58,7 @@ pub struct RawExtension {
     ///
     /// TODO: Determine how to detect ContentType and ContentEncoding of 'Raw' data.
     #[prost(bytes = "vec", optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub raw: ::core::option::Option<::prost::alloc::vec::Vec<u8>>,
 }
 /// TypeMeta is shared by all top level objects. The proper way to use it is to inline it in your type,
@@ -83,9 +84,11 @@ pub struct RawExtension {
 pub struct TypeMeta {
     /// +optional
     #[prost(string, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub api_version: ::core::option::Option<::prost::alloc::string::String>,
     /// +optional
     #[prost(string, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub kind: ::core::option::Option<::prost::alloc::string::String>,
 }
 /// Unknown allows api objects with unknown types to be passed-through. This can be used
@@ -104,18 +107,22 @@ pub struct TypeMeta {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Unknown {
     #[prost(message, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub type_meta: ::core::option::Option<TypeMeta>,
     /// Raw will hold the complete serialized object which couldn't be matched
     /// with a registered type. Most likely, nothing should be done with this
     /// except for passing it through the system.
     #[prost(bytes = "vec", optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub raw: ::core::option::Option<::prost::alloc::vec::Vec<u8>>,
     /// ContentEncoding is encoding used to encode 'Raw' data.
     /// Unspecified means no encoding.
     #[prost(string, optional, tag = "3")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub content_encoding: ::core::option::Option<::prost::alloc::string::String>,
     /// ContentType  is serialization method used to serialize 'Raw'.
     /// Unspecified means ContentTypeJSON.
     #[prost(string, optional, tag = "4")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub content_type: ::core::option::Option<::prost::alloc::string::String>,
 }

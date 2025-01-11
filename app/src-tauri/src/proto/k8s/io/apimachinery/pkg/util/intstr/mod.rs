@@ -14,9 +14,12 @@
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct IntOrString {
     #[prost(int64, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub r#type: ::core::option::Option<i64>,
     #[prost(int32, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub int_val: ::core::option::Option<i32>,
     #[prost(string, optional, tag = "3")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub str_val: ::core::option::Option<::prost::alloc::string::String>,
 }

@@ -17,16 +17,19 @@ pub struct ControllerRevision {
     /// More info: <https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata>
     /// +optional
     #[prost(message, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub metadata: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::ObjectMeta,
     >,
     /// Data is the serialized representation of the state.
     #[prost(message, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub data: ::core::option::Option<
         super::super::super::apimachinery::pkg::runtime::RawExtension,
     >,
     /// Revision indicates the revision of the state represented by Data.
     #[prost(int64, optional, tag = "3")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub revision: ::core::option::Option<i64>,
 }
 /// ControllerRevisionList is a resource containing a list of ControllerRevision objects.
@@ -38,11 +41,13 @@ pub struct ControllerRevisionList {
     /// More info: <https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata>
     /// +optional
     #[prost(message, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub metadata: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::ListMeta,
     >,
     /// Items is the list of ControllerRevisions
     #[prost(message, repeated, tag = "2")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub items: ::prost::alloc::vec::Vec<ControllerRevision>,
 }
 /// DaemonSet represents the configuration of a daemon set.
@@ -55,6 +60,7 @@ pub struct DaemonSet {
     /// More info: <https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata>
     /// +optional
     #[prost(message, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub metadata: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::ObjectMeta,
     >,
@@ -62,6 +68,7 @@ pub struct DaemonSet {
     /// More info: <https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status>
     /// +optional
     #[prost(message, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub spec: ::core::option::Option<DaemonSetSpec>,
     /// The current status of this daemon set. This data may be
     /// out of date by some window of time.
@@ -70,6 +77,7 @@ pub struct DaemonSet {
     /// More info: <https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status>
     /// +optional
     #[prost(message, optional, tag = "3")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub status: ::core::option::Option<DaemonSetStatus>,
 }
 /// DaemonSetCondition describes the state of a DaemonSet at a certain point.
@@ -80,23 +88,28 @@ pub struct DaemonSet {
 pub struct DaemonSetCondition {
     /// Type of DaemonSet condition.
     #[prost(string, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub r#type: ::core::option::Option<::prost::alloc::string::String>,
     /// Status of the condition, one of True, False, Unknown.
     #[prost(string, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub status: ::core::option::Option<::prost::alloc::string::String>,
     /// Last time the condition transitioned from one status to another.
     /// +optional
     #[prost(message, optional, tag = "3")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub last_transition_time: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::Time,
     >,
     /// The reason for the condition's last transition.
     /// +optional
     #[prost(string, optional, tag = "4")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub reason: ::core::option::Option<::prost::alloc::string::String>,
     /// A human readable message indicating details about the transition.
     /// +optional
     #[prost(string, optional, tag = "5")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub message: ::core::option::Option<::prost::alloc::string::String>,
 }
 /// DaemonSetList is a collection of daemon sets.
@@ -109,11 +122,13 @@ pub struct DaemonSetList {
     /// More info: <https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata>
     /// +optional
     #[prost(message, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub metadata: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::ListMeta,
     >,
     /// A list of daemon sets.
     #[prost(message, repeated, tag = "2")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub items: ::prost::alloc::vec::Vec<DaemonSet>,
 }
 /// DaemonSetSpec is the specification of a daemon set.
@@ -127,6 +142,7 @@ pub struct DaemonSetSpec {
     /// It must match the pod template's labels.
     /// More info: <https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors>
     #[prost(message, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub selector: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::LabelSelector,
     >,
@@ -137,10 +153,12 @@ pub struct DaemonSetSpec {
     /// The only allowed template.spec.restartPolicy value is "Always".
     /// More info: <https://kubernetes.io/docs/concepts/workloads/controllers/replicationcontroller#pod-template>
     #[prost(message, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub template: ::core::option::Option<super::super::core::v1::PodTemplateSpec>,
     /// An update strategy to replace existing DaemonSet pods with new pods.
     /// +optional
     #[prost(message, optional, tag = "3")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub update_strategy: ::core::option::Option<DaemonSetUpdateStrategy>,
     /// The minimum number of seconds for which a newly created DaemonSet pod should
     /// be ready without any of its container crashing, for it to be considered
@@ -148,12 +166,14 @@ pub struct DaemonSetSpec {
     /// is ready).
     /// +optional
     #[prost(int32, optional, tag = "4")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub min_ready_seconds: ::core::option::Option<i32>,
     /// The number of old history to retain to allow rollback.
     /// This is a pointer to distinguish between explicit zero and not specified.
     /// Defaults to 10.
     /// +optional
     #[prost(int32, optional, tag = "6")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub revision_history_limit: ::core::option::Option<i32>,
 }
 /// DaemonSetStatus represents the current status of a daemon set.
@@ -166,46 +186,55 @@ pub struct DaemonSetStatus {
     /// daemon pod and are supposed to run the daemon pod.
     /// More info: <https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/>
     #[prost(int32, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub current_number_scheduled: ::core::option::Option<i32>,
     /// The number of nodes that are running the daemon pod, but are
     /// not supposed to run the daemon pod.
     /// More info: <https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/>
     #[prost(int32, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub number_misscheduled: ::core::option::Option<i32>,
     /// The total number of nodes that should be running the daemon
     /// pod (including nodes correctly running the daemon pod).
     /// More info: <https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/>
     #[prost(int32, optional, tag = "3")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub desired_number_scheduled: ::core::option::Option<i32>,
     /// numberReady is the number of nodes that should be running the daemon pod and have one
     /// or more of the daemon pod running with a Ready Condition.
     #[prost(int32, optional, tag = "4")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub number_ready: ::core::option::Option<i32>,
     /// The most recent generation observed by the daemon set controller.
     /// +optional
     #[prost(int64, optional, tag = "5")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub observed_generation: ::core::option::Option<i64>,
     /// The total number of nodes that are running updated daemon pod
     /// +optional
     #[prost(int32, optional, tag = "6")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub updated_number_scheduled: ::core::option::Option<i32>,
     /// The number of nodes that should be running the
     /// daemon pod and have one or more of the daemon pod running and
     /// available (ready for at least spec.minReadySeconds)
     /// +optional
     #[prost(int32, optional, tag = "7")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub number_available: ::core::option::Option<i32>,
     /// The number of nodes that should be running the
     /// daemon pod and have none of the daemon pod running and available
     /// (ready for at least spec.minReadySeconds)
     /// +optional
     #[prost(int32, optional, tag = "8")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub number_unavailable: ::core::option::Option<i32>,
     /// Count of hash collisions for the DaemonSet. The DaemonSet controller
     /// uses this field as a collision avoidance mechanism when it needs to
     /// create the name for the newest ControllerRevision.
     /// +optional
     #[prost(int32, optional, tag = "9")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub collision_count: ::core::option::Option<i32>,
     /// Represents the latest available observations of a DaemonSet's current state.
     /// +optional
@@ -214,6 +243,7 @@ pub struct DaemonSetStatus {
     /// +listType=map
     /// +listMapKey=type
     #[prost(message, repeated, tag = "10")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub conditions: ::prost::alloc::vec::Vec<DaemonSetCondition>,
 }
 /// DaemonSetUpdateStrategy is a struct used to control the update strategy for a DaemonSet.
@@ -225,6 +255,7 @@ pub struct DaemonSetUpdateStrategy {
     /// Type of daemon set update. Can be "RollingUpdate" or "OnDelete". Default is RollingUpdate.
     /// +optional
     #[prost(string, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub r#type: ::core::option::Option<::prost::alloc::string::String>,
     /// Rolling update config params. Present only if type = "RollingUpdate".
     /// ---
@@ -233,6 +264,7 @@ pub struct DaemonSetUpdateStrategy {
     /// See <https://github.com/kubernetes/kubernetes/issues/35345>
     /// +optional
     #[prost(message, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub rolling_update: ::core::option::Option<RollingUpdateDaemonSet>,
 }
 /// Deployment enables declarative updates for Pods and ReplicaSets.
@@ -245,16 +277,19 @@ pub struct Deployment {
     /// More info: <https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata>
     /// +optional
     #[prost(message, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub metadata: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::ObjectMeta,
     >,
     /// Specification of the desired behavior of the Deployment.
     /// +optional
     #[prost(message, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub spec: ::core::option::Option<DeploymentSpec>,
     /// Most recently observed status of the Deployment.
     /// +optional
     #[prost(message, optional, tag = "3")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub status: ::core::option::Option<DeploymentStatus>,
 }
 /// DeploymentCondition describes the state of a deployment at a certain point.
@@ -265,25 +300,31 @@ pub struct Deployment {
 pub struct DeploymentCondition {
     /// Type of deployment condition.
     #[prost(string, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub r#type: ::core::option::Option<::prost::alloc::string::String>,
     /// Status of the condition, one of True, False, Unknown.
     #[prost(string, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub status: ::core::option::Option<::prost::alloc::string::String>,
     /// The last time this condition was updated.
     #[prost(message, optional, tag = "6")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub last_update_time: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::Time,
     >,
     /// Last time the condition transitioned from one status to another.
     #[prost(message, optional, tag = "7")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub last_transition_time: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::Time,
     >,
     /// The reason for the condition's last transition.
     #[prost(string, optional, tag = "4")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub reason: ::core::option::Option<::prost::alloc::string::String>,
     /// A human readable message indicating details about the transition.
     #[prost(string, optional, tag = "5")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub message: ::core::option::Option<::prost::alloc::string::String>,
 }
 /// DeploymentList is a list of Deployments.
@@ -295,11 +336,13 @@ pub struct DeploymentList {
     /// Standard list metadata.
     /// +optional
     #[prost(message, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub metadata: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::ListMeta,
     >,
     /// Items is the list of Deployments.
     #[prost(message, repeated, tag = "2")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub items: ::prost::alloc::vec::Vec<Deployment>,
 }
 /// DeploymentSpec is the specification of the desired behavior of the Deployment.
@@ -312,38 +355,45 @@ pub struct DeploymentSpec {
     /// zero and not specified. Defaults to 1.
     /// +optional
     #[prost(int32, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub replicas: ::core::option::Option<i32>,
     /// Label selector for pods. Existing ReplicaSets whose pods are
     /// selected by this will be the ones affected by this deployment.
     /// It must match the pod template's labels.
     #[prost(message, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub selector: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::LabelSelector,
     >,
     /// Template describes the pods that will be created.
     /// The only allowed template.spec.restartPolicy value is "Always".
     #[prost(message, optional, tag = "3")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub template: ::core::option::Option<super::super::core::v1::PodTemplateSpec>,
     /// The deployment strategy to use to replace existing pods with new ones.
     /// +optional
     /// +patchStrategy=retainKeys
     #[prost(message, optional, tag = "4")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub strategy: ::core::option::Option<DeploymentStrategy>,
     /// Minimum number of seconds for which a newly created pod should be ready
     /// without any of its container crashing, for it to be considered available.
     /// Defaults to 0 (pod will be considered available as soon as it is ready)
     /// +optional
     #[prost(int32, optional, tag = "5")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub min_ready_seconds: ::core::option::Option<i32>,
     /// The number of old ReplicaSets to retain to allow rollback.
     /// This is a pointer to distinguish between explicit zero and not specified.
     /// Defaults to 10.
     /// +optional
     #[prost(int32, optional, tag = "6")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub revision_history_limit: ::core::option::Option<i32>,
     /// Indicates that the deployment is paused.
     /// +optional
     #[prost(bool, optional, tag = "7")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub paused: ::core::option::Option<bool>,
     /// The maximum time in seconds for a deployment to make progress before it
     /// is considered to be failed. The deployment controller will continue to
@@ -351,6 +401,7 @@ pub struct DeploymentSpec {
     /// reason will be surfaced in the deployment status. Note that progress will
     /// not be estimated during the time a deployment is paused. Defaults to 600s.
     #[prost(int32, optional, tag = "9")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub progress_deadline_seconds: ::core::option::Option<i32>,
 }
 /// DeploymentStatus is the most recently observed status of the Deployment.
@@ -362,28 +413,34 @@ pub struct DeploymentStatus {
     /// The generation observed by the deployment controller.
     /// +optional
     #[prost(int64, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub observed_generation: ::core::option::Option<i64>,
     /// Total number of non-terminated pods targeted by this deployment (their labels match the selector).
     /// +optional
     #[prost(int32, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub replicas: ::core::option::Option<i32>,
     /// Total number of non-terminated pods targeted by this deployment that have the desired template spec.
     /// +optional
     #[prost(int32, optional, tag = "3")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub updated_replicas: ::core::option::Option<i32>,
     /// readyReplicas is the number of pods targeted by this Deployment with a Ready Condition.
     /// +optional
     #[prost(int32, optional, tag = "7")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub ready_replicas: ::core::option::Option<i32>,
     /// Total number of available pods (ready for at least minReadySeconds) targeted by this deployment.
     /// +optional
     #[prost(int32, optional, tag = "4")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub available_replicas: ::core::option::Option<i32>,
     /// Total number of unavailable pods targeted by this deployment. This is the total number of
     /// pods that are still required for the deployment to have 100% available capacity. They may
     /// either be pods that are running but not yet available or pods that still have not been created.
     /// +optional
     #[prost(int32, optional, tag = "5")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub unavailable_replicas: ::core::option::Option<i32>,
     /// Represents the latest available observations of a deployment's current state.
     /// +patchMergeKey=type
@@ -391,12 +448,14 @@ pub struct DeploymentStatus {
     /// +listType=map
     /// +listMapKey=type
     #[prost(message, repeated, tag = "6")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub conditions: ::prost::alloc::vec::Vec<DeploymentCondition>,
     /// Count of hash collisions for the Deployment. The Deployment controller uses this
     /// field as a collision avoidance mechanism when it needs to create the name for the
     /// newest ReplicaSet.
     /// +optional
     #[prost(int32, optional, tag = "8")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub collision_count: ::core::option::Option<i32>,
 }
 /// DeploymentStrategy describes how to replace existing pods with new ones.
@@ -408,6 +467,7 @@ pub struct DeploymentStrategy {
     /// Type of deployment. Can be "Recreate" or "RollingUpdate". Default is RollingUpdate.
     /// +optional
     #[prost(string, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub r#type: ::core::option::Option<::prost::alloc::string::String>,
     /// Rolling update config params. Present only if DeploymentStrategyType =
     /// RollingUpdate.
@@ -416,6 +476,7 @@ pub struct DeploymentStrategy {
     /// to be.
     /// +optional
     #[prost(message, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub rolling_update: ::core::option::Option<RollingUpdateDeployment>,
 }
 /// ReplicaSet ensures that a specified number of pod replicas are running at any given time.
@@ -430,6 +491,7 @@ pub struct ReplicaSet {
     /// More info: <https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata>
     /// +optional
     #[prost(message, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub metadata: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::ObjectMeta,
     >,
@@ -437,6 +499,7 @@ pub struct ReplicaSet {
     /// More info: <https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status>
     /// +optional
     #[prost(message, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub spec: ::core::option::Option<ReplicaSetSpec>,
     /// Status is the most recently observed status of the ReplicaSet.
     /// This data may be out of date by some window of time.
@@ -445,6 +508,7 @@ pub struct ReplicaSet {
     /// More info: <https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status>
     /// +optional
     #[prost(message, optional, tag = "3")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub status: ::core::option::Option<ReplicaSetStatus>,
 }
 /// ReplicaSetCondition describes the state of a replica set at a certain point.
@@ -455,23 +519,28 @@ pub struct ReplicaSet {
 pub struct ReplicaSetCondition {
     /// Type of replica set condition.
     #[prost(string, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub r#type: ::core::option::Option<::prost::alloc::string::String>,
     /// Status of the condition, one of True, False, Unknown.
     #[prost(string, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub status: ::core::option::Option<::prost::alloc::string::String>,
     /// The last time the condition transitioned from one status to another.
     /// +optional
     #[prost(message, optional, tag = "3")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub last_transition_time: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::Time,
     >,
     /// The reason for the condition's last transition.
     /// +optional
     #[prost(string, optional, tag = "4")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub reason: ::core::option::Option<::prost::alloc::string::String>,
     /// A human readable message indicating details about the transition.
     /// +optional
     #[prost(string, optional, tag = "5")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub message: ::core::option::Option<::prost::alloc::string::String>,
 }
 /// ReplicaSetList is a collection of ReplicaSets.
@@ -484,12 +553,14 @@ pub struct ReplicaSetList {
     /// More info: <https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds>
     /// +optional
     #[prost(message, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub metadata: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::ListMeta,
     >,
     /// List of ReplicaSets.
     /// More info: <https://kubernetes.io/docs/concepts/workloads/controllers/replicationcontroller>
     #[prost(message, repeated, tag = "2")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub items: ::prost::alloc::vec::Vec<ReplicaSet>,
 }
 /// ReplicaSetSpec is the specification of a ReplicaSet.
@@ -504,18 +575,21 @@ pub struct ReplicaSetSpec {
     /// More info: <https://kubernetes.io/docs/concepts/workloads/controllers/replicationcontroller/#what-is-a-replicationcontroller>
     /// +optional
     #[prost(int32, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub replicas: ::core::option::Option<i32>,
     /// Minimum number of seconds for which a newly created pod should be ready
     /// without any of its container crashing, for it to be considered available.
     /// Defaults to 0 (pod will be considered available as soon as it is ready)
     /// +optional
     #[prost(int32, optional, tag = "4")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub min_ready_seconds: ::core::option::Option<i32>,
     /// Selector is a label query over pods that should match the replica count.
     /// Label keys and values that must match in order to be controlled by this replica set.
     /// It must match the pod template's labels.
     /// More info: <https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors>
     #[prost(message, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub selector: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::LabelSelector,
     >,
@@ -524,6 +598,7 @@ pub struct ReplicaSetSpec {
     /// More info: <https://kubernetes.io/docs/concepts/workloads/controllers/replicationcontroller#pod-template>
     /// +optional
     #[prost(message, optional, tag = "3")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub template: ::core::option::Option<super::super::core::v1::PodTemplateSpec>,
 }
 /// ReplicaSetStatus represents the current status of a ReplicaSet.
@@ -535,22 +610,27 @@ pub struct ReplicaSetStatus {
     /// Replicas is the most recently observed number of replicas.
     /// More info: <https://kubernetes.io/docs/concepts/workloads/controllers/replicationcontroller/#what-is-a-replicationcontroller>
     #[prost(int32, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub replicas: ::core::option::Option<i32>,
     /// The number of pods that have labels matching the labels of the pod template of the replicaset.
     /// +optional
     #[prost(int32, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub fully_labeled_replicas: ::core::option::Option<i32>,
     /// readyReplicas is the number of pods targeted by this ReplicaSet with a Ready Condition.
     /// +optional
     #[prost(int32, optional, tag = "4")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub ready_replicas: ::core::option::Option<i32>,
     /// The number of available replicas (ready for at least minReadySeconds) for this replica set.
     /// +optional
     #[prost(int32, optional, tag = "5")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub available_replicas: ::core::option::Option<i32>,
     /// ObservedGeneration reflects the generation of the most recently observed ReplicaSet.
     /// +optional
     #[prost(int64, optional, tag = "3")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub observed_generation: ::core::option::Option<i64>,
     /// Represents the latest available observations of a replica set's current state.
     /// +optional
@@ -559,6 +639,7 @@ pub struct ReplicaSetStatus {
     /// +listType=map
     /// +listMapKey=type
     #[prost(message, repeated, tag = "6")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub conditions: ::prost::alloc::vec::Vec<ReplicaSetCondition>,
 }
 /// Spec to control the desired behavior of daemon set rolling update.
@@ -583,6 +664,7 @@ pub struct RollingUpdateDaemonSet {
     /// the update.
     /// +optional
     #[prost(message, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub max_unavailable: ::core::option::Option<
         super::super::super::apimachinery::pkg::util::intstr::IntOrString,
     >,
@@ -606,6 +688,7 @@ pub struct RollingUpdateDaemonSet {
     /// cause evictions during disruption.
     /// +optional
     #[prost(message, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub max_surge: ::core::option::Option<
         super::super::super::apimachinery::pkg::util::intstr::IntOrString,
     >,
@@ -628,6 +711,7 @@ pub struct RollingUpdateDeployment {
     /// least 70% of desired pods.
     /// +optional
     #[prost(message, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub max_unavailable: ::core::option::Option<
         super::super::super::apimachinery::pkg::util::intstr::IntOrString,
     >,
@@ -644,6 +728,7 @@ pub struct RollingUpdateDeployment {
     /// at any time during the update is at most 130% of desired pods.
     /// +optional
     #[prost(message, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub max_surge: ::core::option::Option<
         super::super::super::apimachinery::pkg::util::intstr::IntOrString,
     >,
@@ -660,6 +745,7 @@ pub struct RollingUpdateStatefulSetStrategy {
     /// This is helpful in being able to do a canary based deployment. The default value is 0.
     /// +optional
     #[prost(int32, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub partition: ::core::option::Option<i32>,
     /// The maximum number of pods that can be unavailable during the update.
     /// Value can be an absolute number (ex: 5) or a percentage of desired pods (ex: 10%).
@@ -670,6 +756,7 @@ pub struct RollingUpdateStatefulSetStrategy {
     /// will be counted towards MaxUnavailable.
     /// +optional
     #[prost(message, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub max_unavailable: ::core::option::Option<
         super::super::super::apimachinery::pkg::util::intstr::IntOrString,
     >,
@@ -690,17 +777,20 @@ pub struct StatefulSet {
     /// More info: <https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata>
     /// +optional
     #[prost(message, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub metadata: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::ObjectMeta,
     >,
     /// Spec defines the desired identities of pods in this set.
     /// +optional
     #[prost(message, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub spec: ::core::option::Option<StatefulSetSpec>,
     /// Status is the current status of Pods in this StatefulSet. This data
     /// may be out of date by some window of time.
     /// +optional
     #[prost(message, optional, tag = "3")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub status: ::core::option::Option<StatefulSetStatus>,
 }
 /// StatefulSetCondition describes the state of a statefulset at a certain point.
@@ -711,23 +801,28 @@ pub struct StatefulSet {
 pub struct StatefulSetCondition {
     /// Type of statefulset condition.
     #[prost(string, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub r#type: ::core::option::Option<::prost::alloc::string::String>,
     /// Status of the condition, one of True, False, Unknown.
     #[prost(string, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub status: ::core::option::Option<::prost::alloc::string::String>,
     /// Last time the condition transitioned from one status to another.
     /// +optional
     #[prost(message, optional, tag = "3")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub last_transition_time: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::Time,
     >,
     /// The reason for the condition's last transition.
     /// +optional
     #[prost(string, optional, tag = "4")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub reason: ::core::option::Option<::prost::alloc::string::String>,
     /// A human readable message indicating details about the transition.
     /// +optional
     #[prost(string, optional, tag = "5")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub message: ::core::option::Option<::prost::alloc::string::String>,
 }
 /// StatefulSetList is a collection of StatefulSets.
@@ -740,11 +835,13 @@ pub struct StatefulSetList {
     /// More info: <https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata>
     /// +optional
     #[prost(message, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub metadata: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::ListMeta,
     >,
     /// Items is the list of stateful sets.
     #[prost(message, repeated, tag = "2")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub items: ::prost::alloc::vec::Vec<StatefulSet>,
 }
 /// StatefulSetOrdinals describes the policy used for replica ordinal assignment
@@ -764,6 +861,7 @@ pub struct StatefulSetOrdinals {
     ///    [0, .spec.replicas).
     /// +optional
     #[prost(int32, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub start: ::core::option::Option<i32>,
 }
 /// StatefulSetPersistentVolumeClaimRetentionPolicy describes the policy used for PVCs
@@ -778,6 +876,7 @@ pub struct StatefulSetPersistentVolumeClaimRetentionPolicy {
     /// of `Retain` causes PVCs to not be affected by StatefulSet deletion. The
     /// `Delete` policy causes those PVCs to be deleted.
     #[prost(string, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub when_deleted: ::core::option::Option<::prost::alloc::string::String>,
     /// WhenScaled specifies what happens to PVCs created from StatefulSet
     /// VolumeClaimTemplates when the StatefulSet is scaled down. The default
@@ -785,6 +884,7 @@ pub struct StatefulSetPersistentVolumeClaimRetentionPolicy {
     /// `Delete` policy causes the associated PVCs for any excess pods above
     /// the replica count to be deleted.
     #[prost(string, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub when_scaled: ::core::option::Option<::prost::alloc::string::String>,
 }
 /// A StatefulSetSpec is the specification of a StatefulSet.
@@ -800,11 +900,13 @@ pub struct StatefulSetSpec {
     /// TODO: Consider a rename of this field.
     /// +optional
     #[prost(int32, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub replicas: ::core::option::Option<i32>,
     /// selector is a label query over pods that should match the replica count.
     /// It must match the pod template's labels.
     /// More info: <https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors>
     #[prost(message, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub selector: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::LabelSelector,
     >,
@@ -816,6 +918,7 @@ pub struct StatefulSetSpec {
     /// "web" with index number "3" would be named "web-3".
     /// The only allowed template.spec.restartPolicy value is "Always".
     #[prost(message, optional, tag = "3")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub template: ::core::option::Option<super::super::core::v1::PodTemplateSpec>,
     /// volumeClaimTemplates is a list of claims that pods are allowed to reference.
     /// The StatefulSet controller is responsible for mapping network identities to
@@ -827,6 +930,7 @@ pub struct StatefulSetSpec {
     /// +optional
     /// +listType=atomic
     #[prost(message, repeated, tag = "4")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub volume_claim_templates: ::prost::alloc::vec::Vec<
         super::super::core::v1::PersistentVolumeClaim,
     >,
@@ -836,6 +940,7 @@ pub struct StatefulSetSpec {
     /// pattern: pod-specific-string.serviceName.default.svc.cluster.local
     /// where "pod-specific-string" is managed by the StatefulSet controller.
     #[prost(string, optional, tag = "5")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub service_name: ::core::option::Option<::prost::alloc::string::String>,
     /// podManagementPolicy controls how pods are created during initial scale up,
     /// when replacing pods on nodes, or when scaling down. The default policy is
@@ -847,23 +952,27 @@ pub struct StatefulSetSpec {
     /// all pods at once.
     /// +optional
     #[prost(string, optional, tag = "6")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub pod_management_policy: ::core::option::Option<::prost::alloc::string::String>,
     /// updateStrategy indicates the StatefulSetUpdateStrategy that will be
     /// employed to update Pods in the StatefulSet when a revision is made to
     /// Template.
     #[prost(message, optional, tag = "7")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub update_strategy: ::core::option::Option<StatefulSetUpdateStrategy>,
     /// revisionHistoryLimit is the maximum number of revisions that will
     /// be maintained in the StatefulSet's revision history. The revision history
     /// consists of all revisions not represented by a currently applied
     /// StatefulSetSpec version. The default value is 10.
     #[prost(int32, optional, tag = "8")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub revision_history_limit: ::core::option::Option<i32>,
     /// Minimum number of seconds for which a newly created pod should be ready
     /// without any of its container crashing for it to be considered available.
     /// Defaults to 0 (pod will be considered available as soon as it is ready)
     /// +optional
     #[prost(int32, optional, tag = "9")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub min_ready_seconds: ::core::option::Option<i32>,
     /// persistentVolumeClaimRetentionPolicy describes the lifecycle of persistent
     /// volume claims created from volumeClaimTemplates. By default, all persistent
@@ -873,6 +982,7 @@ pub struct StatefulSetSpec {
     /// down.
     /// +optional
     #[prost(message, optional, tag = "10")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub persistent_volume_claim_retention_policy: ::core::option::Option<
         StatefulSetPersistentVolumeClaimRetentionPolicy,
     >,
@@ -881,6 +991,7 @@ pub struct StatefulSetSpec {
     /// increments the index by one for each additional replica requested.
     /// +optional
     #[prost(message, optional, tag = "11")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub ordinals: ::core::option::Option<StatefulSetOrdinals>,
 }
 /// StatefulSetStatus represents the current state of a StatefulSet.
@@ -893,34 +1004,42 @@ pub struct StatefulSetStatus {
     /// StatefulSet's generation, which is updated on mutation by the API Server.
     /// +optional
     #[prost(int64, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub observed_generation: ::core::option::Option<i64>,
     /// replicas is the number of Pods created by the StatefulSet controller.
     #[prost(int32, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub replicas: ::core::option::Option<i32>,
     /// readyReplicas is the number of pods created for this StatefulSet with a Ready Condition.
     #[prost(int32, optional, tag = "3")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub ready_replicas: ::core::option::Option<i32>,
     /// currentReplicas is the number of Pods created by the StatefulSet controller from the StatefulSet version
     /// indicated by currentRevision.
     #[prost(int32, optional, tag = "4")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub current_replicas: ::core::option::Option<i32>,
     /// updatedReplicas is the number of Pods created by the StatefulSet controller from the StatefulSet version
     /// indicated by updateRevision.
     #[prost(int32, optional, tag = "5")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub updated_replicas: ::core::option::Option<i32>,
     /// currentRevision, if not empty, indicates the version of the StatefulSet used to generate Pods in the
     /// sequence [0,currentReplicas).
     #[prost(string, optional, tag = "6")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub current_revision: ::core::option::Option<::prost::alloc::string::String>,
     /// updateRevision, if not empty, indicates the version of the StatefulSet used to generate Pods in the sequence
     /// [replicas-updatedReplicas,replicas)
     #[prost(string, optional, tag = "7")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub update_revision: ::core::option::Option<::prost::alloc::string::String>,
     /// collisionCount is the count of hash collisions for the StatefulSet. The StatefulSet controller
     /// uses this field as a collision avoidance mechanism when it needs to create the name for the
     /// newest ControllerRevision.
     /// +optional
     #[prost(int32, optional, tag = "9")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub collision_count: ::core::option::Option<i32>,
     /// Represents the latest available observations of a statefulset's current state.
     /// +optional
@@ -929,10 +1048,12 @@ pub struct StatefulSetStatus {
     /// +listType=map
     /// +listMapKey=type
     #[prost(message, repeated, tag = "10")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub conditions: ::prost::alloc::vec::Vec<StatefulSetCondition>,
     /// Total number of available pods (ready for at least minReadySeconds) targeted by this statefulset.
     /// +optional
     #[prost(int32, optional, tag = "11")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub available_replicas: ::core::option::Option<i32>,
 }
 /// StatefulSetUpdateStrategy indicates the strategy that the StatefulSet
@@ -947,9 +1068,11 @@ pub struct StatefulSetUpdateStrategy {
     /// Default is RollingUpdate.
     /// +optional
     #[prost(string, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub r#type: ::core::option::Option<::prost::alloc::string::String>,
     /// RollingUpdate is used to communicate parameters when Type is RollingUpdateStatefulSetStrategyType.
     /// +optional
     #[prost(message, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub rolling_update: ::core::option::Option<RollingUpdateStatefulSetStrategy>,
 }

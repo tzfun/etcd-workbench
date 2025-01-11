@@ -1,5 +1,5 @@
 use log::debug;
-use prost::Message;
+use prost::{DecodeError, Message};
 use serde::Serialize;
 
 use crate::{
@@ -25,13 +25,19 @@ pub fn try_format_value(key: &String, value: &Vec<u8>) -> Option<FormattedValue>
     } else if key.starts_with("/registry/deployments/") {
         try_format_deployments(value)
     } else if key.starts_with("/registry/clusterroles/") {
-        try_format_clusterroles(value)
+        try_format_cluster_roles(value)
+    } else if key.starts_with("/registry/clusterrolebindings/") {
+        try_format_cluster_roles_bindings(value)
     } else if key.starts_with("/registry/configmaps/") {
         try_format_configmaps(value)
     } else if key.starts_with("/registry/controllerrevisions/") {
-        try_format_controllerrevisions(value)
+        try_format_controller_revisions(value)
     } else if key.starts_with("/registry/csinodes/") {
-        try_format_csinodes(value)
+        try_format_csi_nodes(value)
+    } else if key.starts_with("/registry/daemonsets/") {
+        try_format_daemon_sets(value)
+    } else if key.starts_with("/registry/endpointslices/") {
+        try_format_endpoint_slices(value)
     } else {
         None
     }
@@ -47,15 +53,17 @@ fn try_format_unknown(value: &Vec<u8>) -> Option<Unknown> {
 
     let result = Unknown::decode(new_value.as_slice());
     match result {
-        Ok(unknown) => Some(unknown),
+        Ok(unknown) => {
+            return Some(unknown);
+        }
         Err(e) => {
             debug!("decode k8s.io.apimachinery.pkg.runtime#Unknown failed: {e}");
-            None
         }
     }
+    None
 }
 
-fn try_fromat_to_json<T>(value: &T, name: &str) -> Option<FormattedValue>
+fn try_format_to_json<T>(value: &T) -> Option<FormattedValue>
 where
     T: ?Sized + Serialize,
 {
@@ -69,225 +77,165 @@ where
             });
         }
         Err(e) => {
-            debug!("serde_json::to_string({name}) failed: {e}");
+            debug!("serde_json::to_string() failed: {e}");
         }
     }
     None
+}
+
+fn try_format<F>(value: &Vec<u8>, f: F) -> Option<FormattedValue>
+where
+    F: Fn(&str, &str, &[u8]) -> Option<FormattedValue>,
+{
+    let result = try_format_unknown(value);
+    if let Some(unknown) = result {
+        if let Some(type_meta) = &unknown.type_meta {
+            let api_version = type_meta.api_version();
+            let kind = type_meta.kind();
+
+            let v = f(kind, api_version, unknown.raw());
+            if v.is_none() {
+                debug!("Kubernetes decoder missed: {} {}", kind, api_version);
+            }
+            return v;
+        }
+    }
+
+    None
+}
+
+fn decode_err_handle(kind: &str, version: &str, e: DecodeError) {
+    debug!("Kubernetes decode failed({}, {}): {}", kind, version, e);
 }
 
 /// parse from `k8s.io.api.core.v1#Pod`
 fn try_format_pods(value: &Vec<u8>) -> Option<FormattedValue> {
-    const NAME: &'static str = "Pod";
-    if let Some(unknwon) = try_format_unknown(value) {
-        if let Some(type_meta) = &unknwon.type_meta {
-            let version = type_meta.api_version();
-            let kind = type_meta.kind();
-
-            if kind.eq(NAME) {
-                if version.eq("v1") {
-                    let raw = unknwon.raw();
-                    let result = proto::k8s::io::api::core::v1::Pod::decode(raw);
-
-                    match result {
-                        Ok(obj) => {
-                            return try_fromat_to_json(&obj, NAME);
-                        }
-                        Err(e) => {
-                            debug!("decode k8s.io.api.core.v1.{NAME} failed: {e}");
-                        }
-                    }
-                }
-            } else {
-                debug!("unknown kind: {}, expect {}.", kind, NAME);
-            }
+    try_format(value, |kind, version, raw| {
+        if kind.eq("Pod") && version.eq("v1") {
+            return proto::k8s::io::api::core::v1::Pod::decode(raw)
+                .map_err(|e| decode_err_handle(kind, version, e))
+                .map_or(None, |o| try_format_to_json(&o));
         }
-    }
-
-    None
+        None
+    })
 }
 
 /// parse from `k8s.io.api.core.v1#Service`
+/// parse from `k8s.io.api.core.v1#Endpoints`
 fn try_format_services(value: &Vec<u8>) -> Option<FormattedValue> {
-    const NAME: &'static str = "Service";
-    if let Some(unknwon) = try_format_unknown(value) {
-        if let Some(type_meta) = &unknwon.type_meta {
-            let version = type_meta.api_version();
-            let kind = type_meta.kind();
-
-            if kind.eq(NAME) {
-                if version.eq("v1") {
-                    let raw = unknwon.raw();
-                    let result = proto::k8s::io::api::core::v1::Pod::decode(raw);
-
-                    match result {
-                        Ok(obj) => {
-                            return try_fromat_to_json(&obj, NAME);
-                        }
-                        Err(e) => {
-                            debug!("decode k8s.io.api.core.v1.{NAME} failed: {e}");
-                        }
-                    }
-                }
-            } else {
-                debug!("unknown kind: {}, expect {}.", kind, NAME);
-            }
+    try_format(value, |kind, version, raw| {
+        // parse from `k8s.io.api.core.v1#Service`
+        if kind.eq("Service") && version.eq("v1") {
+            return proto::k8s::io::api::core::v1::Service::decode(raw)
+                .map_err(|e| decode_err_handle(kind, version, e))
+                .map_or(None, |o| try_format_to_json(&o));
         }
-    }
 
-    None
+        // parse from `k8s.io.api.core.v1#Endpoints`
+        if kind.eq("Endpoints") && version.eq("v1") {
+            return proto::k8s::io::api::core::v1::Endpoints::decode(raw)
+                .map_err(|e| decode_err_handle(kind, version, e))
+                .map_or(None, |o| try_format_to_json(&o));
+        }
+        None
+    })
 }
 
 /// parse from `k8s.io.api.apps.v1#Deployment`
 fn try_format_deployments(value: &Vec<u8>) -> Option<FormattedValue> {
-    const NAME: &'static str = "Deployment";
-    if let Some(unknwon) = try_format_unknown(value) {
-        if let Some(type_meta) = &unknwon.type_meta {
-            let version = type_meta.api_version();
-            let kind = type_meta.kind();
-
-            if kind.eq(NAME) {
-                if version.eq("v1") {
-                    let raw = unknwon.raw();
-                    let result = proto::k8s::io::api::apps::v1::Deployment::decode(raw);
-
-                    match result {
-                        Ok(obj) => {
-                            return try_fromat_to_json(&obj, NAME);
-                        }
-                        Err(e) => {
-                            debug!("decode k8s.io.api.apps.v1.{NAME} failed: {e}");
-                        }
-                    }
-                }
-            } else {
-                debug!("unknown kind: {}, expect {}.", kind, NAME);
-            }
+    try_format(value, |kind, version, raw| {
+        if kind.eq("Deployment") && version.eq("apps/v1") {
+            return proto::k8s::io::api::apps::v1::Deployment::decode(raw)
+                .map_err(|e| decode_err_handle(kind, version, e))
+                .map_or(None, |o| try_format_to_json(&o));
         }
-    }
-
-    None
+        None
+    })
 }
 
 /// parse from `k8s.io.api.rbac.v1#ClusterRole`
-fn try_format_clusterroles(value: &Vec<u8>) -> Option<FormattedValue> {
-    const NAME: &'static str = "ClusterRole";
-    if let Some(unknwon) = try_format_unknown(value) {
-        if let Some(type_meta) = &unknwon.type_meta {
-            let version = type_meta.api_version();
-            let kind = type_meta.kind();
-
-            if kind.eq(NAME) {
-                if version.eq("v1") {
-                    let raw = unknwon.raw();
-                    let result = proto::k8s::io::api::rbac::v1::ClusterRole::decode(raw);
-
-                    match result {
-                        Ok(obj) => {
-                            return try_fromat_to_json(&obj, NAME);
-                        }
-                        Err(e) => {
-                            debug!("decode k8s.io.api.rbac.v1.{NAME} failed: {e}");
-                        }
-                    }
-                }
-            } else {
-                debug!("unknown kind: {}, expect {}.", kind, NAME);
-            }
+fn try_format_cluster_roles(value: &Vec<u8>) -> Option<FormattedValue> {
+    try_format(value, |kind, version, raw| {
+        if kind.eq("ClusterRole") && version.eq("rbac.authorization.k8s.io/v1") {
+            return proto::k8s::io::api::rbac::v1::ClusterRole::decode(raw)
+                .map_err(|e| decode_err_handle(kind, version, e))
+                .map_or(None, |o| try_format_to_json(&o));
         }
-    }
+        None
+    })
+}
 
-    None
+fn try_format_cluster_roles_bindings(value: &Vec<u8>) -> Option<FormattedValue> {
+    try_format(value, |kind, version, raw| {
+        if kind.eq("ClusterRoleBinding") && version.eq("rbac.authorization.k8s.io/v1") {
+            return proto::k8s::io::api::rbac::v1::ClusterRoleBinding::decode(raw)
+                .map_err(|e| decode_err_handle(kind, version, e))
+                .map_or(None, |o| try_format_to_json(&o));
+        }
+        None
+    })
 }
 
 /// parse from `k8s.io.api.core.v1#ConfigMap`
 fn try_format_configmaps(value: &Vec<u8>) -> Option<FormattedValue> {
-    const NAME: &'static str = "ConfigMap";
-    if let Some(unknwon) = try_format_unknown(value) {
-        if let Some(type_meta) = &unknwon.type_meta {
-            let version = type_meta.api_version();
-            let kind = type_meta.kind();
-
-            if kind.eq(NAME) {
-                if version.eq("v1") {
-                    let raw = unknwon.raw();
-                    let result = proto::k8s::io::api::core::v1::ConfigMap::decode(raw);
-
-                    match result {
-                        Ok(obj) => {
-                            return try_fromat_to_json(&obj, NAME);
-                        }
-                        Err(e) => {
-                            debug!("decode k8s.io.api.core.v1.{NAME} failed: {e}");
-                        }
-                    }
-                }
-            } else {
-                debug!("unknown kind: {}, expect {}.", kind, NAME);
-            }
+    try_format(value, |kind, version, raw| {
+        if kind.eq("ConfigMap") && version.eq("v1") {
+            return proto::k8s::io::api::core::v1::ConfigMap::decode(raw)
+                .map_err(|e| decode_err_handle(kind, version, e))
+                .map_or(None, |o| try_format_to_json(&o));
         }
-    }
-
-    None
+        None
+    })
 }
 
 /// parse from `k8s.io.api.apps.v1#ControllerRevision`
-fn try_format_controllerrevisions(value: &Vec<u8>) -> Option<FormattedValue> {
-    const NAME: &'static str = "ControllerRevision";
-    if let Some(unknwon) = try_format_unknown(value) {
-        if let Some(type_meta) = &unknwon.type_meta {
-            let version = type_meta.api_version();
-            let kind = type_meta.kind();
-
-            if kind.eq(NAME) {
-                if version.eq("v1") {
-                    let raw = unknwon.raw();
-                    let result = proto::k8s::io::api::apps::v1::ControllerRevision::decode(raw);
-
-                    match result {
-                        Ok(obj) => {
-                            return try_fromat_to_json(&obj, NAME);
-                        }
-                        Err(e) => {
-                            debug!("decode k8s.io.api.apps.v1.{NAME} failed: {e}");
-                        }
-                    }
-                }
-            } else {
-                debug!("unknown kind: {}, expect {}.", kind, NAME);
-            }
+fn try_format_controller_revisions(value: &Vec<u8>) -> Option<FormattedValue> {
+    try_format(value, |kind, version, raw| {
+        if kind.eq("ControllerRevision") && version.eq("apps/v1") {
+            return proto::k8s::io::api::apps::v1::ControllerRevision::decode(raw)
+                .map_err(|e| decode_err_handle(kind, version, e))
+                .map_or(None, |o| try_format_to_json(&o));
         }
-    }
-
-    None
+        None
+    })
 }
 
 /// parse from `k8s.io.api.storage.v1#CSINode`
-fn try_format_csinodes(value: &Vec<u8>) -> Option<FormattedValue> {
-    const NAME: &'static str = "CSINode";
-    if let Some(unknwon) = try_format_unknown(value) {
-        if let Some(type_meta) = &unknwon.type_meta {
-            let version = type_meta.api_version();
-            let kind = type_meta.kind();
-
-            if kind.eq(NAME) {
-                if version.eq("v1") {
-                    let raw = unknwon.raw();
-                    let result = proto::k8s::io::api::storage::v1::CsiNode::decode(raw);
-
-                    match result {
-                        Ok(obj) => {
-                            return try_fromat_to_json(&obj, NAME);
-                        }
-                        Err(e) => {
-                            debug!("decode k8s.io.api.storage.v1.{NAME} failed: {e}");
-                        }
-                    }
-                }
-            } else {
-                debug!("unknown kind: {}, expect {}.", kind, NAME);
-            }
+fn try_format_csi_nodes(value: &Vec<u8>) -> Option<FormattedValue> {
+    try_format(value, |kind, version, raw| {
+        if kind.eq("CSINode") && version.eq("storage.k8s.io/v1") {
+            return proto::k8s::io::api::storage::v1::CsiNode::decode(raw)
+                .map_err(|e| decode_err_handle(kind, version, e))
+                .map_or(None, |o| try_format_to_json(&o));
         }
-    }
+        None
+    })
+}
+/// parse from k8s.io.api.apps.v1.DaemonSet
+fn try_format_daemon_sets(value: &Vec<u8>) -> Option<FormattedValue> {
+    try_format(value, |kind, version, raw| {
+        if kind.eq("DaemonSet") && version.eq("apps/v1") {
+            return proto::k8s::io::api::apps::v1::DaemonSet::decode(raw)
+                .map_err(|e| decode_err_handle(kind, version, e))
+                .map_or(None, |o| try_format_to_json(&o));
+        }
+        None
+    })
+}
 
-    None
+fn try_format_endpoint_slices(value: &Vec<u8>) -> Option<FormattedValue> {
+    try_format(value, |kind, version, raw| {
+        if kind.eq("EndpointSlice") && version.eq("discovery.k8s.io/v1beta1") {
+            return proto::k8s::io::api::discovery::v1beta1::EndpointSlice::decode(raw)
+                .map_err(|e| decode_err_handle(kind, version, e))
+                .map_or(None, |o| try_format_to_json(&o));
+        }
+
+        if kind.eq("EndpointSlice") && version.eq("discovery.k8s.io/v1") {
+            return proto::k8s::io::api::discovery::v1::EndpointSlice::decode(raw)
+                .map_err(|e| decode_err_handle(kind, version, e))
+                .map_or(None, |o| try_format_to_json(&o));
+        }
+        None
+    })
 }

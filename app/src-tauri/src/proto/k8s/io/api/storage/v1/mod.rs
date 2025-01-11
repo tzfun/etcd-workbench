@@ -18,11 +18,13 @@ pub struct CsiDriver {
     /// alphanumerics between.
     /// More info: <https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata>
     #[prost(message, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub metadata: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::ObjectMeta,
     >,
     /// spec represents the specification of the CSI Driver.
     #[prost(message, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub spec: ::core::option::Option<CsiDriverSpec>,
 }
 /// CSIDriverList is a collection of CSIDriver objects.
@@ -35,11 +37,13 @@ pub struct CsiDriverList {
     /// More info: <https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata>
     /// +optional
     #[prost(message, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub metadata: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::ListMeta,
     >,
     /// items is the list of CSIDriver
     #[prost(message, repeated, tag = "2")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub items: ::prost::alloc::vec::Vec<CsiDriver>,
 }
 /// CSIDriverSpec is the specification of a CSIDriver.
@@ -63,6 +67,7 @@ pub struct CsiDriverSpec {
     ///
     /// +optional
     #[prost(bool, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub attach_required: ::core::option::Option<bool>,
     /// podInfoOnMount indicates this CSI volume driver requires additional pod information (like podName, podUID, etc.)
     /// during mount operations, if set to true.
@@ -92,6 +97,7 @@ pub struct CsiDriverSpec {
     ///
     /// +optional
     #[prost(bool, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub pod_info_on_mount: ::core::option::Option<bool>,
     /// volumeLifecycleModes defines what kind of volumes this CSI volume driver supports.
     /// The default if the list is empty is "Persistent", which is the usage defined by the
@@ -111,6 +117,7 @@ pub struct CsiDriverSpec {
     /// +optional
     /// +listType=set
     #[prost(string, repeated, tag = "3")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub volume_lifecycle_modes: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// storageCapacity indicates that the CSI volume driver wants pod scheduling to consider the storage
     /// capacity that the driver deployment will report by creating
@@ -130,6 +137,7 @@ pub struct CsiDriverSpec {
     /// +optional
     /// +featureGate=CSIStorageCapacity
     #[prost(bool, optional, tag = "4")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub storage_capacity: ::core::option::Option<bool>,
     /// fsGroupPolicy defines if the underlying volume supports changing ownership and
     /// permission of the volume before being mounted.
@@ -144,6 +152,7 @@ pub struct CsiDriverSpec {
     ///
     /// +optional
     #[prost(string, optional, tag = "5")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub fs_group_policy: ::core::option::Option<::prost::alloc::string::String>,
     /// tokenRequests indicates the CSI driver needs pods' service account
     /// tokens it is mounting volume for to do necessary authentication. Kubelet
@@ -164,6 +173,7 @@ pub struct CsiDriverSpec {
     /// +optional
     /// +listType=atomic
     #[prost(message, repeated, tag = "6")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub token_requests: ::prost::alloc::vec::Vec<TokenRequest>,
     /// requiresRepublish indicates the CSI driver wants `NodePublishVolume`
     /// being periodically called to reflect any possible change in the mounted
@@ -175,6 +185,7 @@ pub struct CsiDriverSpec {
     ///
     /// +optional
     #[prost(bool, optional, tag = "7")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub requires_republish: ::core::option::Option<bool>,
     /// seLinuxMount specifies if the CSI driver supports "-o context"
     /// mount option.
@@ -197,6 +208,7 @@ pub struct CsiDriverSpec {
     /// +featureGate=SELinuxMountReadWriteOncePod
     /// +optional
     #[prost(bool, optional, tag = "8")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub se_linux_mount: ::core::option::Option<bool>,
 }
 /// CSINode holds information about all CSI drivers installed on a node.
@@ -216,11 +228,13 @@ pub struct CsiNode {
     /// Standard object's metadata.
     /// metadata.name must be the Kubernetes node name.
     #[prost(message, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub metadata: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::ObjectMeta,
     >,
     /// spec is the specification of CSINode
     #[prost(message, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub spec: ::core::option::Option<CsiNodeSpec>,
 }
 /// CSINodeDriver holds information about the specification of one CSI driver installed on a node
@@ -233,6 +247,7 @@ pub struct CsiNodeDriver {
     /// This MUST be the same name returned by the CSI GetPluginName() call for
     /// that driver.
     #[prost(string, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub name: ::core::option::Option<::prost::alloc::string::String>,
     /// nodeID of the node from the driver point of view.
     /// This field enables Kubernetes to communicate with storage systems that do
@@ -243,6 +258,7 @@ pub struct CsiNodeDriver {
     /// refer to the node name using the ID that the storage system will
     /// understand, e.g. "nodeA" instead of "node1". This field is required.
     #[prost(string, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub node_id: ::core::option::Option<::prost::alloc::string::String>,
     /// topologyKeys is the list of keys supported by the driver.
     /// When a driver is initialized on a cluster, it provides a set of topology
@@ -258,11 +274,13 @@ pub struct CsiNodeDriver {
     /// +optional
     /// +listType=atomic
     #[prost(string, repeated, tag = "3")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub topology_keys: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// allocatable represents the volume resources of a node that are available for scheduling.
     /// This field is beta.
     /// +optional
     #[prost(message, optional, tag = "4")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub allocatable: ::core::option::Option<VolumeNodeResources>,
 }
 /// CSINodeList is a collection of CSINode objects.
@@ -275,11 +293,13 @@ pub struct CsiNodeList {
     /// More info: <https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata>
     /// +optional
     #[prost(message, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub metadata: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::ListMeta,
     >,
     /// items is the list of CSINode
     #[prost(message, repeated, tag = "2")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub items: ::prost::alloc::vec::Vec<CsiNode>,
 }
 /// CSINodeSpec holds information about the specification of all CSI drivers installed on a node
@@ -295,6 +315,7 @@ pub struct CsiNodeSpec {
     /// +listType=map
     /// +listMapKey=name
     #[prost(message, repeated, tag = "1")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub drivers: ::prost::alloc::vec::Vec<CsiNodeDriver>,
 }
 /// CSIStorageCapacity stores the result of one CSI GetCapacity call.
@@ -337,6 +358,7 @@ pub struct CsiStorageCapacity {
     /// More info: <https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata>
     /// +optional
     #[prost(message, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub metadata: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::ObjectMeta,
     >,
@@ -348,6 +370,7 @@ pub struct CsiStorageCapacity {
     ///
     /// +optional
     #[prost(message, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub node_topology: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::LabelSelector,
     >,
@@ -358,6 +381,7 @@ pub struct CsiStorageCapacity {
     /// creator.
     /// This field is immutable.
     #[prost(string, optional, tag = "3")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub storage_class_name: ::core::option::Option<::prost::alloc::string::String>,
     /// capacity is the value reported by the CSI driver in its GetCapacityResponse
     /// for a GetCapacityRequest with topology and parameters that match the
@@ -370,6 +394,7 @@ pub struct CsiStorageCapacity {
     ///
     /// +optional
     #[prost(message, optional, tag = "4")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub capacity: ::core::option::Option<
         super::super::super::apimachinery::pkg::api::resource::Quantity,
     >,
@@ -386,6 +411,7 @@ pub struct CsiStorageCapacity {
     ///
     /// +optional
     #[prost(message, optional, tag = "5")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub maximum_volume_size: ::core::option::Option<
         super::super::super::apimachinery::pkg::api::resource::Quantity,
     >,
@@ -400,11 +426,13 @@ pub struct CsiStorageCapacityList {
     /// More info: <https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata>
     /// +optional
     #[prost(message, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub metadata: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::ListMeta,
     >,
     /// items is the list of CSIStorageCapacity objects.
     #[prost(message, repeated, tag = "2")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub items: ::prost::alloc::vec::Vec<CsiStorageCapacity>,
 }
 /// StorageClass describes the parameters for a class of storage for
@@ -421,11 +449,13 @@ pub struct StorageClass {
     /// More info: <https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata>
     /// +optional
     #[prost(message, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub metadata: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::ObjectMeta,
     >,
     /// provisioner indicates the type of the provisioner.
     #[prost(string, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub provisioner: ::core::option::Option<::prost::alloc::string::String>,
     /// parameters holds the parameters for the provisioner that should
     /// create volumes of this storage class.
@@ -439,6 +469,7 @@ pub struct StorageClass {
     /// Defaults to Delete.
     /// +optional
     #[prost(string, optional, tag = "4")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub reclaim_policy: ::core::option::Option<::prost::alloc::string::String>,
     /// mountOptions controls the mountOptions for dynamically provisioned PersistentVolumes of this storage class.
     /// e.g. \["ro", "soft"\]. Not validated -
@@ -446,16 +477,19 @@ pub struct StorageClass {
     /// +optional
     /// +listType=atomic
     #[prost(string, repeated, tag = "5")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub mount_options: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// allowVolumeExpansion shows whether the storage class allow volume expand.
     /// +optional
     #[prost(bool, optional, tag = "6")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub allow_volume_expansion: ::core::option::Option<bool>,
     /// volumeBindingMode indicates how PersistentVolumeClaims should be
     /// provisioned and bound.  When unset, VolumeBindingImmediate is used.
     /// This field is only honored by servers that enable the VolumeScheduling feature.
     /// +optional
     #[prost(string, optional, tag = "7")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub volume_binding_mode: ::core::option::Option<::prost::alloc::string::String>,
     /// allowedTopologies restrict the node topologies where volumes can be dynamically provisioned.
     /// Each volume plugin defines its own supported topology specifications.
@@ -464,6 +498,7 @@ pub struct StorageClass {
     /// +optional
     /// +listType=atomic
     #[prost(message, repeated, tag = "8")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub allowed_topologies: ::prost::alloc::vec::Vec<
         super::super::core::v1::TopologySelectorTerm,
     >,
@@ -478,11 +513,13 @@ pub struct StorageClassList {
     /// More info: <https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata>
     /// +optional
     #[prost(message, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub metadata: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::ListMeta,
     >,
     /// items is the list of StorageClasses
     #[prost(message, repeated, tag = "2")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub items: ::prost::alloc::vec::Vec<StorageClass>,
 }
 /// TokenRequest contains parameters of a service account token.
@@ -494,12 +531,14 @@ pub struct TokenRequest {
     /// audience is the intended audience of the token in "TokenRequestSpec".
     /// It will default to the audiences of kube apiserver.
     #[prost(string, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub audience: ::core::option::Option<::prost::alloc::string::String>,
     /// expirationSeconds is the duration of validity of the token in "TokenRequestSpec".
     /// It has the same default value of "ExpirationSeconds" in "TokenRequestSpec".
     ///
     /// +optional
     #[prost(int64, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub expiration_seconds: ::core::option::Option<i64>,
 }
 /// VolumeAttachment captures the intent to attach or detach the specified volume
@@ -515,18 +554,21 @@ pub struct VolumeAttachment {
     /// More info: <https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata>
     /// +optional
     #[prost(message, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub metadata: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::ObjectMeta,
     >,
     /// spec represents specification of the desired attach/detach volume behavior.
     /// Populated by the Kubernetes system.
     #[prost(message, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub spec: ::core::option::Option<VolumeAttachmentSpec>,
     /// status represents status of the VolumeAttachment request.
     /// Populated by the entity completing the attach or detach
     /// operation, i.e. the external-attacher.
     /// +optional
     #[prost(message, optional, tag = "3")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub status: ::core::option::Option<VolumeAttachmentStatus>,
 }
 /// VolumeAttachmentList is a collection of VolumeAttachment objects.
@@ -539,11 +581,13 @@ pub struct VolumeAttachmentList {
     /// More info: <https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata>
     /// +optional
     #[prost(message, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub metadata: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::ListMeta,
     >,
     /// items is the list of VolumeAttachments
     #[prost(message, repeated, tag = "2")]
+    #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub items: ::prost::alloc::vec::Vec<VolumeAttachment>,
 }
 /// VolumeAttachmentSource represents a volume that should be attached.
@@ -558,6 +602,7 @@ pub struct VolumeAttachmentSource {
     /// persistentVolumeName represents the name of the persistent volume to attach.
     /// +optional
     #[prost(string, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub persistent_volume_name: ::core::option::Option<::prost::alloc::string::String>,
     /// inlineVolumeSpec contains all the information necessary to attach
     /// a persistent volume defined by a pod's inline VolumeSource. This field
@@ -567,6 +612,7 @@ pub struct VolumeAttachmentSource {
     /// honored by servers that enabled the CSIMigration feature.
     /// +optional
     #[prost(message, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub inline_volume_spec: ::core::option::Option<
         super::super::core::v1::PersistentVolumeSpec,
     >,
@@ -580,12 +626,15 @@ pub struct VolumeAttachmentSpec {
     /// attacher indicates the name of the volume driver that MUST handle this
     /// request. This is the name returned by GetPluginName().
     #[prost(string, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub attacher: ::core::option::Option<::prost::alloc::string::String>,
     /// source represents the volume that should be attached.
     #[prost(message, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub source: ::core::option::Option<VolumeAttachmentSource>,
     /// nodeName represents the node that the volume should be attached to.
     #[prost(string, optional, tag = "3")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub node_name: ::core::option::Option<::prost::alloc::string::String>,
 }
 /// VolumeAttachmentStatus is the status of a VolumeAttachment request.
@@ -598,6 +647,7 @@ pub struct VolumeAttachmentStatus {
     /// This field must only be set by the entity completing the attach
     /// operation, i.e. the external-attacher.
     #[prost(bool, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub attached: ::core::option::Option<bool>,
     /// attachmentMetadata is populated with any
     /// information returned by the attach operation, upon successful attach, that must be passed
@@ -615,12 +665,14 @@ pub struct VolumeAttachmentStatus {
     /// operation, i.e. the external-attacher.
     /// +optional
     #[prost(message, optional, tag = "3")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub attach_error: ::core::option::Option<VolumeError>,
     /// detachError represents the last error encountered during detach operation, if any.
     /// This field must only be set by the entity completing the detach
     /// operation, i.e. the external-attacher.
     /// +optional
     #[prost(message, optional, tag = "4")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub detach_error: ::core::option::Option<VolumeError>,
 }
 /// VolumeError captures an error encountered during a volume operation.
@@ -632,6 +684,7 @@ pub struct VolumeError {
     /// time represents the time the error was encountered.
     /// +optional
     #[prost(message, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub time: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::Time,
     >,
@@ -640,6 +693,7 @@ pub struct VolumeError {
     /// information.
     /// +optional
     #[prost(string, optional, tag = "2")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub message: ::core::option::Option<::prost::alloc::string::String>,
 }
 /// VolumeNodeResources is a set of resource limits for scheduling of volumes.
@@ -654,5 +708,6 @@ pub struct VolumeNodeResources {
     /// If this field is not specified, then the supported number of volumes on this node is unbounded.
     /// +optional
     #[prost(int32, optional, tag = "1")]
+    #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub count: ::core::option::Option<i32>,
 }

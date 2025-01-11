@@ -9,7 +9,8 @@ edition = "2021"
 
 [build-dependencies]
 tauri-build = { version = "1", features = [] }
-prost-build = "0.13.1"
+prost-build = "0.13"
+regex = "1.11.1"
 
 # [target.'cfg(target_os = "macos")'.dependencies]
 
@@ -31,8 +32,7 @@ uuid = "1.10.0"
 md5 = "0.7.0"
 base64 = "0.22.1"
 async-trait = { version = "0.1.81" }
-prost = "0.13.1"
-prost-types = "0.13.1"
+prost = "0.13"
 aes = "0.8.4"
 
 [features]

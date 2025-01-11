@@ -1,4 +1,6 @@
 use std::{fs::{self, remove_dir_all, File}, io::Write, path::{Path, PathBuf}};
+use std::io::{BufRead, BufReader};
+use regex::Regex;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     tauri_build::build();
@@ -9,10 +11,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     config.message_attribute(".", "#[serde(rename_all = \"camelCase\")]");
     config.enum_attribute(".", "#[serde(rename_all = \"camelCase\")]");
-    
 
     config.protoc_arg("--proto_path=proto");
-    // config.extern_path(".google.protobuf", "::pbjson_types");
 
     let out_dir = Path::new("src/proto");
     if out_dir.exists() {
@@ -28,8 +28,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     config.compile_protos(&["proto/k8s.io/api/core/v1/generated.proto"], &["src"])?;
     config.compile_protos(&["proto/k8s.io/api/rbac/v1/generated.proto"], &["src"])?;
     config.compile_protos(&["proto/k8s.io/api/storage/v1/generated.proto"], &["src"])?;
+    config.compile_protos(&["proto/k8s.io/api/discovery/v1/generated.proto"], &["src"])?;
+    config.compile_protos(&["proto/k8s.io/api/discovery/v1beta1/generated.proto"], &["src"])?;
 
     config.compile_protos(&["proto/k8s.io/apimachinery/pkg/apis/meta/v1/generated.proto"], &["src"])?;
+    config.compile_protos(&["proto/k8s.io/apimachinery/pkg/apis/meta/v1beta1/generated.proto"], &["src"])?;
     config.compile_protos(&["proto/k8s.io/apimachinery/pkg/runtime/generated.proto"], &["src"])?;
     config.compile_protos(&["proto/k8s.io/apimachinery/pkg/runtime/schema/generated.proto"], &["src"])?;
     config.compile_protos(&["proto/k8s.io/apimachinery/pkg/util/intstr/generated.proto"], &["src"])?;
@@ -56,17 +59,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             to = to.join(ele);
         }
 
-        println!("mkdirs {:?}", to);
         fs::create_dir_all(&to)?;
         to = to.join("mod.rs");
 
         let from = PathBuf::from(out_dir)
             .join(format!("{}.rs", file));
 
-        File::create_new(&to)?;
-        fs::copy(from.clone(), to)?;
-
-        fs::remove_file(from)?;
+        modify_file(from, to)?;
     }
 
     add_mod(out_dir.into())?;
@@ -74,6 +73,37 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+fn modify_file(from: PathBuf, to: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
+    let mut to_file = File::create_new(&to)?;
+    let from_file = File::open(&from)?;
+    let reader = BufReader::new(from_file);
+
+    let option_re = Regex::new(r"^(\s*)pub [a-zA-Z0-9_#]+: ::core::option::Option<.*$")?;
+    let vec_re = Regex::new(r"^(\s*)pub [a-zA-Z0-9_#]+: ::prost::alloc::vec::Vec<.*$")?;
+    for line in reader.lines() {
+        let line = line?;
+        if let Some(captures) = option_re.captures_iter(line.as_str()).next() {
+            if let Some(prefix) = captures.get(1) {
+                let attribute = format!("{}#[serde(skip_serializing_if = \"::core::option::Option::is_none\")]\n", prefix.as_str());
+                to_file.write(attribute.as_bytes())?;
+            }
+        }
+
+        if let Some(captures) = vec_re.captures_iter(line.as_str()).next() {
+            if let Some(prefix) = captures.get(1) {
+                let attribute = format!("{}#[serde(skip_serializing_if = \"::prost::alloc::vec::Vec::is_empty\")]\n", prefix.as_str());
+                to_file.write(attribute.as_bytes())?;
+            }
+        }
+
+        to_file.write_all(line.as_bytes())?;
+        to_file.write(b"\n")?;
+        to_file.flush()?;
+    }
+
+    fs::remove_file(from)?;
+    Ok(())
+}
 
 fn add_mod(path: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
     let mut mod_content = String::new();
