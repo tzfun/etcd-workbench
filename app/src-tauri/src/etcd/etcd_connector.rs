@@ -217,7 +217,7 @@ impl EtcdConnector {
                 s_kv.remove_prefix(namespace);
             }
 
-            s_kv.formatted_value = k8s_formatter::try_format_value(&full_key, &s_kv.value);
+            s_kv.formatted_value = k8s_formatter::try_format_proto(&full_key, &s_kv.value);
             Ok(s_kv)
         }
     }

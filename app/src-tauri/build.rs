@@ -24,12 +24,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     config.out_dir(out_dir);
 
-    config.compile_protos(&["proto/k8s.io/api/apps/v1/generated.proto"], &["src"])?;
     config.compile_protos(&["proto/k8s.io/api/core/v1/generated.proto"], &["src"])?;
+    config.compile_protos(&["proto/k8s.io/api/apps/v1/generated.proto"], &["src"])?;
     config.compile_protos(&["proto/k8s.io/api/rbac/v1/generated.proto"], &["src"])?;
     config.compile_protos(&["proto/k8s.io/api/storage/v1/generated.proto"], &["src"])?;
     config.compile_protos(&["proto/k8s.io/api/discovery/v1/generated.proto"], &["src"])?;
     config.compile_protos(&["proto/k8s.io/api/discovery/v1beta1/generated.proto"], &["src"])?;
+    config.compile_protos(&["proto/k8s.io/api/flowcontrol/v1/generated.proto"], &["src"])?;
+    // config.compile_protos(&["proto/k8s.io/api/flowcontrol/v1beta1/generated.proto"], &["src"])?;
+    // config.compile_protos(&["proto/k8s.io/api/flowcontrol/v1beta2/generated.proto"], &["src"])?;
+    // config.compile_protos(&["proto/k8s.io/api/flowcontrol/v1beta3/generated.proto"], &["src"])?;
+    config.compile_protos(&["proto/k8s.io/api/coordination/v1/generated.proto"], &["src"])?;
+    config.compile_protos(&["proto/k8s.io/api/scheduling/v1/generated.proto"], &["src"])?;
 
     config.compile_protos(&["proto/k8s.io/apimachinery/pkg/apis/meta/v1/generated.proto"], &["src"])?;
     config.compile_protos(&["proto/k8s.io/apimachinery/pkg/apis/meta/v1beta1/generated.proto"], &["src"])?;

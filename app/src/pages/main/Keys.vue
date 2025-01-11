@@ -37,7 +37,7 @@ import {useTheme} from "vuetify";
 import CountDownTimer from "~/components/CountDownTimer.vue";
 import {_saveGlobalStore, _useGlobalStore, _useSettings} from "~/common/store.ts";
 import Tree from "~/components/tree/Tree.vue";
-import {_isMac, _openSettingWindow} from "~/common/windows.ts";
+import {_isMac} from "~/common/windows.ts";
 
 const theme = useTheme()
 
@@ -892,15 +892,14 @@ const addKeyMonitor = (key: string) => {
                 <v-alert v-if="editorAlert.type === 'kubernetes'" 
                         density="compact"
                         :rounded="false"
-                        class="px-1 py-0 text-medium-emphasis editor-alert-item"
-                        :style="`height: ${editorAlert.show ? 'unset' : '0'};`"
+                        class="pa-1 text-medium-emphasis editor-alert-item"
+                        :style="`display: ${editorAlert.show ? 'block' : 'none'};`"
                         >
                   <v-layout>
-                    <p>The kubernetes storage format is protobuf and is automatically formatted into a <strong>read-only</strong> json format.
-                    <span class="editor-alert-link" @click="_openSettingWindow('autoFormatKubernetes')">setting&gt;&gt;</span></p>
+                    <p>The kubernetes storage format is protobuf and is automatically formatted into a <strong>readonly</strong> json format.</p>
+                    <span class="editor-alert-link pl-2" @click="showFormattedValue = !showFormattedValue">Recover</span>
                     <v-spacer></v-spacer>
                     
-                    <span class="editor-alert-link" @click="showFormattedValue = !showFormattedValue">Recover</span>
                     <v-icon @click="editorAlert.show = false" class="mr-2">mdi-chevron-double-up</v-icon>
                   </v-layout>
                 </v-alert>
@@ -1199,11 +1198,13 @@ $--load-more-area-height: 32px;
     .editor-alert {
       position: absolute;
       height: max-content;
-      width:100%;
-      top:0;
+      width: 100%;
+      top: 0;
+      left: 0;
       z-index: 100;
       .editor-alert-item {
         font-size: 0.9em;
+        transition: all ease 0.8s;
         .editor-alert-link {
           color: #9d9cf3;
           cursor: pointer;

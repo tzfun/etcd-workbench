@@ -17,30 +17,36 @@ const PROTO_PREFIX: [u8; 4] = [0x6b, 0x38, 0x73, 0x00];
 /// 如果格式化成功，将返回一个Json字符串，表达为 由`Option`包裹的`FormattedValue`。
 ///
 /// 如果格式化失败，返回 `None`
-pub fn try_format_value(key: &String, value: &Vec<u8>) -> Option<FormattedValue> {
-    if key.starts_with("/registry/pods/") {
-        try_format_pods(value)
-    } else if key.starts_with("/registry/services/") {
-        try_format_services(value)
-    } else if key.starts_with("/registry/deployments/") {
-        try_format_deployments(value)
-    } else if key.starts_with("/registry/clusterroles/") {
-        try_format_cluster_roles(value)
-    } else if key.starts_with("/registry/clusterrolebindings/") {
-        try_format_cluster_roles_bindings(value)
-    } else if key.starts_with("/registry/configmaps/") {
-        try_format_configmaps(value)
-    } else if key.starts_with("/registry/controllerrevisions/") {
-        try_format_controller_revisions(value)
-    } else if key.starts_with("/registry/csinodes/") {
-        try_format_csi_nodes(value)
-    } else if key.starts_with("/registry/daemonsets/") {
-        try_format_daemon_sets(value)
-    } else if key.starts_with("/registry/endpointslices/") {
-        try_format_endpoint_slices(value)
-    } else {
-        None
+pub fn try_format_proto(key: &String, value: &Vec<u8>) -> Option<FormattedValue> {
+    if key.starts_with("/registry") {
+        return try_format(value, |kind, version, raw| {
+            if version.eq("v1") {
+                return try_format_core_v1(kind, version, raw);
+            } else if version.eq("apps/v1") {
+                return try_format_apps_v1(kind, version, raw);
+            } else if version.eq("rbac.authorization.k8s.io/v1") {
+                return try_format_rbac_v1(kind, version, raw);
+            } else if version.eq("storage.k8s.io/v1") {
+                return try_format_storage_v1(kind, version, raw);
+            } else if version.eq("discovery.k8s.io/v1") {
+                // Note: 虽然有多个版本，但互相不兼容，因此需各个版本单独处理
+                return try_format_discovery_v1(kind, version, raw);
+            } else if version.eq("discovery.k8s.io/v1beta1") {
+                // Note: 虽然有多个版本，但互相不兼容，因此需各个版本单独处理
+                return try_format_discovery_v1beta1(kind, version, raw);
+            } else if version.starts_with("flowcontrol.apiserver.k8s.io/v1") {
+                // Note: 虽然有多个版本（v1beta1, v1beta2, v1beta3），但其中并没有实质性的修改。
+                // 均是对注释修改或者是字段重命名，因此用v1版本解析即可。
+                return try_format_flowcontrol_v1(kind, version, raw);
+            } else if version.eq("coordination.k8s.io/v1") {
+                return try_format_coordination_v1(kind, version, raw);
+            } else if version.eq("scheduling.k8s.io/v1") {
+                return try_format_scheduling_v1(kind, version, raw);
+            }
+            None
+        })
     }
+    None
 }
 
 fn try_format_unknown(value: &Vec<u8>) -> Option<Unknown> {
@@ -108,134 +114,137 @@ fn decode_err_handle(kind: &str, version: &str, e: DecodeError) {
     debug!("Kubernetes decode failed({}, {}): {}", kind, version, e);
 }
 
-/// parse from `k8s.io.api.core.v1#Pod`
-fn try_format_pods(value: &Vec<u8>) -> Option<FormattedValue> {
-    try_format(value, |kind, version, raw| {
-        if kind.eq("Pod") && version.eq("v1") {
-            return proto::k8s::io::api::core::v1::Pod::decode(raw)
-                .map_err(|e| decode_err_handle(kind, version, e))
-                .map_or(None, |o| try_format_to_json(&o));
-        }
-        None
-    })
+/// https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/api/core/v1/generated.proto
+fn try_format_core_v1(kind: &str, version: &str, raw: &[u8]) -> Option<FormattedValue> {
+    match kind {
+        "Pod" => proto::k8s::io::api::core::v1::Pod::decode(raw)
+            .map_err(|e| decode_err_handle(kind, version, e))
+            .map_or(None, |o| try_format_to_json(&o)),
+        "Service" => proto::k8s::io::api::core::v1::Service::decode(raw)
+            .map_err(|e| decode_err_handle(kind, version, e))
+            .map_or(None, |o| try_format_to_json(&o)),
+        "Endpoints" => proto::k8s::io::api::core::v1::Endpoints::decode(raw)
+            .map_err(|e| decode_err_handle(kind, version, e))
+            .map_or(None, |o| try_format_to_json(&o)),
+        "ConfigMap" => proto::k8s::io::api::core::v1::ConfigMap::decode(raw)
+            .map_err(|e| decode_err_handle(kind, version, e))
+            .map_or(None, |o| try_format_to_json(&o)),
+        "Node" => proto::k8s::io::api::core::v1::Node::decode(raw)
+            .map_err(|e| decode_err_handle(kind, version, e))
+            .map_or(None, |o| try_format_to_json(&o)),
+        "Namespace" => proto::k8s::io::api::core::v1::Namespace::decode(raw)
+            .map_err(|e| decode_err_handle(kind, version, e))
+            .map_or(None, |o| try_format_to_json(&o)),
+        "RangeAllocation" => proto::k8s::io::api::core::v1::RangeAllocation::decode(raw)
+            .map_err(|e| decode_err_handle(kind, version, e))
+            .map_or(None, |o| try_format_to_json(&o)),
+        "ServiceAccount" => proto::k8s::io::api::core::v1::ServiceAccount::decode(raw)
+            .map_err(|e| decode_err_handle(kind, version, e))
+            .map_or(None, |o| try_format_to_json(&o)),
+        _ => None,
+    }
 }
 
-/// parse from `k8s.io.api.core.v1#Service`
-/// parse from `k8s.io.api.core.v1#Endpoints`
-fn try_format_services(value: &Vec<u8>) -> Option<FormattedValue> {
-    try_format(value, |kind, version, raw| {
-        // parse from `k8s.io.api.core.v1#Service`
-        if kind.eq("Service") && version.eq("v1") {
-            return proto::k8s::io::api::core::v1::Service::decode(raw)
-                .map_err(|e| decode_err_handle(kind, version, e))
-                .map_or(None, |o| try_format_to_json(&o));
-        }
-
-        // parse from `k8s.io.api.core.v1#Endpoints`
-        if kind.eq("Endpoints") && version.eq("v1") {
-            return proto::k8s::io::api::core::v1::Endpoints::decode(raw)
-                .map_err(|e| decode_err_handle(kind, version, e))
-                .map_or(None, |o| try_format_to_json(&o));
-        }
-        None
-    })
+/// https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/api/apps/v1/generated.proto
+fn try_format_apps_v1(kind: &str, version: &str, raw: &[u8]) -> Option<FormattedValue> {
+    match kind {
+        "Deployment" => proto::k8s::io::api::apps::v1::Deployment::decode(raw)
+            .map_err(|e| decode_err_handle(kind, version, e))
+            .map_or(None, |o| try_format_to_json(&o)),
+        "ControllerRevision" => proto::k8s::io::api::apps::v1::ControllerRevision::decode(raw)
+            .map_err(|e| decode_err_handle(kind, version, e))
+            .map_or(None, |o| try_format_to_json(&o)),
+        "DaemonSet" => proto::k8s::io::api::apps::v1::DaemonSet::decode(raw)
+            .map_err(|e| decode_err_handle(kind, version, e))
+            .map_or(None, |o| try_format_to_json(&o)),
+        "ReplicaSet" => proto::k8s::io::api::apps::v1::ReplicaSet::decode(raw)
+            .map_err(|e| decode_err_handle(kind, version, e))
+            .map_or(None, |o| try_format_to_json(&o)),
+        _ => None
+    }
 }
 
-/// parse from `k8s.io.api.apps.v1#Deployment`
-fn try_format_deployments(value: &Vec<u8>) -> Option<FormattedValue> {
-    try_format(value, |kind, version, raw| {
-        if kind.eq("Deployment") && version.eq("apps/v1") {
-            return proto::k8s::io::api::apps::v1::Deployment::decode(raw)
-                .map_err(|e| decode_err_handle(kind, version, e))
-                .map_or(None, |o| try_format_to_json(&o));
-        }
-        None
-    })
+/// https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/api/rbac/v1/generated.proto
+fn try_format_rbac_v1(kind: &str, version: &str, raw: &[u8]) -> Option<FormattedValue> {
+    match kind {
+        "ClusterRole" => proto::k8s::io::api::rbac::v1::ClusterRole::decode(raw)
+            .map_err(|e| decode_err_handle(kind, version, e))
+            .map_or(None, |o| try_format_to_json(&o)),
+        "ClusterRoleBinding" => proto::k8s::io::api::rbac::v1::ClusterRoleBinding::decode(raw)
+            .map_err(|e| decode_err_handle(kind, version, e))
+            .map_or(None, |o| try_format_to_json(&o)),
+        "RoleBinding" => proto::k8s::io::api::rbac::v1::RoleBinding::decode(raw)
+            .map_err(|e| decode_err_handle(kind, version, e))
+            .map_or(None, |o| try_format_to_json(&o)),
+        "Role" => proto::k8s::io::api::rbac::v1::Role::decode(raw)
+            .map_err(|e| decode_err_handle(kind, version, e))
+            .map_or(None, |o| try_format_to_json(&o)),
+        _ => None
+    }
 }
 
-/// parse from `k8s.io.api.rbac.v1#ClusterRole`
-fn try_format_cluster_roles(value: &Vec<u8>) -> Option<FormattedValue> {
-    try_format(value, |kind, version, raw| {
-        if kind.eq("ClusterRole") && version.eq("rbac.authorization.k8s.io/v1") {
-            return proto::k8s::io::api::rbac::v1::ClusterRole::decode(raw)
-                .map_err(|e| decode_err_handle(kind, version, e))
-                .map_or(None, |o| try_format_to_json(&o));
-        }
-        None
-    })
+/// https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/api/storage/v1/generated.proto
+fn try_format_storage_v1(kind: &str, version: &str, raw: &[u8]) -> Option<FormattedValue> {
+    match kind {
+        "CSINode" => proto::k8s::io::api::storage::v1::CsiNode::decode(raw)
+            .map_err(|e| decode_err_handle(kind, version, e))
+            .map_or(None, |o| try_format_to_json(&o)),
+        "StorageClass" => proto::k8s::io::api::storage::v1::StorageClass::decode(raw)
+            .map_err(|e| decode_err_handle(kind, version, e))
+            .map_or(None, |o| try_format_to_json(&o)),
+        _ => None
+    }
 }
 
-fn try_format_cluster_roles_bindings(value: &Vec<u8>) -> Option<FormattedValue> {
-    try_format(value, |kind, version, raw| {
-        if kind.eq("ClusterRoleBinding") && version.eq("rbac.authorization.k8s.io/v1") {
-            return proto::k8s::io::api::rbac::v1::ClusterRoleBinding::decode(raw)
-                .map_err(|e| decode_err_handle(kind, version, e))
-                .map_or(None, |o| try_format_to_json(&o));
-        }
-        None
-    })
+/// https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/api/discovery/v1/generated.proto
+fn try_format_discovery_v1(kind: &str, version: &str, raw: &[u8]) -> Option<FormattedValue> {
+    match kind {
+        "EndpointSlice" => proto::k8s::io::api::discovery::v1::EndpointSlice::decode(raw)
+            .map_err(|e| decode_err_handle(kind, version, e))
+            .map_or(None, |o| try_format_to_json(&o)),
+        _ => None
+    }
 }
 
-/// parse from `k8s.io.api.core.v1#ConfigMap`
-fn try_format_configmaps(value: &Vec<u8>) -> Option<FormattedValue> {
-    try_format(value, |kind, version, raw| {
-        if kind.eq("ConfigMap") && version.eq("v1") {
-            return proto::k8s::io::api::core::v1::ConfigMap::decode(raw)
-                .map_err(|e| decode_err_handle(kind, version, e))
-                .map_or(None, |o| try_format_to_json(&o));
-        }
-        None
-    })
+/// https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/api/discovery/v1beta1/generated.proto
+fn try_format_discovery_v1beta1(kind: &str, version: &str, raw: &[u8]) -> Option<FormattedValue> {
+    match kind {
+        "EndpointSlice" => proto::k8s::io::api::discovery::v1beta1::EndpointSlice::decode(raw)
+            .map_err(|e| decode_err_handle(kind, version, e))
+            .map_or(None, |o| try_format_to_json(&o)),
+        _ => None
+    }
 }
 
-/// parse from `k8s.io.api.apps.v1#ControllerRevision`
-fn try_format_controller_revisions(value: &Vec<u8>) -> Option<FormattedValue> {
-    try_format(value, |kind, version, raw| {
-        if kind.eq("ControllerRevision") && version.eq("apps/v1") {
-            return proto::k8s::io::api::apps::v1::ControllerRevision::decode(raw)
-                .map_err(|e| decode_err_handle(kind, version, e))
-                .map_or(None, |o| try_format_to_json(&o));
-        }
-        None
-    })
+/// https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/api/flowcontrol/v1/generated.proto
+fn try_format_flowcontrol_v1(kind: &str, version: &str, raw: &[u8]) -> Option<FormattedValue> {
+    match kind {
+        "FlowSchema" => proto::k8s::io::api::flowcontrol::v1::FlowSchema::decode(raw)
+            .map_err(|e| decode_err_handle(kind, version, e))
+            .map_or(None, |o| try_format_to_json(&o)),
+        "PriorityLevelConfiguration" => proto::k8s::io::api::flowcontrol::v1::PriorityLevelConfiguration::decode(raw)
+            .map_err(|e| decode_err_handle(kind, version, e))
+            .map_or(None, |o| try_format_to_json(&o)),
+        _ => None
+    }
 }
 
-/// parse from `k8s.io.api.storage.v1#CSINode`
-fn try_format_csi_nodes(value: &Vec<u8>) -> Option<FormattedValue> {
-    try_format(value, |kind, version, raw| {
-        if kind.eq("CSINode") && version.eq("storage.k8s.io/v1") {
-            return proto::k8s::io::api::storage::v1::CsiNode::decode(raw)
-                .map_err(|e| decode_err_handle(kind, version, e))
-                .map_or(None, |o| try_format_to_json(&o));
-        }
-        None
-    })
-}
-/// parse from k8s.io.api.apps.v1.DaemonSet
-fn try_format_daemon_sets(value: &Vec<u8>) -> Option<FormattedValue> {
-    try_format(value, |kind, version, raw| {
-        if kind.eq("DaemonSet") && version.eq("apps/v1") {
-            return proto::k8s::io::api::apps::v1::DaemonSet::decode(raw)
-                .map_err(|e| decode_err_handle(kind, version, e))
-                .map_or(None, |o| try_format_to_json(&o));
-        }
-        None
-    })
+/// https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/api/coordination/v1/generated.proto
+fn try_format_coordination_v1(kind: &str, version: &str, raw: &[u8]) -> Option<FormattedValue> {
+    match kind {
+        "Lease" =>proto::k8s::io::api::coordination::v1::Lease::decode(raw)
+            .map_err(|e| decode_err_handle(kind, version, e))
+            .map_or(None, |o| try_format_to_json(&o)),
+        _=>None
+    }
 }
 
-fn try_format_endpoint_slices(value: &Vec<u8>) -> Option<FormattedValue> {
-    try_format(value, |kind, version, raw| {
-        if kind.eq("EndpointSlice") && version.eq("discovery.k8s.io/v1beta1") {
-            return proto::k8s::io::api::discovery::v1beta1::EndpointSlice::decode(raw)
-                .map_err(|e| decode_err_handle(kind, version, e))
-                .map_or(None, |o| try_format_to_json(&o));
-        }
-
-        if kind.eq("EndpointSlice") && version.eq("discovery.k8s.io/v1") {
-            return proto::k8s::io::api::discovery::v1::EndpointSlice::decode(raw)
-                .map_err(|e| decode_err_handle(kind, version, e))
-                .map_or(None, |o| try_format_to_json(&o));
-        }
-        None
-    })
+/// https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/api/scheduling/v1/generated.proto
+fn try_format_scheduling_v1(kind: &str, version: &str, raw: &[u8]) -> Option<FormattedValue> {
+    match kind {
+        "PriorityClass" =>proto::k8s::io::api::scheduling::v1::PriorityClass::decode(raw)
+            .map_err(|e| decode_err_handle(kind, version, e))
+            .map_or(None, |o| try_format_to_json(&o)),
+        _=>None
+    }
 }
