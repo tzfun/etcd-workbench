@@ -1,7 +1,7 @@
 import {invoke} from "@tauri-apps/api";
 import {Connection, ConnectionInfo, KeyMonitorConfig, SessionData} from "~/common/transport/connection.ts";
 import {Cluster, SnapshotInfo} from "~/common/transport/maintenance.ts";
-import {KeyValue, LeaseInfo} from "~/common/transport/kv.ts";
+import {KeyValue, LeaseInfo, SearchResult} from "~/common/transport/kv.ts";
 import {_emitLocal, _tipError, EventName} from "~/common/events.ts";
 import {LogicErrorInfo} from "~/common/types.ts";
 import {RolePermission, User} from "~/common/transport/user.ts";
@@ -98,6 +98,13 @@ export function _getKVByVersion(sessionId: number, key: string, version: number)
         session: sessionId,
         key,
         version
+    })
+}
+
+export function _searchByPrefix(sessionId: number, prefix: string): Promise<SearchResult> {
+    return invoke('kv_get_with_prefix', {
+        session: sessionId,
+        prefix
     })
 }
 

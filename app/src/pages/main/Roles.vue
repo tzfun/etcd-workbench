@@ -211,12 +211,14 @@ const grantPerm = () => {
 <template>
   <div class="fill-height pa-5 overflow-y-auto">
     <div>
-      <v-btn class="text-none"
-             prepend-icon="mdi-refresh"
-             @click="loadAllRoles"
-             variant="outlined"
-             text="Refresh"
-             :loading="loadingStore.loadAllRoles"
+      <v-btn 
+            v-bind="props"
+            variant="tonal"
+            size="small"
+            icon="mdi-refresh"
+            @click="loadAllRoles"
+            :loading="loadingStore.loadAllRoles"
+            title="Refresh"
       ></v-btn>
       <v-btn class="text-none ml-2"
              prepend-icon="mdi-lock-plus"

@@ -272,7 +272,13 @@ const getTreeNodeById = (id: any): TreeNode | undefined => {
   return treeRootObj.value.getNodesByParam("id", id, null)[0]
 }
 
-const addItemToTree = (key: string) => {
+const addItemToTree = (key: string, ignoreIfExist?: boolean) => {
+  if(ignoreIfExist) {
+    let node = getTreeNodeById(key)
+    if(node) {
+      return
+    }
+  }
   let id
   if (key.startsWith(props.keySplitter)) {
     id = props.keySplitter
@@ -376,13 +382,21 @@ const cancelSelected = () => {
   treeRootObj.value.cancelSelectedNode()
 }
 
+const selectItem = (key: string) => {
+  let node = getTreeNodeById(key)
+  if(node) {
+    treeRootObj.value.selectNode(node)
+  }
+}
+
 defineExpose({
   addItemToTree,
   removeItemFromTree,
   rerender,
   getSelectedItems,
   refreshDiyDom,
-  cancelSelected
+  cancelSelected,
+  selectItem
 })
 
 </script>

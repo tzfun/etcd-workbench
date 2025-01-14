@@ -2,7 +2,7 @@ use std::str::FromStr;
 use log::warn;
 use crate::error::LogicError;
 use crate::etcd;
-use crate::transport::kv::SerializableKeyValue;
+use crate::transport::kv::{SearchResult, SerializableKeyValue};
 
 #[tauri::command]
 pub async fn kv_get_all_keys(session: i32) -> Result<Vec<SerializableKeyValue>, LogicError> {
@@ -38,6 +38,20 @@ pub async fn kv_get_by_version(session: i32, key: String, version: i64) -> Resul
 }
 
 #[tauri::command]
+pub async fn kv_get_history_versions(session: i32, key: String, start: i64, end: i64) -> Result<Vec<i64>, LogicError> {
+    let mut connector = etcd::get_connector(&session)?;
+    let versions = connector.kv_get_history_versions(key, start, end).await?;
+    Ok(versions)
+}
+
+#[tauri::command]
+pub async fn kv_get_with_prefix(session: i32, prefix: String) -> Result<SearchResult, LogicError> {
+    let mut connector = etcd::get_connector(&session)?;
+    let result = connector.kv_get_with_prefix(prefix).await?;
+    Ok(result)
+}
+
+#[tauri::command]
 pub async fn kv_put(session: i32, key: String, value: Vec<u8>, ttl: Option<i64>) -> Result<(), LogicError> {
     let mut connector = etcd::get_connector(&session)?;
     connector.kv_put(
@@ -65,11 +79,4 @@ pub async fn kv_delete(session: i32, keys: Vec<String>) -> Result<usize, LogicEr
     let mut connector = etcd::get_connector(&session)?;
     let size = connector.kv_delete(keys).await?;
     Ok(size)
-}
-
-#[tauri::command]
-pub async fn kv_get_history_versions(session: i32, key: String, start: i64, end: i64) -> Result<Vec<i64>, LogicError> {
-    let mut connector = etcd::get_connector(&session)?;
-    let versions = connector.kv_get_history_versions(key, start, end).await?;
-    Ok(versions)
 }

@@ -34,3 +34,8 @@ export interface LeaseSimpleInfo {
     ttl: number,
     grantedTtl: number,
 }
+
+export interface SearchResult {
+    count: number,
+    results: KeyValue[]
+}

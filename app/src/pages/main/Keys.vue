@@ -10,6 +10,7 @@ import {
   _handleError,
   _putKV,
   _putKVWithLease,
+  _searchByPrefix,
   _updateKeyCollection
 } from "~/common/services.ts";
 import {
@@ -38,6 +39,9 @@ import CountDownTimer from "~/components/CountDownTimer.vue";
 import {_saveGlobalStore, _useGlobalStore, _useSettings} from "~/common/store.ts";
 import Tree from "~/components/tree/Tree.vue";
 import {_isMac} from "~/common/windows.ts";
+import { _debounce } from "~/common/utils";
+import { SearchResult } from "~/common/transport/kv";
+import { VTextField } from "vuetify/components";
 
 const theme = useTheme()
 
@@ -135,6 +139,14 @@ const versionDiffInfo = reactive({
   },
   useFormattedValue: false,
 })
+
+const searchDialog = reactive({
+  show: false,
+  inputValue: "",
+  searchResult: <SearchResult | null>null,
+  loading: false,
+})
+
 const isDarkTheme = computed<boolean>(() => {
   return theme.global.name.value === 'dark'
 })
@@ -195,7 +207,6 @@ const loadAllKeys = (): Promise<any> => {
   paginationKeyCursor.value = undefined
   loadingStore.loadMore = true
   return _getAllKeys(props.session?.id).then(data => {
-    kvCount.value += data.length
     addDataListToTree(data)
   }).catch(e => {
     _handleError({
@@ -213,7 +224,6 @@ const loadNextPage = (): Promise<any> => {
     loadingStore.loadMore = true
     let limit: number = LIMIT_PER_PAGE.value as number
     return _getAllKeysPaging(props.session?.id, cursor, limit).then((data: KeyValue[]) => {
-      kvCount.value += data.length
       if (data.length < limit) {
         paginationKeyCursor.value = undefined
       }
@@ -310,9 +320,10 @@ const putKey = () => {
   })
 }
 
-const addDataListToTree = (data: KeyValue[]) => {
+const addDataListToTree = (data: KeyValue[], ignoreIfExist?: boolean) => {
+  kvCount.value += data.length
   for (let kv of data) {
-    kvTree.value?.addItemToTree(kv.key)
+    kvTree.value?.addItemToTree(kv.key, ignoreIfExist)
   }
 }
 
@@ -681,18 +692,52 @@ const addKeyMonitor = (key: string) => {
   })
 }
 
+const openSearchDialog = () => {
+  searchDialog.inputValue = ''
+  searchDialog.searchResult = null
+  searchDialog.show = true
+  searchDialog.loading = false
+
+}
+
+const selectSearchItem = (kv: KeyValue) => {
+  showKV(kv.key)
+  kvTree.value?.selectItem(kv.key)
+  searchDialog.show = false
+}
+
+const searchFromServer = _debounce(() => {
+  if(_isEmpty(searchDialog.inputValue)) {
+    searchDialog.searchResult = null
+    return
+  }
+  searchDialog.loading = true
+  _searchByPrefix(props.session?.id, searchDialog.inputValue).then((data: SearchResult) => {
+    searchDialog.searchResult = data
+
+    if(data) {
+      addDataListToTree(data.results, true)
+    }
+  }).finally(() => {
+    searchDialog.loading = false
+  })
+}, 1000)
+
 </script>
 
 <template>
   <div class="fill-height overflow-y-auto">
     <v-layout class="action-area pa-5">
-      <v-btn class="text-none"
-             prepend-icon="mdi-refresh"
-             variant="outlined"
-             @click="refreshAllKeys"
-             :loading="loadingStore.loadMore"
-             text="Refresh"
+      <v-btn 
+            v-bind="props"
+            variant="tonal"
+            size="small"
+            icon="mdi-refresh"
+            @click="refreshAllKeys"
+            :loading="loadingStore.loadMore"
+            title="Refresh"
       ></v-btn>
+      
       <v-btn class="text-none ml-2"
              prepend-icon="mdi-file-document-plus-outline"
              color="green"
@@ -714,18 +759,27 @@ const addKeyMonitor = (key: string) => {
              text="My Collections"
       ></v-btn>
 
+      <v-btn class="text-none ml-2"
+            v-bind="props"
+            prepend-icon="mdi-text-box-search-outline"
+            color="blue-lighten-1"
+            @click="openSearchDialog"
+            text="Search"
+            title="Search from etcd server"
+      ></v-btn>
+
       <v-spacer></v-spacer>
 
       <v-tooltip v-if="session.namespace"
                  location="top"
-                 text="The namespace of the current connection"
+                 text="Namespace"
       >
         <template v-slot:activator="{ props }">
           <v-chip v-bind="props"
                   label
                   color="brown-lighten-2"
                   class="font-weight-bold"
-                  prepend-icon="mdi-view-headline"
+                  prepend-icon="mdi-home"
                   @click="_copyToClipboard(session.namespace)"
           >{{ session.namespace }}
           </v-chip>
@@ -970,7 +1024,6 @@ const addKeyMonitor = (key: string) => {
         v-model="versionDiffInfo.show"
         persistent
         max-width="1200px"
-        min-width="800px"
         scrollable
     >
       <v-card
@@ -1180,6 +1233,60 @@ const addKeyMonitor = (key: string) => {
             ></Tree>
           </div>
         </v-card-item>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog
+        v-model="searchDialog.show"
+        max-width="800px"
+        scrollable
+    >
+      <v-card>
+        <v-card-title class="pa-0">
+          <v-text-field v-model="searchDialog.inputValue"
+                  :prefix="session.namespace"
+                  autofocus
+                  type="text"
+                  @input="searchFromServer"
+                  placeholder="Enter a prefix to search from the server"
+                  prepend-inner-icon="mdi-magnify"
+                  hide-details
+          >
+          <template #append-inner>
+            <v-progress-circular
+                v-if="searchDialog.loading"
+                color="primary"
+                indeterminate="disable-shrink"
+                size="20"
+                width="3"
+            ></v-progress-circular>
+          </template>
+        </v-text-field>
+        </v-card-title>
+        <v-card-text class="pa-0">
+          <v-list lines="two" v-if="searchDialog.searchResult && searchDialog.searchResult.results.length > 0">
+            <v-list-item v-for="kv in searchDialog.searchResult.results"
+                         :key="kv.key"
+                         :title="kv.key"
+                         append-icon="mdi-chevron-right"
+                         @click="selectSearchItem(kv)"
+            >
+              <template #title>
+                <span class="font-weight-bold">{{ kv.key }}</span>
+              </template>
+              <template #subtitle>
+                Version: <i>{{ kv.version }}</i>,
+                Create Revision: <i>{{ kv.createRevision }}</i>,
+                Modify Revision: <i>{{ kv.modRevision }}</i>
+              </template>
+            </v-list-item>
+          </v-list>
+        </v-card-text>
+        <v-card-actions class="text-medium-emphasis">
+          <v-spacer/>
+          <span v-if="searchDialog.searchResult">Searched {{ searchDialog.searchResult.results.length }} / {{ searchDialog.searchResult.count }}</span>
+          <span v-else>Search all keys from etcd server, and display up to 50 results.</span>
+        </v-card-actions>
       </v-card>
     </v-dialog>
   </div>

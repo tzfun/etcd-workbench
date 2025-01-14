@@ -81,3 +81,10 @@ pub struct SerializableLeaseSimpleInfo {
     pub ttl: i64,
     pub granted_ttl: i64
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all="camelCase")]
+pub struct SearchResult {
+    pub count: usize,
+    pub results: Vec<SerializableKeyValue>
+}

@@ -14,7 +14,7 @@ use crate::etcd::wrapped_etcd_client::WrappedEtcdClient;
 use crate::ssh::ssh_tunnel::SshTunnel;
 use crate::transport::connection::{Connection, ConnectionUser};
 use crate::transport::kv::{
-    SerializableKeyValue, SerializableLeaseInfo, SerializableLeaseSimpleInfo,
+    SearchResult, SerializableKeyValue, SerializableLeaseInfo, SerializableLeaseSimpleInfo
 };
 use crate::transport::maintenance::{
     SerializableCluster, SerializableClusterMember, SerializableClusterStatus, SnapshotInfo,
@@ -200,6 +200,35 @@ impl EtcdConnector {
             .await?;
 
         self.find_first_kv(kv)
+    }
+
+    /// 根据前缀搜索键
+    pub async fn kv_get_with_prefix(
+        &mut self,
+        prefix: impl Into<Vec<u8>>,
+    ) -> Result<SearchResult, LogicError> {
+        let key = self.prefix_namespace(prefix);
+        let option = GetOptions::new()
+        .with_prefix()
+        .with_limit(50)
+        .with_keys_only();
+
+        let mut response = self.client.kv_get_request(key, Some(option)).await?;
+        
+        let kvs = response.take_kvs();
+        let mut arr = Vec::with_capacity(kvs.len());
+        for kv in kvs {
+            let mut s_kv = SerializableKeyValue::from(kv);
+            if let Some(namespace) = &self.namespace {
+                s_kv.remove_prefix(namespace);
+            }
+            arr.push(s_kv);
+        }
+
+        Ok(SearchResult{
+            count: response.count() as usize,
+            results: arr,
+        })
     }
 
     fn find_first_kv(
