@@ -25,12 +25,14 @@ A beautiful and lightweight ETCD V3 client. Provides App and Web packages. Suppo
 6. Support SSL, SSH connection.
 7. Support cluster information viewing, version compression, data backup and other functions.
 8. Support Key-Value editing, multi-language format highlighting, batch import/export.
-9. Support comparison of multiple versions of key.
-10. Support quick access from key collection.
-11. Support key change monitoring and notification.
-12. Support lease management: creation, deletion, key bind relationship, countdown display.
-13. Support user management: enable/disable authentication, creation, deletion, grant/revocation of roles, etc.
-14. Support role management: creation, deletion, authorization/revocation of permissions, etc.
+9. Support protobuf format content decoding for kubernetes.
+10. Support comparison of multiple versions of key.
+11. Support quick access from key collection.
+12. Support key change monitoring and notification.
+13. Support key search function.
+14. Support lease management: creation, deletion, key bind relationship, countdown display.
+15. Support user management: enable/disable authentication, creation, deletion, grant/revocation of roles, etc.
+16. Support role management: creation, deletion, authorization/revocation of permissions, etc.
 
 - **App**: It has all the functions, has a better experience than the web version, and is easy to migrate data. It will be continuously updated in the future. It is recommended to use.
 - **Web**: It has most of the functions, but a few functions are not supported (such as data backup, etc.). Users can access it directly with a browser without downloading. It supports multi-user login.

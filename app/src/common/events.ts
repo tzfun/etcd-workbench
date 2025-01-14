@@ -68,9 +68,7 @@ export function _emitWindow(windowLabel: string, eventName: EventName, eventPayl
         return
     }
 
-    window.emit(eventName, eventPayload).then(() => {
-        console.log("emit success", window.label, eventName, eventPayload)
-    }).catch(e => {
+    window.emit(eventName, eventPayload).catch(e => {
         console.error(e)
     })
 }

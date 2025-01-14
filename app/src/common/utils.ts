@@ -41,8 +41,8 @@ export const fileTypeIcon: Record<string, string> = {
     kubernetes: 'mdi-kubernetes'
 }
 
-export const EditorMappedLanguage: Record<EditorHighlightLanguage, EditorHighlightLanguage> = {
-    "kubernetes": "json"
+export const EditorMappedLanguage: Record<string, EditorHighlightLanguage> = {
+    kubernetes: "json"
 }
 
 export function _goBrowserPage(address: string) {
