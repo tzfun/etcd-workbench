@@ -76,6 +76,7 @@ Web 支持 **Jar** 包部署和 **Docker** 部署，在浏览器中管理Etcd Se
 - **Tauri** - App Framework
 - **Tokio** - 异步IO通信
 - **etcd-client** - Etcd Connector
+- **russh** - SSH连接
 - **Vuetify** - UI框架
 
 # License

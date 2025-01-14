@@ -1,19 +1,19 @@
 {
-  "version": "1.1.0",
-  "notes": "Supports key collection and monitoring functions",
-  "pub_date": "2024-12-17T10:44:00Z",
+  "version": "1.1.1",
+  "notes": "Supports protobuf format in kubernetes",
+  "pub_date": "2025-01-14T10:47:00Z",
   "platforms": {
     "darwin-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K0YxS1hDU3hrZ3lmeERHTk9XeDA3R2NnTjZONWVWUHZ5c2tnRytzNStzK1dtc0VZMDFvWnhoR3RsU2hHNXBNcmdFSXpseThSZ2ljRmk0RzQrd2ROMEFzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzM0NDM1NjAyCWZpbGU6RXRjZCBXb3JrYmVuY2guYXBwLnRhci5negpJeENoN3FHOC95VTU4S3JmK0x5b2NSZzMrRWUvVmlKM1pJTHBTZFRyRFZmdnZvbjZPZzlleWFYWjVFSE9iTVBLU29SZ3dHOFprVEV2YVBkZnVuUnRDZz09Cg==",
-      "url": "https://github.com/tzfun/etcd-workbench/releases/download/App-1.1.0/etcd-workbench-1.1.0-macos-x86_64.app.tar.gz"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K0ZFUVpWYVlSaEhjT1lRUGJYRXlId0tGR3pPYUJnbTlzUSt2R244c1dJY2tqN2xEVW5LTTJxV1pHS05tK0k5QzVzcmdFemxDTmVycW5SRjBwTy81MEFBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzM2ODQ5NTE5CWZpbGU6RXRjZCBXb3JrYmVuY2guYXBwLnRhci5negpXdHNWbjM0NVNCSFQ2UXEwMUtDTEpETy9PRFI3bmtOaVBpaU4wamhONnR0MnFyZ2l6QzQ2S3pCK1VIWFdiVUkwSGxDeVUxcUk2aUJMbFJFV3NXaXlDUT09Cg==",
+      "url": "https://github.com/tzfun/etcd-workbench/releases/download/App-1.1.1/etcd-workbench-1.1.1-macos-x86_64.app.tar.gz"
     },
     "darwin-aarch64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K0t6aDNxYm9uR0NlZ0RtM3ZncTdLWUNlNE1JUXVlYmdsdS92T1Q4T0c1SWNCRmQ4QUMrZE4xZlR6S0o3ZjdkalhZNFFZTWswSlFiZDlSZllTOExMeEFzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzM0NDQ5NzE1CWZpbGU6RXRjZCBXb3JrYmVuY2guYXBwLnRhci5negozd0V1Y0lKQXFWL3VTT0lTQXphcGg2QVNYdk1qNGpGMHVMZ250bDFFYUZGMEtMYW1Rc0txMlp6aWIvdWg5TjlaakcrOTBPS1RIM0VmeFlzUFJLbVlBdz09Cg==",
-      "url": "https://github.com/tzfun/etcd-workbench/releases/download/App-1.1.0/etcd-workbench-1.1.0-macos-aarch64.app.tar.gz"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K08wRTlyNUthUTBkYzZXMXVHUmxQSXJPTnp5YTlOTEUvWFZPK1VBblM2RGxUY1JWdFhMY09qNGdLTzFJY1M1V1FPcVpBdEYyQnBWVFh5QXhaU3cyckF3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzM2ODUwNTQ1CWZpbGU6RXRjZCBXb3JrYmVuY2guYXBwLnRhci5nego0YnFKTHJYWW1BMFBpYVp1Mjd0R2VHS1NadytNR2J4Sk9rM2JLRm05ZFMxZzR2ZFN3QWs3SDJVc1c4c1Z1anc3c0wyQjYvb1d0dmVEUFI1V2R3RVZEQT09Cg==",
+      "url": "https://github.com/tzfun/etcd-workbench/releases/download/App-1.1.1/etcd-workbench-1.1.1-macos-aarch64.app.tar.gz"
     },
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K05aRlFmU0ZjZUtjSUhXV28vU1lhcWdCVXF2akx5R3FmazNHVFNmUGszRHNxNzFPUWtiSE5lQnRBTFcyanRaRzZ2Z3lPU2pWWXpsSjAvdnovWXNXbGc4PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzM0NDMyMTYyCWZpbGU6RXRjZCBXb3JrYmVuY2hfMS4xLjBfeDY0LXNldHVwLm5zaXMuemlwCjFzeFFqL2FZTUY4Y3FkMU9NNjE2U25rdC9kWGtQYWFNcXFVQmtzOWViWFc3c0U0ZUJYdXFTOFJJenAwSUNGVXV4c1hzdVEwZms5ZDhiNWJYL1hnU0R3PT0K",
-      "url": "https://github.com/tzfun/etcd-workbench/releases/download/App-1.1.0/etcd-workbench-1.1.0-windows-x86_64.nsis.zip"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K0ovTGJCeEIvRHRCS3F1UDN6NTNxR0lHR2E4a1NMUkdqS2JhN1N3UEZ5dW1VVHIzdjVTK2RGdTE4MG9GUG5wZWIxNkcvWFpvYjZqWk1vREVNY3BZNEFJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzM2ODQ4OTgxCWZpbGU6RXRjZCBXb3JrYmVuY2hfMS4xLjFfeDY0LXNldHVwLm5zaXMuemlwCno4YzhFL25ROGRuTjZOMWo5QTFtY3NZUkI4bWltbDRKdGZqN3MySHJ5VTFQVGt1SHBUMFlUT3VvUnhUaVI1Qmx3ZnZnMW0wSzRpRkE4dHp0QkJvRENBPT0K",
+      "url": "https://github.com/tzfun/etcd-workbench/releases/download/App-1.1.1/etcd-workbench-1.1.1-windows-x86_64.nsis.zip"
     }
   }
 }

@@ -77,6 +77,7 @@ The front-end is developed based on Vue, and the back-end is developed based on 
 - **Tauri** - App Framework
 - **Tokio** - Asynchronous IO communication
 - **etcd-client** - Etcd Connector
+- **russh** - SSH Client
 - **Vuetify** - UI Framework
 
 # License
