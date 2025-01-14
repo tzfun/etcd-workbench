@@ -132,7 +132,8 @@ const versionDiffInfo = reactive({
   B: <DiffInfo>{
     version: 0,
     content: ''
-  }
+  },
+  useFormattedValue: false,
 })
 const isDarkTheme = computed<boolean>(() => {
   return theme.global.name.value === 'dark'
@@ -532,10 +533,16 @@ const loadVersionDiff = () => {
 
     //  当前版本
     versionDiffInfo.B.version = versionDiffInfo.modRevision
-    versionDiffInfo.B.content = _decodeBytesToString(dataB!.value)
-
-    let lang = _tryParseEditorLanguage(dataB.key, versionDiffInfo.B.content, dataB.formattedValue, props.session?.namespace)
-    versionDiffInfo.language = _tryParseDiffLanguage(lang)
+    if(dataB!.formattedValue) {
+      versionDiffInfo.B.content = dataB.formattedValue.value
+      versionDiffInfo.language = dataB.formattedValue.language as EditorHighlightLanguage
+      versionDiffInfo.useFormattedValue = true
+    } else {
+      versionDiffInfo.B.content = _decodeBytesToString(dataB!.value)
+      let lang = _tryParseEditorLanguage(dataB.key, versionDiffInfo.B.content, dataB.formattedValue, props.session?.namespace)
+      versionDiffInfo.language = _tryParseDiffLanguage(lang)
+      versionDiffInfo.useFormattedValue = false
+    }
 
     _getKVHistoryVersions(
         props.session?.id,
@@ -574,7 +581,8 @@ const loadVersionDiff = () => {
 
 const loadDiff = (info: DiffInfo) => {
   _getKVByVersion(props.session?.id, versionDiffInfo.key, info.version).then(data => {
-    info.content = _decodeBytesToString(data.value)
+    info.content = data.formattedValue ? data.formattedValue.value : _decodeBytesToString(data.value)
+
     if (!versionDiffInfo.show) {
       versionDiffInfo.show = true
     }
@@ -961,12 +969,12 @@ const addKeyMonitor = (key: string) => {
     <v-dialog
         v-model="versionDiffInfo.show"
         persistent
-        max-width="80vw"
-        min-width="500px"
+        max-width="1200px"
+        min-width="800px"
         scrollable
     >
       <v-card
-          :min-width="800"
+          :min-width="500"
           :title="versionDiffInfo.key"
           :key="versionDiffInfo.key"
       >
@@ -977,6 +985,13 @@ const addKeyMonitor = (key: string) => {
           <v-icon class="cursor-pointer" @click="versionDiffInfo.show = false">mdi-close</v-icon>
         </template>
         <v-card-text>
+
+          <v-alert v-if="versionDiffInfo.useFormattedValue"
+                   icon="mdi-check-circle-outline"
+                   density="compact"
+          >
+          It has automatically used the formatted content.
+          </v-alert>
           <v-layout class="pt-5">
             <v-select
                 variant="outlined"

@@ -14,6 +14,7 @@ import {useTheme} from "vuetify";
 import Tree from "~/components/tree/Tree.vue";
 import {_useSettings} from "~/common/store.ts";
 import {_handleError, _removeKeyMonitor} from "~/common/services.ts";
+import { EditorHighlightLanguage } from "~/common/types";
 
 const theme = useTheme()
 
@@ -74,11 +75,19 @@ const read = (e: KeyMonitorEvent) => {
 
   if (e.eventType == 'ValueChange') {
     valueDiffDialog.key = e.key
-    valueDiffDialog.beforeValue = _decodeBytesToString(e.previous)
-    valueDiffDialog.afterValue = _decodeBytesToString(e.current)
 
-    let validContent = _isEmpty(valueDiffDialog.beforeValue) ? valueDiffDialog.afterValue : valueDiffDialog.beforeValue
-    let editorLang = _tryParseEditorLanguage(e.key, validContent, undefined, props.session?.namespace)
+    let editorLang;
+    if(e.previousFormatted && e.currentFormatted) {
+      valueDiffDialog.beforeValue = e.previousFormatted.value
+      valueDiffDialog.afterValue = e.currentFormatted.value
+      editorLang = e.previousFormatted?.language as EditorHighlightLanguage
+    } else {
+      valueDiffDialog.beforeValue = _decodeBytesToString(e.previous)
+      valueDiffDialog.afterValue = _decodeBytesToString(e.current)
+      let validContent = _isEmpty(valueDiffDialog.beforeValue) ? valueDiffDialog.afterValue : valueDiffDialog.beforeValue
+      editorLang = _tryParseEditorLanguage(e.key, validContent, undefined, props.session?.namespace)
+    }
+    
     valueDiffDialog.language = _tryParseDiffLanguage(editorLang)
     valueDiffDialog.show = true
   }

@@ -1,5 +1,7 @@
 use crate::etcd::etcd_connector::EtcdConnector;
 use crate::transport::connection::KeyMonitorConfig;
+use crate::transport::kv::FormattedValue;
+use crate::utils::k8s_formatter;
 use etcd_client::{GetOptions, GetResponse};
 use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
@@ -18,7 +20,7 @@ use tokio::time::{interval, interval_at, Instant, MissedTickBehavior};
 use super::get_connection_config;
 
 #[repr(i8)]
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Eq)]
 pub enum KeyMonitorEventType {
     Remove = 1,
     Create = 2,
@@ -41,11 +43,14 @@ impl KeyMonitorEventType {
 #[serde(rename_all = "camelCase")]
 pub struct KeyMonitorEvent<T: Serialize + Clone> {
     pub session: i32,
+    //  key值（全路径）
     pub key: String,
     pub event_type: KeyMonitorEventType,
     pub event_time: u64,
     pub previous: Option<T>,
     pub current: Option<T>,
+    pub previous_formatted: Option<FormattedValue>,
+    pub current_formatted: Option<FormattedValue>,
 }
 
 impl<T: Serialize + Clone> KeyMonitorEvent<T> {
@@ -60,6 +65,8 @@ impl<T: Serialize + Clone> KeyMonitorEvent<T> {
                 .as_millis() as u64,
             previous: None,
             current: None,
+            previous_formatted: None,
+            current_formatted: None,
         }
     }
 
@@ -69,7 +76,16 @@ impl<T: Serialize + Clone> KeyMonitorEvent<T> {
         event_type: KeyMonitorEventType,
         previous: T,
         current: T,
-    ) -> Self {
+    ) -> Self 
+    where Vec<u8>: From<T>
+    {
+        let mut previous_formatted = None;
+        let mut current_formatted = None;
+        if event_type == KeyMonitorEventType::ValueChange {
+            previous_formatted = k8s_formatter::try_format_proto(&key, &(previous.clone()).into());
+            current_formatted = k8s_formatter::try_format_proto(&key, &(current.clone()).into());
+        }
+
         Self {
             session,
             key,
@@ -80,6 +96,8 @@ impl<T: Serialize + Clone> KeyMonitorEvent<T> {
                 .as_millis() as u64,
             previous: Some(previous),
             current: Some(current),
+            previous_formatted,
+            current_formatted,
         }
     }
 }

@@ -7,6 +7,7 @@ import {_useSettings} from "~/common/store.ts";
 import {relaunch} from "@tauri-apps/api/process";
 import {writeText} from "@tauri-apps/api/clipboard";
 import {_goBrowserPage} from "~/common/utils.ts";
+import { FormattedValue } from "./transport/kv";
 
 const localEvents = mitt();
 
@@ -36,6 +37,8 @@ export interface KeyMonitorEvent {
     eventTime: number,
     previous: null | any,
     current: null | any,
+    previousFormatted?: FormattedValue
+    currentFormatted?: FormattedValue
     read?: boolean,
     id?: number
 }
