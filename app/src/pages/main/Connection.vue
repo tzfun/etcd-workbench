@@ -102,7 +102,10 @@ const keyMonitorConfirm = () => {
     _tipWarn("Key cannot be empty")
     return
   }
-
+  
+  if(typeof config.intervalSeconds == 'string') {
+    config.intervalSeconds = parseInt(config.intervalSeconds as string)
+  }
   if (config.intervalSeconds < 1) {
     _tipWarn("Invalid interval")
     return;

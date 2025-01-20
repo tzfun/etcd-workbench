@@ -65,8 +65,8 @@ export function _onClientError(info: string, err: string, exitAppFinally: boolea
         }
     })
     invoke('client_error', {
-        info,
-        err
+        info: info || '',
+        err: err || ''
     }).catch(e => {
         console.error(e)
     })

@@ -401,7 +401,13 @@ const showKV = (key: string): Promise<void> => {
       loadingStore.getKey = false
     })
   })
+}
 
+const showKVUnwrapped = (key: string) => {
+  showKV(key).then(() => {
+  }).catch(e => {
+    console.error(e)
+  })
 }
 
 const addCollectionKey = (key: string) => {
@@ -675,6 +681,7 @@ const onClickKeyCollectionTreeItem = (key: string) => {
 
 const editKeyMonitor = (key: string) => {
   let monitor: KeyMonitorConfig = props.session?.keyMonitorMap![key]
+  
   if (monitor) {
     _emitLocal(EventName.EDIT_KEY_MONITOR, {
       session: props.session?.id,
@@ -808,7 +815,7 @@ const searchFromServer = _debounce(() => {
                 :key-splitter="KEY_SPLITTER"
                 :session="session"
                 class="kvTree"
-                @on-click="showKV"
+                @on-click="showKVUnwrapped"
           ></Tree>
           <v-sheet class="loadMoreArea d-flex align-center justify-center"
           >
