@@ -672,6 +672,7 @@ const clearAllKeyLeaseListener = () => {
 }
 
 const onClickKeyCollectionTreeItem = (key: string) => {
+  kvTree.value?.addItemToTree(key, true)
   kvTree.value?.selectItem(key)
   showKV(key).then(() => {
     collectionDialog.value = false
@@ -1222,7 +1223,7 @@ const searchFromServer = _debounce(() => {
               placeholder="Enter key to add to collections"
               @click:append-inner="addCollectionKey(addCollectionKeyForm); addCollectionKeyForm = '';"
           ></v-text-field>
-          <div style="height: calc(100% - 40px);overflow: auto;">
+          <div style="height: calc(100% - 40px);overflow: auto;width: 100%;">
             <Tree ref="kvCollectionTree"
                   :tree-id="`kv-collection-tree-${new Date().getTime()}`"
                   :key-splitter="KEY_SPLITTER"
@@ -1230,9 +1231,7 @@ const searchFromServer = _debounce(() => {
                   :show-node-suffix="false"
                   :show-check-box="false"
                   show-hover-remove
-                  :enable-search="false"
                   :enable-select="false"
-                  style="width: max-content;"
                   class="mt-2"
                   :init-items="session.keyCollection"
                   @on-click="onClickKeyCollectionTreeItem"

@@ -262,7 +262,7 @@ const addMonitor = () => {
           ></v-btn>
         </template>
         <v-card-item style="height: calc(100% - 64px);">
-          <div style="height: 100%;overflow: auto;">
+          <div style="height: 100%;overflow: auto;width: 100%;">
             <Tree ref="kvMonitorTree"
                   :tree-id="`kv-collection-tree-${new Date().getTime()}`"
                   :key-splitter="KEY_SPLITTER"
@@ -270,9 +270,7 @@ const addMonitor = () => {
                   :show-node-suffix="false"
                   :show-check-box="false"
                   show-hover-remove
-                  :enable-search="false"
                   :enable-select="false"
-                  style="width: max-content;"
                   :init-items="Object.keys(session.keyMonitorMap!)"
                   @on-click="editKeyMonitor"
                   @on-click-remove="removeMonitor"
