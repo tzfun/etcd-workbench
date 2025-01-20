@@ -182,7 +182,7 @@ const addHoverDom = (_treeId: string, node: TreeNode) => {
 
     //  @ts-ignore
     let aObj = $("#" + node.tId + IDMark_A);
-    let star = `<span class="icon-remove tree-node-icon" id="removeBtn_${node.tId}" onfocus='this.blur();' title="Remove from collections"></span>`
+    let star = `<span class="icon-remove tree-node-icon" id="removeBtn_${node.tId}" onfocus='this.blur();' title="Remove"></span>`
     aObj.append(star)
     //  @ts-ignore
     let btn = $(`#removeBtn_${node.tId}`)

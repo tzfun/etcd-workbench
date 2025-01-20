@@ -15,6 +15,7 @@ import Tree from "~/components/tree/Tree.vue";
 import {_useSettings} from "~/common/store.ts";
 import {_handleError, _removeKeyMonitor} from "~/common/services.ts";
 import { EditorHighlightLanguage } from "~/common/types";
+import { KeyMonitorConfig } from "~/common/transport/connection";
 
 const theme = useTheme()
 
@@ -118,6 +119,18 @@ const removeMonitor = (key: string) => {
       session: props.session
     })
   })
+}
+
+const editKeyMonitor = (key: string) => {
+  let monitor: KeyMonitorConfig = props.session?.keyMonitorMap![key]
+
+  if (monitor) {
+    _emitLocal(EventName.EDIT_KEY_MONITOR, {
+      session: props.session?.id,
+      edit: true,
+      monitor
+    })
+  }
 }
 
 const addMonitor = () => {
@@ -261,6 +274,7 @@ const addMonitor = () => {
                   :enable-select="false"
                   style="width: max-content;"
                   :init-items="Object.keys(session.keyMonitorMap!)"
+                  @on-click="editKeyMonitor"
                   @on-click-remove="removeMonitor"
             ></Tree>
           </div>

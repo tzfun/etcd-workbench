@@ -12,6 +12,7 @@ import {_disconnect, _handleError, _removeKeyMonitor, _setKeyMonitor} from "~/co
 import {_isEmpty} from "~/common/utils.ts";
 import {appWindow} from "@tauri-apps/api/window";
 
+const DEFAULT_KEY_MONITOR_INTERVAL_SECONDS = 10
 const props = defineProps({
   session: {
     type: Object as PropType<SessionData>,
@@ -30,7 +31,7 @@ const keyMonitorDialog = reactive({
   edit: false,
   monitor: <KeyMonitorConfig>{
     key: "",
-    intervalSeconds: 5,
+    intervalSeconds: DEFAULT_KEY_MONITOR_INTERVAL_SECONDS,
     monitorLeaseChange: true,
     monitorValueChange: true,
     monitorCreate: true,
@@ -53,7 +54,7 @@ onMounted(async () => {
       } else {
         keyMonitorDialog.edit = false
         keyMonitorDialog.monitor.key = e.key ? (e.key as string) : ''
-        keyMonitorDialog.monitor.intervalSeconds = 5
+        keyMonitorDialog.monitor.intervalSeconds = DEFAULT_KEY_MONITOR_INTERVAL_SECONDS
         keyMonitorDialog.monitor.monitorLeaseChange = true
         keyMonitorDialog.monitor.monitorValueChange = true
         keyMonitorDialog.monitor.monitorCreate = true
@@ -102,7 +103,7 @@ const keyMonitorConfirm = () => {
     _tipWarn("Key cannot be empty")
     return
   }
-  
+
   if(typeof config.intervalSeconds == 'string') {
     config.intervalSeconds = parseInt(config.intervalSeconds as string)
   }
