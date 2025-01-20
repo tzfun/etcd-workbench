@@ -36,6 +36,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // config.compile_protos(&["proto/k8s.io/api/flowcontrol/v1beta3/generated.proto"], &["src"])?;
     config.compile_protos(&["proto/k8s.io/api/coordination/v1/generated.proto"], &["src"])?;
     config.compile_protos(&["proto/k8s.io/api/scheduling/v1/generated.proto"], &["src"])?;
+    config.compile_protos(&["proto/k8s.io/api/batch/v1/generated.proto"], &["src"])?;
+    // config.compile_protos(&["proto/k8s.io/api/batch/v1beta1/generated.proto"], &["src"])?;
+    config.compile_protos(&["proto/k8s.io/api/networking/v1/generated.proto"], &["src"])?;
+    // config.compile_protos(&["proto/k8s.io/api/networking/v1beta1/generated.proto"], &["src"])?;
+    // config.compile_protos(&["proto/k8s.io/api/networking/v1alpha1/generated.proto"], &["src"])?;
+    config.compile_protos(&["proto/k8s.io/api/admissionregistration/v1/generated.proto"], &["src"])?;
+    config.compile_protos(&["proto/k8s.io/api/admissionregistration/v1beta1/generated.proto"], &["src"])?;
+    config.compile_protos(&["proto/k8s.io/api/admissionregistration/v1alpha1/generated.proto"], &["src"])?;
 
     config.compile_protos(&["proto/k8s.io/apimachinery/pkg/apis/meta/v1/generated.proto"], &["src"])?;
     config.compile_protos(&["proto/k8s.io/apimachinery/pkg/apis/meta/v1beta1/generated.proto"], &["src"])?;

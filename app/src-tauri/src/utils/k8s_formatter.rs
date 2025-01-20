@@ -42,9 +42,18 @@ pub fn try_format_proto(key: &String, value: &Vec<u8>) -> Option<FormattedValue>
                 return try_format_coordination_v1(kind, version, raw);
             } else if version.eq("scheduling.k8s.io/v1") {
                 return try_format_scheduling_v1(kind, version, raw);
+            } else if version.starts_with("batch/v1") {
+                // Note: 虽然有多个版本，但互相不兼容，因此需各个版本单独处理
+                return try_format_batch_v1(kind, version, raw);
+            } else if version.starts_with("networking.k8s.io/v1") {
+                // Note: 虽然有多个版本，但互相不兼容，因此需各个版本单独处理
+                return try_format_networking_v1(kind, version, raw);
+            } else if version.starts_with("admissionregistration.k8s.io/v1") {
+                // Note: 虽然有多个版本，但互相不兼容，因此需各个版本单独处理
+                return try_format_admissionregistration_v1(kind, version, raw);
             }
             None
-        })
+        });
     }
     None
 }
@@ -141,6 +150,20 @@ fn try_format_core_v1(kind: &str, version: &str, raw: &[u8]) -> Option<Formatted
         "ServiceAccount" => proto::k8s::io::api::core::v1::ServiceAccount::decode(raw)
             .map_err(|e| decode_err_handle(kind, version, e))
             .map_or(None, |o| try_format_to_json(&o)),
+        "Event" => proto::k8s::io::api::core::v1::Event::decode(raw)
+            .map_err(|e| decode_err_handle(kind, version, e))
+            .map_or(None, |o| try_format_to_json(&o)),
+        "Secret" => proto::k8s::io::api::core::v1::Secret::decode(raw)
+            .map_err(|e| decode_err_handle(kind, version, e))
+            .map_or(None, |o| try_format_to_json(&o)),
+        "PersistentVolumeClaim" => {
+            proto::k8s::io::api::core::v1::PersistentVolumeClaim::decode(raw)
+                .map_err(|e| decode_err_handle(kind, version, e))
+                .map_or(None, |o| try_format_to_json(&o))
+        }
+        "PersistentVolume" => proto::k8s::io::api::core::v1::PersistentVolume::decode(raw)
+            .map_err(|e| decode_err_handle(kind, version, e))
+            .map_or(None, |o| try_format_to_json(&o)),
         _ => None,
     }
 }
@@ -160,7 +183,10 @@ fn try_format_apps_v1(kind: &str, version: &str, raw: &[u8]) -> Option<Formatted
         "ReplicaSet" => proto::k8s::io::api::apps::v1::ReplicaSet::decode(raw)
             .map_err(|e| decode_err_handle(kind, version, e))
             .map_or(None, |o| try_format_to_json(&o)),
-        _ => None
+        "StatefulSet" => proto::k8s::io::api::apps::v1::StatefulSet::decode(raw)
+            .map_err(|e| decode_err_handle(kind, version, e))
+            .map_or(None, |o| try_format_to_json(&o)),
+        _ => None,
     }
 }
 
@@ -179,7 +205,7 @@ fn try_format_rbac_v1(kind: &str, version: &str, raw: &[u8]) -> Option<Formatted
         "Role" => proto::k8s::io::api::rbac::v1::Role::decode(raw)
             .map_err(|e| decode_err_handle(kind, version, e))
             .map_or(None, |o| try_format_to_json(&o)),
-        _ => None
+        _ => None,
     }
 }
 
@@ -192,7 +218,7 @@ fn try_format_storage_v1(kind: &str, version: &str, raw: &[u8]) -> Option<Format
         "StorageClass" => proto::k8s::io::api::storage::v1::StorageClass::decode(raw)
             .map_err(|e| decode_err_handle(kind, version, e))
             .map_or(None, |o| try_format_to_json(&o)),
-        _ => None
+        _ => None,
     }
 }
 
@@ -202,7 +228,7 @@ fn try_format_discovery_v1(kind: &str, version: &str, raw: &[u8]) -> Option<Form
         "EndpointSlice" => proto::k8s::io::api::discovery::v1::EndpointSlice::decode(raw)
             .map_err(|e| decode_err_handle(kind, version, e))
             .map_or(None, |o| try_format_to_json(&o)),
-        _ => None
+        _ => None,
     }
 }
 
@@ -212,7 +238,7 @@ fn try_format_discovery_v1beta1(kind: &str, version: &str, raw: &[u8]) -> Option
         "EndpointSlice" => proto::k8s::io::api::discovery::v1beta1::EndpointSlice::decode(raw)
             .map_err(|e| decode_err_handle(kind, version, e))
             .map_or(None, |o| try_format_to_json(&o)),
-        _ => None
+        _ => None,
     }
 }
 
@@ -222,29 +248,67 @@ fn try_format_flowcontrol_v1(kind: &str, version: &str, raw: &[u8]) -> Option<Fo
         "FlowSchema" => proto::k8s::io::api::flowcontrol::v1::FlowSchema::decode(raw)
             .map_err(|e| decode_err_handle(kind, version, e))
             .map_or(None, |o| try_format_to_json(&o)),
-        "PriorityLevelConfiguration" => proto::k8s::io::api::flowcontrol::v1::PriorityLevelConfiguration::decode(raw)
-            .map_err(|e| decode_err_handle(kind, version, e))
-            .map_or(None, |o| try_format_to_json(&o)),
-        _ => None
+        "PriorityLevelConfiguration" => {
+            proto::k8s::io::api::flowcontrol::v1::PriorityLevelConfiguration::decode(raw)
+                .map_err(|e| decode_err_handle(kind, version, e))
+                .map_or(None, |o| try_format_to_json(&o))
+        }
+        _ => None,
     }
 }
 
 /// https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/api/coordination/v1/generated.proto
 fn try_format_coordination_v1(kind: &str, version: &str, raw: &[u8]) -> Option<FormattedValue> {
     match kind {
-        "Lease" =>proto::k8s::io::api::coordination::v1::Lease::decode(raw)
+        "Lease" => proto::k8s::io::api::coordination::v1::Lease::decode(raw)
             .map_err(|e| decode_err_handle(kind, version, e))
             .map_or(None, |o| try_format_to_json(&o)),
-        _=>None
+        _ => None,
     }
 }
 
 /// https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/api/scheduling/v1/generated.proto
 fn try_format_scheduling_v1(kind: &str, version: &str, raw: &[u8]) -> Option<FormattedValue> {
     match kind {
-        "PriorityClass" =>proto::k8s::io::api::scheduling::v1::PriorityClass::decode(raw)
+        "PriorityClass" => proto::k8s::io::api::scheduling::v1::PriorityClass::decode(raw)
             .map_err(|e| decode_err_handle(kind, version, e))
             .map_or(None, |o| try_format_to_json(&o)),
-        _=>None
+        _ => None,
+    }
+}
+
+/// https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/api/batch/v1/generated.proto
+fn try_format_batch_v1(kind: &str, version: &str, raw: &[u8]) -> Option<FormattedValue> {
+    match kind {
+        "CronJob" => proto::k8s::io::api::batch::v1::CronJob::decode(raw)
+            .map_err(|e| decode_err_handle(kind, version, e))
+            .map_or(None, |o| try_format_to_json(&o)),
+        "Job" => proto::k8s::io::api::batch::v1::Job::decode(raw)
+            .map_err(|e| decode_err_handle(kind, version, e))
+            .map_or(None, |o| try_format_to_json(&o)),
+        _ => None,
+    }
+}
+
+/// https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/api/networking/v1/generated.proto
+fn try_format_networking_v1(kind: &str, version: &str, raw: &[u8]) -> Option<FormattedValue> {
+    match kind {
+        "IngressClass" => proto::k8s::io::api::networking::v1::IngressClass::decode(raw)
+            .map_err(|e| decode_err_handle(kind, version, e))
+            .map_or(None, |o| try_format_to_json(&o)),
+        "Ingress" => proto::k8s::io::api::networking::v1::Ingress::decode(raw)
+            .map_err(|e| decode_err_handle(kind, version, e))
+            .map_or(None, |o| try_format_to_json(&o)),
+        _ => None,
+    }
+}
+
+/// https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/api/admissionregistration/v1/generated.proto
+fn try_format_admissionregistration_v1(kind: &str, version: &str, raw: &[u8]) -> Option<FormattedValue> {
+    match kind {
+        "ValidatingWebhookConfiguration" => proto::k8s::io::api::admissionregistration::v1::ValidatingWebhookConfiguration::decode(raw)
+            .map_err(|e| decode_err_handle(kind, version, e))
+            .map_or(None, |o| try_format_to_json(&o)),
+        _ => None,
     }
 }
