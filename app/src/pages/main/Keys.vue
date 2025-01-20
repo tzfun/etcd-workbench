@@ -672,7 +672,7 @@ const clearAllKeyLeaseListener = () => {
 }
 
 const onClickKeyCollectionTreeItem = (key: string) => {
-  kvTree.value?.cancelSelected()
+  kvTree.value?.selectItem(key)
   showKV(key).then(() => {
     collectionDialog.value = false
   }).catch(() => {
@@ -681,7 +681,7 @@ const onClickKeyCollectionTreeItem = (key: string) => {
 
 const editKeyMonitor = (key: string) => {
   let monitor: KeyMonitorConfig = props.session?.keyMonitorMap![key]
-  
+
   if (monitor) {
     _emitLocal(EventName.EDIT_KEY_MONITOR, {
       session: props.session?.id,

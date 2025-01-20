@@ -269,7 +269,7 @@ impl MonitorTask {
 
     fn on_event<T: Serialize + Clone>(&mut self, window: &Window, event: KeyMonitorEvent<T>) {
         let now = Instant::now();
-        if !window.is_focused().unwrap() && now >= self.event_triggered_ts + Duration::from_secs(1) {
+        if !window.is_focused().unwrap() && now >= self.event_triggered_ts + Duration::from_secs(3) {
             let res = Notification::new("com.beifengtz.etcdworkbench")
                 .title(event.event_type.desc())
                 .body(event.key.clone())
