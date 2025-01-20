@@ -113,23 +113,26 @@ struct MonitorTask {
     previous_value: Option<Vec<u8>>,
     /// 前置查询出的lease值
     previous_lease: Option<i64>,
+    event_triggered_ts: Instant,
 }
 
 impl MonitorTask {
     fn new(config: KeyMonitorConfig) -> Self {
         let interval = config.interval_seconds;
+        let now = Instant::now();
         Self {
             config,
-            next_execute_time: Instant::now() + Duration::from_secs(interval),
+            next_execute_time: now + Duration::from_secs(interval),
             first_run: true,
             previous_exist: None,
             previous_value: None,
             previous_lease: None,
+            event_triggered_ts: now,
         }
     }
 
     async fn run(&mut self, session: i32, connector: &mut EtcdConnector, window: &Window) {
-        let config = &self.config;
+        let config = self.config.clone();
         debug!("Run monitor task: {}", config.key);
 
         let mut options = GetOptions::new().with_limit(1);
@@ -168,7 +171,8 @@ impl MonitorTask {
             let exist = response.kvs().len() > 0;
 
             if config.monitor_create {
-                if !self.previous_exist.unwrap_or(false) && exist {
+                let previous_exist = self.previous_exist.unwrap_or(false);
+                if !previous_exist && exist {
                     debug!("Key create: {}", config.key);
                     self.on_event(
                         window,
@@ -182,7 +186,8 @@ impl MonitorTask {
             }
 
             if config.monitor_remove {
-                if self.previous_exist.unwrap_or(false) && !exist {
+                let previous_exist = self.previous_exist.unwrap_or(false);
+                if previous_exist && !exist {
                     debug!("Key removed: {}", config.key);
                     self.on_event(
                         window,
@@ -262,12 +267,16 @@ impl MonitorTask {
         self.update_next_execute_time();
     }
 
-    fn on_event<T: Serialize + Clone>(&self, window: &Window, event: KeyMonitorEvent<T>) {
-        if !window.is_focused().unwrap() {
-            let _ = Notification::new("com.beifengtz.etcdworkbench")
+    fn on_event<T: Serialize + Clone>(&mut self, window: &Window, event: KeyMonitorEvent<T>) {
+        let now = Instant::now();
+        if !window.is_focused().unwrap() && now >= self.event_triggered_ts + Duration::from_secs(1) {
+            let res = Notification::new("com.beifengtz.etcdworkbench")
                 .title(event.event_type.desc())
                 .body(event.key.clone())
                 .show();
+            if res.is_ok() {
+                self.event_triggered_ts = now;
+            }
         }
         window.emit("key_monitor", event);
     }
