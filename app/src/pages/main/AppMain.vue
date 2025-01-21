@@ -2,7 +2,7 @@
 
 import Home from "~/pages/main/Home.vue";
 import Connection from "~/pages/main/Connection.vue";
-import {_confirm, _listenLocal, EventName} from "~/common/events.ts";
+import {_confirm, _listenLocal, _loading, EventName} from "~/common/events.ts";
 import {_disconnect} from "~/common/services.ts";
 import {onMounted, onUnmounted, reactive, ref} from "vue";
 import {SessionData} from "~/common/transport/connection.ts";
@@ -95,8 +95,11 @@ onMounted(async () => {
     }
     exitConfirmState.value = true
     _confirm("Confirm Exit", "Are you sure you want to exit?").then(() => {
+      _loading(true, 'Exiting...')
       trackEvent('exit').finally(() => {
-        _exitApp()
+        _exitApp().finally(() => {
+          _loading(false)
+        })
       })
     }).catch(() => {
     }).finally(() => {

@@ -89,8 +89,8 @@ export function _openSettingWindow(anchor?: string) {
     })
 }
 
-export function _exitApp() {
-    invoke('exit_app').catch(e => {
+export function _exitApp(): Promise<unknown> {
+    return invoke('exit_app').catch(e => {
         console.error(e)
     })
 }
