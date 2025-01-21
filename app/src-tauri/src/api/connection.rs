@@ -77,6 +77,7 @@ pub async fn save_connection(name: String, connection: Connection) -> Result<(),
         connection,
         key_collection: vec![],
         key_monitor_list: vec![],
+        key_monitor_paused: false,
     };
     let file_name = md5(&connection_info.name);
     dir.push(file_name);
@@ -90,6 +91,7 @@ pub async fn save_connection(name: String, connection: Connection) -> Result<(),
             if let Ok(info) = serde_json::from_slice::<ConnectionInfo>(data.as_slice()) {
                 connection_info.key_collection = info.key_collection;
                 connection_info.key_monitor_list = info.key_monitor_list;
+                connection_info.key_monitor_paused = info.key_monitor_paused;
             }
         }
 
@@ -307,5 +309,18 @@ pub async fn remove_key_monitor(
     let lock_ref = etcd::get_key_monitor(&session);
     let lock = lock_ref.value().clone();
     KeyMonitor::remove_config(lock, &key).await;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn key_monitor_toggle_pause(session: i32, state: bool) -> Result<(), LogicError> {
+    let result = etcd::get_connection_info_optional(&session);
+    if let Some(mut info) = result {
+        info.key_monitor_paused = state;
+        save_connection_info(info.value().clone()).await?;
+    }
+    let lock_ref = etcd::get_key_monitor(&session);
+    let lock = lock_ref.value().clone();
+    KeyMonitor::toggle_pause(lock, state).await;
     Ok(())
 }

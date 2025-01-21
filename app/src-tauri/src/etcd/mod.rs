@@ -67,9 +67,11 @@ pub async fn new_connector(name: String, connection: Connection, window: Window)
     let mut connection_saved = false;
     let mut key_collection = None;
     let mut key_monitor_list = None;
+    let mut key_monitor_paused = false;
     if let Some(info) = info_result {
         key_collection = Some((&info.key_collection).clone());
         key_monitor_list = Some((&info.key_monitor_list).clone());
+        key_monitor_paused = info.key_monitor_paused;
         connection_saved = true;
         
         CONNECTION_INFO_POOL.insert(connector_id, info);
@@ -85,7 +87,7 @@ pub async fn new_connector(name: String, connection: Connection, window: Window)
     }
 
     let key_monitor_lock = Arc::new(Mutex::new(key_monitor));
-    if has_key_monitor {
+    if has_key_monitor && !key_monitor_paused {
         KeyMonitor::start(Arc::clone(&key_monitor_lock));
         log::info!("Started key monitor when create: {}", connector_id);
     }
@@ -98,7 +100,8 @@ pub async fn new_connector(name: String, connection: Connection, window: Window)
         namespace,
         connection_saved,
         key_collection,
-        key_monitor_list
+        key_monitor_list,
+        key_monitor_paused
     })
 }
 

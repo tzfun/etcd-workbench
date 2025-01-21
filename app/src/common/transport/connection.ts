@@ -70,9 +70,10 @@ export interface SessionData {
     namespace?: string,
     keyCollection?: string[],
     keyMonitorList?: KeyMonitorConfig[],
+    keyMonitorPaused: boolean,
     //  客户端自行构造
-    keyCollectionSet?: Set<string>
-    keyMonitorMap?: Record<string, KeyMonitorConfig>
+    keyCollectionSet?: Set<string>,
+    keyMonitorMap?: Record<string, KeyMonitorConfig>,
 }
 
 export interface ErrorPayload {

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import {computed, onMounted, PropType, reactive, ref} from "vue";
-import {SessionData} from "~/common/transport/connection.ts";
+import {SessionData, KeyMonitorConfig} from "~/common/transport/connection.ts";
 import {_confirmSystem, _emitLocal, _listenLocal, EventName, KeyMonitorEvent} from "~/common/events.ts";
 import {
   _decodeBytesToString,
@@ -13,9 +13,8 @@ import {CodeDiff} from "v-code-diff";
 import {useTheme} from "vuetify";
 import Tree from "~/components/tree/Tree.vue";
 import {_useSettings} from "~/common/store.ts";
-import {_handleError, _removeKeyMonitor} from "~/common/services.ts";
+import {_handleError, _keyMonitorTogglePauseState, _removeKeyMonitor} from "~/common/services.ts";
 import { EditorHighlightLanguage } from "~/common/types";
-import { KeyMonitorConfig } from "~/common/transport/connection";
 
 const theme = useTheme()
 
@@ -34,6 +33,7 @@ const isDarkTheme = computed<boolean>(() => {
 const KEY_SPLITTER = computed<string>(() => {
   return _useSettings().value.kvPathSplitter
 })
+const togglePauseLoading = ref<boolean>(false)
 
 const emits = defineEmits(['on-read'])
 const props = defineProps({
@@ -140,11 +140,26 @@ const addMonitor = () => {
   })
 }
 
+const togglePauseState = () => {
+  let state = !props.session?.keyMonitorPaused
+  togglePauseLoading.value = true
+  _keyMonitorTogglePauseState(props.session?.id, state).then(() => {
+    props.session!.keyMonitorPaused = state
+  }).catch((e) => {
+    _handleError({
+      e,
+      session: props.session
+    })
+  }).finally(() => {
+    togglePauseLoading.value = false
+  })
+}
+
 </script>
 
 <template>
   <div class="fill-height pa-5 overflow-y-auto">
-    <div>
+    <v-layout>
       <v-btn class="text-none"
              prepend-icon="mdi-checkbox-marked-circle-auto-outline"
              :disabled="events.length == 0"
@@ -165,8 +180,43 @@ const addMonitor = () => {
              color="#cc8f53"
       >My Monitors
       </v-btn>
-    </div>
-    <div style="height: calc(100% - 56px); overflow-y: auto;" class="mt-5">
+
+      <v-spacer/>
+
+      <v-btn class="text-none my-2"
+             density="comfortable"
+             variant="tonal"
+             size="small"
+             :icon="session.keyMonitorPaused ? 'mdi-play' : 'mdi-pause'"
+             :title="session.keyMonitorPaused ? 'Start the monitor' : 'Stop the monitor'"
+             @click="togglePauseState"
+             :loading="togglePauseLoading"
+      ></v-btn>
+      <v-chip
+        v-if="session.keyMonitorPaused"
+        class="ma-2"
+        size="small"
+        color="secondary"
+        variant="outlined"
+        style="width: 78px;"
+      >
+        <v-icon icon="mdi-robot-dead-outline" start></v-icon>
+        Paused
+      </v-chip>
+      <v-chip
+        v-else
+        class="ma-2"
+        size="small"
+        color="success"
+        variant="outlined"
+        style="width: 78px;"
+      >
+        <v-icon icon="mdi-robot-happy" start></v-icon>
+        Runing
+      </v-chip>
+      
+    </v-layout>
+    <div style="height: calc(100% - 56px); overflow-y: auto;">
       <v-list class="pa-0 overflow-hidden"
               :selectable="false"
               lines="two"
@@ -262,7 +312,7 @@ const addMonitor = () => {
           ></v-btn>
         </template>
         <v-card-item style="height: calc(100% - 64px);">
-          <div style="height: 100%;overflow: auto;width: 100%;">
+          <div class="full-width full-height overflow-y-auto" style="height: 100%;">
             <Tree ref="kvMonitorTree"
                   :tree-id="`kv-collection-tree-${new Date().getTime()}`"
                   :key-splitter="KEY_SPLITTER"
@@ -270,6 +320,7 @@ const addMonitor = () => {
                   :show-node-suffix="false"
                   :show-check-box="false"
                   show-hover-remove
+                  style="height: 100%;"
                   :enable-select="false"
                   :init-items="Object.keys(session.keyMonitorMap!)"
                   @on-click="editKeyMonitor"

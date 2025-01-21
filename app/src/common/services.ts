@@ -313,3 +313,10 @@ export function _removeKeyMonitor(session: number, key: string): Promise<undefin
         key
     })
 }
+
+export function _keyMonitorTogglePauseState(session: number, state: boolean): Promise<undefined> {
+    return invoke('key_monitor_toggle_pause', {
+        session,
+        state
+    })
+}

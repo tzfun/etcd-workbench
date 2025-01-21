@@ -1214,16 +1214,17 @@ const searchFromServer = _debounce(() => {
           <v-text-field
               v-model="addCollectionKeyForm"
               type="text"
-              append-inner-icon="mdi-plus"
+              append-icon="mdi-plus"
               density="compact"
               variant="solo-filled"
+              class="mx-2"
               hide-details
               single-line
               clearable
               placeholder="Enter key to add to collections"
-              @click:append-inner="addCollectionKey(addCollectionKeyForm); addCollectionKeyForm = '';"
+              @click:append="addCollectionKey(addCollectionKeyForm); addCollectionKeyForm = '';"
           ></v-text-field>
-          <div style="height: calc(100% - 40px);overflow: auto;width: 100%;">
+          <div class="overflow-y-auto full-width" style="height: calc(100% - 40px);">
             <Tree ref="kvCollectionTree"
                   :tree-id="`kv-collection-tree-${new Date().getTime()}`"
                   :key-splitter="KEY_SPLITTER"
@@ -1232,7 +1233,7 @@ const searchFromServer = _debounce(() => {
                   :show-check-box="false"
                   show-hover-remove
                   :enable-select="false"
-                  class="mt-2"
+                  style="height: 100%;"
                   :init-items="session.keyCollection"
                   @on-click="onClickKeyCollectionTreeItem"
                   @on-click-remove="removeCollectionKey"

@@ -218,9 +218,9 @@ const onReadKeyMonitorLog = (num: number) => {
                     color="green"
                     :content="keyMonitorEventLog.unreadNum"
                 >
-                  <v-icon>mdi-robot</v-icon>
+                  <v-icon>{{ session.keyMonitorPaused ? 'mdi-robot-dead-outline' : 'mdi-robot-happy' }}</v-icon>
                 </v-badge>
-                <v-icon v-else>mdi-robot</v-icon>
+                <v-icon v-else>{{ session.keyMonitorPaused ? 'mdi-robot-dead-outline' : 'mdi-robot-happy' }}</v-icon>
               </template>
 
             </v-list-item>

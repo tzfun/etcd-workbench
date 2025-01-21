@@ -68,7 +68,10 @@ pub struct ConnectionInfo {
     pub key_collection: Vec<String>,
     //  key监控列表
     #[serde(default = "default_key_monitor_list")]
-    pub key_monitor_list: Vec<KeyMonitorConfig>
+    pub key_monitor_list: Vec<KeyMonitorConfig>,
+    //  key监控是否暂停
+    #[serde(default = "default_key_monitor_paused")]
+    pub key_monitor_paused: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -80,7 +83,8 @@ pub struct SessionData {
     pub connection_saved: bool,
     pub namespace: Option<String>,
     pub key_collection: Option<Vec<String>>,
-    pub key_monitor_list: Option<Vec<KeyMonitorConfig>>
+    pub key_monitor_list: Option<Vec<KeyMonitorConfig>>,
+    pub key_monitor_paused: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -115,4 +119,8 @@ fn default_key_collection() -> Vec<String> {
 
 fn default_key_monitor_list() -> Vec<KeyMonitorConfig> {
     vec![]
+}
+
+fn default_key_monitor_paused() -> bool {
+    false
 }

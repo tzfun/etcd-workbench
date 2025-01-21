@@ -376,6 +376,23 @@ impl KeyMonitor {
         info!("Key monitor stopped: {}", monitor.session_id);
     }
 
+    //  切换监听暂停状态
+    pub async fn toggle_pause(lock: Arc<Mutex<Self>>, pause_state:bool) {
+        let mut monitor = lock.lock().await;
+        if monitor.running == !pause_state {
+            return
+        }
+        drop(monitor);
+        
+        if pause_state {
+            //  暂停
+            KeyMonitor::stop(lock).await;
+        } else {
+            //  恢复
+            KeyMonitor::start(lock);
+        }
+    }
+
     pub async fn set_config(lock: Arc<Mutex<Self>>, config: KeyMonitorConfig) {
         info!("Set key monitor: {}", config.key);
         let mut monitor = lock.lock().await;
