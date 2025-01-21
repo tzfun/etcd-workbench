@@ -4,7 +4,7 @@ import {_getLease, _grantLease, _handleError, _leases, _revokeLeases} from "~/co
 import {SessionData} from "~/common/transport/connection.ts";
 import {LeaseInfo} from "~/common/transport/kv.ts";
 import CountDownTimer from "~/components/CountDownTimer.vue";
-import {_confirmSystem, _copyToClipboard, _tipWarn} from "~/common/events.ts";
+import {_confirmSystem, _copyToClipboard, _tipInfo, _tipWarn} from "~/common/events.ts";
 import {_isEmpty} from "~/common/utils.ts";
 
 const props = defineProps({
@@ -28,37 +28,32 @@ const grantNewDialog = reactive({
   ttl: '',
   lease: ''
 })
-const leaseListeners = reactive<Set<any>>(new Set())
 
 onMounted(() => {
   loadAllLeases()
 })
 
-onUnmounted(() => {
-  clearAllLeaseListener()
-})
-
 const loadAllLeases = () => {
   expendPanel.value = []
-  clearAllLeaseListener()
   _leases(props.session?.id).then(data => {
     leases.value = data
   })
 }
 
-const getLeaseInfo = (leaseId: any) => {
+const getLeaseInfo = (leaseId: string) => {
   currentLeaseId.value = leaseId
   currentLeaseInfo.value = undefined
   if (leaseId) {
     loadingStore.getInfo = true
     _getLease(props.session?.id, leaseId).then(info => {
-      currentLeaseInfo.value = info
-      let timer = setTimeout(() => {
-        leaseListeners.delete(timer)
+      if(currentLeaseId.value == leaseId) {
+        currentLeaseInfo.value = info
+      }
 
-        removeLease(info.id)
-      }, info.ttl * 1000)
-      leaseListeners.add(timer)
+      if(!info) {
+        removeLease(leaseId)
+        _tipInfo("The lease has expired")
+      }
     }).catch(e => {
       _handleError({
         e,
@@ -98,14 +93,6 @@ const revokeLease = (lease: string) => {
   }).catch(() => {
 
   })
-}
-
-const clearAllLeaseListener = () => {
-  for (let listener of leaseListeners) {
-    clearTimeout(listener)
-  }
-
-  leaseListeners.clear()
 }
 
 const openGrantNewDialog = () => {
@@ -223,7 +210,7 @@ const grantLease = () => {
                         </th>
 
                         <td class="text-high-emphasis">
-                          <CountDownTimer :value="currentLeaseInfo.ttl"></CountDownTimer>
+                          <CountDownTimer :value="currentLeaseInfo.ttl" :key="currentLeaseInfo.ttl"></CountDownTimer>
                         </td>
                       </tr>
 
@@ -246,7 +233,13 @@ const grantLease = () => {
                     </v-table>
                   </v-card-text>
                 </v-card>
-                <div class="flex-column align-center mt-auto mb-auto" style="width: 200px;">
+                <div class="flex-column align-center mt-auto mb-auto" style="width: 300px;">
+                  <v-btn class="text-none ml-5"
+                         icon="mdi-refresh"
+                         size="small"
+                         @click="getLeaseInfo(currentLeaseInfo.id)"
+                         :loading="loadingStore.revoke"
+                  ></v-btn>
                   <v-btn color="red"
                          text="Delete"
                          class="text-none ml-5"
