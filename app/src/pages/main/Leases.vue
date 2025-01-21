@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {onMounted, onUnmounted, PropType, reactive, ref} from "vue";
+import {onMounted, PropType, reactive, ref} from "vue";
 import {_getLease, _grantLease, _handleError, _leases, _revokeLeases} from "~/common/services.ts";
 import {SessionData} from "~/common/transport/connection.ts";
 import {LeaseInfo} from "~/common/transport/kv.ts";
@@ -40,7 +40,7 @@ const loadAllLeases = () => {
   })
 }
 
-const getLeaseInfo = (leaseId: string) => {
+const getLeaseInfo = (leaseId: any) => {
   currentLeaseId.value = leaseId
   currentLeaseInfo.value = undefined
   if (leaseId) {
