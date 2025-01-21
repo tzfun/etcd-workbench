@@ -141,23 +141,19 @@ const checkUpdate = (autoUpdate: boolean) => {
     updateInfo.latestVersion = manifest
 
     if (autoUpdate) {
-      let message = _genNewVersionUpdateMessage(manifest)
-      _confirmUpdateApp(message).then(() => {
-        _loading(true, "Installing...")
-        installUpdate().then(() => {
-          _loading(true, "Restarting...")
-          relaunch().catch((e: string) => {
-            console.error(e)
-            _alertError("Unable to relaunch, please relaunch manually.")
-          }).finally(() => {
-            _loading(false)
-          })
-        }).catch(e => {
-          _loading(false)
+      _loading(true, "Installing new version...")
+      installUpdate().then(() => {
+        _loading(true, "Relaunch...")
+        relaunch().catch((e: string) => {
           console.error(e)
-          _alertError("Update failed, please update manually or go to GitHub to download the latest version.")
+          _alertError("Unable to relaunch, please relaunch manually.")
+        }).finally(() => {
+          _loading(false)
         })
-      }).catch(() => {
+      }).catch(e => {
+        _loading(false)
+        console.error(e)
+        _alertError(`Install failed, please update manually or go to <span onclick='_goBrowserPage("https://github.com/tzfun/etcd-workbench")' class='simulate-tag-a text-green font-weight-bold' title='Click to view github'>GitHub</span> to download the latest version.`)
       })
     }
   }).catch(e => {

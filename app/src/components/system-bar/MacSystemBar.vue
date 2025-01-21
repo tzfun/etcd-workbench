@@ -132,7 +132,7 @@ const snapshotListShowChanged = (show: boolean) => {
       <v-btn v-if="updateInfo.valid"
              class="text-none ms-2 pr-2"
              color="light-green-darken-1"
-             text="Update Workbench"
+             text="New Version"
              variant="outlined"
              rounded
              density="comfortable"

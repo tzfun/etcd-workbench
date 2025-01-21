@@ -1,12 +1,12 @@
-import {DialogItem, TipsItem} from "~/common/types.ts";
-import {WebviewWindow} from "@tauri-apps/api/window";
-import {emit} from "@tauri-apps/api/event";
-import mitt, {Emitter, EventType, Handler} from "mitt";
-import {checkUpdate, installUpdate, UpdateManifest, UpdateResult} from "@tauri-apps/api/updater";
-import {_useSettings} from "~/common/store.ts";
-import {relaunch} from "@tauri-apps/api/process";
-import {writeText} from "@tauri-apps/api/clipboard";
-import {_goBrowserPage} from "~/common/utils.ts";
+import { DialogItem, TipsItem } from "~/common/types.ts";
+import { WebviewWindow } from "@tauri-apps/api/window";
+import { emit } from "@tauri-apps/api/event";
+import mitt, { Emitter, EventType, Handler } from "mitt";
+import { checkUpdate, installUpdate, UpdateManifest, UpdateResult } from "@tauri-apps/api/updater";
+import { _useSettings } from "~/common/store.ts";
+import { relaunch } from "@tauri-apps/api/process";
+import { writeText } from "@tauri-apps/api/clipboard";
+import { _goBrowserPage, _relativeTimeFormat } from "~/common/utils.ts";
 import { FormattedValue } from "./transport/kv";
 
 const localEvents = mitt();
@@ -123,7 +123,7 @@ export function _confirmUpdateApp(text: string): Promise<undefined> {
         let dialog: DialogItem = {
             value: true,
             content: text,
-            title: "Install Update",
+            title: "Update",
             icon: 'mdi-update',
             iconColor: 'green',
             buttons: [
@@ -234,7 +234,7 @@ export function _tipInfo(text: string) {
 export function _checkUpdate(): Promise<UpdateManifest> {
     return new Promise((resolve, reject) => {
         checkUpdate().then((res: UpdateResult) => {
-            const {shouldUpdate, manifest} = res;
+            const { shouldUpdate, manifest } = res;
             if (shouldUpdate) {
                 resolve(manifest!)
             } else {
@@ -247,9 +247,29 @@ export function _checkUpdate(): Promise<UpdateManifest> {
 }
 
 export function _genNewVersionUpdateMessage(manifest: UpdateManifest): string {
-    let version = manifest.version
+    const version = manifest.version
+    // 使用正则表达式提取日期和时间部分
+    const regex = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/;
+    const match = manifest.date.match(regex);
 
-    return `New version <span onclick='_goBrowserPage("https://github.com/tzfun/etcd-workbench/releases/tag/App-${version}")' class="simulate-tag-a text-green font-weight-bold" title="Click to view updated content">${version}</span> is available, update now?`
+    let timeDes = undefined
+    if (match) {
+        // 构造新的日期字符串
+        const formattedDateString = `${match[1]}T${match[2]}Z`
+    
+        // 创建 Date 对象
+        const dateObject = new Date(formattedDateString)
+        timeDes = _relativeTimeFormat(dateObject)
+    } else {
+        console.debug("The date string format is incorrect", manifest.date)
+    }
+    let message =  `New version <span onclick='_goBrowserPage("https://github.com/tzfun/etcd-workbench/releases/tag/App-${version}")' class="simulate-tag-a text-green font-weight-bold" title="Click to view updated content">${version}</span> released`
+
+    if(timeDes) {
+        message += ` ${timeDes}`
+    }
+    message += ', install it now?'
+    return message
 }
 
 export function _checkUpdateAndInstall() {
@@ -263,7 +283,7 @@ export function _checkUpdateAndInstall() {
             installUpdate().then(() => {
                 _loading(false)
                 _loading(true, "Restarting...")
-                relaunch().catch((e:string) => {
+                relaunch().catch((e: string) => {
                     console.error(e)
                     _alertError("Unable to relaunch, please relaunch manually.")
                 }).finally(() => {
