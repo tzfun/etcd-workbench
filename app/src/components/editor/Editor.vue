@@ -3,11 +3,6 @@
 import {computed, onMounted, onUnmounted, PropType, reactive, ref, shallowRef, watch} from "vue";
 import {useTheme} from "vuetify";
 import {EditorConfig, EditorHighlightLanguage, EditorSupportedHighlightLanguage} from "~/common/types.ts";
-import jsonLanguage from "./lang/json";
-import xmlLanguage from "./lang/xml";
-import yamlLanguage from "./lang/yaml";
-import sqlLanguage from "./lang/sql";
-import propertiesLanguage from "./lang/properties";
 import {EditorView} from "codemirror";
 import {
   _byteTextFormat,
@@ -15,13 +10,13 @@ import {
   _encodeStringToBytes,
   _pointInRect,
   _strArrToNumArr,
-  _upperCaseFirst, EditorMappedLanguage,
+  _upperCaseFirst,
+  EditorMappedLanguage,
   fileTypeIcon
 } from "~/common/utils.ts";
 import {Codemirror} from "vue-codemirror";
 import {appWindow} from "@tauri-apps/api/window";
-import {_useSettings} from "~/common/store.ts";
-import {getThemeByName} from "~/components/editor/themes.ts";
+import {getTheme} from "~/components/editor/themes.ts";
 import {VSheet} from "vuetify/components";
 
 import * as prettier from "prettier/standalone";
@@ -32,8 +27,8 @@ import prettierPluginEstree from "prettier/plugins/estree";
 import prettierPluginSql from "prettier-plugin-sql";
 import {BuiltInParserName, LiteralUnion, Plugin} from "prettier";
 import {_isLinux, _isMac, _isWindows} from "~/common/windows.ts";
-import shellLanguage from "~/components/editor/lang/shell";
-import nginxLanguage from "~/components/editor/lang/nginx";
+import {Extension} from "@codemirror/state";
+import {getLanguage} from "~/components/editor/languages.ts";
 
 type ContentFormatType = 'text' | 'blob'
 type ConsoleType = 'info' | 'warn' | 'error' | 'none'
@@ -162,46 +157,19 @@ const formatData = (content: string, fromFormat: ContentFormatType, toFormat: Co
   return content
 }
 
-const extensions = computed(() => {
-  const result = []
-  const lang = EditorMappedLanguage[props.config.language] || props.config.language
-  switch (lang) {
-    case 'json':
-      result.push(jsonLanguage())
-      break
-    case 'xml':
-      result.push(xmlLanguage())
-      break
-    case 'yaml':
-      result.push(yamlLanguage())
-      break
-    case 'sql':
-      result.push(sqlLanguage())
-      break
-    case 'properties':
-      result.push(propertiesLanguage())
-      break
-    case 'shell':
-    case 'dockerfile':
-      result.push(shellLanguage())
-      break
-    case 'nginx':
-      result.push(nginxLanguage())
-      break
+const extensions = computed<Extension[]>(() => {
+  const result: Extension[] = []
+
+  const languageExtension = getLanguage(props.config?.language)
+  if (languageExtension) {
+    result.push(languageExtension)
   }
 
-  let appTheme = useTheme().global.name.value
-  let setting = _useSettings().value;
-  let themeName
-  if (appTheme == 'dark') {
-    themeName = setting.editorDarkTheme
-  } else {
-    themeName = setting.editorLightTheme
-  }
+  result.push(getTheme(useTheme().global.name.value))
 
-  result.push(getThemeByName(themeName))
   return result
 })
+
 const cmView = shallowRef<EditorView>()
 const size = computed(() => {
   return _byteTextFormat(_encodeStringToBytes(content.value).length)
@@ -340,9 +308,14 @@ const readDataBytes = (): number[] => {
   }
 }
 
+const readDataString = (): string => {
+  return content.value
+}
+
 defineExpose({
   readDataBytes,
-  tryFormatContent
+  tryFormatContent,
+  readDataString
 })
 
 </script>

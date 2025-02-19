@@ -25,13 +25,19 @@ import {
   _tipWarn,
   EventName
 } from "~/common/events.ts";
-import {computed, nextTick, onMounted, onUnmounted, PropType, reactive, ref} from "vue";
+import {computed, nextTick, onMounted, onUnmounted, PropType, reactive, ref, watch} from "vue";
 import {ErrorPayload, KeyMonitorConfig, SessionData} from "~/common/transport/connection.ts";
 import DragBox from "~/components/drag-area/DragBox.vue";
 import DragItem from "~/components/drag-area/DragItem.vue";
 import {KeyValue} from "~/common/transport/kv.ts";
 import Editor from "~/components/editor/Editor.vue";
-import {_decodeBytesToString, _isEmpty, _tryParseDiffLanguage, _tryParseEditorLanguage} from "~/common/utils.ts";
+import {
+  _decodeBytesToString,
+  _encodeStringToBytes,
+  _isEmpty,
+  _tryParseDiffLanguage,
+  _tryParseEditorLanguage
+} from "~/common/utils.ts";
 import {EditorConfig, EditorHighlightLanguage} from "~/common/types.ts";
 import {CodeDiff} from "v-code-diff";
 import {useTheme} from "vuetify";
@@ -39,9 +45,14 @@ import CountDownTimer from "~/components/CountDownTimer.vue";
 import {_saveGlobalStore, _useGlobalStore, _useSettings} from "~/common/store.ts";
 import Tree from "~/components/tree/Tree.vue";
 import {_isMac} from "~/common/windows.ts";
-import { _debounce } from "~/common/utils";
-import { SearchResult } from "~/common/transport/kv";
-import { VTextField } from "vuetify/components";
+import {_debounce} from "~/common/utils";
+import {SearchResult} from "~/common/transport/kv";
+import {VTextField} from "vuetify/components";
+import {MergeView} from "@codemirror/merge";
+import {basicSetup, EditorView} from "codemirror";
+import {EditorState, Extension} from "@codemirror/state";
+import {getLanguage} from "~/components/editor/languages.ts";
+import {getTheme} from "~/components/editor/themes.ts";
 
 const theme = useTheme()
 
@@ -89,6 +100,9 @@ const editorAlert = reactive({
 const kvEditorContainerRef = ref()
 const editorRef = ref<InstanceType<typeof Editor>>()
 const newKeyEditorRef = ref<InstanceType<typeof Editor>>()
+const putMergeEditorRef = ref<InstanceType<typeof HTMLElement>>()
+const putMergeEditor = ref<MergeView>()
+
 const editorConfig = reactive<EditorConfig>({
   disabled: false,
   indentWithTab: true,
@@ -147,6 +161,29 @@ const searchDialog = reactive({
   loading: false,
 })
 
+const putMergeDialog = reactive({
+  show: false,
+  existValue: "",
+  existVersion: 0,
+  request: {
+    key: "",
+    value: "",
+    ttl: <undefined | number>undefined
+  },
+  successCallback: <Function | undefined>undefined,
+  failedCallback: <Function | undefined>undefined
+})
+
+watch(
+    () => theme,
+    () => {
+      renderMergeViewEditor()
+    },
+    {
+      deep: true,
+    }
+)
+
 const isDarkTheme = computed<boolean>(() => {
   return theme.global.name.value === 'dark'
 })
@@ -182,6 +219,20 @@ onMounted(() => {
       let key = e.key as string
       kvTree.value?.refreshDiyDom(key)
     }
+  })
+  putMergeEditor.value = new MergeView({
+    a: {
+      doc: putMergeDialog.request.value
+    },
+    b: {
+      doc: putMergeDialog.existValue,
+      extensions: [
+        basicSetup,
+        EditorView.editable.of(false),
+        EditorState.readOnly.of(true),
+      ]
+    },
+    parent: putMergeEditorRef.value!
   })
 })
 
@@ -296,12 +347,32 @@ const putKey = () => {
   }
   let key = newKeyDialog.key
   let value: number[] = newKeyEditorRef.value!.readDataBytes()
-  let promise: Promise<undefined>
+  let promise: Promise<void>
   if (newKeyDialog.model === 'lease') {
     promise = _putKVWithLease(props.session?.id, key, value, newKeyDialog.lease)
   } else {
     let ttl = newKeyDialog.model === 'none' ? undefined : parseInt(newKeyDialog.ttl)
-    promise = _putKV(props.session?.id, key, value, ttl)
+    promise = new Promise<void>((resolve, reject) => {
+      _putKV(props.session?.id, key, value, 0, ttl).then((result) => {
+        if (result.success) {
+          resolve()
+        } else {
+          putMergeDialog.request.key = key;
+          putMergeDialog.request.value = newKeyEditorRef.value!.readDataString()
+
+          putMergeDialog.request.ttl = ttl
+          putMergeDialog.existValue = _decodeBytesToString(result.existValue!)
+          putMergeDialog.existVersion = result.existVersion!
+          putMergeDialog.successCallback = resolve
+          putMergeDialog.failedCallback = reject
+
+          putMergeDialog.show = true
+          renderMergeViewEditor()
+        }
+      }).catch(e => {
+        reject(e)
+      })
+    })
   }
 
   loadingStore.confirmNewKey = true
@@ -507,9 +578,26 @@ const saveKV = () => {
     let doSave = () => {
       let value: number[] = editorRef.value!.readDataBytes()
       loadingStore.save = true
-      _putKV(props.session?.id, kv!.key, value).then(() => {
-        currentKvChanged.value = false
-        currentKv.value!.value = value
+      _putKV(props.session?.id, kv!.key, value, kv!.version).then((result) => {
+        if (result.success) {
+          currentKvChanged.value = false
+          currentKv.value!.value = value
+          currentKv.value!.version++
+        } else {
+          putMergeDialog.request.key = kv!.key
+          putMergeDialog.request.value = editorRef.value!.readDataString()
+          putMergeDialog.request.ttl = undefined
+          putMergeDialog.existValue = _decodeBytesToString(result.existValue!)
+          putMergeDialog.existVersion = result.existVersion!
+          putMergeDialog.successCallback = (value: number[], version: number) => {
+            currentKvChanged.value = false
+            currentKv.value!.value = value
+            currentKv.value!.version = version
+          }
+          putMergeDialog.failedCallback = undefined
+          putMergeDialog.show = true
+          renderMergeViewEditor()
+        }
       }).catch(e => {
         _handleError({
           e,
@@ -551,7 +639,7 @@ const loadVersionDiff = () => {
 
     //  当前版本
     versionDiffInfo.B.version = versionDiffInfo.modRevision
-    if(dataB!.formattedValue) {
+    if (dataB!.formattedValue) {
       versionDiffInfo.B.content = dataB.formattedValue.value
       versionDiffInfo.language = dataB.formattedValue.language as EditorHighlightLanguage
       versionDiffInfo.useFormattedValue = true
@@ -716,7 +804,7 @@ const selectSearchItem = (kv: KeyValue) => {
 }
 
 const searchFromServer = _debounce(() => {
-  if(_isEmpty(searchDialog.inputValue)) {
+  if (_isEmpty(searchDialog.inputValue)) {
     searchDialog.searchResult = null
     return
   }
@@ -724,7 +812,7 @@ const searchFromServer = _debounce(() => {
   _searchByPrefix(props.session?.id, searchDialog.inputValue).then((data: SearchResult) => {
     searchDialog.searchResult = data
 
-    if(data) {
+    if (data) {
       addDataListToTree(data.results, true)
     }
   }).finally(() => {
@@ -732,21 +820,98 @@ const searchFromServer = _debounce(() => {
   })
 }, 1000)
 
+const renderMergeViewEditor = () => {
+  if (!putMergeDialog.show) {
+    return
+  }
+  const language = _tryParseEditorLanguage(putMergeDialog.request.key, putMergeDialog.request.value)
+
+  const extensions: Extension[] = []
+
+  const languageExtension = getLanguage(language)
+  if (languageExtension) {
+    extensions.push(languageExtension)
+  }
+
+  extensions.push(getTheme(theme.global.name.value))
+  nextTick(() => {
+    if (putMergeEditor.value) {
+      putMergeEditor.value.destroy()
+    }
+    putMergeEditor.value = new MergeView({
+      a: {
+        doc: putMergeDialog.request.value,
+        extensions: [
+          ...extensions,
+          basicSetup
+        ],
+      },
+      b: {
+        doc: putMergeDialog.existValue,
+        extensions: [
+          ...extensions,
+          basicSetup,
+          EditorView.editable.of(false),
+          EditorState.readOnly.of(true)
+        ]
+      },
+      gutter: true,
+      revertControls: 'b-to-a',
+      parent: putMergeEditorRef.value!
+    })
+  })
+}
+
+const cancelMergeDialog = () => {
+  putMergeDialog.show = false
+  if (putMergeDialog.failedCallback) {
+    putMergeDialog.failedCallback()
+  }
+}
+
+const confirmMergeDialog = () => {
+  putMergeDialog.show = false
+  const key = putMergeDialog.request.key
+  const value = putMergeEditor.value!.a!.state.doc.toString()
+  const ttl = putMergeDialog.request.ttl
+  const valueBytes = _encodeStringToBytes(value)
+  _putKV(props.session?.id, key, valueBytes, putMergeDialog.existVersion, ttl).then((result) => {
+    if (result.success) {
+      if (putMergeDialog.successCallback) {
+        putMergeDialog.successCallback(valueBytes, putMergeDialog.existVersion + 1)
+      }
+    } else {
+      putMergeDialog.request.key = key
+      putMergeDialog.request.value = value
+      putMergeDialog.request.ttl = ttl
+      putMergeDialog.existValue = _decodeBytesToString(result.existValue!)
+      putMergeDialog.existVersion = result.existVersion!
+
+      putMergeDialog.show = true
+      renderMergeViewEditor()
+    }
+  }).catch(e => {
+    if (putMergeDialog.failedCallback) {
+      putMergeDialog.failedCallback(e)
+    }
+  })
+}
+
 </script>
 
 <template>
   <div class="fill-height overflow-y-auto">
     <v-layout class="action-area pa-5">
-      <v-btn 
-            v-bind="props"
-            variant="tonal"
-            size="small"
-            icon="mdi-refresh"
-            @click="refreshAllKeys"
-            :loading="loadingStore.loadMore"
-            title="Refresh"
+      <v-btn
+          v-bind="props"
+          variant="tonal"
+          size="small"
+          icon="mdi-refresh"
+          @click="refreshAllKeys"
+          :loading="loadingStore.loadMore"
+          title="Refresh"
       ></v-btn>
-      
+
       <v-btn class="text-none ml-2"
              prepend-icon="mdi-file-document-plus-outline"
              color="green"
@@ -769,12 +934,12 @@ const searchFromServer = _debounce(() => {
       ></v-btn>
 
       <v-btn class="text-none ml-2"
-            v-bind="props"
-            prepend-icon="mdi-text-box-search-outline"
-            color="blue-lighten-1"
-            @click="openSearchDialog"
-            text="Search"
-            title="Search from etcd server"
+             v-bind="props"
+             prepend-icon="mdi-text-box-search-outline"
+             color="blue-lighten-1"
+             @click="openSearchDialog"
+             text="Search"
+             title="Search from etcd server"
       ></v-btn>
 
       <v-spacer></v-spacer>
@@ -960,24 +1125,27 @@ const searchFromServer = _debounce(() => {
 
             <div class="editor-body">
               <div class="editor-alert" v-if="editorAlert.enable">
-                <v-alert v-if="editorAlert.type === 'kubernetes'" 
-                        density="compact"
-                        :rounded="false"
-                        class="pa-1 text-medium-emphasis editor-alert-item"
-                        :style="`display: ${editorAlert.show ? 'block' : 'none'};`"
-                        >
+                <v-alert v-if="editorAlert.type === 'kubernetes'"
+                         density="compact"
+                         :rounded="false"
+                         class="pa-1 text-medium-emphasis editor-alert-item"
+                         :style="`display: ${editorAlert.show ? 'block' : 'none'};`"
+                >
                   <v-layout>
-                    <p>The kubernetes storage format is protobuf and is automatically formatted into a <strong>readonly</strong> json format.</p>
-                    <span class="editor-alert-link pl-2" @click="showFormattedValue = !showFormattedValue">Recover</span>
+                    <p>The kubernetes storage format is protobuf and is automatically formatted into a
+                      <strong>readonly</strong> json format.</p>
+                    <span class="editor-alert-link pl-2"
+                          @click="showFormattedValue = !showFormattedValue">Recover</span>
                     <v-spacer></v-spacer>
-                    
+
                     <v-icon @click="editorAlert.show = false" class="mr-2">mdi-chevron-double-up</v-icon>
                   </v-layout>
                 </v-alert>
                 <v-icon class="editor-alert-expend-link text-medium-emphasis"
                         v-show="!editorAlert.show"
                         @click="editorAlert.show = true"
-                >mdi-chevron-double-down</v-icon>
+                >mdi-chevron-double-down
+                </v-icon>
               </div>
               <editor ref="editorRef"
                       :key="currentKv.key"
@@ -1052,7 +1220,7 @@ const searchFromServer = _debounce(() => {
                    icon="mdi-check-circle-outline"
                    density="compact"
           >
-          It has automatically used the formatted content.
+            It has automatically used the formatted content.
           </v-alert>
           <v-layout class="pt-5">
             <v-select
@@ -1244,6 +1412,7 @@ const searchFromServer = _debounce(() => {
       </v-card>
     </v-dialog>
 
+    <!--   服务器搜索弹窗-->
     <v-dialog
         v-model="searchDialog.show"
         max-width="800px"
@@ -1252,24 +1421,24 @@ const searchFromServer = _debounce(() => {
       <v-card>
         <v-card-title class="pa-0">
           <v-text-field v-model="searchDialog.inputValue"
-                  :prefix="session.namespace"
-                  autofocus
-                  type="text"
-                  @input="searchFromServer"
-                  placeholder="Enter a prefix to search from the server"
-                  prepend-inner-icon="mdi-magnify"
-                  hide-details
+                        :prefix="session.namespace"
+                        autofocus
+                        type="text"
+                        @input="searchFromServer"
+                        placeholder="Enter a prefix to search from the server"
+                        prepend-inner-icon="mdi-magnify"
+                        hide-details
           >
-          <template #append-inner>
-            <v-progress-circular
-                v-if="searchDialog.loading"
-                color="primary"
-                indeterminate="disable-shrink"
-                size="20"
-                width="3"
-            ></v-progress-circular>
-          </template>
-        </v-text-field>
+            <template #append-inner>
+              <v-progress-circular
+                  v-if="searchDialog.loading"
+                  color="primary"
+                  indeterminate="disable-shrink"
+                  size="20"
+                  width="3"
+              ></v-progress-circular>
+            </template>
+          </v-text-field>
         </v-card-title>
         <v-card-text class="pa-0">
           <v-list lines="two" v-if="searchDialog.searchResult && searchDialog.searchResult.results.length > 0">
@@ -1292,8 +1461,50 @@ const searchFromServer = _debounce(() => {
         </v-card-text>
         <v-card-actions class="text-medium-emphasis">
           <v-spacer/>
-          <span v-if="searchDialog.searchResult">Searched {{ searchDialog.searchResult.results.length }} / {{ searchDialog.searchResult.count }}</span>
+          <span v-if="searchDialog.searchResult">Searched {{
+              searchDialog.searchResult.results.length
+            }} / {{ searchDialog.searchResult.count }}</span>
           <span v-else>Search all keys from etcd server, and display up to 50 results.</span>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!--   更新冲突Merge弹窗-->
+    <v-dialog
+        v-model="putMergeDialog.show"
+        max-width="1200px"
+        min-width="500px"
+        persistent
+        scrollable
+    >
+      <v-card title="Resolve Conflict">
+        <v-card-text>
+          <v-alert color="warning"
+                   text="The system has detected an intermediate version. Please resolve whether to merge the content before submitting."
+                   class="my-2"
+                   density="comfortable"
+          ></v-alert>
+          <v-layout class="my-2">
+            <span class="text-medium-emphasis">Your version</span>
+            <v-spacer></v-spacer>
+            <span class="text-medium-emphasis">Latest version</span>
+          </v-layout>
+          <div ref="putMergeEditorRef"></div>
+        </v-card-text>
+
+        <v-card-actions>
+          <v-btn text="Cancel"
+                 variant="text"
+                 class="text-none"
+                 @click="cancelMergeDialog"
+          ></v-btn>
+
+          <v-btn text="Resolved & Submit"
+                 variant="flat"
+                 class="text-none"
+                 color="primary"
+                 @click="confirmMergeDialog"
+          ></v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -1332,9 +1543,11 @@ $--load-more-area-height: 32px;
       top: 0;
       left: 0;
       z-index: 100;
+
       .editor-alert-item {
         font-size: 0.9em;
         transition: all ease 0.8s;
+
         .editor-alert-link {
           color: #9d9cf3;
           cursor: pointer;

@@ -17,6 +17,8 @@ import {
     solarizedLight,
     tomorrow,
 } from 'thememirror'
+import {Extension} from "@codemirror/state";
+import {_useSettings} from "~/common/store.ts";
 
 export {
     amy,
@@ -36,6 +38,17 @@ export {
     solarizedLight,
     tomorrow,
 } from 'thememirror'
+
+export function getTheme(appTheme: string): Extension {
+    let setting = _useSettings().value;
+    let themeName
+    if (appTheme == 'dark') {
+        themeName = setting.editorDarkTheme
+    } else {
+        themeName = setting.editorLightTheme
+    }
+    return getThemeByName(themeName)
+}
 
 export function getThemeByName(name: string) {
     switch (name) {

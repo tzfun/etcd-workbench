@@ -39,3 +39,9 @@ export interface SearchResult {
     count: number,
     results: KeyValue[]
 }
+
+export interface KVPutResult {
+    success: boolean,
+    existValue?: number[],
+    existVersion?: number,
+}

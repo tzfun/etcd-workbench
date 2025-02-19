@@ -2,7 +2,7 @@ use std::str::FromStr;
 use log::warn;
 use crate::error::LogicError;
 use crate::etcd;
-use crate::transport::kv::{SearchResult, SerializableKeyValue};
+use crate::transport::kv::{KVPutResult, SearchResult, SerializableKeyValue};
 
 #[tauri::command]
 pub async fn kv_get_all_keys(session: i32) -> Result<Vec<SerializableKeyValue>, LogicError> {
@@ -52,15 +52,32 @@ pub async fn kv_get_with_prefix(session: i32, prefix: String) -> Result<SearchRe
 }
 
 #[tauri::command]
-pub async fn kv_put(session: i32, key: String, value: Vec<u8>, ttl: Option<i64>) -> Result<(), LogicError> {
+pub async fn kv_put(session: i32, key: String, value: Vec<u8>, version: i64, ttl: Option<i64>) -> Result<KVPutResult, LogicError> {
     let mut connector = etcd::get_connector(&session)?;
+
+    let response = connector.kv_get_request(key.clone(), None).await?;
+    if !response.kvs().is_empty() {
+        let kv = &response.kvs()[0];
+        if version != kv.version() {
+            return Ok(KVPutResult {
+                success: false,
+                exist_value: Some(Vec::from(kv.value())),
+                exist_version: Some(kv.version())
+            })
+        }
+    }
+
     connector.kv_put(
         key,
         value,
         ttl,
     ).await?;
 
-    Ok(())
+    Ok(KVPutResult {
+        success: true,
+        exist_value: None,
+        exist_version: None,
+    })
 }
 
 #[tauri::command]

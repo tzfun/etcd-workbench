@@ -88,3 +88,11 @@ pub struct SearchResult {
     pub count: usize,
     pub results: Vec<SerializableKeyValue>
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all="camelCase")]
+pub struct KVPutResult {
+    pub success: bool,
+    pub exist_value: Option<Vec<u8>>,
+    pub exist_version: Option<i64>
+}

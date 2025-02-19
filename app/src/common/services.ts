@@ -1,7 +1,7 @@
 import {invoke} from "@tauri-apps/api";
 import {Connection, ConnectionInfo, KeyMonitorConfig, SessionData} from "~/common/transport/connection.ts";
 import {Cluster, SnapshotInfo} from "~/common/transport/maintenance.ts";
-import {KeyValue, LeaseInfo, SearchResult} from "~/common/transport/kv.ts";
+import {KeyValue, KVPutResult, LeaseInfo, SearchResult} from "~/common/transport/kv.ts";
 import {_emitLocal, _tipError, EventName} from "~/common/events.ts";
 import {LogicErrorInfo} from "~/common/types.ts";
 import {RolePermission, User} from "~/common/transport/user.ts";
@@ -108,16 +108,17 @@ export function _searchByPrefix(sessionId: number, prefix: string): Promise<Sear
     })
 }
 
-export function _putKV(sessionId: number, key: string, value: number[], ttl?: number): Promise<undefined> {
+export function _putKV(sessionId: number, key: string, value: number[], version: number, ttl?: number): Promise<KVPutResult> {
     return invoke('kv_put', {
         session: sessionId,
         key,
         value,
+        version,
         ttl
     })
 }
 
-export function _putKVWithLease(sessionId: number, key: string, value: number[], lease: string): Promise<undefined> {
+export function _putKVWithLease(sessionId: number, key: string, value: number[], lease: string): Promise<void> {
     return invoke('kv_put_with_lease', {
         session: sessionId,
         key,

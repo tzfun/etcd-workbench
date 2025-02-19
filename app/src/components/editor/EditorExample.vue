@@ -2,12 +2,9 @@
 
 import {Codemirror} from "vue-codemirror";
 import {computed} from "vue";
-import jsonLanguage from "./lang/json";
-import xmlLanguage from "./lang/xml";
-import yamlLanguage from "./lang/yaml";
-import sqlLanguage from "./lang/sql";
-import propertiesLanguage from "./lang/properties";
 import {getThemeByName} from "~/components/editor/themes.ts";
+import {getLanguage} from "~/components/editor/languages.ts";
+import {EditorHighlightLanguage} from "~/common/types.ts";
 
 const props = defineProps({
   content: {
@@ -26,23 +23,12 @@ const props = defineProps({
 
 const extensions = computed(() => {
   const result = []
-  switch (props.contentLanguage) {
-    case 'json':
-      result.push(jsonLanguage())
-      break
-    case 'xml':
-      result.push(xmlLanguage())
-      break
-    case 'yaml':
-      result.push(yamlLanguage())
-      break
-    case 'sql':
-      result.push(sqlLanguage())
-      break
-    case 'properties':
-      result.push(propertiesLanguage())
-      break
+
+  const languageExtension = getLanguage(props.contentLanguage as EditorHighlightLanguage)
+  if (languageExtension) {
+    result.push(languageExtension)
   }
+
   let theme = getThemeByName(props.theme)
   if (theme) {
     result.push(theme)
