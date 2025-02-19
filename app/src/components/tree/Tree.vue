@@ -78,6 +78,7 @@ const keyId = computed<string>(() => {
 })
 const treeRootObj = ref()
 const triggerRemovedKey = ref<string>()
+const expandState = ref<boolean>(false)
 
 const beforeClick = (_treeId: string, treeNode: TreeNode) => {
   if (!treeNode) {
@@ -273,9 +274,9 @@ const getTreeNodeById = (id: any): TreeNode | undefined => {
 }
 
 const addItemToTree = (key: string, ignoreIfExist?: boolean) => {
-  if(ignoreIfExist) {
+  if (ignoreIfExist) {
     let node = getTreeNodeById(key)
-    if(node) {
+    if (node) {
       return
     }
   }
@@ -384,9 +385,22 @@ const cancelSelected = () => {
 
 const selectItem = (key: string) => {
   let node = getTreeNodeById(key)
-  if(node) {
+  if (node) {
     treeRootObj.value.selectNode(node)
   }
+}
+/**
+ * 展开/折叠全部
+ * @param expand 状态。true-展开，false-折叠
+ * @return boolean 状态。true-展开，false-折叠
+ */
+const expandAll = (expand: boolean): boolean => {
+  return treeRootObj.value.expandAll(expand)
+}
+
+const toggleExpand = () => {
+  expandState.value = !expandState.value
+  expandAll(expandState.value)
 }
 
 defineExpose({
@@ -396,7 +410,8 @@ defineExpose({
   getSelectedItems,
   refreshDiyDom,
   cancelSelected,
-  selectItem
+  selectItem,
+  expandAll
 })
 
 </script>
@@ -406,6 +421,14 @@ defineExpose({
     <div v-if="enableSearch" class="position-relative">
       <v-icon class="search-icon">mdi-magnify</v-icon>
       <input type="text" :id="keyId" value="" class="search-input" placeholder="Type to search"/>
+      <v-btn class="expand-icon"
+             icon="mdi-arrow-expand-vertical"
+             title="Expand or collapse all"
+             size="x-small"
+             variant="plain"
+             @click="toggleExpand"
+      ></v-btn>
+
     </div>
     <div :id="treeId" class="ztree key-tree overflow-auto px-1"
          :style="`height:${enableSearch ? 'calc(100% - 46px)' : '100%'};`"></div>
@@ -427,14 +450,23 @@ $--search-focus-border-color: rgb(33, 150, 243);
   top: calc($--search-input-x-margin + $--fixed-margin);
 }
 
+$--expand-icon-width: 32px;
+$--expand-icon-margin: 3px;
+
+.expand-icon {
+  width: $--expand-icon-width;
+  margin-left: $--expand-icon-margin;
+  margin-right: $--expand-icon-margin;
+}
+
 .search-input {
   padding-left: 30px;
   border: 1px solid;
   border-radius: 3px;
   font-size: 0.9em;
-  width: calc(100% - $--search-input-x-margin * 2);
+  width: calc(100% - $--search-input-x-margin - $--expand-icon-width - $--expand-icon-margin * 2);
   height: 30px;
-  margin: $--search-input-x-margin;
+  margin: $--search-input-x-margin 0 $--search-input-x-margin $--search-input-x-margin;
   background-color: rgba(0, 0, 0, 0);
   transition: all ease 0.2s;
   outline: none;

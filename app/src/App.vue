@@ -191,7 +191,12 @@ const setAppTheme = (appTheme: AppTheme) => {
 const disableWebviewNativeEvents = () => {
   document.addEventListener('keydown', e => {
     let key = e.key.toLowerCase()
-    if (e.ctrlKey && key == 'r') {
+    if (e.ctrlKey && key.match(/[pri]/)) {
+      e.preventDefault()
+      return false
+    }
+
+    if (e.ctrlKey && e.shiftKey && key == 'i') {
       e.preventDefault()
       return false
     }
