@@ -509,6 +509,7 @@ const saveKV = () => {
       loadingStore.save = true
       _putKV(props.session?.id, kv!.key, value).then(() => {
         currentKvChanged.value = false
+        currentKv.value!.value = value
       }).catch(e => {
         _handleError({
           e,
