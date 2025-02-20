@@ -712,7 +712,7 @@ const onScroll = _debounce(() => {
                   <p class="text-blue cursor-pointer"
                      @click="_goBrowserPage('https://github.com/tzfun/etcd-workbench/blob/master/LICENSE')"
                      title="Click to view details"
-                  >Apache License 2.0</p>
+                  >GPL 2.0</p>
                 </div>
               </v-layout>
 
