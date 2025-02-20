@@ -61,13 +61,14 @@ pub async fn kv_put(session: i32, key: String, value: Vec<u8>, version: i64, ttl
         if version != kv.version() {
             return Ok(KVPutResult {
                 success: false,
+                final_kv: None,
                 exist_value: Some(Vec::from(kv.value())),
                 exist_version: Some(kv.version())
             })
         }
     }
 
-    connector.kv_put(
+    let final_kv = connector.kv_put(
         key,
         value,
         ttl,
@@ -75,6 +76,7 @@ pub async fn kv_put(session: i32, key: String, value: Vec<u8>, version: i64, ttl
 
     Ok(KVPutResult {
         success: true,
+        final_kv,
         exist_value: None,
         exist_version: None,
     })

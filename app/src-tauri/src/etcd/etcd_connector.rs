@@ -267,7 +267,7 @@ impl EtcdConnector {
         key: impl Into<Vec<u8>>,
         value: impl Into<Vec<u8>>,
         ttl: Option<i64>,
-    ) -> Result<(), Error> {
+    ) -> Result<Option<SerializableKeyValue>, Error> {
         let mut lease_id = 0;
         let final_key = self.prefix_namespace(key);
         if let Some(ttl_param) = ttl {
@@ -290,10 +290,19 @@ impl EtcdConnector {
         };
 
         self.client
-            .kv_put_request(final_key, value.into(), option)
+            .kv_put_request(final_key.clone(), value.into(), option)
             .await?;
 
-        Ok(())
+        let kv_vec = self.kv_get_by_option(final_key, Some(GetOptions::new().with_keys_only())).await?;
+
+        let res = self.find_first_kv(kv_vec);
+        let final_kv = if let Ok(kv) = res {
+            Some(kv)
+        } else {
+            None
+        };
+
+        Ok(final_kv)
     }
 
     /// 将Key绑定到lease中

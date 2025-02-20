@@ -93,6 +93,7 @@ pub struct SearchResult {
 #[serde(rename_all="camelCase")]
 pub struct KVPutResult {
     pub success: bool,
+    pub final_kv: Option<SerializableKeyValue>,
     pub exist_value: Option<Vec<u8>>,
     pub exist_version: Option<i64>
 }

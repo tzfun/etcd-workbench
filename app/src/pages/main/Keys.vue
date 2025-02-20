@@ -103,7 +103,7 @@ const newKeyEditorRef = ref<InstanceType<typeof Editor>>()
 const putMergeEditorRef = ref<InstanceType<typeof HTMLElement>>()
 const putMergeEditor = ref<MergeView>()
 
-const editorConfig = reactive<EditorConfig>({
+const defaultEditorConfig: EditorConfig = {
   disabled: false,
   indentWithTab: true,
   tabSize: 2,
@@ -111,6 +111,14 @@ const editorConfig = reactive<EditorConfig>({
   height: "100%",
   fontSize: "1rem",
   language: 'text'
+}
+
+const editorConfig = reactive<EditorConfig>({
+  ...defaultEditorConfig
+})
+
+const newKeyEditorConfig = reactive<EditorConfig>({
+  ...defaultEditorConfig
 })
 
 const loadingStore = reactive({
@@ -318,6 +326,8 @@ const showNewKeyDialog = () => {
   newKeyDialog.title = 'New Key'
   newKeyDialog.copyAndSave = false
   newKeyDialog.show = true
+
+  newKeyEditorConfig.language = editorConfig.language
 }
 
 const showCopyAndSaveDialog = (fromKey: string, fromValue: string) => {
@@ -330,6 +340,8 @@ const showCopyAndSaveDialog = (fromKey: string, fromValue: string) => {
   newKeyDialog.title = 'Copy And Save'
   newKeyDialog.copyAndSave = true
   newKeyDialog.show = true
+
+  newKeyEditorConfig.language = editorConfig.language
 }
 
 const putKey = () => {
@@ -581,18 +593,18 @@ const saveKV = () => {
       _putKV(props.session?.id, kv!.key, value, kv!.version).then((result) => {
         if (result.success) {
           currentKvChanged.value = false
-          currentKv.value!.value = value
-          currentKv.value!.version++
+          result.finalKv!.value = value
+          currentKv.value = result.finalKv
         } else {
           putMergeDialog.request.key = kv!.key
           putMergeDialog.request.value = editorRef.value!.readDataString()
           putMergeDialog.request.ttl = undefined
           putMergeDialog.existValue = _decodeBytesToString(result.existValue!)
           putMergeDialog.existVersion = result.existVersion!
-          putMergeDialog.successCallback = (value: number[], version: number) => {
+          putMergeDialog.successCallback = (finalKv: KeyValue, value: number[]) => {
             currentKvChanged.value = false
-            currentKv.value!.value = value
-            currentKv.value!.version = version
+            finalKv.value = value
+            currentKv.value = finalKv
           }
           putMergeDialog.failedCallback = undefined
           putMergeDialog.show = true
@@ -878,7 +890,7 @@ const confirmMergeDialog = () => {
   _putKV(props.session?.id, key, valueBytes, putMergeDialog.existVersion, ttl).then((result) => {
     if (result.success) {
       if (putMergeDialog.successCallback) {
-        putMergeDialog.successCallback(valueBytes, putMergeDialog.existVersion + 1)
+        putMergeDialog.successCallback(result.finalKv, valueBytes)
       }
     } else {
       putMergeDialog.request.key = key
@@ -1341,7 +1353,7 @@ const confirmMergeDialog = () => {
           <div style="height: 50vh;width:100%">
             <editor ref="newKeyEditorRef"
                     :value="newKeyDialog.value"
-                    :config="editorConfig"></editor>
+                    :config="newKeyEditorConfig"></editor>
           </div>
         </v-card-text>
         <v-card-actions>
@@ -1473,22 +1485,25 @@ const confirmMergeDialog = () => {
     <v-dialog
         v-model="putMergeDialog.show"
         max-width="1200px"
-        min-width="500px"
+        min-width="800px"
         persistent
         scrollable
     >
       <v-card title="Resolve Conflict">
         <v-card-text>
-          <v-alert color="warning"
+          <v-alert type="warning"
                    text="The system has detected an intermediate version. Please resolve whether to merge the content before submitting."
                    class="my-2"
-                   density="comfortable"
+                   density="compact"
           ></v-alert>
-          <v-layout class="my-2">
-            <span class="text-medium-emphasis">Your version</span>
-            <v-spacer></v-spacer>
-            <span class="text-medium-emphasis">Latest version</span>
-          </v-layout>
+          <v-row class="my-2">
+            <v-col cols="6" class="text-center font-weight-bold text-medium-emphasis">
+              Your version
+            </v-col>
+            <v-col cols="6" class="text-center font-weight-bold text-medium-emphasis">
+              Latest version ({{ putMergeDialog.existVersion }})
+            </v-col>
+          </v-row>
           <div ref="putMergeEditorRef"></div>
         </v-card-text>
 

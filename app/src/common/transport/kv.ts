@@ -42,6 +42,7 @@ export interface SearchResult {
 
 export interface KVPutResult {
     success: boolean,
+    finalKv?: KeyValue,
     existValue?: number[],
     existVersion?: number,
 }
