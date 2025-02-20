@@ -16,7 +16,7 @@ export const enConfig = {
             // {text: 'Home', link: '/'},
         ],
         footer: {
-            message: 'Released under the Apache-2.0 License.',
+            message: 'Released under the GPL-3.0 License.',
             copyright: 'Copyright © 2023-present beifengtz'
         }
     }

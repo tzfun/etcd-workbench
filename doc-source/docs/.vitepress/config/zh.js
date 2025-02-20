@@ -16,7 +16,7 @@ export const zhConfig = {
             // {text: 'Home', link: '/zh/'},
         ],
         footer: {
-            message: '基于Apache-2.0开源许可协议',
+            message: '基于GPL-3.0开源许可协议',
             copyright: 'Copyright © 2023-present Tiny Craft'
         }
     }
