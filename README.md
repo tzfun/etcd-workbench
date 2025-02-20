@@ -27,12 +27,13 @@ A beautiful and lightweight ETCD V3 client. Provides App and Web packages. Suppo
 8. Support Key-Value editing, multi-language format highlighting, batch import/export.
 9. Support protobuf format content decoding for kubernetes.
 10. Support comparison of multiple versions of key.
-11. Support quick access from key collection.
-12. Support key change monitoring and notification.
-13. Support key search function.
-14. Support lease management: creation, deletion, key bind relationship, countdown display.
-15. Support user management: enable/disable authentication, creation, deletion, grant/revocation of roles, etc.
-16. Support role management: creation, deletion, authorization/revocation of permissions, etc.
+11. Support for Key Merge to resolve update conflicts.
+12. Support quick access from key collection.
+13. Support key change monitoring and notification.
+14. Support key search function.
+15. Support lease management: creation, deletion, key bind relationship, countdown display.
+16. Support user management: enable/disable authentication, creation, deletion, grant/revocation of roles, etc.
+17. Support role management: creation, deletion, authorization/revocation of permissions, etc.
 
 - **App**: It has all the functions, has a better experience than the web version, and is easy to migrate data. It will be continuously updated in the future. It is recommended to use.
 - **Web**: It has most of the functions, but a few functions are not supported (such as data backup, etc.). Users can access it directly with a browser without downloading. It supports multi-user login.
@@ -64,6 +65,8 @@ Web supports **jar** package deployment and **Docker** deployment, manages etcd 
 
 ![key-new.png](screenshot/app/key-new.png)
 
+![key-merge.png](screenshot/app/merge.png)
+
 ![cluster.png](screenshot/app/cluster.png)
 
 ![leases.png](screenshot/app/leases.png)
@@ -82,4 +85,4 @@ The front-end is developed based on Vue, and the back-end is developed based on 
 
 # License
 
-[Apache License 2.0](LICENSE)
+[GPL-3.0](LICENSE)

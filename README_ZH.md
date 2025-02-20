@@ -26,12 +26,13 @@
 8. 支持 Key-Value 编辑、多语言格式高亮、批量导入/导出
 9. 支持 Kubernetes 的 Protobuf 格式内容解码
 10. 支持 Key 多个版本内容比较
-11. 支持Key收藏快捷访问
-12. 支持Key变化监听与通知
-13. 支持Key搜索功能
-14. 支持 Lease 管理：创建、删除、Key绑定关系、倒计时显示
-15. 支持用户管理：开关身份认证功能、用户创建、用户删除、用户授予/回收角色等
-16. 支持角色管理：角色创建、角色删除、角色授权/回收权限等
+11. 支持 Key Merge解决更新冲突
+12. 支持Key收藏快捷访问
+13. 支持Key变化监听与通知
+14. 支持Key搜索功能
+15. 支持 Lease 管理：创建、删除、Key绑定关系、倒计时显示
+16. 支持用户管理：开关身份认证功能、用户创建、用户删除、用户授予/回收角色等
+17. 支持角色管理：角色创建、角色删除、角色授权/回收权限等
 
 - **App**: 拥有所有功能，相比Web版拥有更好的体验，数据方便迁移，后续将持续更新，推荐使用
 - **Web**：拥有大部分功能，少部分功能不支持（例如数据备份等），用户无需下载可使用浏览器直接访问，支持多用户登录。
@@ -63,6 +64,8 @@ Web 支持 **Jar** 包部署和 **Docker** 部署，在浏览器中管理Etcd Se
 
 ![key-new.png](screenshot/app/key-new.png)
 
+![key-merge.png](screenshot/app/merge.png)
+
 ![cluster.png](screenshot/app/cluster.png)
 
 ![leases.png](screenshot/app/leases.png)
@@ -81,4 +84,4 @@ Web 支持 **Jar** 包部署和 **Docker** 部署，在浏览器中管理Etcd Se
 
 # License
 
-[Apache License 2.0](LICENSE)
+[GPL-3.0](LICENSE)
