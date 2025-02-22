@@ -13,7 +13,7 @@
 
 # Etcd Workbench
 
-A beautiful and lightweight ETCD V3 client. Provides App and Web packages. Supports SSL and SSH Tunnel connections.
+A powerful ui client for etcd v3. Supports web deployment and app installation.
 
 # Features
 

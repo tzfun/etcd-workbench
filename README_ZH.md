@@ -12,7 +12,7 @@
 
 # Etcd Workbench
 
-一个漂亮、轻量的 ETCD V3 客户端，提供 App 和 Web 版本，支持SSL、SSH Tunnel连接。
+一个功能齐全的 ETCD V3 可视化客户端，支持Web部署和App安装。
 
 # 特点及功能
 
