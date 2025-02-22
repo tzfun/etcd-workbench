@@ -1,5 +1,14 @@
 use etcd_client::{
-    AlarmAction, AlarmOptions, AlarmResponse, AlarmType, AuthDisableResponse, AuthEnableResponse, DefragmentResponse, DeleteOptions, DeleteResponse, GetOptions, GetResponse, LeaseGrantOptions, LeaseGrantResponse, LeaseLeasesResponse, LeaseRevokeResponse, LeaseTimeToLiveOptions, LeaseTimeToLiveResponse, MemberAddOptions, MemberAddResponse, MemberListResponse, MemberRemoveResponse, MemberUpdateResponse, Permission, PutOptions, PutResponse, RoleAddResponse, RoleDeleteResponse, RoleGetResponse, RoleGrantPermissionResponse, RoleListResponse, RoleRevokePermissionOptions, RoleRevokePermissionResponse, SnapshotStreaming, StatusResponse, UserAddOptions, UserAddResponse, UserChangePasswordResponse, UserDeleteResponse, UserGetResponse, UserGrantRoleResponse, UserListResponse, UserRevokeRoleResponse
+    AlarmAction, AlarmOptions, AlarmResponse, AlarmType, AuthDisableResponse, AuthEnableResponse,
+    DefragmentResponse, DeleteOptions, DeleteResponse, GetOptions, GetResponse, LeaseGrantOptions,
+    LeaseGrantResponse, LeaseLeasesResponse, LeaseRevokeResponse, LeaseTimeToLiveOptions,
+    LeaseTimeToLiveResponse, MemberAddOptions, MemberAddResponse, MemberListResponse,
+    MemberRemoveResponse, MemberUpdateResponse, Permission, PutOptions, PutResponse,
+    RoleAddResponse, RoleDeleteResponse, RoleGetResponse, RoleGrantPermissionResponse,
+    RoleListResponse, RoleRevokePermissionOptions, RoleRevokePermissionResponse, SnapshotStreaming,
+    StatusResponse, UserAddOptions, UserAddResponse, UserChangePasswordResponse,
+    UserDeleteResponse, UserGetResponse, UserGrantRoleResponse, UserListResponse,
+    UserRevokeRoleResponse, WatchOptions, WatchResponse, WatchStream, Watcher,
 };
 
 use crate::transport::connection::ConnectionUser;
@@ -511,7 +520,7 @@ impl WrappedEtcdClient {
 
     pub async fn member_remove(
         &mut self,
-        id: u64
+        id: u64,
     ) -> Result<MemberRemoveResponse, etcd_client::Error> {
         let result = self.inner.member_remove(id).await;
 
@@ -530,7 +539,7 @@ impl WrappedEtcdClient {
     pub async fn member_update(
         &mut self,
         id: u64,
-        url: Vec<String>
+        url: Vec<String>,
     ) -> Result<MemberUpdateResponse, etcd_client::Error> {
         let result = self.inner.member_update(id, url.clone()).await;
 
@@ -545,7 +554,7 @@ impl WrappedEtcdClient {
         }
         result
     }
-    
+
     pub async fn defragment(&mut self) -> Result<DefragmentResponse, etcd_client::Error> {
         let result = self.inner.defragment().await;
 
@@ -573,6 +582,30 @@ impl WrappedEtcdClient {
                 }
             }
         }
+        result
+    }
+
+    pub async fn watch(
+        &mut self,
+        key: Vec<u8>,
+        options: Option<WatchOptions>,
+    ) -> Result<(Watcher, WatchStream), etcd_client::Error> {
+        let result = self
+            .inner
+            .watch_client()
+            .watch(key.clone(), options.clone())
+            .await;
+
+        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
+            if s.code() as i32 == 16 {
+                let self_auth = self.auth.clone();
+                if let Some(auth) = self_auth {
+                    self.authenticate().await?;
+                    return self.inner.watch(key, options).await;
+                }
+            }
+        }
+
         result
     }
 }
