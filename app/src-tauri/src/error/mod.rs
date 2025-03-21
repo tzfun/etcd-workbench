@@ -26,6 +26,8 @@ enum ErrorType {
     ResourceNotExist,
     /// 权限被拒绝
     PermissionDenied,
+    /// 更新失败
+    UpdateFailed,
 }
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all="camelCase")]
@@ -47,7 +49,8 @@ pub enum LogicError<> {
     SerdeError(serde_json::Error),
     AesError(AesError),
     ChannelRcvError(oneshot::error::RecvError),
-    StringConvertError(FromUtf8Error)
+    StringConvertError(FromUtf8Error),
+    UpdateError(tauri::updater::Error)
 }
 
 impl Serialize for LogicError {
@@ -183,6 +186,13 @@ impl Serialize for LogicError {
                     err_msg: e,
                 }.serialize(serializer)
             }
+            LogicError::UpdateError(e) => {
+                error!("Update error: {}", e);
+                ErrorPayload {
+                    err_type: ErrorType::UpdateFailed,
+                    err_msg: "update error",
+                }.serialize(serializer)
+            }
         }
     }
 }
@@ -232,5 +242,11 @@ impl From<oneshot::error::RecvError> for LogicError {
 impl From<FromUtf8Error> for LogicError {
     fn from(value: FromUtf8Error) -> Self {
         LogicError::StringConvertError(value)
+    }
+}
+
+impl From<tauri::updater::Error> for LogicError {
+    fn from(value: tauri::updater::Error) -> Self {
+        LogicError::UpdateError(value)
     }
 }

@@ -97,6 +97,8 @@ async fn main() {
             api::settings::save_global_store,
             api::settings::get_app_version,
             api::settings::is_debug_model,
+            api::settings::check_update,
+            api::settings::install_update,
             api::kv::kv_get_all_keys,
             api::kv::kv_get_all_keys_paging,
             api::kv::kv_get,

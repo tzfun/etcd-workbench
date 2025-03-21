@@ -21,6 +21,7 @@ import {useTheme} from "vuetify";
 import {open, save} from "@tauri-apps/api/dialog";
 import {_exportConnection, _handleError, _importConnection} from "~/common/services.ts";
 import {_getDownloadPath, _isLinux, _isMac, _isWindows} from "~/common/windows.ts";
+import IconGitee from "~/components/icon/IconGitee.vue";
 
 const theme = useTheme()
 
@@ -665,6 +666,32 @@ const onScroll = _debounce(() => {
                   ></v-switch>
                 </div>
               </v-layout>
+
+              <v-divider class="mt-5 mb-5"></v-divider>
+              <v-layout>
+                <div>
+                  <div class="form-label text-high-emphasis">Update Source</div>
+                  <div class="v-messages">During the update check or installation, content will be read from the specified source.</div>
+                </div>
+                <v-spacer></v-spacer>
+                <div>
+                  <v-radio-group
+                    v-model="settingForm.updateSource"
+                    inline
+                  >
+                    <v-radio
+                      label="GitHub"
+                      value="github"
+                      class="mr-6 font-weight-light"
+                    >
+                    </v-radio>
+                    <v-radio
+                      label="Gitee"
+                      value="gitee"
+                    ></v-radio>
+                  </v-radio-group>
+                </div>
+              </v-layout>
             </v-sheet>
 
             <h3 class="group-title mt-5" id="setting-about">About</h3>
@@ -694,11 +721,7 @@ const onScroll = _debounce(() => {
                   <v-icon @click="_goBrowserPage('https://gitee.com/tzfun/etcd-workbench/')"
                           title="Gitee"
                   >
-                    <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="20" height="20">
-                      <path
-                          d="M512 1024C229.2224 1024 0 794.7776 0 512S229.2224 0 512 0s512 229.2224 512 512-229.2224 512-512 512z m259.1488-568.8832H480.4096a25.2928 25.2928 0 0 0-25.2928 25.2928l-0.0256 63.2064c0 13.952 11.3152 25.2928 25.2672 25.2928h177.024c13.9776 0 25.2928 11.3152 25.2928 25.2672v12.6464a75.8528 75.8528 0 0 1-75.8528 75.8528H366.592a25.2928 25.2928 0 0 1-25.2672-25.2928v-240.1792a75.8528 75.8528 0 0 1 75.8272-75.8528h353.9456a25.2928 25.2928 0 0 0 25.2672-25.2928l0.0768-63.2064a25.2928 25.2928 0 0 0-25.2672-25.2928H417.152a189.6192 189.6192 0 0 0-189.6192 189.6448v353.9456c0 13.9776 11.3152 25.2928 25.2928 25.2928h372.9408a170.6496 170.6496 0 0 0 170.6496-170.6496v-145.408a25.2928 25.2928 0 0 0-25.2928-25.2672z"
-                          fill="#C71D23"></path>
-                    </svg>
+                    <IconGitee></IconGitee>
                   </v-icon>
                 </div>
               </v-layout>
