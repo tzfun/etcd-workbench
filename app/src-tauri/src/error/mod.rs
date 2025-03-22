@@ -190,7 +190,7 @@ impl Serialize for LogicError {
                 error!("Update error: {}", e);
                 ErrorPayload {
                     err_type: ErrorType::UpdateFailed,
-                    err_msg: "update error",
+                    err_msg: "Could not fetch a valid release version",
                 }.serialize(serializer)
             }
         }

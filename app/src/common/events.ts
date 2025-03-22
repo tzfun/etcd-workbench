@@ -1,12 +1,10 @@
-import { DialogItem, TipsItem } from "~/common/types.ts";
-import { WebviewWindow } from "@tauri-apps/api/window";
-import { emit } from "@tauri-apps/api/event";
-import mitt, { Emitter, EventType, Handler } from "mitt";
-import { checkUpdate, installUpdate, UpdateManifest, UpdateResult } from "@tauri-apps/api/updater";
-import { _useSettings } from "~/common/store.ts";
-import { relaunch } from "@tauri-apps/api/process";
 import { writeText } from "@tauri-apps/api/clipboard";
-import { _goBrowserPage, _relativeTimeFormat } from "~/common/utils.ts";
+import { emit } from "@tauri-apps/api/event";
+import { UpdateManifest } from "@tauri-apps/api/updater";
+import { WebviewWindow } from "@tauri-apps/api/window";
+import mitt, { Emitter, EventType, Handler } from "mitt";
+import { DialogItem, TipsItem } from "~/common/types.ts";
+import { _relativeTimeFormat } from "~/common/utils.ts";
 import { FormattedValue } from "./transport/kv";
 
 const localEvents = mitt();
@@ -230,22 +228,6 @@ export function _tipInfo(text: string) {
     _emitLocal(EventName.TIP, tip)
 }
 
-
-export function _checkUpdate(): Promise<UpdateManifest> {
-    return new Promise((resolve, reject) => {
-        checkUpdate().then((res: UpdateResult) => {
-            const { shouldUpdate, manifest } = res;
-            if (shouldUpdate) {
-                resolve(manifest!)
-            } else {
-                reject()
-            }
-        }).catch(e => {
-            reject(e)
-        })
-    })
-}
-
 export function _genNewVersionUpdateMessage(manifest: UpdateManifest): string {
     const version = manifest.version
     // 使用正则表达式提取日期和时间部分
@@ -262,6 +244,9 @@ export function _genNewVersionUpdateMessage(manifest: UpdateManifest): string {
         timeDes = _relativeTimeFormat(dateObject)
     } else {
         console.debug("The date string format is incorrect", manifest.date)
+        
+        const dateObject = new Date(parseInt(manifest.date))
+        timeDes = _relativeTimeFormat(dateObject)
     }
     let message =  `New version <span onclick='_goBrowserPage("https://github.com/tzfun/etcd-workbench/releases/tag/App-${version}")' class="simulate-tag-a text-green font-weight-bold" title="Click to view updated content">${version}</span> released`
 
@@ -270,41 +255,6 @@ export function _genNewVersionUpdateMessage(manifest: UpdateManifest): string {
     }
     message += ', install it now?'
     return message
-}
-
-export function _checkUpdateAndInstall() {
-    _loading(true, "Checking for update...")
-    _checkUpdate().then(manifest => {
-        _loading(false)
-        let message = _genNewVersionUpdateMessage(manifest)
-
-        _confirmUpdateApp(message).then(() => {
-            _loading(true, "Installing...")
-            installUpdate().then(() => {
-                _loading(false)
-                _loading(true, "Restarting...")
-                relaunch().catch((e: string) => {
-                    console.error(e)
-                    _alertError("Unable to relaunch, please relaunch manually.")
-                }).finally(() => {
-                    _loading(false)
-                })
-            }).catch(e => {
-                _loading(false)
-                console.error(e)
-                _alertError("Unable to update: " + e)
-            })
-        }).catch(() => {
-
-        })
-    }).catch((e) => {
-        _loading(false)
-        if (e == undefined) {
-            _tipSuccess('Your version is already the latest')
-        } else {
-            _tipError(e)
-        }
-    })
 }
 
 export function _copyToClipboard(content: any) {

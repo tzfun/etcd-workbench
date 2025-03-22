@@ -14,7 +14,7 @@ use crate::transport::settings::{GlobalStoreConfig, SettingConfig, UpdateManifes
 use crate::utils::{aes_util, file_util};
 
 static UPDATE_SOURCE_GITHUB: &str = "https://tzfun.github.io/etcd-workbench/etcd-workbench-update.json";
-static UPDATE_SOURCE_GITEE: &str = "https://tzfun.github.io/etcd-workbench/etcd-workbench-update.json";
+static UPDATE_SOURCE_GITEE: &str = "https://tzfun.gitee.io/etcd-workbench/etcd-workbench-update.json";
 
 lazy_static! {
     static ref SETTING_CONFIG: RwLock<Option<SettingConfig>> = RwLock::new(None);
@@ -170,7 +170,9 @@ pub async fn check_update(app_handle: AppHandle,) -> Result<Option<UpdateManifes
             update_builder.endpoints(&[String::from(UPDATE_SOURCE_GITHUB)])
         },
         UpdateSource::Gitee => {
-            update_builder.endpoints(&[String::from(UPDATE_SOURCE_GITEE)])
+            update_builder = update_builder.endpoints(&[String::from(UPDATE_SOURCE_GITEE)]);
+            //  为了避免国内镜像连接失效，保底从GitHub读取
+            update_builder.endpoints(&[String::from(UPDATE_SOURCE_GITHUB)])
         }
     };
 

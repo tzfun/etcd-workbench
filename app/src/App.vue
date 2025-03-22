@@ -1,29 +1,26 @@
 <script setup lang="ts">
-import {appWindow} from '@tauri-apps/api/window'
-import {AppTheme, DialogItem, TipsItem} from "~/common/types.ts";
-import {computed, onMounted, onUnmounted, reactive, ref, watch} from "vue";
-import {platform as getPlatform} from "@tauri-apps/api/os";
-import {useTheme} from "vuetify";
-import WindowsSystemBar from "~/components/system-bar/WindowsSystemBar.vue";
-import MacSystemBar from "~/components/system-bar/MacSystemBar.vue";
-import AppSetting from "~/pages/setting/AppSetting.vue";
-import AppMain from "~/pages/main/AppMain.vue";
+import { platform as getPlatform } from "@tauri-apps/api/os";
+import { relaunch } from "@tauri-apps/api/process";
+import { appWindow } from '@tauri-apps/api/window';
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue";
+import { useTheme } from "vuetify";
 import {
   _alertError,
-  _checkUpdate,
-  _confirmUpdateApp,
-  _genNewVersionUpdateMessage,
   _listenLocal,
   _loading,
   EventName
 } from "~/common/events.ts";
-import {_loadAppVersion, _loadGlobalStore, _loadSettings, _useSettings, _useUpdateInfo} from "~/common/store.ts";
-import {DEFAULT_SETTING_CONFIG} from "~/common/transport/setting.ts";
-import {installUpdate} from "@tauri-apps/api/updater";
-import {_isDebugModel} from "~/common/services.ts";
+import { _isDebugModel } from "~/common/services.ts";
+import { _loadAppVersion, _loadGlobalStore, _loadSettings, _useSettings, _useUpdateInfo } from "~/common/store.ts";
+import { DEFAULT_SETTING_CONFIG } from "~/common/transport/setting.ts";
+import { AppTheme, DialogItem, TipsItem } from "~/common/types.ts";
+import { _isLinux, _isMac, _isWindows, _setPlatform } from "~/common/windows.ts";
 import LinuxSystemBar from "~/components/system-bar/LinuxSystemBar.vue";
-import {_isLinux, _isMac, _isWindows, _setPlatform} from "~/common/windows.ts";
-import {relaunch} from "@tauri-apps/api/process";
+import MacSystemBar from "~/components/system-bar/MacSystemBar.vue";
+import WindowsSystemBar from "~/components/system-bar/WindowsSystemBar.vue";
+import AppMain from "~/pages/main/AppMain.vue";
+import AppSetting from "~/pages/setting/AppSetting.vue";
+import { _checkUpdate, _installUpdate } from './common/updater';
 
 const DEFAULT_LOADING_TEXT: string = "Loading..."
 const loading = ref<boolean>(false)
@@ -142,7 +139,7 @@ const checkUpdate = (autoUpdate: boolean) => {
 
     if (autoUpdate) {
       _loading(true, "Installing new version...")
-      installUpdate().then(() => {
+      _installUpdate().then(() => {
         _loading(true, "Relaunch...")
         relaunch().catch((e: string) => {
           console.error(e)

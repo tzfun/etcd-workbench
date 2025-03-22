@@ -1,11 +1,11 @@
 <script setup lang="ts">
 
-import {appWindow} from "@tauri-apps/api/window";
-import {computed, onMounted, reactive, ref} from "vue";
-import {_openSettingWindow} from "~/common/windows.ts";
+import { appWindow } from "@tauri-apps/api/window";
+import { computed, onMounted, reactive, ref } from "vue";
+import { _useUpdateInfo } from "~/common/store.ts";
+import { _checkUpdateAndInstall } from "~/common/updater.ts";
+import { _openSettingWindow } from "~/common/windows.ts";
 import SnapshotList from "~/components/SnapshotList.vue";
-import {_checkUpdateAndInstall} from "~/common/events.ts";
-import {_useUpdateInfo} from "~/common/store.ts";
 
 const maximize = ref(false)
 
