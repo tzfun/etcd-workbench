@@ -1,5 +1,24 @@
 <script setup lang="ts">
 
+import { MergeView } from "@codemirror/merge";
+import { EditorState, Extension } from "@codemirror/state";
+import { basicSetup, EditorView } from "codemirror";
+import { CodeDiff } from "v-code-diff";
+import { computed, nextTick, onMounted, onUnmounted, PropType, reactive, ref, watch } from "vue";
+import { useTheme } from "vuetify";
+import { VTextField } from "vuetify/components";
+import {
+  _confirm,
+  _confirmSystem,
+  _copyToClipboard,
+  _emitLocal,
+  _listenLocal,
+  _loading,
+  _tipInfo,
+  _tipSuccess,
+  _tipWarn,
+  EventName
+} from "~/common/events.ts";
 import {
   _deleteKV,
   _getAllKeys,
@@ -13,24 +32,12 @@ import {
   _searchByPrefix,
   _updateKeyCollection
 } from "~/common/services.ts";
-import {
-  _confirm,
-  _confirmSystem,
-  _copyToClipboard,
-  _emitLocal,
-  _listenLocal,
-  _loading,
-  _tipInfo,
-  _tipSuccess,
-  _tipWarn,
-  EventName
-} from "~/common/events.ts";
-import {computed, nextTick, onMounted, onUnmounted, PropType, reactive, ref, watch} from "vue";
-import {ErrorPayload, KeyMonitorConfig, SessionData} from "~/common/transport/connection.ts";
-import DragBox from "~/components/drag-area/DragBox.vue";
-import DragItem from "~/components/drag-area/DragItem.vue";
-import {KeyValue} from "~/common/transport/kv.ts";
-import Editor from "~/components/editor/Editor.vue";
+import { _saveGlobalStore, _useGlobalStore, _useSettings } from "~/common/store.ts";
+import { ErrorPayload, KeyMonitorConfig, SessionData } from "~/common/transport/connection.ts";
+import { SearchResult } from "~/common/transport/kv";
+import { KeyValue } from "~/common/transport/kv.ts";
+import { EditorConfig, EditorHighlightLanguage } from "~/common/types.ts";
+import { _debounce } from "~/common/utils";
 import {
   _decodeBytesToString,
   _encodeStringToBytes,
@@ -38,23 +45,17 @@ import {
   _tryParseDiffLanguage,
   _tryParseEditorLanguage
 } from "~/common/utils.ts";
-import {EditorConfig, EditorHighlightLanguage} from "~/common/types.ts";
-import {CodeDiff} from "v-code-diff";
-import {useTheme} from "vuetify";
+import { _isMac } from "~/common/windows.ts";
 import CountDownTimer from "~/components/CountDownTimer.vue";
-import {_saveGlobalStore, _useGlobalStore, _useSettings} from "~/common/store.ts";
+import DragBox from "~/components/drag-area/DragBox.vue";
+import DragItem from "~/components/drag-area/DragItem.vue";
+import Editor from "~/components/editor/Editor.vue";
+import { getLanguage } from "~/components/editor/languages.ts";
+import { getTheme } from "~/components/editor/themes.ts";
 import Tree from "~/components/tree/Tree.vue";
-import {_isMac} from "~/common/windows.ts";
-import {_debounce} from "~/common/utils";
-import {SearchResult} from "~/common/transport/kv";
-import {VTextField} from "vuetify/components";
-import {MergeView} from "@codemirror/merge";
-import {basicSetup, EditorView} from "codemirror";
-import {EditorState, Extension} from "@codemirror/state";
-import {getLanguage} from "~/components/editor/languages.ts";
-import {getTheme} from "~/components/editor/themes.ts";
 
 const theme = useTheme()
+const settings = _useSettings()
 
 type DiffInfo = {
   version: number,
@@ -65,11 +66,11 @@ type DiffInfo = {
 const AUTO_REMOVE_EXPIRED_KEY = false
 
 const KEY_SPLITTER = computed<string>(() => {
-  return _useSettings().value.kvPathSplitter
+  return settings.value.kvPathSplitter
 })
 
 const LIMIT_PER_PAGE = computed(() => {
-  return _useSettings().value.kvLimitPerPage
+  return settings.value.kvLimitPerPage
 })
 
 const props = defineProps({
@@ -183,13 +184,25 @@ const putMergeDialog = reactive({
 })
 
 watch(
-    () => theme,
-    () => {
+  () => theme,
+  () => {
+    renderMergeViewEditor()
+  },
+  {
+    deep: true,
+  }
+)
+
+watch(
+  () => settings.value,
+  (newVal, oldVal) => {
+    if (newVal.editorDarkTheme != oldVal.editorDarkTheme || newVal.editorLightTheme != oldVal.editorLightTheme) {
       renderMergeViewEditor()
-    },
-    {
-      deep: true,
     }
+  },
+  {
+    deep: true,
+  }
 )
 
 const isDarkTheme = computed<boolean>(() => {
@@ -254,7 +267,7 @@ const refreshAllKeys = (): Promise<any> => {
   clearAllKeyLeaseListener()
   kvTree.value?.rerender()
 
-  if (_useSettings().value.kvPaginationQuery && !enforceLoadAllKey.value) {
+  if (settings.value.kvPaginationQuery && !enforceLoadAllKey.value) {
     paginationKeyCursor.value = ""
     return loadNextPage()
   } else {
@@ -535,7 +548,7 @@ const removeCollectionKey = (key: string) => {
   })
 }
 
-const editorChange = ({modified}: { data: string, modified: boolean }) => {
+const editorChange = ({ modified }: { data: string, modified: boolean }) => {
   if (currentKv.value) {
     currentKvChanged.value = modified
   }
@@ -620,7 +633,7 @@ const saveKV = () => {
       })
     }
 
-    if (_useSettings().value.kvCheckFormatBeforeSave) {
+    if (settings.value.kvCheckFormatBeforeSave) {
       editorRef.value.tryFormatContent().then(() => {
         doSave()
       }).catch(() => {
@@ -663,10 +676,10 @@ const loadVersionDiff = () => {
     }
 
     _getKVHistoryVersions(
-        props.session?.id,
-        key!,
-        dataB.createRevision,
-        dataB.modRevision
+      props.session?.id,
+      key!,
+      dataB.createRevision,
+      dataB.modRevision
     ).then(versions => {
       if (versions.length < 2) {
         _tipWarn('No multiple versions, required revision has been compacted')
@@ -869,7 +882,8 @@ const renderMergeViewEditor = () => {
       },
       gutter: true,
       revertControls: 'b-to-a',
-      parent: putMergeEditorRef.value!
+      parent: putMergeEditorRef.value!,
+      highlightChanges: true,
     })
   })
 }
@@ -914,74 +928,33 @@ const confirmMergeDialog = () => {
 <template>
   <div class="fill-height overflow-y-auto">
     <v-layout class="action-area pa-5">
-      <v-btn
-          v-bind="props"
-          variant="tonal"
-          size="small"
-          icon="mdi-refresh"
-          @click="refreshAllKeys"
-          :loading="loadingStore.loadMore"
-          title="Refresh"
-      ></v-btn>
+      <v-btn v-bind="props" variant="tonal" size="small" icon="mdi-refresh" @click="refreshAllKeys"
+        :loading="loadingStore.loadMore" title="Refresh"></v-btn>
 
-      <v-btn class="text-none ml-2"
-             prepend-icon="mdi-file-document-plus-outline"
-             color="green"
-             @click="showNewKeyDialog"
-             text="Add Key"
-      ></v-btn>
-      <v-btn class="text-none ml-2"
-             prepend-icon="mdi-file-document-minus-outline"
-             color="red"
-             @click="deleteKeyBatch"
-             :loading="loadingStore.deleteBatch"
-             text="Delete Keys"
-      ></v-btn>
+      <v-btn class="text-none ml-2" prepend-icon="mdi-file-document-plus-outline" color="green"
+        @click="showNewKeyDialog" text="Add Key"></v-btn>
+      <v-btn class="text-none ml-2" prepend-icon="mdi-file-document-minus-outline" color="red" @click="deleteKeyBatch"
+        :loading="loadingStore.deleteBatch" text="Delete Keys"></v-btn>
 
-      <v-btn class="text-none ml-2"
-             prepend-icon="mdi-star"
-             color="yellow"
-             @click="collectionDialog = true"
-             text="My Collections"
-      ></v-btn>
+      <v-btn class="text-none ml-2" prepend-icon="mdi-star" color="yellow" @click="collectionDialog = true"
+        text="My Collections"></v-btn>
 
-      <v-btn class="text-none ml-2"
-             v-bind="props"
-             prepend-icon="mdi-text-box-search-outline"
-             color="blue-lighten-1"
-             @click="openSearchDialog"
-             text="Search"
-             title="Search from etcd server"
-      ></v-btn>
+      <v-btn class="text-none ml-2" v-bind="props" prepend-icon="mdi-text-box-search-outline" color="blue-lighten-1"
+        @click="openSearchDialog" text="Search" title="Search from etcd server"></v-btn>
 
       <v-spacer></v-spacer>
 
-      <v-tooltip v-if="session.namespace"
-                 location="top"
-                 text="Namespace"
-      >
+      <v-tooltip v-if="session.namespace" location="top" text="Namespace">
         <template v-slot:activator="{ props }">
-          <v-chip v-bind="props"
-                  label
-                  color="brown-lighten-2"
-                  class="font-weight-bold"
-                  prepend-icon="mdi-home"
-                  @click="_copyToClipboard(session.namespace)"
-          >{{ session.namespace }}
+          <v-chip v-bind="props" label color="brown-lighten-2" class="font-weight-bold" prepend-icon="mdi-home"
+            @click="_copyToClipboard(session.namespace)">{{ session.namespace }}
           </v-chip>
         </template>
       </v-tooltip>
-      <v-tooltip v-if="currentKv"
-                 location="top"
-                 text="Current key"
-      >
+      <v-tooltip v-if="currentKv" location="top" text="Current key">
         <template v-slot:activator="{ props }">
-          <v-chip v-bind="props"
-                  label
-                  color="light-blue-accent-4"
-                  class="font-weight-bold ml-2"
-                  @click="_copyToClipboard(currentKv.key)"
-          >{{ currentKv.key }}
+          <v-chip v-bind="props" label color="light-blue-accent-4" class="font-weight-bold ml-2"
+            @click="_copyToClipboard(currentKv.key)">{{ currentKv.key }}
           </v-chip>
         </template>
       </v-tooltip>
@@ -989,26 +962,12 @@ const confirmMergeDialog = () => {
     <v-layout class="main-area">
       <drag-box>
         <drag-item class="overflow-y-auto" style="min-width: 300px">
-          <Tree ref="kvTree"
-                :tree-id="`kv-tree-${new Date().getTime()}`"
-                :key-splitter="KEY_SPLITTER"
-                :session="session"
-                class="kvTree"
-                @on-click="showKVUnwrapped"
-          ></Tree>
-          <v-sheet class="loadMoreArea d-flex align-center justify-center"
-          >
-            <v-btn
-                v-if="paginationKeyCursor != undefined"
-                block
-                density="compact"
-                color="cyan-darken-4"
-                class="text-none border-none user-select-none"
-                style="border-radius: 0;"
-                text="Load More"
-                @click="loadNextPage"
-                prepend-icon="mdi-book-open-page-variant-outline"
-            >
+          <Tree ref="kvTree" :tree-id="`kv-tree-${new Date().getTime()}`" :key-splitter="KEY_SPLITTER"
+            :session="session" class="kvTree" @on-click="showKVUnwrapped"></Tree>
+          <v-sheet class="loadMoreArea d-flex align-center justify-center">
+            <v-btn v-if="paginationKeyCursor != undefined" block density="compact" color="cyan-darken-4"
+              class="text-none border-none user-select-none" style="border-radius: 0;" text="Load More"
+              @click="loadNextPage" prepend-icon="mdi-book-open-page-variant-outline">
               <template #append>
                 <span class="count  user-select-none" title="The number of keys loaded">({{ kvCount }})</span>
               </template>
@@ -1018,70 +977,35 @@ const confirmMergeDialog = () => {
 
           </v-sheet>
         </drag-item>
-        <drag-item ref="kvEditorContainerRef"
-                   style="width: calc(100% - 300px)"
-                   :show-resize-line="false">
-          <v-overlay
-              v-model="loadingStore.getKey"
-              persistent
-              contained
-              class="align-center justify-center ma-0"
-              :z-index="100"
-          >
-            <v-progress-circular
-                color="primary"
-                size="40"
-                indeterminate
-            ></v-progress-circular>
+        <drag-item ref="kvEditorContainerRef" style="width: calc(100% - 300px)" :show-resize-line="false">
+          <v-overlay v-model="loadingStore.getKey" persistent contained class="align-center justify-center ma-0"
+            :z-index="100">
+            <v-progress-circular color="primary" size="40" indeterminate></v-progress-circular>
           </v-overlay>
 
           <div v-if="currentKv" class="fill-height">
             <v-layout class="editor-header">
-              <v-chip
-                  v-if="session.keyCollectionSet!.has(currentKv.key)"
-                  class="ml-2 mt-2"
-                  density="compact"
-                  @click="removeCollectionKey(currentKv.key)"
-                  title="Remove from collections"
-                  text="Remove"
-              >
+              <v-chip v-if="session.keyCollectionSet!.has(currentKv.key)" class="ml-2 mt-2" density="compact"
+                @click="removeCollectionKey(currentKv.key)" title="Remove from collections" text="Remove">
                 <template #prepend>
                   <v-icon color="#ced10a" class="mr-2">mdi-star</v-icon>
                 </template>
               </v-chip>
-              <v-chip
-                  v-else
-                  class="ml-2 mt-2"
-                  density="compact"
-                  title="Add to collections"
-                  @click="addCollectionKey(currentKv.key)"
-                  text="Collect"
-              >
+              <v-chip v-else class="ml-2 mt-2" density="compact" title="Add to collections"
+                @click="addCollectionKey(currentKv.key)" text="Collect">
                 <template #prepend>
                   <v-icon color="#ced10a" class="mr-2">mdi-star-outline</v-icon>
                 </template>
               </v-chip>
 
-              <v-chip
-                  v-if="session.keyMonitorMap![currentKv.key]"
-                  class="ml-2 mt-2"
-                  density="compact"
-                  title="Edit monitor rule"
-                  @click="editKeyMonitor(currentKv.key)"
-                  text="Edit"
-              >
+              <v-chip v-if="session.keyMonitorMap![currentKv.key]" class="ml-2 mt-2" density="compact"
+                title="Edit monitor rule" @click="editKeyMonitor(currentKv.key)" text="Edit">
                 <template #prepend>
                   <v-icon color="#cc8f53" class="mr-2">mdi-robot</v-icon>
                 </template>
               </v-chip>
-              <v-chip
-                  v-else
-                  class="ml-2 mt-2"
-                  density="compact"
-                  title="Add to monitor list"
-                  @click="addKeyMonitor(currentKv.key)"
-                  text="Add"
-              >
+              <v-chip v-else class="ml-2 mt-2" density="compact" title="Add to monitor list"
+                @click="addKeyMonitor(currentKv.key)" text="Add">
                 <template #prepend>
                   <v-icon color="#cc8f53" class="mr-2">mdi-robot-outline</v-icon>
                 </template>
@@ -1089,90 +1013,50 @@ const confirmMergeDialog = () => {
 
               <v-spacer></v-spacer>
 
-              <v-tooltip location="top"
-                         :text="_isMac() ? '⌘ + S' : 'Ctrl + S'"
-              >
+              <v-tooltip location="top" :text="_isMac() ? '⌘ + S' : 'Ctrl + S'">
                 <template v-slot:activator="{ props }">
-                  <v-btn
-                      v-bind="props"
-                      :disabled="!currentKvChanged"
-                      color="primary"
-                      size="small"
-                      @click="saveKV"
-                      text="Save"
-                      class="mr-2 text-none"
-                      :loading="loadingStore.save"
-                      prepend-icon="mdi-content-save-outline"
-                  ></v-btn>
+                  <v-btn v-bind="props" :disabled="!currentKvChanged" color="primary" size="small" @click="saveKV"
+                    text="Save" class="mr-2 text-none" :loading="loadingStore.save"
+                    prepend-icon="mdi-content-save-outline"></v-btn>
                 </template>
               </v-tooltip>
 
-              <v-btn
-                  color="cyan-darken-1"
-                  size="small"
-                  @click="loadVersionDiff"
-                  text="Version Diff"
-                  class="mr-2 text-none"
-                  :loading="loadingStore.diff"
-                  prepend-icon="mdi-vector-difference"
-              ></v-btn>
-              <v-btn
-                  color="light-green-darken-1"
-                  size="small"
-                  text="Copy And Save"
-                  class="mr-2 text-none"
-                  prepend-icon="mdi-content-copy"
-                  @click="showCopyAndSaveDialog(currentKv.key, _decodeBytesToString(currentKv.value))"
-              ></v-btn>
-              <v-btn
-                  color="deep-orange-darken-1"
-                  size="small"
-                  @click="deleteKey"
-                  :loading="loadingStore.delete"
-                  text="Delete"
-                  class="mr-2 text-none"
-                  prepend-icon="mdi-trash-can-outline"
-              ></v-btn>
+              <v-btn color="cyan-darken-1" size="small" @click="loadVersionDiff" text="Version Diff"
+                class="mr-2 text-none" :loading="loadingStore.diff" prepend-icon="mdi-vector-difference"></v-btn>
+              <v-btn color="light-green-darken-1" size="small" text="Copy And Save" class="mr-2 text-none"
+                prepend-icon="mdi-content-copy"
+                @click="showCopyAndSaveDialog(currentKv.key, _decodeBytesToString(currentKv.value))"></v-btn>
+              <v-btn color="deep-orange-darken-1" size="small" @click="deleteKey" :loading="loadingStore.delete"
+                text="Delete" class="mr-2 text-none" prepend-icon="mdi-trash-can-outline"></v-btn>
             </v-layout>
 
             <div class="editor-body">
               <div class="editor-alert" v-if="editorAlert.enable">
-                <v-alert v-if="editorAlert.type === 'kubernetes'"
-                         density="compact"
-                         :rounded="false"
-                         class="pa-1 text-medium-emphasis editor-alert-item"
-                         :style="`display: ${editorAlert.show ? 'block' : 'none'};`"
-                >
+                <v-alert v-if="editorAlert.type === 'kubernetes'" density="compact" :rounded="false"
+                  class="pa-1 text-medium-emphasis editor-alert-item"
+                  :style="`display: ${editorAlert.show ? 'block' : 'none'};`">
                   <v-layout>
                     <p>The kubernetes storage format is protobuf and is automatically formatted into a
-                      <strong>readonly</strong> json format.</p>
+                      <strong>readonly</strong> json format.
+                    </p>
                     <span class="editor-alert-link pl-2"
-                          @click="showFormattedValue = !showFormattedValue">Recover</span>
+                      @click="showFormattedValue = !showFormattedValue">Recover</span>
                     <v-spacer></v-spacer>
 
                     <v-icon @click="editorAlert.show = false" class="mr-2">mdi-chevron-double-up</v-icon>
                   </v-layout>
                 </v-alert>
-                <v-icon class="editor-alert-expend-link text-medium-emphasis"
-                        v-show="!editorAlert.show"
-                        @click="editorAlert.show = true"
-                >mdi-chevron-double-down
+                <v-icon class="editor-alert-expend-link text-medium-emphasis" v-show="!editorAlert.show"
+                  @click="editorAlert.show = true">mdi-chevron-double-down
                 </v-icon>
               </div>
-              <editor ref="editorRef"
-                      :key="currentKv.key"
-                      :value="editorContent"
-                      :config="editorConfig"
-                      @change="editorChange"
-                      @change-language="editorChangeLanguage"
-                      @save="editorSave">
+              <editor ref="editorRef" :key="currentKv.key" :value="editorContent" :config="editorConfig"
+                @change="editorChange" @change-language="editorChangeLanguage" @save="editorSave">
                 <template #footer>
                   <span class="editor-footer-item ml-0" v-if="currentKv.leaseInfo">
-                    <v-tooltip location="top"
-                               :text="`Granted TTL: ${currentKv.leaseInfo.grantedTtl} s`">
+                    <v-tooltip location="top" :text="`Granted TTL: ${currentKv.leaseInfo.grantedTtl} s`">
                       <template v-slot:activator="{ props }">
-                        <span class="text-secondary user-select-none"
-                              v-bind="props">
+                        <span class="text-secondary user-select-none" v-bind="props">
                           <CountDownTimer :value="currentKv.leaseInfo.ttl"></CountDownTimer>
                         </span>
                       </template>
@@ -1181,27 +1065,23 @@ const confirmMergeDialog = () => {
                   <v-spacer></v-spacer>
                   <span class="editor-footer-item"><strong>Version</strong>: {{ currentKv.version }}</span>
                   <span class="editor-footer-item cursor-pointer"
-                        @click="_copyToClipboard(currentKv.createRevision)"><strong>Create Revision</strong>: {{
+                    @click="_copyToClipboard(currentKv.createRevision)"><strong>Create Revision</strong>: {{
                       currentKv.createRevision
                     }}</span>
                   <span class="editor-footer-item cursor-pointer"
-                        @click="_copyToClipboard(currentKv.modRevision)"><strong>Modify Revision</strong>: {{
+                    @click="_copyToClipboard(currentKv.modRevision)"><strong>Modify Revision</strong>: {{
                       currentKv.modRevision
                     }}</span>
-                  <span class="editor-footer-item cursor-pointer"
-                        @click="_copyToClipboard(currentKv.lease)"
-                        v-if="currentKv.lease != '0'"><strong>Lease</strong>: {{ currentKv.lease }}</span>
+                  <span class="editor-footer-item cursor-pointer" @click="_copyToClipboard(currentKv.lease)"
+                    v-if="currentKv.lease != '0'"><strong>Lease</strong>: {{ currentKv.lease }}</span>
                 </template>
               </editor>
             </div>
           </div>
 
           <div v-else class="no-key-preview fill-height">
-            <v-empty-state icon="mdi-text-box-edit-outline"
-                           headline="Please select a key"
-                           title="Select a key to view its details or edit it"
-                           class="mx-auto my-auto user-select-none"
-            >
+            <v-empty-state icon="mdi-text-box-edit-outline" headline="Please select a key"
+              title="Select a key to view its details or edit it" class="mx-auto my-auto user-select-none">
             </v-empty-state>
           </div>
         </drag-item>
@@ -1209,17 +1089,8 @@ const confirmMergeDialog = () => {
     </v-layout>
 
     <!--    Diff弹窗  -->
-    <v-dialog
-        v-model="versionDiffInfo.show"
-        persistent
-        max-width="1200px"
-        scrollable
-    >
-      <v-card
-          :min-width="500"
-          :title="versionDiffInfo.key"
-          :key="versionDiffInfo.key"
-      >
+    <v-dialog v-model="versionDiffInfo.show" persistent max-width="1200px" scrollable>
+      <v-card :min-width="500" :title="versionDiffInfo.key" :key="versionDiffInfo.key">
         <template v-slot:prepend>
           <v-icon>mdi-vector-difference</v-icon>
         </template>
@@ -1228,238 +1099,120 @@ const confirmMergeDialog = () => {
         </template>
         <v-card-text>
 
-          <v-alert v-if="versionDiffInfo.useFormattedValue"
-                   icon="mdi-check-circle-outline"
-                   density="compact"
-          >
+          <v-alert v-if="versionDiffInfo.useFormattedValue" icon="mdi-check-circle-outline" density="compact">
             It has automatically used the formatted content.
           </v-alert>
           <v-layout class="pt-5">
-            <v-select
-                variant="outlined"
-                v-model="versionDiffInfo.A.version"
-                density="compact"
-                :items="versionDiffInfo.versionHistory"
-                :item-props="versionSelectItemProps"
-                :width="10"
-                hide-details
-                persistent-hint
-                class="mr-3"
-                label="Version A"
-                @update:model-value="loadDiff(versionDiffInfo.A)"
-            ></v-select>
+            <v-select variant="outlined" v-model="versionDiffInfo.A.version" density="compact"
+              :items="versionDiffInfo.versionHistory" :item-props="versionSelectItemProps" :width="10" hide-details
+              persistent-hint class="mr-3" label="Version A"
+              @update:model-value="loadDiff(versionDiffInfo.A)"></v-select>
 
             <v-spacer></v-spacer>
 
-            <v-select
-                variant="outlined"
-                v-model="versionDiffInfo.B.version"
-                density="compact"
-                :items="versionDiffInfo.versionHistory"
-                :item-props="versionSelectItemProps"
-                :width="10"
-                hide-details
-                persistent-hint
-                class="mr-3"
-                label="Version B"
-                @update:model-value="loadDiff(versionDiffInfo.B)"
-            ></v-select>
+            <v-select variant="outlined" v-model="versionDiffInfo.B.version" density="compact"
+              :items="versionDiffInfo.versionHistory" :item-props="versionSelectItemProps" :width="10" hide-details
+              persistent-hint class="mr-3" label="Version B"
+              @update:model-value="loadDiff(versionDiffInfo.B)"></v-select>
           </v-layout>
 
-          <code-diff
-              style="max-height: 60vh;min-height: 40vh;"
-              :old-string="versionDiffInfo.A.content"
-              :filename="`Revision: ${versionDiffInfo.A.version}`"
-              :new-string="versionDiffInfo.B.content"
-              :new-filename="`Revision: ${versionDiffInfo.B.version}`"
-              :theme="isDarkTheme ? 'dark' : 'light'"
-              :language="versionDiffInfo.language"
-              output-format="side-by-side"/>
+          <code-diff style="max-height: 60vh;min-height: 40vh;" :old-string="versionDiffInfo.A.content"
+            :filename="`Revision: ${versionDiffInfo.A.version}`" :new-string="versionDiffInfo.B.content"
+            :new-filename="`Revision: ${versionDiffInfo.B.version}`" :theme="isDarkTheme ? 'dark' : 'light'"
+            :language="versionDiffInfo.language" output-format="side-by-side" />
         </v-card-text>
       </v-card>
     </v-dialog>
 
     <!--  Add Key弹窗-->
-    <v-dialog
-        v-model="newKeyDialog.show"
-        persistent
-        max-width="70vw"
-        min-width="500px"
-        scrollable
-    >
+    <v-dialog v-model="newKeyDialog.show" persistent max-width="70vw" min-width="500px" scrollable>
       <v-card :title="newKeyDialog.title">
         <v-card-text>
           <v-layout class="mb-5" v-show="newKeyDialog.copyAndSave">
             <span class="new-key-form-label">From Key: </span>
-            <v-text-field v-model="newKeyDialog.fromKey"
-                          density="comfortable"
-                          prepend-inner-icon="mdi-file-document"
-                          :prefix="session.namespace"
-                          hide-details
-                          readonly
-            ></v-text-field>
+            <v-text-field v-model="newKeyDialog.fromKey" density="comfortable" prepend-inner-icon="mdi-file-document"
+              :prefix="session.namespace" hide-details readonly></v-text-field>
           </v-layout>
           <v-layout class="mb-5">
             <span class="new-key-form-label">Key: </span>
-            <v-text-field v-model="newKeyDialog.key"
-                          density="comfortable"
-                          prepend-inner-icon="mdi-file-document"
-                          :prefix="session.namespace"
-                          hint="The key under namespace (if it exists)"
-                          persistent-hint
-            ></v-text-field>
+            <v-text-field v-model="newKeyDialog.key" density="comfortable" prepend-inner-icon="mdi-file-document"
+              :prefix="session.namespace" hint="The key under namespace (if it exists)" persistent-hint></v-text-field>
           </v-layout>
           <v-layout class="mb-5">
             <span class="new-key-form-label"></span>
-            <v-radio-group
-                v-model="newKeyDialog.model"
-                inline
-                hide-details
-            >
-              <v-radio
-                  label="Never Expire"
-                  value="none"
-              ></v-radio>
-              <v-radio
-                  label="With TTL"
-                  value="ttl"
-              ></v-radio>
-              <v-radio
-                  label="With Lease"
-                  value="lease"
-              ></v-radio>
+            <v-radio-group v-model="newKeyDialog.model" inline hide-details>
+              <v-radio label="Never Expire" value="none"></v-radio>
+              <v-radio label="With TTL" value="ttl"></v-radio>
+              <v-radio label="With Lease" value="lease"></v-radio>
             </v-radio-group>
           </v-layout>
           <v-layout class="mb-5" v-if="newKeyDialog.model == 'ttl'">
             <span class="new-key-form-label">TTL(s): </span>
-            <v-text-field v-model="newKeyDialog.ttl"
-                          type="number"
-                          density="comfortable"
-                          prepend-inner-icon="mdi-clock-time-eight"
-                          hint="The key expiration time in seconds, optional. If left blank, the key will never expire."
-                          persistent-hint
-            ></v-text-field>
+            <v-text-field v-model="newKeyDialog.ttl" type="number" density="comfortable"
+              prepend-inner-icon="mdi-clock-time-eight"
+              hint="The key expiration time in seconds, optional. If left blank, the key will never expire."
+              persistent-hint></v-text-field>
           </v-layout>
           <v-layout class="mb-5" v-if="newKeyDialog.model == 'lease'">
             <span class="new-key-form-label">Lease: </span>
-            <v-text-field v-model="newKeyDialog.lease"
-                          type="number"
-                          density="comfortable"
-                          prepend-inner-icon="mdi-identifier"
-                          hint="Bind the key to this lease, they share the same lifecycle. Please make sure the lease already exists, otherwise the operation will fail."
-                          persistent-hint
-            ></v-text-field>
+            <v-text-field v-model="newKeyDialog.lease" type="number" density="comfortable"
+              prepend-inner-icon="mdi-identifier"
+              hint="Bind the key to this lease, they share the same lifecycle. Please make sure the lease already exists, otherwise the operation will fail."
+              persistent-hint></v-text-field>
           </v-layout>
           <div style="height: 50vh;width:100%">
-            <editor ref="newKeyEditorRef"
-                    :value="newKeyDialog.value"
-                    :config="newKeyEditorConfig"></editor>
+            <editor ref="newKeyEditorRef" :value="newKeyDialog.value" :config="newKeyEditorConfig"></editor>
           </div>
         </v-card-text>
         <v-card-actions>
-          <v-btn text="Cancel"
-                 variant="text"
-                 class="text-none"
-                 @click="newKeyDialog.show = false"
-          ></v-btn>
+          <v-btn text="Cancel" variant="text" class="text-none" @click="newKeyDialog.show = false"></v-btn>
 
-          <v-btn text="Confirm"
-                 variant="flat"
-                 class="text-none"
-                 color="primary"
-                 @click="putKey"
-                 :loading="loadingStore.confirmNewKey"
-          ></v-btn>
+          <v-btn text="Confirm" variant="flat" class="text-none" color="primary" @click="putKey"
+            :loading="loadingStore.confirmNewKey"></v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
     <!--   key收藏弹窗-->
-    <v-dialog
-        v-model="collectionDialog"
-        eager
-        transition="slide-x-reverse-transition"
-        scrollable
-        class="collection-drawer"
-        contained
-    >
+    <v-dialog v-model="collectionDialog" eager transition="slide-x-reverse-transition" scrollable
+      class="collection-drawer" contained>
 
-      <v-card
-          :rounded="false"
-          title="My Collections"
-      >
+      <v-card :rounded="false" title="My Collections">
         <template #prepend>
           <v-icon color="#ced10a">mdi-star</v-icon>
         </template>
         <v-card-item style="height: calc(100% - 64px);">
-          <v-text-field
-              v-model="addCollectionKeyForm"
-              type="text"
-              append-icon="mdi-plus"
-              density="compact"
-              variant="solo-filled"
-              class="mx-2"
-              hide-details
-              single-line
-              clearable
-              placeholder="Enter key to add to collections"
-              @click:append="addCollectionKey(addCollectionKeyForm); addCollectionKeyForm = '';"
-          ></v-text-field>
+          <v-text-field v-model="addCollectionKeyForm" type="text" append-icon="mdi-plus" density="compact"
+            variant="solo-filled" class="mx-2" hide-details single-line clearable
+            placeholder="Enter key to add to collections"
+            @click:append="addCollectionKey(addCollectionKeyForm); addCollectionKeyForm = '';"></v-text-field>
           <div class="overflow-y-auto full-width" style="height: calc(100% - 40px);">
-            <Tree ref="kvCollectionTree"
-                  :tree-id="`kv-collection-tree-${new Date().getTime()}`"
-                  :key-splitter="KEY_SPLITTER"
-                  :session="session"
-                  :show-node-suffix="false"
-                  :show-check-box="false"
-                  show-hover-remove
-                  :enable-select="false"
-                  style="height: 100%;"
-                  :init-items="session.keyCollection"
-                  @on-click="onClickKeyCollectionTreeItem"
-                  @on-click-remove="removeCollectionKey"
-            ></Tree>
+            <Tree ref="kvCollectionTree" :tree-id="`kv-collection-tree-${new Date().getTime()}`"
+              :key-splitter="KEY_SPLITTER" :session="session" :show-node-suffix="false" :show-check-box="false"
+              show-hover-remove :enable-select="false" style="height: 100%;" :init-items="session.keyCollection"
+              @on-click="onClickKeyCollectionTreeItem" @on-click-remove="removeCollectionKey"></Tree>
           </div>
         </v-card-item>
       </v-card>
     </v-dialog>
 
     <!--   服务器搜索弹窗-->
-    <v-dialog
-        v-model="searchDialog.show"
-        max-width="800px"
-        scrollable
-    >
+    <v-dialog v-model="searchDialog.show" max-width="800px" scrollable>
       <v-card>
         <v-card-title class="pa-0">
-          <v-text-field v-model="searchDialog.inputValue"
-                        :prefix="session.namespace"
-                        autofocus
-                        type="text"
-                        @input="searchFromServer"
-                        placeholder="Enter a prefix to search from the server"
-                        prepend-inner-icon="mdi-magnify"
-                        hide-details
-          >
+          <v-text-field v-model="searchDialog.inputValue" :prefix="session.namespace" autofocus type="text"
+            @input="searchFromServer" placeholder="Enter a prefix to search from the server"
+            prepend-inner-icon="mdi-magnify" hide-details>
             <template #append-inner>
-              <v-progress-circular
-                  v-if="searchDialog.loading"
-                  color="primary"
-                  indeterminate="disable-shrink"
-                  size="20"
-                  width="3"
-              ></v-progress-circular>
+              <v-progress-circular v-if="searchDialog.loading" color="primary" indeterminate="disable-shrink" size="20"
+                width="3"></v-progress-circular>
             </template>
           </v-text-field>
         </v-card-title>
         <v-card-text class="pa-0">
           <v-list lines="two" v-if="searchDialog.searchResult && searchDialog.searchResult.results.length > 0">
-            <v-list-item v-for="kv in searchDialog.searchResult.results"
-                         :key="kv.key"
-                         :title="kv.key"
-                         append-icon="mdi-chevron-right"
-                         @click="selectSearchItem(kv)"
-            >
+            <v-list-item v-for="kv in searchDialog.searchResult.results" :key="kv.key" :title="kv.key"
+              append-icon="mdi-chevron-right" @click="selectSearchItem(kv)">
               <template #title>
                 <span class="font-weight-bold">{{ kv.key }}</span>
               </template>
@@ -1472,30 +1225,22 @@ const confirmMergeDialog = () => {
           </v-list>
         </v-card-text>
         <v-card-actions class="text-medium-emphasis">
-          <v-spacer/>
+          <v-spacer />
           <span v-if="searchDialog.searchResult">Searched {{
-              searchDialog.searchResult.results.length
-            }} / {{ searchDialog.searchResult.count }}</span>
+            searchDialog.searchResult.results.length
+          }} / {{ searchDialog.searchResult.count }}</span>
           <span v-else>Search all keys from etcd server, and display up to 50 results.</span>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
     <!--   更新冲突Merge弹窗-->
-    <v-dialog
-        v-model="putMergeDialog.show"
-        max-width="1200px"
-        min-width="800px"
-        persistent
-        scrollable
-    >
+    <v-dialog v-model="putMergeDialog.show" max-width="1200px" min-width="800px" persistent scrollable>
       <v-card title="Resolve Conflict">
         <v-card-text>
           <v-alert type="warning"
-                   text="The system has detected an intermediate version. Please resolve whether to merge the content before submitting."
-                   class="my-2"
-                   density="compact"
-          ></v-alert>
+            text="The system has detected an intermediate version. Please resolve whether to merge the content before submitting."
+            class="my-2" density="compact"></v-alert>
           <v-row class="my-2">
             <v-col cols="6" class="text-center font-weight-bold text-medium-emphasis">
               Your version
@@ -1508,18 +1253,10 @@ const confirmMergeDialog = () => {
         </v-card-text>
 
         <v-card-actions>
-          <v-btn text="Cancel"
-                 variant="text"
-                 class="text-none"
-                 @click="cancelMergeDialog"
-          ></v-btn>
+          <v-btn text="Cancel" variant="text" class="text-none" @click="cancelMergeDialog"></v-btn>
 
-          <v-btn text="Resolved & Submit"
-                 variant="flat"
-                 class="text-none"
-                 color="primary"
-                 @click="confirmMergeDialog"
-          ></v-btn>
+          <v-btn text="Resolved & Submit" variant="flat" class="text-none" color="primary"
+            @click="confirmMergeDialog"></v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
