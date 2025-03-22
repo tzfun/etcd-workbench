@@ -3,6 +3,7 @@ use std::any::Any;
 use std::collections::HashMap;
 use std::ffi::{OsStr, OsString};
 use std::future::Future;
+use std::ops::DerefMut;
 use std::path::PathBuf;
 use std::pin::Pin;
 use std::time::Duration;
@@ -14,7 +15,7 @@ use crate::etcd::wrapped_etcd_client::WrappedEtcdClient;
 use crate::ssh::ssh_tunnel::SshTunnel;
 use crate::transport::connection::{Connection, ConnectionUser};
 use crate::transport::kv::{
-    SearchResult, SerializableKeyValue, SerializableLeaseInfo, SerializableLeaseSimpleInfo
+    SearchResult, SerializableKeyValue, SerializableLeaseInfo, SerializableLeaseSimpleInfo,
 };
 use crate::transport::maintenance::{
     SerializableCluster, SerializableClusterMember, SerializableClusterStatus, SnapshotInfo,
@@ -23,9 +24,9 @@ use crate::transport::maintenance::{
 use crate::transport::user::{SerializablePermission, SerializableUser};
 use crate::utils::k8s_formatter;
 use etcd_client::{
-    AlarmAction, AlarmType, Certificate, Client, ConnectOptions, Error, GetOptions, GetResponse,
-    Identity, LeaseGrantOptions, LeaseTimeToLiveOptions, PutOptions, RoleRevokePermissionOptions,
-    SortOrder, SortTarget, TlsOptions,
+    AlarmAction, AlarmType, Client, ConnectOptions, Error, GetOptions, GetResponse,
+    LeaseGrantOptions, LeaseTimeToLiveOptions, PutOptions, RoleRevokePermissionOptions, SortOrder,
+    SortTarget,
 };
 use log::{debug, error, info, warn};
 use serde::{Deserialize, Serialize};
@@ -56,21 +57,62 @@ impl EtcdConnector {
         };
 
         if let Some(tls) = connection.tls {
-            let mut tls_option = TlsOptions::new();
+            #[cfg(feature = "etcd-client-tls")]
+            {
+                use etcd_client::{Certificate, Identity, TlsOptions};
 
-            for cert in tls.cert {
-                tls_option = tls_option.ca_certificate(Certificate::from_pem(cert));
+                let mut tls_option = TlsOptions::new();
+                for cert in tls.cert {
+                    tls_option = tls_option.ca_certificate(Certificate::from_pem(cert));
+                }
+
+                if let Some(domain) = tls.domain {
+                    tls_option = tls_option.domain_name(domain);
+                };
+
+                if let Some(identity) = tls.identity {
+                    tls_option =
+                        tls_option.identity(Identity::from_pem(identity.cert, identity.key));
+                };
+
+                option = option.with_tls(tls_option)
             }
 
-            if let Some(domain) = tls.domain {
-                tls_option = tls_option.domain_name(domain)
-            };
+            #[cfg(feature = "etcd-client-tls-openssl")]
+            {
+                use etcd_client::OpenSslClientConfig;
 
-            if let Some(identity) = tls.identity {
-                tls_option = tls_option.identity(Identity::from_pem(identity.cert, identity.key))
-            };
+                let mut openssl_config = OpenSslClientConfig::default();
+                for cert in tls.cert {
+                    openssl_config = openssl_config.ca_cert_pem(cert.as_slice());
+                }
 
-            option = option.with_tls(tls_option)
+                if let Some(domain) = tls.domain {
+
+                    openssl_config = openssl_config.manually(move |builder| {
+                        builder
+                            .deref_mut()
+                            .set_servername_callback(move |ssl_ref, ssl_alert| {
+                                let param = ssl_ref.param_mut();
+                                // param.set_hostflags(X509CheckFlags::NO_PARTIAL_WILDCARDS);
+                                match domain.parse() {
+                                    Ok(ip) => param.set_ip(ip),
+                                    Err(_) => param.set_host(domain.as_str()),
+                                }.unwrap();
+                                debug!("openssl servername callback{:?}", ssl_alert);
+                                Ok(())
+                            });
+                        Ok(())
+                    });
+                };
+
+                if let Some(identity) = tls.identity {
+                    openssl_config = openssl_config
+                        .client_cert_pem_and_key(identity.cert.as_slice(), identity.key.as_slice());
+                };
+
+                option = option.with_openssl_tls(openssl_config);
+            }
         };
         let mut host = connection.host;
         let mut port = connection.port;
@@ -209,12 +251,12 @@ impl EtcdConnector {
     ) -> Result<SearchResult, LogicError> {
         let key = self.prefix_namespace(prefix);
         let option = GetOptions::new()
-        .with_prefix()
-        .with_limit(50)
-        .with_keys_only();
+            .with_prefix()
+            .with_limit(50)
+            .with_keys_only();
 
         let mut response = self.client.kv_get_request(key, Some(option)).await?;
-        
+
         let kvs = response.take_kvs();
         let mut arr = Vec::with_capacity(kvs.len());
         for kv in kvs {
@@ -225,7 +267,7 @@ impl EtcdConnector {
             arr.push(s_kv);
         }
 
-        Ok(SearchResult{
+        Ok(SearchResult {
             count: response.count() as usize,
             results: arr,
         })
@@ -293,14 +335,12 @@ impl EtcdConnector {
             .kv_put_request(final_key.clone(), value.into(), option)
             .await?;
 
-        let kv_vec = self.kv_get_by_option(final_key, Some(GetOptions::new().with_keys_only())).await?;
+        let kv_vec = self
+            .kv_get_by_option(final_key, Some(GetOptions::new().with_keys_only()))
+            .await?;
 
         let res = self.find_first_kv(kv_vec);
-        let final_kv = if let Ok(kv) = res {
-            Some(kv)
-        } else {
-            None
-        };
+        let final_kv = if let Ok(kv) = res { Some(kv) } else { None };
 
         Ok(final_kv)
     }
