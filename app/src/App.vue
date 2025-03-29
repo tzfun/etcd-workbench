@@ -188,17 +188,26 @@ const setAppTheme = (appTheme: AppTheme) => {
 const disableWebviewNativeEvents = () => {
   document.addEventListener('keydown', e => {
     let key = e.key.toLowerCase()
-    if (e.ctrlKey && key.match(/[pri]/)) {
-      e.preventDefault()
-      return false
-    }
 
     if (e.ctrlKey && e.shiftKey && key == 'i') {
+      console.log("pass b")
+      e.preventDefault()
+      return false
+    }
+    //  阻止快捷键：
+    //  ctrl + p
+    //  ctrl + r
+    //  ctrl + i
+    //  ctrl + u
+    //  ctrl + j
+    if (e.ctrlKey && /^[priuj]$/.test(key) == true) {
+      console.log("pass a",key)
       e.preventDefault()
       return false
     }
 
-    if (key.match(/^f\d+$/) || key == 'escape') {
+    if (key.match(/^f\d+$/)) {
+      console.log("pass c")
       e.preventDefault()
       return false
     }
