@@ -1,14 +1,15 @@
 use etcd_client::{
     AlarmAction, AlarmOptions, AlarmResponse, AlarmType, AuthDisableResponse, AuthEnableResponse,
-    DefragmentResponse, DeleteOptions, DeleteResponse, GetOptions, GetResponse, LeaseGrantOptions,
-    LeaseGrantResponse, LeaseLeasesResponse, LeaseRevokeResponse, LeaseTimeToLiveOptions,
-    LeaseTimeToLiveResponse, MemberAddOptions, MemberAddResponse, MemberListResponse,
-    MemberRemoveResponse, MemberUpdateResponse, Permission, PutOptions, PutResponse,
-    RoleAddResponse, RoleDeleteResponse, RoleGetResponse, RoleGrantPermissionResponse,
-    RoleListResponse, RoleRevokePermissionOptions, RoleRevokePermissionResponse, SnapshotStreaming,
-    StatusResponse, UserAddOptions, UserAddResponse, UserChangePasswordResponse,
-    UserDeleteResponse, UserGetResponse, UserGrantRoleResponse, UserListResponse,
-    UserRevokeRoleResponse, WatchOptions, WatchResponse, WatchStream, Watcher,
+    CompactionOptions, CompactionResponse, DefragmentResponse, DeleteOptions, DeleteResponse,
+    GetOptions, GetResponse, LeaseGrantOptions, LeaseGrantResponse, LeaseLeasesResponse,
+    LeaseRevokeResponse, LeaseTimeToLiveOptions, LeaseTimeToLiveResponse, MemberAddOptions,
+    MemberAddResponse, MemberListResponse, MemberRemoveResponse, MemberUpdateResponse, Permission,
+    PutOptions, PutResponse, RoleAddResponse, RoleDeleteResponse, RoleGetResponse,
+    RoleGrantPermissionResponse, RoleListResponse, RoleRevokePermissionOptions,
+    RoleRevokePermissionResponse, SnapshotStreaming, StatusResponse, UserAddOptions,
+    UserAddResponse, UserChangePasswordResponse, UserDeleteResponse, UserGetResponse,
+    UserGrantRoleResponse, UserListResponse, UserRevokeRoleResponse, WatchOptions, WatchResponse,
+    WatchStream, Watcher,
 };
 
 use crate::transport::connection::ConnectionUser;
@@ -564,6 +565,25 @@ impl WrappedEtcdClient {
                 if let Some(auth) = self_auth {
                     self.authenticate().await?;
                     return self.inner.defragment().await;
+                }
+            }
+        }
+        result
+    }
+
+    pub async fn compact(
+        &mut self,
+        revision: i64,
+        options: Option<CompactionOptions>,
+    ) -> Result<CompactionResponse, etcd_client::Error> {
+        let result = self.inner.compact(revision, options.clone()).await;
+
+        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
+            if s.code() as i32 == 16 {
+                let self_auth = self.auth.clone();
+                if let Some(auth) = self_auth {
+                    self.authenticate().await?;
+                    return self.inner.compact(revision, options.clone()).await;
                 }
             }
         }

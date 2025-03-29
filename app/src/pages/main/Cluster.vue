@@ -2,10 +2,10 @@
 
 import {onMounted, PropType, reactive, ref} from "vue";
 import {ErrorPayload, SessionData} from "~/common/transport/connection.ts";
-import {_defragment, _getCluster, _handleError, _maintenanceCreateSnapshotTask} from "~/common/services.ts";
+import {_compact, _defragment, _getCluster, _handleError, _maintenanceCreateSnapshotTask} from "~/common/services.ts";
 import {Alarm, Cluster} from "~/common/transport/maintenance.ts";
-import {_byteTextFormat} from "~/common/utils.ts";
-import {_alertError, _confirmSystem, _emitLocal, _tipSuccess, EventName} from "~/common/events.ts";
+import {_byteTextFormat, _isEmpty} from "~/common/utils.ts";
+import {_alertError, _confirmSystem, _emitLocal, _tipSuccess, _tipWarn, EventName} from "~/common/events.ts";
 import {save} from "@tauri-apps/api/dialog";
 import {_getDownloadPath} from "~/common/windows.ts";
 
@@ -36,7 +36,14 @@ const MEMBER_COL = {
 const loadingStore = reactive({
   loadCluster: false,
   defragment: false,
+  compact: false,
   snapshot: false,
+})
+
+const compactDialog = reactive({
+  show: false,
+  revision: '',
+  physical: false,
 })
 
 onMounted(() => {
@@ -69,6 +76,36 @@ const defragment = () => {
       })
     }).finally(() => {
       loadingStore.defragment = false
+    })
+  }).catch(() => {
+  })
+}
+
+const showCompactDialog = () => {
+  compactDialog.revision = ''
+  compactDialog.physical = false
+  compactDialog.show = true
+}
+
+const compact = () => {
+  if (_isEmpty(compactDialog.revision)) {
+    _tipWarn("Need a valid revision")
+    return
+  }
+
+  const revision = parseInt(compactDialog.revision)
+  _confirmSystem('Confirm compaction operation?').then(() => {
+    loadingStore.compact = true
+    _compact(props.session?.id, revision, compactDialog.physical).then(() => {
+      _tipSuccess("Succeeded!")
+      compactDialog.show = false
+    }).catch((e: string | ErrorPayload) => {
+      _handleError({
+        e,
+        session: props.session
+      })
+    }).finally(() => {
+      loadingStore.compact = false
     })
   }).catch(() => {
   })
@@ -115,10 +152,18 @@ const snapshot = () => {
       ></v-btn>
       <v-btn class="text-none ml-2"
              prepend-icon="mdi-database-sync"
+             @click="showCompactDialog"
+             color="red-accent-3"
+             text="Compact"
+             title="Compacts the event history in the etcd key-value store."
+             :loading="loadingStore.compact"
+      ></v-btn>
+      <v-btn class="text-none ml-2"
+             prepend-icon="mdi-database-sync"
              @click="defragment"
              color="yellow"
              text="Defragment"
-             title="Defragment a member's backend database to recover storage space."
+             title="Defragment backend database to recover storage space."
              :loading="loadingStore.defragment"
       ></v-btn>
       <v-btn class="text-none ml-2"
@@ -343,6 +388,43 @@ const snapshot = () => {
 
       </div>
     </div>
+
+    <!--  Compact弹窗-->
+    <v-dialog
+        v-model="compactDialog.show"
+        persistent
+        width="500px"
+        scrollable
+    >
+      <v-card title="Compact">
+        <v-card-text>
+          <v-layout>
+            <v-text-field v-model="compactDialog.revision"
+                          label="Revision"
+                          type="number" 
+                          density="comfortable"
+            ></v-text-field>
+
+            <v-checkbox label="Physical" v-model="compactDialog.physical"></v-checkbox>
+          </v-layout>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn text="Cancel"
+                 variant="text"
+                 class="text-none"
+                 @click="compactDialog.show = false"
+          ></v-btn>
+
+          <v-btn text="Confirm"
+                 variant="flat"
+                 class="text-none"
+                 color="primary"
+                 @click="compact"
+                 :loading="loadingStore.compact"
+          ></v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 

@@ -24,9 +24,9 @@ use crate::transport::maintenance::{
 use crate::transport::user::{SerializablePermission, SerializableUser};
 use crate::utils::k8s_formatter;
 use etcd_client::{
-    AlarmAction, AlarmType, Client, ConnectOptions, Error, GetOptions, GetResponse,
-    LeaseGrantOptions, LeaseTimeToLiveOptions, PutOptions, RoleRevokePermissionOptions, SortOrder,
-    SortTarget,
+    AlarmAction, AlarmType, Client, CompactionOptions, ConnectOptions, Error, GetOptions,
+    GetResponse, LeaseGrantOptions, LeaseTimeToLiveOptions, PutOptions,
+    RoleRevokePermissionOptions, SortOrder, SortTarget,
 };
 use log::{debug, error, info, warn};
 use serde::{Deserialize, Serialize};
@@ -88,7 +88,6 @@ impl EtcdConnector {
                 }
 
                 if let Some(domain) = tls.domain {
-
                     openssl_config = openssl_config.manually(move |builder| {
                         builder
                             .deref_mut()
@@ -98,7 +97,8 @@ impl EtcdConnector {
                                 match domain.parse() {
                                     Ok(ip) => param.set_ip(ip),
                                     Err(_) => param.set_host(domain.as_str()),
-                                }.unwrap();
+                                }
+                                .unwrap();
                                 debug!("openssl servername callback{:?}", ssl_alert);
                                 Ok(())
                             });
@@ -780,6 +780,24 @@ impl EtcdConnector {
             }
             Err(e) => Err(Error::InvalidArgs(e.to_string())),
         }
+    }
+
+    /// 对server进行版本压缩，指定版本之前的旧版本将被移除
+    pub async fn maintenance_compact(
+        &mut self,
+        revision: i64,
+        physical: bool,
+    ) -> Result<(), Error> {
+        let options = if physical {
+            Some(CompactionOptions::new().with_physical())
+        } else {
+            None
+        };
+        let res = self
+            .client
+            .compact(revision,options)
+            .await?;
+        Ok(())
     }
 
     /// 对节点进行碎片整理。这是一个比较消耗资源的操作，谨慎调用。

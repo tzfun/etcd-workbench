@@ -607,7 +607,7 @@ const onScroll = _debounce(() => {
                 </div>
                 <v-spacer></v-spacer>
                 <div>
-                  <div title="Donate with PayPal mb-2">
+                  <div title="Donate with PayPal" class="mb-2">
                     <IconPayPal class="link cursor-pointer" 
                               @click="_goBrowserPage('https://paypal.me/beifengtz')"></IconPayPal>
                   </div>

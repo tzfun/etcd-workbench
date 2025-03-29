@@ -110,6 +110,7 @@ async fn main() {
             api::kv::kv_delete,
             api::maintenance::get_cluster,
             api::maintenance::maintenance_defragment,
+            api::maintenance::maintenance_compact,
             api::maintenance::maintenance_create_snapshot_task,
             api::maintenance::maintenance_stop_snapshot_task,
             api::maintenance::maintenance_remove_snapshot_task,
