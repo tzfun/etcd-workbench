@@ -12,7 +12,7 @@
 
 # Etcd Workbench
 
-一个漂亮、轻量的 ETCD V3 客户端，提供 App 和 Web 版本，支持SSL、SSH Tunnel连接。
+一个功能强大的 ETCD V3 客户端，提供 App 和 Web 版本，支持SSL、SSH Tunnel连接。
 
 # 特点及功能
 
@@ -81,6 +81,25 @@ Web 支持 **Jar** 包部署和 **Docker** 部署，在浏览器中管理Etcd Se
 - **etcd-client** - Etcd Connector
 - **russh** - SSH连接
 - **Vuetify** - UI框架
+
+# 捐赠
+
+你的支持是作者开发最大的动力，感谢你请的coffee🍵！
+
+你可以在
+<a href=https://paypal.me/beifengtz>
+<img src=https://www.paypalobjects.com/paypal-ui/logos/svg/paypal-color.svg width=80/>
+</a>中捐赠
+
+
+也可以使用微信赞赏捐赠
+<div>
+<img src=app/public/donate-wechat.jpg width=200/>
+</div>
+
+## 捐赠列表（不定期更新）
+- Machérie - 微信 - 30元
+- whoops - 微信 - 12.9元
 
 # License
 

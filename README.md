@@ -13,7 +13,7 @@
 
 # Etcd Workbench
 
-A beautiful and lightweight ETCD V3 client. Provides App and Web packages. Supports SSL and SSH Tunnel connections.
+A powerful ui client for ETCD v3. Provides App and Web packages. Supports SSL and SSH Tunnel connections.
 
 # Features
 
@@ -82,6 +82,26 @@ The front-end is developed based on Vue, and the back-end is developed based on 
 - **etcd-client** - Etcd Connector
 - **russh** - SSH Client
 - **Vuetify** - UI Framework
+
+# Donate
+
+Your support is the greatest motivation for the author's development. Thank you for the coffee🍵!
+
+You can donate via
+<a href=https://paypal.me/beifengtz>
+<img src=https://www.paypalobjects.com/paypal-ui/logos/svg/paypal-color.svg width=80/>
+</a>
+
+
+Or donate via WeChat Rewards
+<div>
+<img src=app/public/donate-wechat.jpg width=200/>
+</div>
+
+## Donation List (Irregularly Updated)
+- Machérie - WeChat - ￥30
+- whoops - WeChat - ￥12.9
+
 
 # License
 

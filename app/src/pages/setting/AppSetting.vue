@@ -20,6 +20,7 @@ import { _debounce, _encodeStringToBytes, _goBrowserPage } from "~/common/utils.
 import { _getDownloadPath, _isLinux, _isMac, _isWindows } from "~/common/windows.ts";
 import EditorExample from "~/components/editor/EditorExample.vue";
 import IconGitee from "~/components/icon/IconGitee.vue";
+import IconPayPal from "~/components/icon/IconPayPal.vue";
 import Skeleton from "~/components/Skeleton.vue";
 import WorkbenchLogo from "~/components/WorkbenchLogo.vue";
 
@@ -322,19 +323,6 @@ const onScroll = _debounce(() => {
 
               <v-layout>
                 <div>
-                  <div class="form-label text-high-emphasis">File Encrypt Key</div>
-                  <div class="v-messages">Local storage of connection profile encryption key.</div>
-                </div>
-                <v-spacer></v-spacer>
-                <div class="form-input" style="width: 200px;">
-                  <v-text-field v-model="settingForm.connectionConfEncryptKey" variant="outlined" density="compact"
-                    :counter="16" persistent-counter :rules="connectionConfEncryptKeyRule"></v-text-field>
-                </div>
-              </v-layout>
-              <v-divider class="mt-5 mb-5"></v-divider>
-
-              <v-layout>
-                <div>
                   <div class="form-label text-high-emphasis">Connect Timeout</div>
                   <div class="v-messages">Timeout for connecting to etcd server, in seconds.</div>
                 </div>
@@ -395,6 +383,20 @@ const onScroll = _debounce(() => {
                 </div>
               </v-layout>
 
+              <v-divider class="mt-5 mb-5"></v-divider>
+
+              <v-layout>
+                <div>
+                  <div class="form-label text-high-emphasis">File Encrypt Key</div>
+                  <div class="v-messages">Local storage of connection profile encryption key.</div>
+                </div>
+                <v-spacer></v-spacer>
+                <div class="form-input" style="width: 200px;">
+                  <v-text-field v-model="settingForm.connectionConfEncryptKey" variant="outlined" density="compact"
+                    :counter="16" persistent-counter :rules="connectionConfEncryptKeyRule"></v-text-field>
+                </div>
+              </v-layout>
+              
               <v-layout class="pt-12 pb-5 justify-center align-center">
                 <v-btn class="text-none" text="Export Connections Configuration" color="green-darken-3"
                   @click="exportConnectionConfig" :loading="loadingStore.exportConnection"></v-btn>
@@ -574,7 +576,7 @@ const onScroll = _debounce(() => {
                 <WorkbenchLogo class="my-5 cursor-pointer"
                   @click="_goBrowserPage('https://tzfun.github.io/etcd-workbench/')" title="Etcd Workbench App">
                 </WorkbenchLogo>
-                <p class="description my-3">A beautiful and lightweight gui client for ETCD V3</p>
+                <p class="description my-3">A powerful ui client for ETCD v3.</p>
                 <p class="copyright">
                   Copyright &copy; 2024 <span class="link cursor-pointer"
                     @click="_goBrowserPage('https://github.com/tzfun')">beifengtz</span>. All
@@ -597,13 +599,38 @@ const onScroll = _debounce(() => {
 
               <v-divider class="mt-5 mb-5"></v-divider>
 
+              <v-layout style="overflow: unset;">
+                <div>
+                  <div class="form-label text-high-emphasis">Donate</div>
+                  <div class="v-messages">Support the author with a coffee🍵.
+                  </div>
+                </div>
+                <v-spacer></v-spacer>
+                <div>
+                  <div title="Donate with PayPal mb-2">
+                    <IconPayPal class="link cursor-pointer" 
+                              @click="_goBrowserPage('https://paypal.me/beifengtz')"></IconPayPal>
+                  </div>
+                  <div>
+                    <span style="position: relative;" class="link cursor-pointer donate-wechat-link">
+                    <v-icon title="请作者喝一杯咖啡" color="green">mdi-wechat</v-icon>
+                      微信赞赏
+                      <img class="donate-wechat" src="/donate-wechat.jpg" alt="donate_wechat">
+                    </span>
+                  </div>
+                  
+                </div>
+              </v-layout>
+
+              <v-divider class="mt-5 mb-5"></v-divider>
+
               <v-layout>
                 <div class="form-label text-high-emphasis">License</div>
                 <v-spacer></v-spacer>
                 <div>
                   <p class="text-blue cursor-pointer"
                     @click="_goBrowserPage('https://github.com/tzfun/etcd-workbench/blob/master/LICENSE')"
-                    title="Click to view details">GPL 2.0</p>
+                    title="Click to view details">GPL 3.0</p>
                 </div>
               </v-layout>
 
@@ -721,4 +748,25 @@ const onScroll = _debounce(() => {
     text-decoration-line: underline;
   }
 }
+
+.donate-wechat-link {
+  .donate-wechat {
+    display: none;
+    width: 200px;
+    height: 240px;
+    position: absolute;
+    z-index: 10;
+    bottom: 0;
+    right: 100px;
+    box-shadow: 5px 5px 10px rgba(125, 119, 119, 0.3215686275);
+    border-radius: 15px;
+  }
+}
+
+.donate-wechat-link:hover {
+  .donate-wechat {
+    display: block;
+  }
+}
+
 </style>

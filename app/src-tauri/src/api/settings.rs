@@ -13,8 +13,12 @@ use crate::error::LogicError;
 use crate::transport::settings::{GlobalStoreConfig, SettingConfig, UpdateManifest, UpdateSource};
 use crate::utils::{aes_util, file_util};
 
+/// 从Github拉取更新信息，并从Github下载更新
 static UPDATE_SOURCE_GITHUB: &str = "https://tzfun.github.io/etcd-workbench/etcd-workbench-update.json";
-static UPDATE_SOURCE_GITEE: &str = "https://tzfun.gitee.io/etcd-workbench/etcd-workbench-update.json";
+/// 从Github拉取更新信息，并从Gitee下载更新
+static UPDATE_SOURCE_GITEE_CHECK_FROM_GITHUB: &str = "https://tzfun.gitee.io/etcd-workbench/etcd-workbench-update-gitee.json";
+/// 从Gitee拉取更新信息，并从Gitee下载更新
+static UPDATE_SOURCE_GITEE_CHECK_FROM_GITEE: &str = "https://gitee.com/tzfun/etcd-workbench/raw/master/docs/etcd-workbench-update-gitee.json";
 
 lazy_static! {
     static ref SETTING_CONFIG: RwLock<Option<SettingConfig>> = RwLock::new(None);
@@ -170,8 +174,11 @@ pub async fn check_update(app_handle: AppHandle,) -> Result<Option<UpdateManifes
             update_builder.endpoints(&[String::from(UPDATE_SOURCE_GITHUB)])
         },
         UpdateSource::Gitee => {
-            update_builder = update_builder.endpoints(&[String::from(UPDATE_SOURCE_GITEE)]);
-            //  为了避免国内镜像连接失效，保底从GitHub读取
+            //  从Gitee读取，从Gitee下载
+            update_builder = update_builder.endpoints(&[String::from(UPDATE_SOURCE_GITEE_CHECK_FROM_GITEE)]);
+            //  从GitHub读取，从Gitee下载
+            update_builder = update_builder.endpoints(&[String::from(UPDATE_SOURCE_GITEE_CHECK_FROM_GITHUB)]);
+            //  为了避免国内镜像连接失效，保底从GitHub读取，从GitHub下载
             update_builder.endpoints(&[String::from(UPDATE_SOURCE_GITHUB)])
         }
     };
