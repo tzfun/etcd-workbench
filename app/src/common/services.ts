@@ -78,6 +78,10 @@ export function _compact(sessionId: number, revision: number, physical: boolean)
     return invoke('maintenance_compact', {session: sessionId, revision, physical})
 }
 
+export function _metrics(sessionId: number): Promise<Array<string[]>> {
+    return invoke<Record<string, string>>('metrics', {session: sessionId})
+}
+
 export function _getAllKeys(sessionId: number): Promise<KeyValue[]> {
     return invoke('kv_get_all_keys', {session: sessionId})
 }

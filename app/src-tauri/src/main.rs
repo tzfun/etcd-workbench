@@ -115,6 +115,7 @@ async fn main() {
             api::maintenance::maintenance_stop_snapshot_task,
             api::maintenance::maintenance_remove_snapshot_task,
             api::maintenance::maintenance_list_snapshot_task,
+            api::maintenance::metrics,
             api::lease::leases,
             api::lease::lease_get,
             api::lease::lease_grant,

@@ -34,6 +34,7 @@ base64 = "0.22.1"
 async-trait = { version = "0.1.81" }
 prost = "0.13"
 aes = "0.8.4"
+reqwest = {version = "0.11.27", features=["native-tls"]}
 
 [features]
 default = ["etcd-client-tls"]

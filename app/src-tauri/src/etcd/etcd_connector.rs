@@ -6,6 +6,7 @@ use std::future::Future;
 use std::ops::DerefMut;
 use std::path::PathBuf;
 use std::pin::Pin;
+use std::sync::Arc;
 use std::time::Duration;
 use std::{fs, u8};
 
@@ -25,10 +26,11 @@ use crate::transport::user::{SerializablePermission, SerializableUser};
 use crate::utils::k8s_formatter;
 use etcd_client::{
     AlarmAction, AlarmType, Client, CompactionOptions, ConnectOptions, Error, GetOptions,
-    GetResponse, LeaseGrantOptions, LeaseTimeToLiveOptions, PutOptions,
+    GetResponse, Identity, LeaseGrantOptions, LeaseTimeToLiveOptions, PutOptions,
     RoleRevokePermissionOptions, SortOrder, SortTarget,
 };
 use log::{debug, error, info, warn};
+use russh::client;
 use serde::{Deserialize, Serialize};
 use tokio::fs::{File, OpenOptions};
 use tokio::io::AsyncWriteExt;
@@ -40,11 +42,13 @@ pub struct EtcdConnector {
     namespace: Option<String>,
     client: WrappedEtcdClient,
     ssh: Option<SshTunnel>,
+    connection_config: Connection,
 }
 
 impl EtcdConnector {
     pub async fn new(connection: Connection) -> Result<Self, LogicError> {
         let settings = get_settings().await?;
+        let mut connection_config = connection.clone();
 
         let mut option = ConnectOptions::new()
             .with_keep_alive_while_idle(true)
@@ -124,6 +128,10 @@ impl EtcdConnector {
             port = ssh_context.get_proxy_port();
             host.clear();
             host.push_str("127.0.0.1");
+
+            connection_config.host = host.clone();
+            connection_config.port = port;
+
             Some(ssh_context)
         } else {
             None
@@ -132,10 +140,12 @@ impl EtcdConnector {
         let address = format!("{}:{}", host, port);
         info!("Connect to etcd server: {}", address);
         let client = Client::connect([address], Some(option)).await?;
+
         Ok(EtcdConnector {
             namespace,
-            client: WrappedEtcdClient::new(client, connection.user),
+            client: WrappedEtcdClient::new(client, (&connection.user).clone()),
             ssh,
+            connection_config,
         })
     }
 
@@ -793,10 +803,7 @@ impl EtcdConnector {
         } else {
             None
         };
-        let res = self
-            .client
-            .compact(revision,options)
-            .await?;
+        let res = self.client.compact(revision, options).await?;
         Ok(())
     }
 
@@ -881,6 +888,58 @@ impl EtcdConnector {
         });
 
         Ok(())
+    }
+
+    /// 读取server的检测数据
+    pub async fn metrics(&self) -> Result<Vec<(String, String)>, LogicError> {
+        let response = if let Some(tls) = &self.connection_config.tls {
+            let mut client_builder = reqwest::Client::builder()
+                .use_native_tls()
+                .danger_accept_invalid_hostnames(true);
+            for cert in &tls.cert {
+                let certificate = reqwest::Certificate::from_pem(cert.as_slice())?;
+                client_builder = client_builder.add_root_certificate(certificate);
+            }
+
+            if let Some(identity) = &tls.identity {
+                let id = reqwest::Identity::from_pkcs8_pem(
+                    identity.cert.as_slice(),
+                    identity.key.as_slice(),
+                )?;
+                client_builder = client_builder.identity(id);
+            }
+
+            let url = format!(
+                "https://{}:{}/metrics",
+                self.connection_config.host, self.connection_config.port
+            );
+
+            client_builder.build()?.get(url).send().await?
+        } else {
+            let url = format!(
+                "http://{}:{}/metrics",
+                self.connection_config.host, self.connection_config.port
+            );
+
+            reqwest::Client::new().get(url).send().await?
+        };
+
+        let response = response.text().await?;
+
+        let mut metrics = vec![];
+
+        for line in response.lines() {
+            if line.starts_with("#") {
+                continue;
+            }
+            if let Some(idx) = line.find(" ") {
+                let k = &line[0..idx];
+                let v = &line[idx + 1..];
+                metrics.push((String::from(k), String::from(v)));
+            }
+        }
+
+        Ok(metrics)
     }
 }
 

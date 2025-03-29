@@ -28,6 +28,8 @@ enum ErrorType {
     PermissionDenied,
     /// 更新失败
     UpdateFailed,
+    /// http请求失败
+    HttpRequestError,
 }
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all="camelCase")]
@@ -50,7 +52,8 @@ pub enum LogicError<> {
     AesError(AesError),
     ChannelRcvError(oneshot::error::RecvError),
     StringConvertError(FromUtf8Error),
-    UpdateError(tauri::updater::Error)
+    UpdateError(tauri::updater::Error),
+    ReqwestError(reqwest::Error),
 }
 
 impl Serialize for LogicError {
@@ -193,6 +196,13 @@ impl Serialize for LogicError {
                     err_msg: "Could not fetch a valid release version",
                 }.serialize(serializer)
             }
+            LogicError::ReqwestError(e) => {
+                error!("Http request error: {}", e);
+                ErrorPayload {
+                    err_type: ErrorType::HttpRequestError,
+                    err_msg: "HTTP request failed",
+                }.serialize(serializer)
+            }
         }
     }
 }
@@ -248,5 +258,11 @@ impl From<FromUtf8Error> for LogicError {
 impl From<tauri::updater::Error> for LogicError {
     fn from(value: tauri::updater::Error) -> Self {
         LogicError::UpdateError(value)
+    }
+}
+
+impl From<reqwest::Error> for LogicError {
+    fn from(value: reqwest::Error) -> Self {
+        LogicError::ReqwestError(value)
     }
 }

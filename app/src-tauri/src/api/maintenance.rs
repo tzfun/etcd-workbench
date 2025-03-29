@@ -157,3 +157,10 @@ pub fn maintenance_list_snapshot_task() -> Result<Vec<SnapshotInfo>, LogicError>
     }
     Ok(list)
 }
+
+#[tauri::command]
+pub async fn metrics(session: i32) -> Result<Vec<(String, String)>, LogicError> {
+    let connector = etcd::get_connector(&session)?;
+    let metrics = connector.metrics().await?;
+    Ok(metrics)
+}
