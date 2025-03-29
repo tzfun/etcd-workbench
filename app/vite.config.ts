@@ -2,6 +2,7 @@ import {defineConfig} from "vite";
 import vue from "@vitejs/plugin-vue";
 import vuetify from 'vite-plugin-vuetify';
 import {join} from "path";
+import {visualizer} from 'rollup-plugin-visualizer';
 // import inject from '@rollup/plugin-inject'
 
 // https://vitejs.dev/config/
@@ -13,6 +14,7 @@ export default defineConfig(async () => ({
                 configFile: 'src/styles/settings.scss'
             }
         }),
+        visualizer({ open: true }), // 自动开启分析页面
         // inject({
             // $: 'jquery',
             // jQuery: 'jquery',

@@ -1,11 +1,11 @@
 <script setup lang="ts">
 
-import {onMounted, PropType, reactive, ref} from "vue";
+import {computed, onMounted, PropType, reactive, ref} from "vue";
 import {ErrorPayload, SessionData} from "~/common/transport/connection.ts";
-import {_defragment, _getCluster, _handleError, _maintenanceCreateSnapshotTask} from "~/common/services.ts";
+import {_compact, _defragment, _getCluster, _handleError, _maintenanceCreateSnapshotTask, _metrics} from "~/common/services.ts";
 import {Alarm, Cluster} from "~/common/transport/maintenance.ts";
-import {_byteTextFormat} from "~/common/utils.ts";
-import {_alertError, _confirmSystem, _emitLocal, _tipSuccess, EventName} from "~/common/events.ts";
+import {_byteTextFormat, _isEmpty} from "~/common/utils.ts";
+import {_alertError, _confirmSystem, _emitLocal, _tipSuccess, _tipWarn, EventName} from "~/common/events.ts";
 import {save} from "@tauri-apps/api/dialog";
 import {_getDownloadPath} from "~/common/windows.ts";
 
@@ -36,7 +36,41 @@ const MEMBER_COL = {
 const loadingStore = reactive({
   loadCluster: false,
   defragment: false,
+  compact: false,
   snapshot: false,
+  metrics: false,
+})
+
+const compactDialog = reactive({
+  show: false,
+  revision: '',
+  physical: false,
+})
+
+const metricsDialog = reactive({
+  data: <Array<string[]>>[],
+  keyword: '',
+  show: false
+})
+
+const computedMetrics = computed(() => {
+  const keyword = metricsDialog.keyword
+  if (_isEmpty(keyword)) {
+    return metricsDialog.data
+  }
+
+  const lowerKeyword = keyword.toLocaleLowerCase()
+
+  // 辅助函数：转义正则特殊字符
+  function escapeRegExp(string:string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  const pattern = new RegExp(`(${escapeRegExp(keyword)})`, 'gi');
+
+  return metricsDialog.data
+    .filter(kv => kv[0].toLowerCase().includes(lowerKeyword))
+    .map(kv => [kv[0].replace(pattern, `<span class='search-mark'>$1</span>`), kv[1]])
 })
 
 onMounted(() => {
@@ -74,8 +108,38 @@ const defragment = () => {
   })
 }
 
+const showCompactDialog = () => {
+  compactDialog.revision = ''
+  compactDialog.physical = false
+  compactDialog.show = true
+}
+
+const compact = () => {
+  if (_isEmpty(compactDialog.revision)) {
+    _tipWarn("Need a valid revision")
+    return
+  }
+
+  const revision = parseInt(compactDialog.revision)
+  _confirmSystem('Confirm compaction operation?').then(() => {
+    loadingStore.compact = true
+    _compact(props.session?.id, revision, compactDialog.physical).then(() => {
+      _tipSuccess("Succeeded!")
+      compactDialog.show = false
+    }).catch((e: string | ErrorPayload) => {
+      _handleError({
+        e,
+        session: props.session
+      })
+    }).finally(() => {
+      loadingStore.compact = false
+    })
+  }).catch(() => {
+  })
+}
+
 const snapshot = () => {
-  _confirmSystem('Are you sure you want to start a snapshot task? Download time depends on the size of the data.').then(async () => {
+  _confirmSystem('Confirm snapshot creation? Download duration varies by data size.').then(async () => {
     let downloadPath = await _getDownloadPath()
     save({
       defaultPath: downloadPath
@@ -100,6 +164,33 @@ const snapshot = () => {
   })
 }
 
+const showMetricsDialog = () => {
+  if (metricsDialog.data.length == 0) {
+    loadMetrics().then(() => {
+      metricsDialog.show = true 
+    }).catch(() => {})
+  } else {
+    metricsDialog.show = true
+  }
+}
+
+const loadMetrics = ():Promise<Array<string[]>> => {
+  return new Promise<Array<string[]>>((resolve, reject) => {
+    loadingStore.metrics = true
+    _metrics(props.session?.id).then(data => {
+      metricsDialog.data = data
+      resolve(data)
+    }).catch(e => {
+      reject()
+      _handleError({
+        e,
+        session: props.session
+      })
+    }).finally(() => {
+      loadingStore.metrics = false
+    })
+  })
+}
 </script>
 
 <template>
@@ -114,11 +205,27 @@ const snapshot = () => {
             title="Refresh"
       ></v-btn>
       <v-btn class="text-none ml-2"
+             prepend-icon="mdi-database-search"
+             @click="showMetricsDialog"
+             color="success"
+             text="Metrics"
+             title="Query metrics data from etcd server."
+             :loading="loadingStore.metrics"
+      ></v-btn>
+      <v-btn class="text-none ml-2"
+             prepend-icon="mdi-database-cog"
+             @click="showCompactDialog"
+             color="red-accent-3"
+             text="Compact"
+             title="Compacts the event history in the etcd key-value store."
+             :loading="loadingStore.compact"
+      ></v-btn>
+      <v-btn class="text-none ml-2"
              prepend-icon="mdi-database-sync"
              @click="defragment"
              color="yellow"
              text="Defragment"
-             title="Defragment a member's backend database to recover storage space."
+             title="Defragment backend database to recover storage space."
              :loading="loadingStore.defragment"
       ></v-btn>
       <v-btn class="text-none ml-2"
@@ -343,6 +450,96 @@ const snapshot = () => {
 
       </div>
     </div>
+
+    <!--  Compact弹窗-->
+    <v-dialog
+        v-model="compactDialog.show"
+        persistent
+        width="600px"
+        scrollable
+    >
+      <v-card title="Compact">
+        <v-card-text>
+          Compacts the event history in the etcd key-value store. The key-value store should be periodically compacted 
+          or the event history will continue to grow indefinitely.
+          <v-layout class="mt-5">
+            <v-text-field v-model="compactDialog.revision"
+                          label="Revision"
+                          type="number" 
+                          density="comfortable"
+            ></v-text-field>
+
+            <v-checkbox label="Physical" v-model="compactDialog.physical"></v-checkbox>
+          </v-layout>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn text="Cancel"
+                 variant="text"
+                 class="text-none"
+                 @click="compactDialog.show = false"
+          ></v-btn>
+
+          <v-btn text="Confirm"
+                 variant="flat"
+                 class="text-none"
+                 color="primary"
+                 @click="compact"
+                 :loading="loadingStore.compact"
+          ></v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog
+        v-model="metricsDialog.show"
+        transition="dialog-bottom-transition"
+        persistent
+        fullscreen
+        scrollable
+    >
+      <v-card class="pb-8">
+        <v-card-title>
+          <v-layout>
+            Metrics
+            <v-btn class="text-none ml-2"
+                  prepend-icon="mdi-refresh"
+                  size="small"
+                  @click="loadMetrics"
+                  color="success"
+                  text="Refresh"
+                  title="Query metrics data from etcd server."
+                  :loading="loadingStore.metrics"
+            ></v-btn>
+            <v-spacer></v-spacer>
+            <div style="width: 500px;" class="mr-2">
+              <v-text-field v-model="metricsDialog.keyword" 
+                          placeholder="Type to search"
+                          density="compact"
+                          clearable
+                          hide-details
+              ></v-text-field>
+            </div>
+            <v-spacer></v-spacer>
+            <v-btn
+              icon="mdi-close"
+              size="x-small"
+              @click="metricsDialog.show = false"
+            ></v-btn>
+          </v-layout>
+        </v-card-title>
+
+        <v-card-text>
+          <div v-for="kv in computedMetrics">
+            <v-layout class="metric-line px-2">
+              <div v-html="kv[0]"></div>
+              <v-spacer></v-spacer>
+              <div>{{ kv[1] }}</div>
+            </v-layout>
+            <v-divider class="mt-2 mb-2"></v-divider>
+          </div>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -371,5 +568,23 @@ const snapshot = () => {
   .node-uri-label {
     min-width: 200px;
   }
+}
+
+.metric-line {
+  $--metric-line-height: 30px;
+  height: $--metric-line-height;
+  line-height: $--metric-line-height;
+}
+.metric-line:hover {
+  background-color: rgba(109, 107, 107, .3);
+
+}
+</style>
+
+<style>
+.search-mark {
+  display: inline-block;
+  color: black;
+  background-color: yellow;
 }
 </style>

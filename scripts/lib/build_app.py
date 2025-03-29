@@ -189,12 +189,13 @@ def build_docs():
     os.chdir('../docs')
     docs_path = os.getcwd()
     for file in os.listdir(docs_path):
-        if file!='etcd-workbench-update.json':
-            path = os.path.join(docs_path, file)
-            if os.path.isfile(path):
-                os.unlink(path)
-            else:
-                shutil.rmtree(path)
+        if file.startswith('etcd-workbench-update'):
+            continue
+        path = os.path.join(docs_path, file)
+        if os.path.isfile(path):
+            os.unlink(path)
+        else:
+            shutil.rmtree(path)
     
     for file in os.listdir(dist_path):
         path = os.path.join(dist_path, file)

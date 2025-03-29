@@ -1,7 +1,9 @@
+use std::future::Future;
+
 use async_trait::async_trait;
-use log::{info};
-use russh::{client};
-use russh::client::{DisconnectReason};
+use log::info;
+use russh::client;
+use russh::client::DisconnectReason;
 use russh::keys::ssh_key;
 
 pub struct SshClient {
@@ -20,21 +22,25 @@ impl SshClient {
 impl client::Handler for SshClient {
     type Error = russh::Error;
 
-    async fn check_server_key(
+    #[allow(unused_variables)]
+    fn check_server_key(
         &mut self,
-        _server_public_key: &ssh_key::PublicKey,
-    ) -> Result<bool, Self::Error> {
-        Ok(true)
+        server_public_key: &ssh_key::PublicKey,
+    ) -> impl Future<Output = Result<bool, Self::Error>> + Send {
+        async { Ok(true) }
     }
 
-    async fn disconnected(
+    #[allow(unused_variables)]
+    fn disconnected(
         &mut self,
         reason: DisconnectReason<Self::Error>,
-    ) -> Result<(), Self::Error> {
-        info!("{} ssh disconnected: {:?}", self.ssh_simple_info, reason);
-        match reason {
-            DisconnectReason::ReceivedDisconnect(_) => Ok(()),
-            DisconnectReason::Error(e) => Err(e),
+    ) -> impl Future<Output = Result<(), Self::Error>> + Send {
+        async {
+            info!("{} ssh disconnected: {:?}", self.ssh_simple_info, reason);
+            match reason {
+                DisconnectReason::ReceivedDisconnect(_) => Ok(()),
+                DisconnectReason::Error(e) => Err(e),
+            }
         }
     }
 }

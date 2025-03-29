@@ -31,6 +31,9 @@ pub struct SettingConfig {
     /// 自动更新
     #[serde(default = "default_auto_update")]
     pub auto_update: bool,
+    /// 更新源
+    #[serde(default = "default_update_source")]
+    pub update_source: UpdateSource,
 
     /// 使用 ctrl + w 关闭连接tab
     #[serde(default)]
@@ -89,6 +92,10 @@ fn default_auto_update() -> bool {
     true
 }
 
+fn default_update_source() -> UpdateSource {
+    UpdateSource::Github
+}
+
 fn default_connection_conf_encrypt_key() -> String {
     String::from("workbench*#)&%.$")
 }
@@ -102,8 +109,9 @@ impl Default for SettingConfig {
             kv_path_splitter: default_kv_path_splitter(),
             kv_pagination_query: true,
             kv_limit_per_page: default_kv_limit_per_page(),
-            kv_check_format_before_save: true,
-            auto_update: true,
+            kv_check_format_before_save: default_kv_check_format_before_save(),
+            auto_update: default_auto_update(),
+            update_source: default_update_source(),
             close_tab_use_ctrl_w: true,
             connect_timeout_seconds: default_connect_timeout_seconds(),
             request_timeout_seconds: default_request_timeout_seconds(),
@@ -111,6 +119,13 @@ impl Default for SettingConfig {
             connection_conf_encrypt_key: default_connection_conf_encrypt_key(),
         }
     }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all="camelCase")]
+pub enum UpdateSource {
+    Github,
+    Gitee
 }
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
@@ -141,4 +156,11 @@ pub struct FileFormat {
     /// key全路径，包含namespace前缀
     pub key: String,
     pub format: String
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct UpdateManifest {
+    pub version: String,
+    pub date: i64,
+    pub body: String
 }

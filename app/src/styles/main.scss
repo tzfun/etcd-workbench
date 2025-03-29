@@ -17,12 +17,21 @@ html, body, #app {
   border: 1px solid rgba(216, 212, 212, 0.3);
 }
 
-.v-overlay-container .v-overlay__scrim {
+.v-overlay-container .v-overlay__scrim,
+.v-dialog--fullscreen .v-overlay__scrim,
+.v-dialog--fullscreen .v-overlay__content 
+ {
   top: 28px;
 }
 
-.v-overlay-container .v-overlay__content {
+.v-overlay .v-overlay__content {
   max-height: 90%;
+}
+
+.v-dialog--fullscreen .v-overlay__content,
+.v-overlay--contained .v-overlay__content
+ {
+  max-height: 100%;
 }
 
 ::-webkit-scrollbar {

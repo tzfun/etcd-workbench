@@ -24,7 +24,7 @@ import prettierPluginBabel from "prettier/plugins/babel";
 import prettierPluginHtml from "prettier/plugins/html";
 import prettierPluginYaml from "prettier/plugins/yaml";
 import prettierPluginEstree from "prettier/plugins/estree";
-import prettierPluginSql from "prettier-plugin-sql";
+// import prettierPluginSql from "prettier-plugin-sql";
 import {BuiltInParserName, LiteralUnion, Plugin} from "prettier";
 import {_isLinux, _isMac, _isWindows} from "~/common/windows.ts";
 import {Extension} from "@codemirror/state";
@@ -50,7 +50,7 @@ const enabledFormatLanguage = new Set([
   'json',
   'yaml',
   'xml',
-  'sql'
+  // 'sql'
 ])
 
 const allLanguages = reactive<Array<EditorSupportedHighlightLanguage>>([
@@ -270,10 +270,11 @@ const tryFormatContent = (): Promise<string | undefined> => {
       parser = 'yaml'
       plugins.push(prettierPluginYaml)
       break
-    case 'sql':
-      parser = 'sql'
-      plugins.push(prettierPluginSql)
-      break
+      //  因相关依赖占用体积太大，暂时移除
+    // case 'sql':
+    //   parser = 'sql'
+    //   plugins.push(prettierPluginSql)
+    //   break
   }
   return new Promise((resolve, reject) => {
     prettier.format(content.value, {

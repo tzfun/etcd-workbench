@@ -3,6 +3,7 @@ import {EditorHighlightLanguage} from "~/common/types.ts";
 
 export const MAIN_WINDOW_MIN_HEIGHT = 500;
 export const MAIN_WINDOW_MIN_WIDTH = 900;
+export type UpdateSource = 'github' | 'gitee';
 
 export interface SettingConfig {
     //  应用主题
@@ -23,6 +24,8 @@ export interface SettingConfig {
 
     //  自动下载更新
     autoUpdate: boolean,
+    //  更新源
+    updateSource: UpdateSource,
 
     //  使用 ctrl + w 关闭连接tab
     closeTabUseCtrlW: boolean,
@@ -53,6 +56,7 @@ export const DEFAULT_SETTING_CONFIG: SettingConfig = {
     kvCheckFormatBeforeSave: true,
     closeTabUseCtrlW: true,
     autoUpdate: true,
+    updateSource: 'github',
     connectTimeoutSeconds: 5,
     requestTimeoutSeconds: 15,
     sshConnectTimeoutSeconds: 10,

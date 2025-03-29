@@ -87,15 +87,19 @@ impl SshTunnel {
 
                 match decode_secret_key(String::from_utf8(key.key)?.as_str(), passphrase) {
                     Ok(key_pair) => {
-                        let private_key = PrivateKeyWithHashAlg::new(Arc::new(key_pair), hash_alg)?;
+                        let private_key = PrivateKeyWithHashAlg::new(Arc::new(key_pair), hash_alg);
                         let res = session
                             .authenticate_publickey(ssh_config.user, private_key)
                             .await?;
-                        if !res {
-                            return Err(LogicError::IoError(Error::new(
-                                ErrorKind::ConnectionAborted,
-                                "Ssh authentication failed",
-                            )));
+                        match res {
+                            client::AuthResult::Failure { remaining_methods, partial_success } => {
+                                debug!("Ssh authentication failed, methods:{:?}, partial_success: {}", remaining_methods, partial_success);
+                                return Err(LogicError::IoError(Error::new(
+                                    ErrorKind::ConnectionAborted,
+                                    "SSH connection rejected: authentication failure",
+                                )));
+                            },
+                            _=>{}
                         }
                     }
                     Err(e) => {
@@ -110,11 +114,15 @@ impl SshTunnel {
                 let res = session
                     .authenticate_password(ssh_config.user, password)
                     .await?;
-                if !res {
-                    return Err(LogicError::IoError(Error::new(
-                        ErrorKind::ConnectionAborted,
-                        "Ssh authentication failed",
-                    )));
+                match res {
+                    client::AuthResult::Failure { remaining_methods, partial_success } => {
+                        debug!("Ssh authentication failed, methods:{:?}, partial_success: {}", remaining_methods, partial_success);
+                        return Err(LogicError::IoError(Error::new(
+                            ErrorKind::ConnectionAborted,
+                            "SSH connection rejected: authentication failure",
+                        )));
+                    },
+                    _=>{}
                 }
             }
         }

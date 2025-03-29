@@ -1,2 +1,0 @@
-# etcd-workbench App
-TODO

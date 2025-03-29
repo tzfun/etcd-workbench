@@ -3,8 +3,10 @@ use std::any::Any;
 use std::collections::HashMap;
 use std::ffi::{OsStr, OsString};
 use std::future::Future;
+use std::ops::DerefMut;
 use std::path::PathBuf;
 use std::pin::Pin;
+use std::sync::Arc;
 use std::time::Duration;
 use std::{fs, u8};
 
@@ -14,7 +16,7 @@ use crate::etcd::wrapped_etcd_client::WrappedEtcdClient;
 use crate::ssh::ssh_tunnel::SshTunnel;
 use crate::transport::connection::{Connection, ConnectionUser};
 use crate::transport::kv::{
-    SearchResult, SerializableKeyValue, SerializableLeaseInfo, SerializableLeaseSimpleInfo
+    SearchResult, SerializableKeyValue, SerializableLeaseInfo, SerializableLeaseSimpleInfo,
 };
 use crate::transport::maintenance::{
     SerializableCluster, SerializableClusterMember, SerializableClusterStatus, SnapshotInfo,
@@ -23,11 +25,12 @@ use crate::transport::maintenance::{
 use crate::transport::user::{SerializablePermission, SerializableUser};
 use crate::utils::k8s_formatter;
 use etcd_client::{
-    AlarmAction, AlarmType, Certificate, Client, ConnectOptions, Error, GetOptions, GetResponse,
-    Identity, LeaseGrantOptions, LeaseTimeToLiveOptions, PutOptions, RoleRevokePermissionOptions,
-    SortOrder, SortTarget, TlsOptions,
+    AlarmAction, AlarmType, Client, CompactionOptions, ConnectOptions, Error, GetOptions,
+    GetResponse, Identity, LeaseGrantOptions, LeaseTimeToLiveOptions, PutOptions,
+    RoleRevokePermissionOptions, SortOrder, SortTarget,
 };
 use log::{debug, error, info, warn};
+use russh::client;
 use serde::{Deserialize, Serialize};
 use tokio::fs::{File, OpenOptions};
 use tokio::io::AsyncWriteExt;
@@ -39,11 +42,13 @@ pub struct EtcdConnector {
     namespace: Option<String>,
     client: WrappedEtcdClient,
     ssh: Option<SshTunnel>,
+    connection_config: Connection,
 }
 
 impl EtcdConnector {
     pub async fn new(connection: Connection) -> Result<Self, LogicError> {
         let settings = get_settings().await?;
+        let mut connection_config = connection.clone();
 
         let mut option = ConnectOptions::new()
             .with_keep_alive_while_idle(true)
@@ -56,21 +61,62 @@ impl EtcdConnector {
         };
 
         if let Some(tls) = connection.tls {
-            let mut tls_option = TlsOptions::new();
+            #[cfg(feature = "etcd-client-tls")]
+            {
+                use etcd_client::{Certificate, Identity, TlsOptions};
 
-            for cert in tls.cert {
-                tls_option = tls_option.ca_certificate(Certificate::from_pem(cert));
+                let mut tls_option = TlsOptions::new();
+                for cert in tls.cert {
+                    tls_option = tls_option.ca_certificate(Certificate::from_pem(cert));
+                }
+
+                if let Some(domain) = tls.domain {
+                    tls_option = tls_option.domain_name(domain);
+                };
+
+                if let Some(identity) = tls.identity {
+                    tls_option =
+                        tls_option.identity(Identity::from_pem(identity.cert, identity.key));
+                };
+
+                option = option.with_tls(tls_option)
             }
 
-            if let Some(domain) = tls.domain {
-                tls_option = tls_option.domain_name(domain)
-            };
+            #[cfg(feature = "etcd-client-tls-openssl")]
+            {
+                use etcd_client::OpenSslClientConfig;
 
-            if let Some(identity) = tls.identity {
-                tls_option = tls_option.identity(Identity::from_pem(identity.cert, identity.key))
-            };
+                let mut openssl_config = OpenSslClientConfig::default();
+                for cert in tls.cert {
+                    openssl_config = openssl_config.ca_cert_pem(cert.as_slice());
+                }
 
-            option = option.with_tls(tls_option)
+                if let Some(domain) = tls.domain {
+                    openssl_config = openssl_config.manually(move |builder| {
+                        builder
+                            .deref_mut()
+                            .set_servername_callback(move |ssl_ref, ssl_alert| {
+                                let param = ssl_ref.param_mut();
+                                // param.set_hostflags(X509CheckFlags::NO_PARTIAL_WILDCARDS);
+                                match domain.parse() {
+                                    Ok(ip) => param.set_ip(ip),
+                                    Err(_) => param.set_host(domain.as_str()),
+                                }
+                                .unwrap();
+                                debug!("openssl servername callback{:?}", ssl_alert);
+                                Ok(())
+                            });
+                        Ok(())
+                    });
+                };
+
+                if let Some(identity) = tls.identity {
+                    openssl_config = openssl_config
+                        .client_cert_pem_and_key(identity.cert.as_slice(), identity.key.as_slice());
+                };
+
+                option = option.with_openssl_tls(openssl_config);
+            }
         };
         let mut host = connection.host;
         let mut port = connection.port;
@@ -82,6 +128,10 @@ impl EtcdConnector {
             port = ssh_context.get_proxy_port();
             host.clear();
             host.push_str("127.0.0.1");
+
+            connection_config.host = host.clone();
+            connection_config.port = port;
+
             Some(ssh_context)
         } else {
             None
@@ -90,10 +140,12 @@ impl EtcdConnector {
         let address = format!("{}:{}", host, port);
         info!("Connect to etcd server: {}", address);
         let client = Client::connect([address], Some(option)).await?;
+
         Ok(EtcdConnector {
             namespace,
-            client: WrappedEtcdClient::new(client, connection.user),
+            client: WrappedEtcdClient::new(client, (&connection.user).clone()),
             ssh,
+            connection_config,
         })
     }
 
@@ -209,12 +261,12 @@ impl EtcdConnector {
     ) -> Result<SearchResult, LogicError> {
         let key = self.prefix_namespace(prefix);
         let option = GetOptions::new()
-        .with_prefix()
-        .with_limit(50)
-        .with_keys_only();
+            .with_prefix()
+            .with_limit(50)
+            .with_keys_only();
 
         let mut response = self.client.kv_get_request(key, Some(option)).await?;
-        
+
         let kvs = response.take_kvs();
         let mut arr = Vec::with_capacity(kvs.len());
         for kv in kvs {
@@ -225,7 +277,7 @@ impl EtcdConnector {
             arr.push(s_kv);
         }
 
-        Ok(SearchResult{
+        Ok(SearchResult {
             count: response.count() as usize,
             results: arr,
         })
@@ -293,14 +345,12 @@ impl EtcdConnector {
             .kv_put_request(final_key.clone(), value.into(), option)
             .await?;
 
-        let kv_vec = self.kv_get_by_option(final_key, Some(GetOptions::new().with_keys_only())).await?;
+        let kv_vec = self
+            .kv_get_by_option(final_key, Some(GetOptions::new().with_keys_only()))
+            .await?;
 
         let res = self.find_first_kv(kv_vec);
-        let final_kv = if let Ok(kv) = res {
-            Some(kv)
-        } else {
-            None
-        };
+        let final_kv = if let Ok(kv) = res { Some(kv) } else { None };
 
         Ok(final_kv)
     }
@@ -742,6 +792,21 @@ impl EtcdConnector {
         }
     }
 
+    /// 对server进行版本压缩，指定版本之前的旧版本将被移除
+    pub async fn maintenance_compact(
+        &mut self,
+        revision: i64,
+        physical: bool,
+    ) -> Result<(), Error> {
+        let options = if physical {
+            Some(CompactionOptions::new().with_physical())
+        } else {
+            None
+        };
+        let res = self.client.compact(revision, options).await?;
+        Ok(())
+    }
+
     /// 对节点进行碎片整理。这是一个比较消耗资源的操作，谨慎调用。
     pub async fn maintenance_defragment(&mut self) -> Result<(), Error> {
         self.client.defragment().await?;
@@ -823,6 +888,58 @@ impl EtcdConnector {
         });
 
         Ok(())
+    }
+
+    /// 读取server的检测数据
+    pub async fn metrics(&self) -> Result<Vec<(String, String)>, LogicError> {
+        let response = if let Some(tls) = &self.connection_config.tls {
+            let mut client_builder = reqwest::Client::builder()
+                .use_native_tls()
+                .danger_accept_invalid_hostnames(true);
+            for cert in &tls.cert {
+                let certificate = reqwest::Certificate::from_pem(cert.as_slice())?;
+                client_builder = client_builder.add_root_certificate(certificate);
+            }
+
+            if let Some(identity) = &tls.identity {
+                let id = reqwest::Identity::from_pkcs8_pem(
+                    identity.cert.as_slice(),
+                    identity.key.as_slice(),
+                )?;
+                client_builder = client_builder.identity(id);
+            }
+
+            let url = format!(
+                "https://{}:{}/metrics",
+                self.connection_config.host, self.connection_config.port
+            );
+
+            client_builder.build()?.get(url).send().await?
+        } else {
+            let url = format!(
+                "http://{}:{}/metrics",
+                self.connection_config.host, self.connection_config.port
+            );
+
+            reqwest::Client::new().get(url).send().await?
+        };
+
+        let response = response.text().await?;
+
+        let mut metrics = vec![];
+
+        for line in response.lines() {
+            if line.starts_with("#") {
+                continue;
+            }
+            if let Some(idx) = line.find(" ") {
+                let k = &line[0..idx];
+                let v = &line[idx + 1..];
+                metrics.push((String::from(k), String::from(v)));
+            }
+        }
+
+        Ok(metrics)
     }
 }
 

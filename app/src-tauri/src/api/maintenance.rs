@@ -1,19 +1,21 @@
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicI32, Ordering};
 
+use crate::error::LogicError;
+use crate::etcd;
+use crate::etcd::etcd_connector::SnapshotTask;
+use crate::transport::maintenance::{
+    SerializableCluster, SnapshotInfo, SnapshotState, SnapshotStateEvent,
+};
 use dashmap::DashMap;
 use lazy_static::lazy_static;
 use tauri::Manager;
 use tokio::sync::{mpsc, oneshot};
-use crate::error::LogicError;
-use crate::etcd;
-use crate::etcd::etcd_connector::SnapshotTask;
-use crate::transport::maintenance::{SerializableCluster, SnapshotInfo, SnapshotState, SnapshotStateEvent};
 
 #[allow(unused)]
 static SNAPSHOT_TASK_ID_COUNTER: AtomicI32 = AtomicI32::new(1);
 lazy_static! {
-    static ref SNAPSHOT_TASK_POOL:DashMap<i32, SnapshotTask> = DashMap::with_capacity(1);
+    static ref SNAPSHOT_TASK_POOL: DashMap<i32, SnapshotTask> = DashMap::with_capacity(1);
 }
 
 #[tauri::command]
@@ -23,11 +25,21 @@ pub async fn get_cluster(session: i32) -> Result<SerializableCluster, LogicError
     Ok(cluster)
 }
 
-
 #[tauri::command]
 pub async fn maintenance_defragment(session: i32) -> Result<(), LogicError> {
     let mut connector = etcd::get_connector(&session)?;
     connector.maintenance_defragment().await?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn maintenance_compact(
+    session: i32,
+    revision: i64,
+    physical: bool,
+) -> Result<(), LogicError> {
+    let mut connector = etcd::get_connector(&session)?;
+    connector.maintenance_compact(revision, physical).await?;
     Ok(())
 }
 
@@ -44,7 +56,6 @@ pub async fn maintenance_create_snapshot_task(
     let (watch_sender, mut receiver) = mpsc::channel::<(u64, u64, Option<String>)>(128);
 
     tokio::spawn(async move {
-
         while let Some(state) = receiver.recv().await {
             let task = SNAPSHOT_TASK_POOL.get_mut(&task_id);
             if let Some(mut t) = task {
@@ -57,14 +68,18 @@ pub async fn maintenance_create_snapshot_task(
 
                 let state = t.state.clone();
 
-                app.emit_all("snapshot_state", SnapshotStateEvent {
-                    id: task_id,
-                    state: state,
-                }).unwrap();
+                app.emit_all(
+                    "snapshot_state",
+                    SnapshotStateEvent {
+                        id: task_id,
+                        state: state,
+                    },
+                )
+                .unwrap();
             }
         }
     });
-    
+
     let file_path = PathBuf::from(filepath);
     let folder = if let Some(path) = file_path.parent() {
         path.to_string_lossy().to_string()
@@ -92,7 +107,7 @@ pub async fn maintenance_create_snapshot_task(
         id: task_id,
         name: file_name.clone(),
         folder: folder.clone(),
-        state: SnapshotState::default()
+        state: SnapshotState::default(),
     };
 
     let task = SnapshotTask {
@@ -103,8 +118,10 @@ pub async fn maintenance_create_snapshot_task(
     };
     SNAPSHOT_TASK_POOL.insert(id, task);
 
-    connector.maintenance_snapshot(file_path, watch_sender, stop_receiver).await?;
-    
+    connector
+        .maintenance_snapshot(file_path, watch_sender, stop_receiver)
+        .await?;
+
     Ok(info)
 }
 
@@ -139,4 +156,11 @@ pub fn maintenance_list_snapshot_task() -> Result<Vec<SnapshotInfo>, LogicError>
         });
     }
     Ok(list)
+}
+
+#[tauri::command]
+pub async fn metrics(session: i32) -> Result<Vec<(String, String)>, LogicError> {
+    let connector = etcd::get_connector(&session)?;
+    let metrics = connector.metrics().await?;
+    Ok(metrics)
 }
