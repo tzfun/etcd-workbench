@@ -28,7 +28,9 @@ html, body, #app {
   max-height: 90%;
 }
 
-.v-dialog--fullscreen .v-overlay__content {
+.v-dialog--fullscreen .v-overlay__content,
+.v-overlay--contained .v-overlay__content
+ {
   max-height: 100%;
 }
 

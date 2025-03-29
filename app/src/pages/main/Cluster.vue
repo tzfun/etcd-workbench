@@ -140,7 +140,7 @@ const compact = () => {
 }
 
 const snapshot = () => {
-  _confirmSystem('Are you sure you want to start a snapshot task? Download time depends on the size of the data.').then(async () => {
+  _confirmSystem('Confirm snapshot creation? Download duration varies by data size.').then(async () => {
     let downloadPath = await _getDownloadPath()
     save({
       defaultPath: downloadPath
@@ -208,7 +208,7 @@ const loadMetrics = ():Promise<Array<string[]>> => {
       <v-btn class="text-none ml-2"
              prepend-icon="mdi-database-search"
              @click="showMetricsDialog"
-             color="info"
+             color="success"
              text="Metrics"
              title="Query metrics data from etcd server."
              :loading="loadingStore.metrics"
@@ -456,12 +456,14 @@ const loadMetrics = ():Promise<Array<string[]>> => {
     <v-dialog
         v-model="compactDialog.show"
         persistent
-        width="500px"
+        width="600px"
         scrollable
     >
       <v-card title="Compact">
         <v-card-text>
-          <v-layout>
+          Compacts the event history in the etcd key-value store. The key-value store should be periodically compacted 
+          or the event history will continue to grow indefinitely.
+          <v-layout class="mt-5">
             <v-text-field v-model="compactDialog.revision"
                           label="Revision"
                           type="number" 
@@ -497,7 +499,7 @@ const loadMetrics = ():Promise<Array<string[]>> => {
         scrollable
     >
       <v-card class="pb-8">
-        <v-card-title class="pa-2">
+        <v-card-title>
           <v-layout>
             Metrics
             <v-btn class="text-none ml-2"
@@ -510,18 +512,18 @@ const loadMetrics = ():Promise<Array<string[]>> => {
                   :loading="loadingStore.metrics"
             ></v-btn>
             <v-spacer></v-spacer>
-            <div style="width: 300px;" class="mr-2">
+            <div style="width: 500px;" class="mr-2">
               <v-text-field v-model="metricsDialog.keyword" 
                           placeholder="Type to search"
                           density="compact"
                           clearable
                           hide-details
-                          ></v-text-field>
+              ></v-text-field>
             </div>
-
+            <v-spacer></v-spacer>
             <v-btn
               icon="mdi-close"
-              size="small"
+              size="x-small"
               @click="metricsDialog.show = false"
             ></v-btn>
           </v-layout>
@@ -529,7 +531,7 @@ const loadMetrics = ():Promise<Array<string[]>> => {
 
         <v-card-text>
           <div v-for="kv in computedMetrics">
-            <v-layout>
+            <v-layout class="metric-line px-2">
               <div v-html="kv[0]"></div>
               <v-spacer></v-spacer>
               <div>{{ kv[1] }}</div>
@@ -567,6 +569,16 @@ const loadMetrics = ():Promise<Array<string[]>> => {
   .node-uri-label {
     min-width: 200px;
   }
+}
+
+.metric-line {
+  $--metric-line-height: 30px;
+  height: $--metric-line-height;
+  line-height: $--metric-line-height;
+}
+.metric-line:hover {
+  background-color: rgba(109, 107, 107, .3);
+
 }
 </style>
 

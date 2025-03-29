@@ -291,6 +291,7 @@ const onScroll = _debounce(() => {
               prepend-icon="mdi-transit-connection-variant"></v-list-item>
             <v-list-item title="Keys" value="keys" prepend-icon="mdi-file-document-multiple"></v-list-item>
             <v-list-item title="Update" value="update" prepend-icon="mdi-update"></v-list-item>
+            <v-list-item title="Donate" value="donate" prepend-icon="mdi-gift"></v-list-item>
             <v-list-item title="About" value="about" prepend-icon="mdi-information-variant-circle"></v-list-item>
           </v-list>
         </v-navigation-drawer>
@@ -570,6 +571,28 @@ const onScroll = _debounce(() => {
               </v-layout>
             </v-sheet>
 
+            <h3 class="group-title mt-5" id="setting-donate">Donate</h3>
+
+            <v-sheet class="mt-2 form-area pa-3">
+
+              <div class="form-label text-high-emphasis mb-5">Open-source is a labor of love, but even passion projects need to recharge sometimes. You can fuel my coding adventures here:🍵</div>
+              
+              <v-row class="my-8">
+                <v-col :cols="6" class="donate-way" title="Donate with PayPal">
+                  <IconPayPal class="link cursor-pointer" 
+                              @click="_goBrowserPage('https://paypal.me/beifengtz')"></IconPayPal>
+                </v-col>
+                <v-col :cols="6" class="donate-way" title="Donate with WeChat">
+                  <span style="position: relative;" 
+                        class="link cursor-pointer donate-wechat-link">
+                    <v-icon title="请作者喝一杯咖啡" color="green">mdi-wechat</v-icon>
+                      微信赞赏
+                      <img class="donate-wechat" src="/donate-wechat.jpg" alt="donate_wechat">
+                    </span>
+                </v-col>
+              </v-row>
+            </v-sheet>
+
             <h3 class="group-title mt-5" id="setting-about">About</h3>
             <v-sheet class="mt-2 form-area pa-3">
               <div class="mb-12">
@@ -594,31 +617,6 @@ const onScroll = _debounce(() => {
                   <v-icon @click="_goBrowserPage('https://gitee.com/tzfun/etcd-workbench/')" title="Gitee">
                     <IconGitee></IconGitee>
                   </v-icon>
-                </div>
-              </v-layout>
-
-              <v-divider class="mt-5 mb-5"></v-divider>
-
-              <v-layout style="overflow: unset;">
-                <div>
-                  <div class="form-label text-high-emphasis">Donate</div>
-                  <div class="v-messages">Support the author with a coffee🍵.
-                  </div>
-                </div>
-                <v-spacer></v-spacer>
-                <div>
-                  <div title="Donate with PayPal" class="mb-2">
-                    <IconPayPal class="link cursor-pointer" 
-                              @click="_goBrowserPage('https://paypal.me/beifengtz')"></IconPayPal>
-                  </div>
-                  <div>
-                    <span style="position: relative;" class="link cursor-pointer donate-wechat-link">
-                    <v-icon title="请作者喝一杯咖啡" color="green">mdi-wechat</v-icon>
-                      微信赞赏
-                      <img class="donate-wechat" src="/donate-wechat.jpg" alt="donate_wechat">
-                    </span>
-                  </div>
-                  
                 </div>
               </v-layout>
 
@@ -749,15 +747,23 @@ const onScroll = _debounce(() => {
   }
 }
 
+.donate-way {
+  justify-content: center;
+  display: flex;
+  align-self: center;
+}
+
 .donate-wechat-link {
+  font-size: x-large;
+
   .donate-wechat {
     display: none;
     width: 200px;
     height: 240px;
     position: absolute;
-    z-index: 10;
-    bottom: 0;
-    right: 100px;
+    z-index: 1000;
+    bottom: 70px;
+    right: -30px;
     box-shadow: 5px 5px 10px rgba(125, 119, 119, 0.3215686275);
     border-radius: 15px;
   }
