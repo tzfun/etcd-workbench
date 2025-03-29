@@ -79,7 +79,7 @@ export function _compact(sessionId: number, revision: number, physical: boolean)
 }
 
 export function _metrics(sessionId: number): Promise<Array<string[]>> {
-    return invoke<Record<string, string>>('metrics', {session: sessionId})
+    return invoke<Array<string[]>>('metrics', {session: sessionId})
 }
 
 export function _getAllKeys(sessionId: number): Promise<KeyValue[]> {
