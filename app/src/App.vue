@@ -201,7 +201,7 @@ const disableWebviewNativeEvents = () => {
     //  ctrl + i
     //  ctrl + u
     //  ctrl + j
-    if (e.ctrlKey && /^[priuj]$/.test(key) == true) {
+    if (e.ctrlKey && /^[priuj]$/.test(key)) {
       console.log("pass a",key)
       e.preventDefault()
       return false
