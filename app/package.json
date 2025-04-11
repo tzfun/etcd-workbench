@@ -28,7 +28,7 @@
     "v-code-diff": "1.13.1",
     "vue": "^3.3.4",
     "vue-codemirror": "^6.1.1",
-    "vuetify": "3.7.5"
+    "vuetify": "3.7.19"
   },
   "devDependencies": {
     "@mdi/font": "^7.4.47",
@@ -42,5 +42,15 @@
     "vite": "^5.3.1",
     "vite-plugin-vuetify": "^2.0.3",
     "vue-tsc": "^2.0.22"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "v-code-diff"
+    ],
+    "ignoredBuiltDependencies": [
+      "esbuild",
+      "v-code-diff",
+      "vue-demi"
+    ]
   }
 }
