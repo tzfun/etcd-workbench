@@ -13,6 +13,7 @@ use std::{fs, u8};
 use crate::api::settings::get_settings;
 use crate::error::LogicError;
 use crate::etcd::wrapped_etcd_client::WrappedEtcdClient;
+use crate::ssh::ssh_client::SshClientHandler;
 use crate::ssh::ssh_tunnel::SshTunnel;
 use crate::transport::connection::{Connection, ConnectionUser};
 use crate::transport::kv::{
@@ -38,6 +39,8 @@ use tokio::select;
 use tokio::sync::{mpsc, oneshot};
 use tokio::task::JoinHandle;
 
+use super::etcd_connector_handler::EtcdConnectorHandler;
+
 pub struct EtcdConnector {
     namespace: Option<String>,
     client: WrappedEtcdClient,
@@ -46,7 +49,7 @@ pub struct EtcdConnector {
 }
 
 impl EtcdConnector {
-    pub async fn new(connection: Connection) -> Result<Self, LogicError> {
+    pub async fn new(connection: Connection, handler: EtcdConnectorHandler) -> Result<Self, LogicError> {
         let settings = get_settings().await?;
         let mut connection_config = connection.clone();
 
@@ -122,9 +125,11 @@ impl EtcdConnector {
         let mut port = connection.port;
         let namespace = connection.namespace.clone();
 
+
         let ssh = if let Some(ssh) = connection.ssh {
+
             let ssh_context =
-                SshTunnel::new(ssh, Box::leak(host.clone().into_boxed_str()), port).await?;
+                SshTunnel::new(ssh, Box::leak(host.clone().into_boxed_str()), port, handler).await?;
             port = ssh_context.get_proxy_port();
             host.clear();
             host.push_str("127.0.0.1");

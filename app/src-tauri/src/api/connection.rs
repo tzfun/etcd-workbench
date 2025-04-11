@@ -6,11 +6,12 @@ use std::{fs, io, vec};
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
 use log::{debug, info, warn};
-use tauri::Window;
+use tauri::{AppHandle, Window};
 
 use crate::error::LogicError;
 use crate::etcd;
 use crate::etcd::etcd_connector::EtcdConnector;
+use crate::etcd::etcd_connector_handler::EtcdConnectorHandler;
 use crate::etcd::key_monitor::KeyMonitor;
 use crate::transport::connection::{Connection, ConnectionInfo, KeyMonitorConfig, SessionData};
 use crate::utils::{aes_util, file_util, md5};
@@ -19,14 +20,19 @@ use super::settings::get_settings;
 
 #[tauri::command]
 pub async fn connect_test(connection: Connection) -> Result<(), LogicError> {
-    let connector = EtcdConnector::new(connection).await?;
+    let connector = EtcdConnector::new(connection, EtcdConnectorHandler::default()).await?;
     connector.test_connection().await?;
     Ok(())
 }
 
 #[tauri::command]
-pub async fn connect(name: String, connection: Connection, window: Window) -> Result<SessionData, LogicError> {
-    let session = etcd::new_connector(name, connection, window).await?;
+pub async fn connect(
+    app_handle: AppHandle,
+    window: Window,
+    name: String,
+    connection: Connection,
+) -> Result<SessionData, LogicError> {
+    let session = etcd::new_connector(name, connection, app_handle, window).await?;
     info!("New connection: {}", session.id);
     Ok(session)
 }
@@ -270,7 +276,6 @@ pub async fn set_key_monitor(
     session: i32,
     key_monitor: KeyMonitorConfig,
 ) -> Result<(), LogicError> {
-
     let result = etcd::get_connection_info_optional(&session);
     if let Some(mut info) = result {
         let mut found = false;
@@ -295,14 +300,11 @@ pub async fn set_key_monitor(
 }
 
 #[tauri::command]
-pub async fn remove_key_monitor(
-    session: i32,
-    key: String,
-) -> Result<(), LogicError> {
+pub async fn remove_key_monitor(session: i32, key: String) -> Result<(), LogicError> {
     let result = etcd::get_connection_info_optional(&session);
     if let Some(mut info) = result {
         info.key_monitor_list.retain(|c| c.key.ne(&key));
-        
+
         save_connection_info(info.value().clone()).await?;
     }
 

@@ -1,30 +1,32 @@
 #![allow(unused)]
-use std::sync::Arc;
 use std::sync::atomic::{AtomicI32, Ordering};
+use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use dashmap::mapref::one::{Ref, RefMut};
-use dashmap::DashMap;
-use etcd_client::Error;
-use lazy_static::lazy_static;
-use tauri::Window;
-use tokio::sync::Mutex;
 use crate::api::connection;
 use crate::error::LogicError;
 use crate::etcd::etcd_connector::EtcdConnector;
 use crate::etcd::key_monitor::KeyMonitor;
 use crate::transport::connection::{Connection, ConnectionInfo, SessionData};
+use dashmap::mapref::one::{Ref, RefMut};
+use dashmap::DashMap;
+use etcd_client::Error;
+use etcd_connector_handler::EtcdConnectorHandler;
+use lazy_static::lazy_static;
+use tauri::{AppHandle, Window};
+use tokio::sync::Mutex;
 
 pub mod etcd_connector;
-mod wrapped_etcd_client;
-mod test;
+pub mod etcd_connector_handler;
 pub mod key_monitor;
+mod test;
+mod wrapped_etcd_client;
 
 static CONNECTION_ID_COUNTER: AtomicI32 = AtomicI32::new(1);
 
 lazy_static! {
-    static ref CONNECTION_POOL:DashMap<i32, EtcdConnector> = DashMap::with_capacity(2);
-    static ref CONNECTION_CONFIG:DashMap<i32, Connection> = DashMap::with_capacity(2);
+    static ref CONNECTION_POOL: DashMap<i32, EtcdConnector> = DashMap::with_capacity(2);
+    static ref CONNECTION_CONFIG: DashMap<i32, Connection> = DashMap::with_capacity(2);
     static ref CONNECTION_INFO_POOL: DashMap<i32, ConnectionInfo> = DashMap::new();
     static ref CONNECTION_KEY_MONITORS: DashMap<i32, Arc<Mutex<KeyMonitor>>> = DashMap::new();
 }
@@ -40,14 +42,22 @@ pub fn now_timestamp() -> u128 {
         .as_millis()
 }
 
-pub async fn new_connector(name: String, connection: Connection, window: Window) -> Result<SessionData, LogicError> {
+pub async fn new_connector(
+    name: String,
+    connection: Connection,
+    app_handle: AppHandle,
+    window: Window,
+) -> Result<SessionData, LogicError> {
     let user = if let Some(u) = &connection.user {
         Some(u.username.clone())
     } else {
         None
     };
     let namespace = connection.namespace.clone();
-    let mut connector = EtcdConnector::new(connection.clone()).await?;
+    let connector_id = gen_connection_id();
+
+    let handler = EtcdConnectorHandler::new(app_handle, connector_id);
+    let mut connector = EtcdConnector::new(connection.clone(), handler.clone()).await?;
     connector.test_connection().await?;
 
     let root = if let Some(u) = &user {
@@ -56,14 +66,12 @@ pub async fn new_connector(name: String, connection: Connection, window: Window)
         true
     };
 
-    let connector_id = gen_connection_id();
     CONNECTION_POOL.insert(connector_id, connector);
 
     CONNECTION_CONFIG.insert(connector_id, connection);
 
-
     let info_result = connection::get_connection(name).await?;
-    
+
     let mut connection_saved = false;
     let mut key_collection = None;
     let mut key_monitor_list = None;
@@ -73,11 +81,11 @@ pub async fn new_connector(name: String, connection: Connection, window: Window)
         key_monitor_list = Some((&info.key_monitor_list).clone());
         key_monitor_paused = info.key_monitor_paused;
         connection_saved = true;
-        
+
         CONNECTION_INFO_POOL.insert(connector_id, info);
     }
 
-    let mut key_monitor = KeyMonitor::new(connector_id, window);
+    let mut key_monitor = KeyMonitor::new(connector_id, window, handler);
     let mut has_key_monitor = false;
     if let Some(monitor_list) = &key_monitor_list {
         for config in monitor_list {
@@ -101,7 +109,7 @@ pub async fn new_connector(name: String, connection: Connection, window: Window)
         connection_saved,
         key_collection,
         key_monitor_list,
-        key_monitor_paused
+        key_monitor_paused,
     })
 }
 

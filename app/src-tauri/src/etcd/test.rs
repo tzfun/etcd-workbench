@@ -3,6 +3,7 @@ mod test_connect {
     use etcd_client::Error;
     use crate::error::LogicError;
     use crate::etcd::etcd_connector::EtcdConnector;
+    use crate::etcd::etcd_connector_handler::EtcdConnectorHandler;
     use crate::transport::connection::Connection;
 
     async fn get_connector() -> Result<EtcdConnector, LogicError> {
@@ -14,7 +15,7 @@ mod test_connect {
             tls: None,
             ssh: None,
         };
-        EtcdConnector::new(connection).await
+        EtcdConnector::new(connection, EtcdConnectorHandler::default()).await
     }
 
     #[tokio::test]

@@ -17,6 +17,7 @@ use tauri::{Manager, Window};
 use tokio::sync::Mutex;
 use tokio::time::{interval, interval_at, Instant, MissedTickBehavior};
 
+use super::etcd_connector_handler::EtcdConnectorHandler;
 use super::get_connection_config;
 
 #[repr(i8)]
@@ -288,6 +289,7 @@ pub struct KeyMonitor {
     config_map: HashMap<String, MonitorTask>,
     running: bool,
     window: Window,
+    handler: EtcdConnectorHandler
 }
 
 impl Drop for KeyMonitor {
@@ -297,13 +299,14 @@ impl Drop for KeyMonitor {
 }
 
 impl KeyMonitor {
-    pub fn new(session_id: i32, window: Window) -> Self {
+    pub fn new(session_id: i32, window: Window, handler: EtcdConnectorHandler) -> Self {
         Self {
             session_id,
             etcd_connector: None,
             config_map: HashMap::new(),
             running: false,
             window,
+            handler,
         }
     }
 
@@ -429,7 +432,7 @@ impl KeyMonitor {
             let session_id = self.session_id;
             let config = get_connection_config(&session_id);
             if let Some(connection) = config {
-                let result = EtcdConnector::new(connection.value().clone()).await;
+                let result = EtcdConnector::new(connection.value().clone(), self.handler.clone()).await;
                 match result {
                     Ok(connector) => {
                         self.etcd_connector = Some(connector);

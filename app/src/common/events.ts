@@ -23,7 +23,8 @@ export enum EventName {
     EDIT_KEY_MONITOR = 'editKeyMonitor',
     KEY_MONITOR_CONFIG_CHANGE = 'keyMonitorChange',
     KEY_MONITOR_EVENT = 'key_monitor',
-    SET_SETTING_ANCHOR = 'setSettingAnchor'
+    SET_SETTING_ANCHOR = 'setSettingAnchor',
+    SESSION_DISCONNECTED = 'sessionDisconnected',
 }
 
 export type KeyMonitorEventType = "Remove" | "Create" | "LeaseChange" | "ValueChange"
@@ -39,6 +40,11 @@ export interface KeyMonitorEvent {
     currentFormatted?: FormattedValue
     read?: boolean,
     id?: number
+}
+
+export interface SessionDisconnectedEvent {
+    sessionId: number,
+    case: string | Record<string, string>,
 }
 
 export function _useLocalEvents(): Emitter<Record<EventType, any>> {
@@ -79,8 +85,8 @@ export function _loading(state: boolean, text?: string) {
     })
 }
 
-export function _confirm(title: string, text: string,): Promise<undefined> {
-    return new Promise((resolve, reject) => {
+export function _confirm(title: string, text: string,): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
         let dialog: DialogItem = {
             value: true,
             content: text,
@@ -109,10 +115,9 @@ export function _confirm(title: string, text: string,): Promise<undefined> {
 
         _emitLocal(EventName.DIALOG, dialog)
     })
-
 }
 
-export function _confirmSystem(text: string): Promise<undefined> {
+export function _confirmSystem(text: string): Promise<void> {
     return _confirm('System', text)
 }
 
@@ -160,24 +165,31 @@ export function _dialogContent(content: string) {
     _emitLocal(EventName.DIALOG, dialog)
 }
 
-export function _alertError(text: string) {
-    let dialog: DialogItem = {
-        value: true,
-        title: "Error",
-        content: text,
-        icon: 'mdi-alert-circle-outline',
-        iconColor: "red",
-        buttons: [
-            {
-                text: "Close",
-                callback: (item: DialogItem) => {
-                    item.value = false
-                }
-            }
-        ]
-    }
+export function _alertError(text: string):Promise<void> {
+    return _alert(text)
+}
 
-    _emitLocal(EventName.DIALOG, dialog)
+export function _alert(text: string, title?: string):Promise<void> {
+    return new Promise<void>(resolve => {
+        let dialog: DialogItem = {
+            value: true,
+            title: title ? title : "System",
+            content: text,
+            icon: 'mdi-alert-circle-outline',
+            iconColor: "red",
+            buttons: [
+                {
+                    text: "Close",
+                    callback: (item: DialogItem) => {
+                        item.value = false
+                        resolve()
+                    }
+                }
+            ]
+        }
+
+        _emitLocal(EventName.DIALOG, dialog)
+    })
 }
 
 export function _tipError(text: string) {

@@ -15,8 +15,10 @@ use tokio::{io, select};
 
 use crate::api::settings::get_settings;
 use crate::error::LogicError;
-use crate::ssh::ssh_client::SshClient;
+use crate::etcd::etcd_connector_handler::EtcdConnectorHandler;
+use crate::ssh::ssh_client::SshClientHandler;
 use crate::transport::connection::ConnectionSsh;
+use crate::transport::event::DisconnectCase;
 
 pub struct SshTunnel {
     proxy_port: u16,
@@ -28,10 +30,11 @@ impl SshTunnel {
         ssh_config: ConnectionSsh,
         forward_host: &'static str,
         forward_port: u16,
+        handler: EtcdConnectorHandler,
     ) -> Result<Self, LogicError> {
         let config = client::Config {
-            inactivity_timeout: Some(Duration::from_secs(10)),
-            keepalive_interval: Some(Duration::from_secs(5)),
+            inactivity_timeout: Some(Duration::from_secs(30)),
+            keepalive_interval: Some(Duration::from_secs(10)),
             keepalive_max: 6,
             preferred: Preferred {
                 kex: Cow::Borrowed(&[
@@ -55,11 +58,12 @@ impl SshTunnel {
         };
         let config = Arc::new(config);
 
+        let ssh_handler = SshClientHandler::new(ssh_config.user.clone(), ssh_config.host.clone(), ssh_config.port, handler.clone());
+
         let ssh_simple_info = format!(
             "{}@{}:{}",
             ssh_config.user, ssh_config.host, ssh_config.port
         );
-        let client = SshClient::new(ssh_simple_info.clone());
         let addr = format!("{}:{}", ssh_config.host, ssh_config.port);
 
         let settings = get_settings().await?;
@@ -71,7 +75,7 @@ impl SshTunnel {
         .await
         .map_err(|_| io::Error::new(ErrorKind::ConnectionAborted, "ssh connection timeout"))??;
 
-        let mut session = client::connect_stream(config, stream, client).await?;
+        let mut session = client::connect_stream(config, stream, ssh_handler).await?;
 
         if let Some(identity) = ssh_config.identity {
             if let Some(key) = identity.key {
@@ -144,6 +148,7 @@ impl SshTunnel {
             forward_host,
             forward_port,
             rcv_abort,
+            handler,
         )
         .await?;
 
@@ -160,10 +165,11 @@ impl SshTunnel {
     async fn handle_tcp_proxy(
         ssh_simple_info: String,
         listener: TcpListener,
-        ssh_session: Arc<Handle<SshClient>>,
+        ssh_session: Arc<Handle<SshClientHandler>>,
         forward_host: &'static str,
         forward_port: u16,
         rcv_abort: watch::Receiver<()>,
+        handler: EtcdConnectorHandler,
     ) -> Result<(), LogicError> {
         let (sender, receiver) = oneshot::channel();
         tokio::spawn(async move {
@@ -195,7 +201,7 @@ impl SshTunnel {
                                     forward_host,
                                     forward_port as u32,
                                     "127.0.0.1",
-                                    22,
+                                    57128,
                                 )
                                 .await;
 
@@ -232,12 +238,14 @@ impl SshTunnel {
                                 }
                                 Err(e) => {
                                     error!("Unable to forward messages via ssh: {e}");
+                                    handler.disconnected(DisconnectCase::SshTunnelError(e.to_string()));
                                     continue;
                                 }
                             }
                         }
                         Err(e) => {
                             warn!("ssh proxy listener error: {e}");
+                            handler.disconnected(DisconnectCase::SshTunnelError(e.to_string()));
                             break;
                         }
                     }
