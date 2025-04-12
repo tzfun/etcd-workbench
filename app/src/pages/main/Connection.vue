@@ -7,12 +7,11 @@ import Users from "~/pages/main/Users.vue";
 import Roles from "~/pages/main/Roles.vue";
 import Leases from "~/pages/main/Leases.vue";
 import KeyMonitor from "~/pages/main/KeyMonitor.vue";
-import {_emitLocal, _listenLocal, _tipWarn, EventName, KeyMonitorEvent} from "~/common/events.ts";
+import {_emitLocal, _listenLocal, _tipWarn, EventName, KeyWatchEvent} from "~/common/events.ts";
 import {_disconnect, _handleError, _removeKeyMonitor, _setKeyMonitor} from "~/common/services.ts";
 import {_isEmpty} from "~/common/utils.ts";
 import {appWindow} from "@tauri-apps/api/window";
 
-const DEFAULT_KEY_MONITOR_INTERVAL_SECONDS = 10
 const props = defineProps({
   session: {
     type: Object as PropType<SessionData>,
@@ -31,18 +30,18 @@ const keyMonitorDialog = reactive({
   edit: false,
   monitor: <KeyMonitorConfig>{
     key: "",
-    intervalSeconds: DEFAULT_KEY_MONITOR_INTERVAL_SECONDS,
-    monitorLeaseChange: true,
+    isPrefix: false,
     monitorValueChange: true,
     monitorCreate: true,
     monitorRemove: true,
+    paused: false,
   },
 })
 
 const keyMonitorEventLog = reactive({
   idCounter: 1,
   unreadNum: 0,
-  logs: <KeyMonitorEvent[]>[]
+  logs: <KeyWatchEvent[]>[]
 })
 
 onMounted(async () => {
@@ -54,24 +53,30 @@ onMounted(async () => {
       } else {
         keyMonitorDialog.edit = false
         keyMonitorDialog.monitor.key = e.key ? (e.key as string) : ''
-        keyMonitorDialog.monitor.intervalSeconds = DEFAULT_KEY_MONITOR_INTERVAL_SECONDS
-        keyMonitorDialog.monitor.monitorLeaseChange = true
+        keyMonitorDialog.monitor.isPrefix = false
         keyMonitorDialog.monitor.monitorValueChange = true
         keyMonitorDialog.monitor.monitorCreate = true
         keyMonitorDialog.monitor.monitorRemove = true
+        keyMonitorDialog.monitor.paused = false
       }
 
       keyMonitorDialog.show = true
     }
   })
 
-  eventUnListens.push(await appWindow.listen(EventName.KEY_MONITOR_EVENT, e => {
-    let event = e.payload as KeyMonitorEvent
+  eventUnListens.push(await appWindow.listen<KeyWatchEvent>(EventName.KEY_WATCH_EVENT, e => {
+    let event = e.payload
+    console.log(event)
+
     if (props.session!.id == event.session) {
       event.id = keyMonitorEventLog.idCounter++
       keyMonitorEventLog.unreadNum++
       keyMonitorEventLog.logs.unshift(event)
     }
+  }))
+
+  eventUnListens.push(await appWindow.listen<string>(EventName.KEY_WATCH_ERROR_EVENT, e => {
+
   }))
 })
 
@@ -102,14 +107,6 @@ const keyMonitorConfirm = () => {
   if (_isEmpty(config.key)) {
     _tipWarn("Key cannot be empty")
     return
-  }
-
-  if(typeof config.intervalSeconds == 'string') {
-    config.intervalSeconds = parseInt(config.intervalSeconds as string)
-  }
-  if (config.intervalSeconds < 1) {
-    _tipWarn("Invalid interval")
-    return;
   }
 
   _setKeyMonitor(props.session?.id, config).then(() => {
@@ -218,9 +215,9 @@ const onReadKeyMonitorLog = (num: number) => {
                     color="green"
                     :content="keyMonitorEventLog.unreadNum"
                 >
-                  <v-icon>{{ session.keyMonitorPaused ? 'mdi-robot-dead-outline' : 'mdi-robot-happy' }}</v-icon>
+                  <v-icon>mdi-robot-happy</v-icon>
                 </v-badge>
-                <v-icon v-else>{{ session.keyMonitorPaused ? 'mdi-robot-dead-outline' : 'mdi-robot-happy' }}</v-icon>
+                <v-icon v-else>mdi-robot-happy</v-icon>
               </template>
 
             </v-list-item>
@@ -329,17 +326,19 @@ const onReadKeyMonitorLog = (num: number) => {
           </v-layout>
 
           <v-layout class="mb-5">
+            <span class="grant-form-label">Type: </span>
+            <v-radio-group v-model="keyMonitorDialog.monitor.isPrefix" inline hide-details>
+              <v-radio label="Key Only" :value="false"></v-radio>
+              <v-radio label="With Prefix" :value="true"></v-radio>
+            </v-radio-group>
+          </v-layout>
+
+          <v-layout class="mb-5">
             <span class="grant-form-label">Target: </span>
 
             <v-checkbox
                 v-model="keyMonitorDialog.monitor.monitorValueChange"
                 label="Value Change"
-                hide-details
-            ></v-checkbox>
-            <v-checkbox
-                v-model="keyMonitorDialog.monitor.monitorLeaseChange"
-                label="Lease Change"
-                class="ml-2"
                 hide-details
             ></v-checkbox>
             <v-checkbox
@@ -354,33 +353,6 @@ const onReadKeyMonitorLog = (num: number) => {
                 class="ml-2"
                 hide-details
             ></v-checkbox>
-          </v-layout>
-
-          <v-layout class="mb-5">
-            <span class="grant-form-label">Interval: </span>
-            <v-text-field v-model="keyMonitorDialog.monitor.intervalSeconds"
-                          type="number"
-                          density="comfortable"
-                          hide-details
-                          persistent-hint
-                          suffix="S"
-                          max-width="200px"
-            ></v-text-field>
-
-            <v-tooltip location="end center"
-                       origin="start center"
-                       no-click-animation>
-              <template #default>
-                <p>Periodically query the key information from the etcd server.</p>
-                <p>The shorter the monitoring interval, the more computer resources are consumed and the higher the accuracy.</p>
-              </template>
-              <template v-slot:activator="{ props }">
-                <v-icon v-bind="props"
-                        class="ma-3 cursor-pointer"
-                >mdi-help-circle</v-icon>
-              </template>
-            </v-tooltip>
-
           </v-layout>
         </v-card-item>
         <v-card-actions>

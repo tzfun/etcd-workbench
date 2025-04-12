@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {computed, onMounted, PropType, reactive, ref} from "vue";
 import {SessionData, KeyMonitorConfig} from "~/common/transport/connection.ts";
-import {_confirmSystem, _emitLocal, _listenLocal, EventName, KeyMonitorEvent} from "~/common/events.ts";
+import {_confirmSystem, _emitLocal, _listenLocal, EventName, KeyWatchEvent} from "~/common/events.ts";
 import {
   _decodeBytesToString,
   _isEmpty,
@@ -13,7 +13,7 @@ import {CodeDiff} from "v-code-diff";
 import {useTheme} from "vuetify";
 import Tree from "~/components/tree/Tree.vue";
 import {_useSettings} from "~/common/store.ts";
-import {_handleError, _keyMonitorTogglePauseState, _removeKeyMonitor} from "~/common/services.ts";
+import {_handleError, _removeKeyMonitor} from "~/common/services.ts";
 import { EditorHighlightLanguage } from "~/common/types";
 
 const theme = useTheme()
@@ -33,7 +33,6 @@ const isDarkTheme = computed<boolean>(() => {
 const KEY_SPLITTER = computed<string>(() => {
   return _useSettings().value.kvPathSplitter
 })
-const togglePauseLoading = ref<boolean>(false)
 
 const emits = defineEmits(['on-read'])
 const props = defineProps({
@@ -42,7 +41,7 @@ const props = defineProps({
     required: true
   },
   events: {
-    type: Array<KeyMonitorEvent>,
+    type: Array<KeyWatchEvent>,
     required: true,
   }
 })
@@ -68,29 +67,31 @@ const markAllRead = () => {
   emits('on-read', -1)
 }
 
-const read = (e: KeyMonitorEvent) => {
+const read = (e: KeyWatchEvent) => {
   if (!e.read) {
     e.read = true
     emits('on-read', 1)
   }
 
-  if (e.eventType == 'ValueChange') {
+  if (e.eventType == 'Modify') {
     valueDiffDialog.key = e.key
 
     let editorLang;
-    if(e.previousFormatted && e.currentFormatted) {
-      valueDiffDialog.beforeValue = e.previousFormatted.value
-      valueDiffDialog.afterValue = e.currentFormatted.value
-      editorLang = e.previousFormatted?.language as EditorHighlightLanguage
-    } else {
-      valueDiffDialog.beforeValue = _decodeBytesToString(e.previous)
-      valueDiffDialog.afterValue = _decodeBytesToString(e.current)
-      let validContent = _isEmpty(valueDiffDialog.beforeValue) ? valueDiffDialog.afterValue : valueDiffDialog.beforeValue
-      editorLang = _tryParseEditorLanguage(e.key, validContent, undefined, props.session?.namespace)
+    if(e.prevKv && e.curKv) {
+      if (e.prevKv.formattedValue && e.curKv.formattedValue) {
+        valueDiffDialog.beforeValue = e.prevKv.formattedValue.value
+        valueDiffDialog.afterValue = e.curKv.formattedValue.value
+        editorLang = e.prevKv.formattedValue.language as EditorHighlightLanguage
+      } else {
+        valueDiffDialog.beforeValue = _decodeBytesToString(e.prevKv.value)
+        valueDiffDialog.afterValue = _decodeBytesToString(e.curKv.value)
+        let validContent = _isEmpty(valueDiffDialog.beforeValue) ? valueDiffDialog.afterValue : valueDiffDialog.beforeValue
+        editorLang = _tryParseEditorLanguage(e.key, validContent, undefined, props.session?.namespace)
+      }
+
+      valueDiffDialog.language = _tryParseDiffLanguage(editorLang)
+      valueDiffDialog.show = true
     }
-    
-    valueDiffDialog.language = _tryParseDiffLanguage(editorLang)
-    valueDiffDialog.show = true
   }
 }
 
@@ -140,21 +141,6 @@ const addMonitor = () => {
   })
 }
 
-const togglePauseState = () => {
-  let state = !props.session?.keyMonitorPaused
-  togglePauseLoading.value = true
-  _keyMonitorTogglePauseState(props.session?.id, state).then(() => {
-    props.session!.keyMonitorPaused = state
-  }).catch((e) => {
-    _handleError({
-      e,
-      session: props.session
-    })
-  }).finally(() => {
-    togglePauseLoading.value = false
-  })
-}
-
 </script>
 
 <template>
@@ -183,37 +169,37 @@ const togglePauseState = () => {
 
       <v-spacer/>
 
-      <v-btn class="text-none my-2"
-             density="comfortable"
-             variant="tonal"
-             size="small"
-             :icon="session.keyMonitorPaused ? 'mdi-play' : 'mdi-pause'"
-             :title="session.keyMonitorPaused ? 'Start the monitor' : 'Stop the monitor'"
-             @click="togglePauseState"
-             :loading="togglePauseLoading"
-      ></v-btn>
-      <v-chip
-        v-if="session.keyMonitorPaused"
-        class="ma-2"
-        size="small"
-        color="secondary"
-        variant="outlined"
-        style="width: 78px;"
-      >
-        <v-icon icon="mdi-robot-dead-outline" start></v-icon>
-        Paused
-      </v-chip>
-      <v-chip
-        v-else
-        class="ma-2"
-        size="small"
-        color="success"
-        variant="outlined"
-        style="width: 78px;"
-      >
-        <v-icon icon="mdi-robot-happy" start></v-icon>
-        Runing
-      </v-chip>
+<!--      <v-btn class="text-none my-2"-->
+<!--             density="comfortable"-->
+<!--             variant="tonal"-->
+<!--             size="small"-->
+<!--             :icon="session.keyMonitorPaused ? 'mdi-play' : 'mdi-pause'"-->
+<!--             :title="session.keyMonitorPaused ? 'Start the monitor' : 'Stop the monitor'"-->
+<!--             @click="togglePauseState"-->
+<!--             :loading="togglePauseLoading"-->
+<!--      ></v-btn>-->
+<!--      <v-chip-->
+<!--        v-if="session.keyMonitorPaused"-->
+<!--        class="ma-2"-->
+<!--        size="small"-->
+<!--        color="secondary"-->
+<!--        variant="outlined"-->
+<!--        style="width: 78px;"-->
+<!--      >-->
+<!--        <v-icon icon="mdi-robot-dead-outline" start></v-icon>-->
+<!--        Paused-->
+<!--      </v-chip>-->
+<!--      <v-chip-->
+<!--        v-else-->
+<!--        class="ma-2"-->
+<!--        size="small"-->
+<!--        color="success"-->
+<!--        variant="outlined"-->
+<!--        style="width: 78px;"-->
+<!--      >-->
+<!--        <v-icon icon="mdi-robot-happy" start></v-icon>-->
+<!--        Running-->
+<!--      </v-chip>-->
       
     </v-layout>
     <div style="height: calc(100% - 56px); overflow-y: auto;">
@@ -235,15 +221,13 @@ const togglePauseState = () => {
             <template #prepend>
               <v-icon v-if="e.eventType == 'Create'">mdi-folder-plus-outline</v-icon>
               <v-icon v-else-if="e.eventType == 'Remove'">mdi-folder-remove-outline</v-icon>
-              <v-icon v-else-if="e.eventType == 'LeaseChange'">mdi-clock-time-nine</v-icon>
-              <v-icon v-else-if="e.eventType == 'ValueChange'">mdi-content-save-all-outline</v-icon>
+              <v-icon v-else-if="e.eventType == 'Modify'">mdi-content-save-all-outline</v-icon>
             </template>
 
             <template #append>
               <span v-if="e.eventType == 'Create'" class="text-medium-emphasis">Created</span>
               <span v-else-if="e.eventType == 'Remove'" class="text-medium-emphasis">Removed</span>
-              <span v-else-if="e.eventType == 'LeaseChange'" class="text-medium-emphasis">Lease Changed</span>
-              <span v-else-if="e.eventType == 'ValueChange'" class="text-medium-emphasis">Value Changed</span>
+              <span v-else-if="e.eventType == 'Modify'" class="text-medium-emphasis">Value Changed</span>
             </template>
           </v-list-item>
         </transition-group>

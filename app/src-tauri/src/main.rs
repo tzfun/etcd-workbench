@@ -90,7 +90,6 @@ async fn main() {
             api::connection::update_key_collection,
             api::connection::set_key_monitor,
             api::connection::remove_key_monitor,
-            api::connection::key_monitor_toggle_pause,
             api::settings::get_settings,
             api::settings::get_global_store,
             api::settings::save_settings,

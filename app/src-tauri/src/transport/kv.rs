@@ -1,6 +1,8 @@
 use etcd_client::KeyValue;
 use serde::{Deserialize, Serialize};
 
+use crate::utils::k8s_formatter;
+
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all="camelCase")]
@@ -37,8 +39,8 @@ pub struct SerializableKeyValue {
     pub formatted_value: Option<FormattedValue>
 }
 
-impl From<KeyValue> for SerializableKeyValue {
-    fn from(kv: KeyValue) -> Self {
+impl SerializableKeyValue {
+    pub fn from_ref(kv: &KeyValue) -> Self {
         unsafe {
             let key = String::from(kv.key_str_unchecked());
             let value = Vec::from(kv.value());
@@ -46,6 +48,7 @@ impl From<KeyValue> for SerializableKeyValue {
             let mod_revision = kv.mod_revision();
             let version = kv.version();
             let lease = kv.lease().to_string();
+            let formatted_value = k8s_formatter::try_format_proto(&key, &value);
             SerializableKeyValue {
                 key,
                 value,
@@ -54,9 +57,15 @@ impl From<KeyValue> for SerializableKeyValue {
                 version,
                 lease,
                 lease_info: None,
-                formatted_value: None
+                formatted_value,
             }
         }
+    }
+}
+
+impl From<KeyValue> for SerializableKeyValue {
+    fn from(kv: KeyValue) -> Self {
+        Self::from_ref(&kv)
     }
 }
 

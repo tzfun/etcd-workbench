@@ -5,7 +5,7 @@ import { WebviewWindow } from "@tauri-apps/api/window";
 import mitt, { Emitter, EventType, Handler } from "mitt";
 import { DialogItem, TipsItem } from "~/common/types.ts";
 import { _relativeTimeFormat } from "~/common/utils.ts";
-import { FormattedValue } from "./transport/kv";
+import {KeyValue} from "./transport/kv";
 
 const localEvents = mitt();
 
@@ -22,22 +22,21 @@ export enum EventName {
     CONFIRM_EXIT = 'confirm_exit',
     EDIT_KEY_MONITOR = 'editKeyMonitor',
     KEY_MONITOR_CONFIG_CHANGE = 'keyMonitorChange',
-    KEY_MONITOR_EVENT = 'key_monitor',
+    KEY_WATCH_EVENT = 'key_watch_event',
+    KEY_WATCH_ERROR_EVENT = 'key_watch_error_event',
     SET_SETTING_ANCHOR = 'setSettingAnchor',
     SESSION_DISCONNECTED = 'sessionDisconnected',
 }
 
-export type KeyMonitorEventType = "Remove" | "Create" | "LeaseChange" | "ValueChange"
+export type KeyWatchEventType = "Remove" | "Create" | "Modify"
 
-export interface KeyMonitorEvent {
+export interface KeyWatchEvent {
     session: number,
     key: string,
-    eventType: KeyMonitorEventType,
+    eventType: KeyWatchEventType,
     eventTime: number,
-    previous: null | any,
-    current: null | any,
-    previousFormatted?: FormattedValue
-    currentFormatted?: FormattedValue
+    prevKv?: KeyValue,
+    curKv?: KeyValue,
     read?: boolean,
     id?: number
 }
