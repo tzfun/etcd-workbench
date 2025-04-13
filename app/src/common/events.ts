@@ -6,6 +6,7 @@ import mitt, { Emitter, EventType, Handler } from "mitt";
 import { DialogItem, TipsItem } from "~/common/types.ts";
 import { _relativeTimeFormat } from "~/common/utils.ts";
 import {KeyValue} from "./transport/kv";
+import {KeyMonitorConfig} from "~/common/transport/connection.ts";
 
 const localEvents = mitt();
 
@@ -23,7 +24,7 @@ export enum EventName {
     EDIT_KEY_MONITOR = 'editKeyMonitor',
     KEY_MONITOR_CONFIG_CHANGE = 'keyMonitorChange',
     KEY_WATCH_EVENT = 'key_watch_event',
-    KEY_WATCH_ERROR_EVENT = 'key_watch_error_event',
+    KEY_MONITOR_MODIFIED_BY_SERVER  ="key_monitor_modified_by_server",
     SET_SETTING_ANCHOR = 'setSettingAnchor',
     SESSION_DISCONNECTED = 'sessionDisconnected',
 }
@@ -38,7 +39,13 @@ export interface KeyWatchEvent {
     prevKv?: KeyValue,
     curKv?: KeyValue,
     read?: boolean,
-    id?: number
+    id?: number,
+    eventKey?: string,
+}
+
+export interface KeyMonitorModifiedByServerEvent {
+    session: number,
+    config: KeyMonitorConfig,
 }
 
 export interface SessionDisconnectedEvent {

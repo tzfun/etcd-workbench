@@ -69,6 +69,7 @@ export interface SessionData {
     connectionSaved: boolean,
     namespace?: string,
     keyCollection?: string[],
+    //  客户端构造完之后会将其设置为 undefined
     keyMonitorList?: KeyMonitorConfig[],
     //  客户端自行构造
     keyCollectionSet?: Set<string>,

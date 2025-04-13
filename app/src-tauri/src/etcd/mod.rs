@@ -7,6 +7,7 @@ use crate::api::connection;
 use crate::error::LogicError;
 use crate::etcd::etcd_connector::EtcdConnector;
 use crate::transport::connection::{Connection, ConnectionInfo, KeyMonitorConfig, SessionData};
+use crate::transport::event::KeyMonitorModifiedByServerEvent;
 use dashmap::mapref::one::{Ref, RefMut};
 use dashmap::DashMap;
 use etcd_client::Error;
@@ -126,14 +127,18 @@ pub fn get_key_watcher(id: &i32) -> RefMut<'_, i32, KeyWatcher> {
 }
 
 /// 重试key watcher
-pub fn retry_key_watcher(id: i32, config: KeyMonitorConfig) {
+pub fn retry_key_watcher(id: i32, window: Window, config: KeyMonitorConfig) {
     tokio::spawn(async move {
         let key = config.key.clone();
         let mut config_clone = config.clone();
         if let Err(e) = get_key_watcher(&id).retry_config(config).await {
             error!("Failed to retry key watcher '{}': {:?}", key, e);
             config_clone.paused = true;
-            connection::set_key_monitor(id, config_clone).await;
+            connection::set_key_monitor(id, config_clone.clone()).await;
+            window.emit("key_monitor_modified_by_server", KeyMonitorModifiedByServerEvent {
+                session: id,
+                config: config_clone,
+            });
         } else {
             info!("Retry watcher successful '{}'", key);
         }

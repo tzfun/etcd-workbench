@@ -260,7 +260,7 @@ impl KeyWatcher {
                     if retry {
                         let _ = watcher.cancel().await;
                         //  重新监听
-                        retry_key_watcher(session_id, config_clone);
+                        retry_key_watcher(session_id, window_clone, config_clone);
                     }
                 }
             }

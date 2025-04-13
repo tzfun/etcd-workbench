@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::kv::SerializableKeyValue;
+use super::{connection::KeyMonitorConfig, kv::SerializableKeyValue};
 
 #[derive(Clone, Deserialize, Serialize)]
 #[serde(rename_all="camelCase")]
@@ -46,4 +46,11 @@ pub struct KeyWatchEvent {
     pub event_time: u64,
     pub prev_kv: Option<SerializableKeyValue>,
     pub cur_kv: Option<SerializableKeyValue>,
+}
+
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(rename_all="camelCase")]
+pub struct KeyMonitorModifiedByServerEvent {
+    pub session: i32,
+    pub config: KeyMonitorConfig,
 }

@@ -53,6 +53,7 @@ import Editor from "~/components/editor/Editor.vue";
 import { getLanguage } from "~/components/editor/languages.ts";
 import { getTheme } from "~/components/editor/themes.ts";
 import Tree from "~/components/tree/Tree.vue";
+import {Handler} from "mitt";
 
 const theme = useTheme()
 const settings = _useSettings()
@@ -236,7 +237,7 @@ onMounted(() => {
     })
   }, 200)
 
-  const keyMonitorConfigChangeEventHandler = e => {
+  const keyMonitorConfigChangeEventHandler:Handler<any> = e => {
     if (e.session == props.session?.id) {
       let key = e.key as string
       kvTree.value?.refreshDiyDom(key)

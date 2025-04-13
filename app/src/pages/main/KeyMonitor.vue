@@ -53,7 +53,6 @@ const monitorList = computed<KeyMonitorConfig[]>(() => {
     if (!_isEmpty(searchKeyword.value)) {
       list = list.filter(monitor => monitor.key.toLowerCase().includes(searchKeyword.value.toLowerCase()))
     }
-    console.log(JSON.parse(JSON.stringify(list)))
     return list
   }
   return []
@@ -82,7 +81,7 @@ const read = (e: KeyWatchEvent) => {
   }
 
   if (e.eventType == 'Modify') {
-    valueDiffDialog.key = e.curKv!.key
+    valueDiffDialog.key = e.eventKey!
 
     let editorLang;
     if (e.prevKv && e.curKv) {
@@ -209,7 +208,7 @@ const addMonitor = () => {
           <v-list-item
               v-for="e in events"
               :key="e.id"
-              :title="e.curKv!.key"
+              :title="e.eventKey"
               :subtitle="_timeFormat(e.eventTime)"
               @click="read(e)"
               density="comfortable"

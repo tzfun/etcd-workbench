@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {onActivated, onMounted, onUnmounted, PropType, reactive, ref} from "vue";
+import {computed, onActivated, onMounted, onUnmounted, PropType, reactive, ref} from "vue";
 import {KeyMonitorConfig, SessionData} from "~/common/transport/connection.ts";
 import Cluster from "~/pages/main/Cluster.vue";
 import Keys from "~/pages/main/Keys.vue";
@@ -7,7 +7,15 @@ import Users from "~/pages/main/Users.vue";
 import Roles from "~/pages/main/Roles.vue";
 import Leases from "~/pages/main/Leases.vue";
 import KeyMonitor from "~/pages/main/KeyMonitor.vue";
-import {_emitLocal, _listenLocal, _tipWarn, _unListenLocal, EventName, KeyWatchEvent} from "~/common/events.ts";
+import {
+  _emitLocal,
+  _listenLocal,
+  _tipWarn,
+  _unListenLocal,
+  EventName,
+  KeyMonitorModifiedByServerEvent,
+  KeyWatchEvent
+} from "~/common/events.ts";
 import {_disconnect, _handleError, _removeKeyMonitor, _setKeyMonitor} from "~/common/services.ts";
 import {_isEmpty} from "~/common/utils.ts";
 import {appWindow} from "@tauri-apps/api/window";
@@ -37,6 +45,7 @@ const keyMonitorDialog = reactive({
     monitorRemove: true,
     paused: false,
   },
+  monitorBefore: <KeyMonitorConfig | undefined>undefined,
 })
 
 const keyMonitorEventLog = reactive({
@@ -45,12 +54,24 @@ const keyMonitorEventLog = reactive({
   logs: <KeyWatchEvent[]>[]
 })
 
+const keyMonitorDialogCanConfirm = computed<boolean>(() => {
+  if (keyMonitorDialog.monitorBefore) {
+    return keyMonitorDialog.monitorBefore.isPrefix != keyMonitorDialog.monitor.isPrefix
+        || keyMonitorDialog.monitorBefore.monitorValueChange != keyMonitorDialog.monitor.monitorValueChange
+        || keyMonitorDialog.monitorBefore.monitorCreate != keyMonitorDialog.monitor.monitorCreate
+        || keyMonitorDialog.monitorBefore.monitorRemove != keyMonitorDialog.monitor.monitorRemove
+        || keyMonitorDialog.monitorBefore.paused != keyMonitorDialog.monitor.paused
+  }
+  return true
+})
+
 onMounted(async () => {
-  let editKeyMonitorEventHandler:Handler<any> = (e) => {
+  let editKeyMonitorEventHandler: Handler<any> = (e) => {
     if (e.session == props.session?.id) {
       if (e.edit) {
         keyMonitorDialog.edit = true
         keyMonitorDialog.monitor = e.monitor as KeyMonitorConfig;
+        keyMonitorDialog.monitorBefore = JSON.parse(JSON.stringify(keyMonitorDialog.monitor))
       } else {
         keyMonitorDialog.edit = false
         keyMonitorDialog.monitor = {
@@ -61,6 +82,7 @@ onMounted(async () => {
           monitorRemove: true,
           paused: false
         }
+        keyMonitorDialog.monitorBefore = undefined
       }
 
       keyMonitorDialog.show = true
@@ -73,13 +95,17 @@ onMounted(async () => {
     let event = e.payload
     if (props.session!.id == event.session) {
       event.id = keyMonitorEventLog.idCounter++
+      event.eventKey = event.prevKv ? event.prevKv.key : event.curKv?.key
       keyMonitorEventLog.unreadNum++
       keyMonitorEventLog.logs.unshift(event)
     }
   }))
 
-  eventUnListens.push(await appWindow.listen<string>(EventName.KEY_WATCH_ERROR_EVENT, e => {
-
+  eventUnListens.push(await appWindow.listen<KeyMonitorModifiedByServerEvent>(EventName.KEY_MONITOR_MODIFIED_BY_SERVER, e => {
+    const event = e.payload
+    if (props.session!.id == event.session) {
+      props.session!.keyMonitorMap![event.config.key] = event.config
+    }
   }))
 })
 
@@ -370,6 +396,7 @@ const onReadKeyMonitorLog = (num: number) => {
                  variant="flat"
                  class="text-none"
                  color="primary"
+                 :disabled="!keyMonitorDialogCanConfirm"
                  @click="keyMonitorConfirm"
           ></v-btn>
         </v-card-actions>
