@@ -9,7 +9,8 @@ use std::pin::Pin;
 use std::sync::Arc;
 use std::time::Duration;
 use std::{fs, u8};
-
+use std::net::IpAddr;
+use std::str::FromStr;
 use crate::api::settings::get_settings;
 use crate::error::LogicError;
 use crate::etcd::wrapped_etcd_client::WrappedEtcdClient;
@@ -898,19 +899,23 @@ impl EtcdConnector {
     pub async fn metrics(&self) -> Result<Vec<(String, String)>, LogicError> {
         let response = if let Some(tls) = &self.connection_config.tls {
             let mut client_builder = reqwest::Client::builder()
-                .use_native_tls()
-                .danger_accept_invalid_hostnames(true);
+                .use_rustls_tls()
+                .tls_sni(true);
             for cert in &tls.cert {
                 let certificate = reqwest::Certificate::from_pem(cert.as_slice())?;
                 client_builder = client_builder.add_root_certificate(certificate);
             }
 
             if let Some(identity) = &tls.identity {
-                let id = reqwest::Identity::from_pkcs8_pem(
-                    identity.cert.as_slice(),
-                    identity.key.as_slice(),
-                )?;
+                let buf = [&identity.key[..], &identity.cert[..]].concat();
+                let id = reqwest::Identity::from_pem(buf.as_slice())?;
                 client_builder = client_builder.identity(id);
+            }
+            
+            if let Some(domain) = &tls.domain {
+                if let Ok(ip_addr) = IpAddr::from_str(domain.as_str()) {
+                    client_builder = client_builder.local_address(Some(ip_addr));
+                }
             }
 
             let url = format!(
