@@ -86,7 +86,7 @@ pub struct SessionData {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all="camelCase")]
 pub struct KeyMonitorConfig {
-    //  key值（全路径）
+    //  key值（相对路径）
     pub key: String,
     #[serde(default = "default_key_monitor_is_prefix")]
     pub is_prefix: bool,

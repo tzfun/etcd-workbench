@@ -7,10 +7,11 @@ import Users from "~/pages/main/Users.vue";
 import Roles from "~/pages/main/Roles.vue";
 import Leases from "~/pages/main/Leases.vue";
 import KeyMonitor from "~/pages/main/KeyMonitor.vue";
-import {_emitLocal, _listenLocal, _tipWarn, EventName, KeyWatchEvent} from "~/common/events.ts";
+import {_emitLocal, _listenLocal, _tipWarn, _unListenLocal, EventName, KeyWatchEvent} from "~/common/events.ts";
 import {_disconnect, _handleError, _removeKeyMonitor, _setKeyMonitor} from "~/common/services.ts";
 import {_isEmpty} from "~/common/utils.ts";
 import {appWindow} from "@tauri-apps/api/window";
+import {Handler} from "mitt";
 
 const props = defineProps({
   session: {
@@ -45,24 +46,28 @@ const keyMonitorEventLog = reactive({
 })
 
 onMounted(async () => {
-  _listenLocal(EventName.EDIT_KEY_MONITOR, (e) => {
+  let editKeyMonitorEventHandler:Handler<any> = (e) => {
     if (e.session == props.session?.id) {
       if (e.edit) {
         keyMonitorDialog.edit = true
         keyMonitorDialog.monitor = e.monitor as KeyMonitorConfig;
       } else {
         keyMonitorDialog.edit = false
-        keyMonitorDialog.monitor.key = e.key ? (e.key as string) : ''
-        keyMonitorDialog.monitor.isPrefix = false
-        keyMonitorDialog.monitor.monitorValueChange = true
-        keyMonitorDialog.monitor.monitorCreate = true
-        keyMonitorDialog.monitor.monitorRemove = true
-        keyMonitorDialog.monitor.paused = false
+        keyMonitorDialog.monitor = {
+          key: e.key ? (e.key as string) : '',
+          isPrefix: false,
+          monitorValueChange: true,
+          monitorCreate: true,
+          monitorRemove: true,
+          paused: false
+        }
       }
 
       keyMonitorDialog.show = true
     }
-  })
+  }
+  _listenLocal(EventName.EDIT_KEY_MONITOR, editKeyMonitorEventHandler)
+  eventUnListens.push(() => _unListenLocal(EventName.EDIT_KEY_MONITOR, editKeyMonitorEventHandler))
 
   eventUnListens.push(await appWindow.listen<KeyWatchEvent>(EventName.KEY_WATCH_EVENT, e => {
     let event = e.payload
@@ -213,9 +218,9 @@ const onReadKeyMonitorLog = (num: number) => {
                     color="green"
                     :content="keyMonitorEventLog.unreadNum"
                 >
-                  <v-icon>mdi-robot-happy</v-icon>
+                  <v-icon>mdi-robot</v-icon>
                 </v-badge>
-                <v-icon v-else>mdi-robot-happy</v-icon>
+                <v-icon v-else>mdi-robot</v-icon>
               </template>
 
             </v-list-item>

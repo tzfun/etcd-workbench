@@ -89,7 +89,7 @@ impl KeyWatcher {
             holder.shutdown().await;
             info!("Removed key watcher: {}", key);
         } else {
-            warn!("Need not remove watcher because of not running: {}", key);
+            debug!("Need not remove watcher because of not running: {}", key);
         }
     }
 

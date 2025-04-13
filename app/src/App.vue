@@ -7,7 +7,7 @@ import { useTheme } from "vuetify";
 import {
   _alertError,
   _listenLocal,
-  _loading,
+  _loading, _unListenLocal,
   EventName
 } from "~/common/events.ts";
 import { _isDebugModel } from "~/common/services.ts";
@@ -22,6 +22,7 @@ import AppMain from "~/pages/main/AppMain.vue";
 import AppSetting from "~/pages/setting/AppSetting.vue";
 import { _checkUpdate, _installUpdate } from './common/updater';
 import IconEtcd from "~/components/icon/IconEtcd.vue";
+import {Handler} from "mitt";
 
 const DEFAULT_LOADING_TEXT: string = "Loading..."
 const loading = ref<boolean>(false)
@@ -65,13 +66,16 @@ onMounted(async () => {
   if (_isMac() || _isLinux()) {
     document.getElementById("app")!.classList.add("main-window-radius")
   }
-
-  _listenLocal(EventName.LOADING, (e: { state: boolean, text: string | undefined }) => {
+  const loadingEventHandler: Handler<any> = (e: { state: boolean, text: string | undefined }) => {
     loadingText.value = e.text || DEFAULT_LOADING_TEXT
     loading.value = e.state
+  }
+  _listenLocal(EventName.LOADING, loadingEventHandler)
+  eventUnListens.push(() => {
+    _unListenLocal(EventName.LOADING, loadingEventHandler)
   })
 
-  _listenLocal(EventName.DIALOG, (e) => {
+  const dialogEventHandler: Handler<any> = (e) => {
     let dialog = e as DialogItem
     let idx = -1;
     for (let i = 0; i < dialogs.value.length; i++) {
@@ -87,9 +91,13 @@ onMounted(async () => {
     } else {
       dialogs.value[idx] = dialog
     }
+  }
+  _listenLocal(EventName.DIALOG, dialogEventHandler)
+  eventUnListens.push(() => {
+    _unListenLocal(EventName.DIALOG, dialogEventHandler)
   })
 
-  _listenLocal(EventName.TIP, (e) => {
+  const tipEventHandler: Handler<any> = (e) => {
     let tip = e as TipsItem
     let idx = -1;
     for (let i = 0; i < tips.value.length; i++) {
@@ -106,6 +114,10 @@ onMounted(async () => {
     } else {
       tips.value[idx] = tip
     }
+  }
+  _listenLocal(EventName.TIP, tipEventHandler)
+  eventUnListens.push(() => {
+    _unListenLocal(EventName.TIP, tipEventHandler)
   })
 
   if (windowLabel.value == 'main') {

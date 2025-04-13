@@ -8,7 +8,7 @@ import {
   _confirm,
   _confirmSystem,
   _listenLocal,
-  _loading,
+  _loading, _unListenLocal,
   EventName,
   SessionDisconnectedEvent
 } from "~/common/events.ts";
@@ -22,6 +22,7 @@ import {_saveGlobalStore, _saveSettings, _useGlobalStore, _useSettings} from "~/
 import {listen} from "@tauri-apps/api/event";
 import {MAIN_WINDOW_MIN_HEIGHT, MAIN_WINDOW_MIN_WIDTH, SettingConfig} from "~/common/transport/setting.ts";
 import {loadModule, trackEvent} from "~/common/analytics.ts";
+import {Handler} from "mitt";
 
 type TabItem = {
   name: string,
@@ -146,7 +147,7 @@ onMounted(async () => {
     })
   }))
 
-  _listenLocal(EventName.NEW_CONNECTION, (e: any) => {
+  const newConnectionEventHandler:Handler<any> = (e: any) => {
     let name = e.name as string
     let session = e.session as SessionData
 
@@ -169,6 +170,10 @@ onMounted(async () => {
     tabList.push(tabItem)
 
     activeTab.value = tabItem.name
+  }
+  _listenLocal(EventName.NEW_CONNECTION, newConnectionEventHandler)
+  eventUnListens.push(() => {
+    _unListenLocal(EventName.NEW_CONNECTION, newConnectionEventHandler)
   })
 
   document.addEventListener('keydown', e => {
@@ -185,11 +190,12 @@ onMounted(async () => {
 
     }
   }, {capture: true})
-
-  _listenLocal(EventName.CLOSE_TAB, e => {
+  const closeTabEventHandler:Handler<any> = e => {
     closeTabDirectly(e as number)
     activeTab.value = HOME_TAB
-  })
+  }
+  _listenLocal(EventName.CLOSE_TAB, closeTabEventHandler)
+  eventUnListens.push(() => _unListenLocal(EventName.CLOSE_TAB, closeTabEventHandler))
 
   _openMainWindow()
 })

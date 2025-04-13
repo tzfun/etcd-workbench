@@ -54,6 +54,10 @@ export function _listenLocal(type: EventName, handler: Handler<any>) {
     localEvents.on(type, handler)
 }
 
+export function _unListenLocal(type: EventName, handler: Handler<any>) {
+    localEvents.off(type, handler)
+}
+
 export function _emitLocal(eventName: EventName, eventPayload?: any) {
     localEvents.emit(eventName, eventPayload)
 }
