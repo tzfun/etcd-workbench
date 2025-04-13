@@ -14,21 +14,21 @@ hero:
 
 features:
   - title: 桌面App
-    details: 桌面App让您更轻松地管理 etcd，并且非常轻量只有 4M，支持 Mac 和 Windows 的主流版本。
+    details: 桌面App让您更轻松地管理 etcd，并且非常轻量只有 5M，支持 Mac 和 Windows 的主流版本。
     linkText: Download
     link: https://github.com/tzfun/etcd-workbench/releases
-  - title: 私有化部署
-    details: 支持部署私有Web服务，用户无需额外下载就可以在任意设备上通过浏览器管理etcd。
-  - title: Docker镜像
-    details: Web服务支持在任何平台上私有部署，并为Windows、MacOS和Linux（arm / x86）提供Docker镜像，你可以在Docker中直接启动它。
+  - title: Web版部署
+    details: 支持部署私有Web服务，用户无需额外下载就可以在任意设备上通过浏览器管理etcd。并为Windows、MacOS和Linux（arm / x86）提供Docker镜像，你可以在Docker中直接启动它。
     linkText: Docker Hub
     link: https://hub.docker.com/r/tzfun/etcd-workbench
   - title: 键值编辑器
-    details: 提供高亮代码编辑器，支持多种语言的高亮和快速代码格式化，让你管理Key-Value更加得心应手。
+    details: 提供高亮代码编辑器，支持多种语言的高亮和快速代码格式化，对kubernetes protobuf做了特殊的支持，让你管理Key-Value更加得心应手。
   - title: 历史版本对比
-    details: 支持查看并对比 Key 不同修订版本的内容。 
-  - title: 开源
-    details: 此工具永远开源且免费！
+    details: 支持查看并对比 Key 不同修订版本的内容，当更新Key时发生冲突有友好的界面进行内容合并处理。 
+  - title: Key监听通知
+    details: 提供Key创建、修改、删除的实时事件推送，即使在后台运行也能收到通知。
+  - title: 开源免费
+    details: 作者承诺此工具永远开源且免费！
     linkText: GitHub
     link: https://github.com/tzfun/etcd-workbench
 ---

@@ -762,7 +762,7 @@ const onScroll = _debounce(() => {
     height: 240px;
     position: absolute;
     z-index: 1000;
-    bottom: 70px;
+    bottom: 50px;
     right: -30px;
     box-shadow: 5px 5px 10px rgba(125, 119, 119, 0.3215686275);
     border-radius: 15px;
