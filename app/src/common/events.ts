@@ -256,7 +256,7 @@ export function _genNewVersionUpdateMessage(manifest: UpdateManifest): string {
     const regex = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/;
     const match = manifest.date.match(regex);
 
-    let timeDes = undefined
+    let timeDes
     if (match) {
         // 构造新的日期字符串
         const formattedDateString = `${match[1]}T${match[2]}Z`

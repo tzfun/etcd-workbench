@@ -4,9 +4,7 @@ import Home from "~/pages/main/Home.vue";
 import Connection from "~/pages/main/Connection.vue";
 import {
   _alert,
-  _alertError,
   _confirm,
-  _confirmSystem,
   _listenLocal,
   _loading, _unListenLocal,
   EventName,

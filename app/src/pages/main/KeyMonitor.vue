@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {computed, onMounted, onUnmounted, PropType, reactive, ref} from "vue";
 import {SessionData, KeyMonitorConfig} from "~/common/transport/connection.ts";
-import {_confirmSystem, _emitLocal, _listenLocal, _unListenLocal, EventName, KeyWatchEvent} from "~/common/events.ts";
+import {_confirmSystem, _emitLocal, EventName, KeyWatchEvent} from "~/common/events.ts";
 import {
   _decodeBytesToString,
   _isEmpty,
