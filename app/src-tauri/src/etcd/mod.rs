@@ -6,14 +6,14 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use crate::api::connection;
 use crate::error::LogicError;
 use crate::etcd::etcd_connector::EtcdConnector;
-use crate::transport::connection::{Connection, ConnectionInfo, SessionData};
+use crate::transport::connection::{Connection, ConnectionInfo, KeyMonitorConfig, SessionData};
 use dashmap::mapref::one::{Ref, RefMut};
 use dashmap::DashMap;
 use etcd_client::Error;
 use etcd_connector_handler::EtcdConnectorHandler;
 use key_watcher::KeyWatcher;
 use lazy_static::lazy_static;
-use log::info;
+use log::{error, info};
 use tauri::{AppHandle, Window};
 use tokio::sync::Mutex;
 
@@ -123,6 +123,21 @@ pub fn get_connection_info_optional(id: &i32) -> Option<RefMut<'_, i32, Connecti
 
 pub fn get_key_watcher(id: &i32) -> RefMut<'_, i32, KeyWatcher> {
     CONNECTION_KEY_WATCHERS.get_mut(id).unwrap()
+}
+
+/// 重试key watcher
+pub fn retry_key_watcher(id: i32, config: KeyMonitorConfig) {
+    tokio::spawn(async move {
+        let key = config.key.clone();
+        let mut config_clone = config.clone();
+        if let Err(e) = get_key_watcher(&id).retry_config(config).await {
+            error!("Failed to retry key watcher '{}': {:?}", key, e);
+            config_clone.paused = true;
+            connection::set_key_monitor(id, config_clone).await;
+        } else {
+            info!("Retry watcher successful '{}'", key);
+        }
+    });
 }
 
 pub async fn remove_connector(id: &i32) {

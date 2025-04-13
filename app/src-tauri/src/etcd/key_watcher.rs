@@ -11,16 +11,15 @@ use tauri::{api::notification::Notification, AppHandle, Window};
 use tokio::{
     sync::{oneshot, Mutex},
     task::JoinHandle,
-    time::Instant,
+    time::{sleep, Instant},
 };
 
 use crate::{
-    error::LogicError,
-    transport::{
+    error::LogicError, etcd::retry_key_watcher, transport::{
         connection::KeyMonitorConfig,
         event::{KeyWatchEvent, KeyWatchEventType},
         kv::SerializableKeyValue,
-    },
+    }
 };
 
 use super::{
@@ -53,19 +52,7 @@ impl KeyMonitorHolder {
         }
         let task_handle = Arc::clone(&self.task_handle);
         let mut task_handle = task_handle.lock().await;
-
-        if let Some(task_handle) = task_handle.take() {
-            if task_handle.is_finished() {
-                debug!("Watcher task finished");
-            } else {
-                debug!("Watcher task is running");
-                task_handle.abort();
-
-                debug!("Abort: {}", task_handle.is_finished());
-            }
-        } else {
-            debug!("task handle not found");
-        }
+        task_handle.take();
         drop(task_handle);
     }
 }
@@ -101,7 +88,24 @@ impl KeyWatcher {
         if let Some(holder) = holder.as_mut() {
             holder.shutdown().await;
             info!("Removed key watcher: {}", key);
+        } else {
+            warn!("Need not remove watcher because of not running: {}", key);
         }
+    }
+
+    pub async fn retry_config(&mut self, config: KeyMonitorConfig) -> Result<(), LogicError> {
+        let mut retry_times = 1;
+        while let Err(e) = self.set_config(config.clone()).await {
+            warn!("Watcher retry failed {}: {:?}", retry_times, e);
+            if retry_times == 10 {
+                error!("Watcher retry attempts have exceeded {} times, retries will be discontinued.", retry_times);
+                return Err(LogicError::ConnectionLose);
+            }
+            retry_times += 1;
+            sleep(Duration::from_secs(3)).await;
+        }
+        
+        Ok(())
     }
 
     /// 新增一个配置，在新增之前会移除已有的配置
@@ -136,10 +140,6 @@ impl KeyWatcher {
             return Ok(());
         }
         let mut connector = connector.unwrap();
-        debug!(
-            "Starting to watch: {} with option: {:?}",
-            config.key, options
-        );
 
         let (mut watcher, mut stream) = connector.watch(config.key.as_str(), Some(options)).await?;
         drop(connector);
@@ -152,11 +152,13 @@ impl KeyWatcher {
         let config_clone = config.clone();
         let window_clone = self.window.clone();
         let session_id = self.session_id;
+        let key_clone = config.key.clone();
 
         let (shutdown_sender, shutdown_receiver) = oneshot::channel::<i32>();
 
         let task = tokio::spawn(async move {
             let watch_task = async {
+                let mut need_retry = false;
                 debug!("Started watcher: {}", config_clone.key);
                 loop {
                     match stream.message().await {
@@ -238,23 +240,29 @@ impl KeyWatcher {
                         }
                         Err(e) => {
                             //  可能因为网络连接、Token超时等问题结束监听，需要重新恢复
-                            error!("Watcher error: {}", e);
-                            //  通知客户端重新监听
-                            window_clone.emit("key_watch_error_event", config_clone.key.clone());
+                            warn!("Watcher error: {}", e);
+                            need_retry = true;
                             break;
                         }
                     }
                 }
 
                 debug!("Watcher finished: {}", config_clone.key);
+                need_retry
             };
 
             tokio::select! {
                 v = shutdown_receiver => {
                     info!("Received watch shutdown: {}", v.unwrap_or(-1));
-                    watcher.cancel().await.unwrap();
+                    let _ = watcher.cancel().await;
                 },
-                _ = watch_task => {}
+                retry = watch_task => {
+                    if retry {
+                        let _ = watcher.cancel().await;
+                        //  重新监听
+                        retry_key_watcher(session_id, config_clone);
+                    }
+                }
             }
 
             let mut lock = task_handle_clone.lock().await;

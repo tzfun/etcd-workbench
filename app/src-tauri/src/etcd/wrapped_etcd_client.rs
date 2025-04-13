@@ -11,6 +11,7 @@ use etcd_client::{
     UserGrantRoleResponse, UserListResponse, UserRevokeRoleResponse, WatchOptions, WatchResponse,
     WatchStream, Watcher,
 };
+use log::debug;
 
 use crate::transport::connection::ConnectionUser;
 
@@ -610,6 +611,7 @@ impl WrappedEtcdClient {
         key: Vec<u8>,
         options: Option<WatchOptions>,
     ) -> Result<(Watcher, WatchStream), etcd_client::Error> {
+        debug!("watch key {} with option {:?}", String::from_utf8_lossy(&key), options);
         let result = self
             .inner
             .watch_client()

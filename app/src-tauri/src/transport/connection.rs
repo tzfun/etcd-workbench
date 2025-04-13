@@ -98,6 +98,9 @@ pub struct KeyMonitorConfig {
     pub paused: bool,
 }
 
+unsafe impl Send for KeyMonitorConfig {
+}
+
 impl KeyMonitorConfig {
     pub fn merge(&mut self, other: &KeyMonitorConfig) {
         self.is_prefix = other.is_prefix;

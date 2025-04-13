@@ -66,8 +66,6 @@ onMounted(async () => {
 
   eventUnListens.push(await appWindow.listen<KeyWatchEvent>(EventName.KEY_WATCH_EVENT, e => {
     let event = e.payload
-    console.log(event)
-
     if (props.session!.id == event.session) {
       event.id = keyMonitorEventLog.idCounter++
       keyMonitorEventLog.unreadNum++

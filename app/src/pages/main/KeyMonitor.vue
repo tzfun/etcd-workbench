@@ -203,7 +203,7 @@ const addMonitor = () => {
       
     </v-layout>
     <div style="height: calc(100% - 56px); overflow-y: auto;">
-      <v-list class="pa-0 overflow-hidden"
+      <v-list class="pa-0 my-5 overflow-hidden"
               :selectable="false"
               lines="two"
               v-if="events.length > 0"

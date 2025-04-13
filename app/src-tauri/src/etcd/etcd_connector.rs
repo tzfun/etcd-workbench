@@ -52,7 +52,7 @@ impl EtcdConnector {
         let mut connection_config = connection.clone();
 
         let mut option = ConnectOptions::new()
-            .with_keep_alive(Duration::from_secs(30), Duration::from_secs(10))
+            .with_keep_alive(Duration::from_secs(10), Duration::from_secs(5))
             .with_keep_alive_while_idle(true)
             .with_tcp_keepalive(Duration::from_secs(5))
             .with_connect_timeout(Duration::from_secs(settings.connect_timeout_seconds))
