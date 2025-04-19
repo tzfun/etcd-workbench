@@ -103,7 +103,7 @@ onMounted(async () => {
       return
     }
     exitConfirmState.value = true
-    _confirm("Confirm Exit", "Are you sure you want to exit?").then(() => {
+    _confirm("Confirm Exit", "Are you sure you want to exit?", 20000).then(() => {
       _loading(true, 'Exiting...')
       trackEvent('exit').finally(() => {
         _exitApp().finally(() => {

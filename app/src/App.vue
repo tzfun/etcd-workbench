@@ -299,7 +299,7 @@ const disableWebviewNativeEvents = () => {
         :persistent="item.persistent == undefined ? true : item.persistent"
         :scrollable="item.scrollable == undefined ? true : item.scrollable"
         width="auto"
-        style="z-index: 2000;"
+        :style="`z-index: ${item.zIndex ? item.zIndex : 2000};`"
     >
       <v-card
           :max-width="item.maxWidth ? item.maxWidth : 500"

@@ -95,7 +95,7 @@ export function _loading(state: boolean, text?: string) {
     })
 }
 
-export function _confirm(title: string, text: string,): Promise<void> {
+export function _confirm(title: string, text: string, zIndex?: number): Promise<void> {
     return new Promise<void>((resolve, reject) => {
         let dialog: DialogItem = {
             value: true,
@@ -120,7 +120,8 @@ export function _confirm(title: string, text: string,): Promise<void> {
                         resolve(undefined)
                     }
                 }
-            ]
+            ],
+            zIndex
         }
 
         _emitLocal(EventName.DIALOG, dialog)
