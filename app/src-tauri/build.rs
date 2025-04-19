@@ -5,6 +5,12 @@ use regex::Regex;
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     tauri_build::build();
 
+    build_proto()
+}
+
+fn build_proto()  -> Result<(), Box<dyn std::error::Error>> {
+    println!("cargo:rerun-if-changed=proto");
+
     let mut config = prost_build::Config::new();
     config.message_attribute(".", "#[derive(serde::Serialize, serde::Deserialize)]");
     config.enum_attribute(".", "#[derive(serde::Serialize, serde::Deserialize)]");

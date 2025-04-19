@@ -529,14 +529,18 @@ const loadMetrics = ():Promise<Array<string[]>> => {
         </v-card-title>
 
         <v-card-text>
-          <div v-for="kv in computedMetrics">
-            <v-layout class="metric-line px-2">
-              <div v-html="kv[0]"></div>
-              <v-spacer></v-spacer>
-              <div>{{ kv[1] }}</div>
-            </v-layout>
-            <v-divider class="mt-2 mb-2"></v-divider>
-          </div>
+          <v-virtual-scroll :items="computedMetrics" item-height="30" height="100%">
+            <template v-slot:default="{ item }">
+              <v-list-item>
+                <v-layout class="metric-line px-2">
+                  <div v-html="item[0]"></div>
+                  <v-spacer></v-spacer>
+                  <div>{{ item[1] }}</div>
+                </v-layout>
+                <v-divider class="mt-2"></v-divider>
+              </v-list-item>
+            </template>
+          </v-virtual-scroll>
         </v-card-text>
       </v-card>
     </v-dialog>

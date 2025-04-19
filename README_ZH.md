@@ -46,6 +46,7 @@
     - 支持 `macos-x86_64`
     - 支持 `macos-aarch64`
 - Web：版本号以 **Web** 为前缀，例如 `Web-1.1.4`
+    - 从DockerHub下载镜像：[https://hub.docker.com/r/tzfun/etcd-workbench](https://hub.docker.com/r/tzfun/etcd-workbench)
     - 支持 Docker 平台：`linux/amd64`, `linux/arm64`, `windows/amd64`
 
 > 注：在 2024年5月10日及之前的版本均是Web版，从 2024年8月30日发布的首个App版本开始使用此前缀规则。

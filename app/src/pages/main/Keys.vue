@@ -16,7 +16,7 @@ import {
   _loading,
   _tipInfo,
   _tipSuccess,
-  _tipWarn,
+  _tipWarn, _unListenLocal,
   EventName
 } from "~/common/events.ts";
 import {
@@ -53,6 +53,7 @@ import Editor from "~/components/editor/Editor.vue";
 import { getLanguage } from "~/components/editor/languages.ts";
 import { getTheme } from "~/components/editor/themes.ts";
 import Tree from "~/components/tree/Tree.vue";
+import {Handler} from "mitt";
 
 const theme = useTheme()
 const settings = _useSettings()
@@ -103,6 +104,7 @@ const editorRef = ref<InstanceType<typeof Editor>>()
 const newKeyEditorRef = ref<InstanceType<typeof Editor>>()
 const putMergeEditorRef = ref<InstanceType<typeof HTMLElement>>()
 const putMergeEditor = ref<MergeView>()
+const eventUnListens = reactive<Function[]>([])
 
 const defaultEditorConfig: EditorConfig = {
   disabled: false,
@@ -235,12 +237,15 @@ onMounted(() => {
     })
   }, 200)
 
-  _listenLocal(EventName.KEY_MONITOR_CONFIG_CHANGE, e => {
+  const keyMonitorConfigChangeEventHandler:Handler<any> = e => {
     if (e.session == props.session?.id) {
       let key = e.key as string
       kvTree.value?.refreshDiyDom(key)
     }
-  })
+  }
+  _listenLocal(EventName.KEY_MONITOR_CONFIG_CHANGE, keyMonitorConfigChangeEventHandler)
+  eventUnListens.push(() => _unListenLocal(EventName.KEY_MONITOR_CONFIG_CHANGE, keyMonitorConfigChangeEventHandler))
+
   putMergeEditor.value = new MergeView({
     a: {
       doc: putMergeDialog.request.value
@@ -259,6 +264,10 @@ onMounted(() => {
 
 onUnmounted(() => {
   clearAllKeyLeaseListener()
+
+  for (let eventUnListen of eventUnListens) {
+    eventUnListen()
+  }
 })
 
 const refreshAllKeys = (): Promise<any> => {
@@ -1175,7 +1184,7 @@ const confirmMergeDialog = () => {
 
     <!--   key收藏弹窗-->
     <v-dialog v-model="collectionDialog" eager transition="slide-x-reverse-transition" scrollable
-      class="collection-drawer" contained>
+      class="collection-drawer-right" contained>
 
       <v-card :rounded="false" title="My Collections">
         <template #prepend>
@@ -1340,22 +1349,5 @@ $--load-more-area-height: 32px;
     height: $--load-more-area-height;
     line-height: $--load-more-area-height;
   }
-}
-</style>
-
-<style>
-.collection-drawer .v-overlay__content {
-  width: 600px;
-  height: 100%;
-  margin: 0;
-  position: absolute;
-  right: 0;
-  padding: 0;
-  border-radius: 0;
-}
-
-.collection-drawer .v-card-item__content {
-  height: 100%;
-  align-self: start;
 }
 </style>

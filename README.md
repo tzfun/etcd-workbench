@@ -17,47 +17,48 @@ A powerful ui client for ETCD v3. Provides App and Web packages. Supports SSL an
 
 # Features
 
-1. This tool is completely open source and free!
-2. Provides two packages: App and Web. The app can be run directly on your local, and the web package can be deployed to the server directly or using docker.
-3. Very lightweight, App package is only **5M**, Web package is only **15M**.
-4. Support theme switching.
-5. Support multiple connection management.
-6. Support SSL, SSH connection.
-7. Support cluster information viewing, version compression, data backup and other functions.
-8. Support Key-Value editing, multi-language format highlighting, batch import/export.
-9. Support protobuf format content decoding for kubernetes.
-10. Support comparison of multiple versions of key.
-11. Support for Key Merge to resolve update conflicts.
-12. Support quick access from key collection.
-13. Support key change monitoring and notification.
-14. Support key search function.
-15. Support lease management: creation, deletion, key bind relationship, countdown display.
-16. Support user management: enable/disable authentication, creation, deletion, grant/revocation of roles, etc.
-17. Support role management: creation, deletion, authorization/revocation of permissions, etc.
+1. Completely open-source and free!
+2. Available in both desktop app and web versions. The desktop app can be downloaded and installed locally, while the web version can be deployed directly or via docker on a server.
+3. Extremely lightweight: the App package is only **5M**, and the Web package is only **15M**.
+4. Supports theme switching.
+5. Supports multi-connection management.
+6. Supports SSL and SSH connections.
+7. Supports cluster information viewing, version compaction, data backup, and more.
+8. Supports Key-Value editing, multi-language syntax highlighting, and batch import/export.
+9. Supports decoding Kubernetes Protobuf format content.
+10. Supports comparing multiple versions of Key content.
+11. Supports key merge to resolve update conflicts.
+12. Supports bookmarking Keys for quick access.
+13. Supports key change monitoring and notifications.
+14. Supports Key search functionality.
+15. Supports lease management: create, delete, Key binding relationships, and countdown display.
+16. Supports user management: toggle authentication, create/delete users, grant/revoke roles, etc.
+17. Supports role management: create/delete roles, grant/revoke permissions, etc.
 
-- **App**: It has all the functions, has a better experience than the web version, and is easy to migrate data. It will be continuously updated in the future. It is recommended to use.
-- **Web**: It has most of the functions, but a few functions are not supported (such as data backup, etc.). Users can access it directly with a browser without downloading. It supports multi-user login.
+- **App**: Includes all features, offers a better experience than the Web version, allows easy data migration, and will receive continuous updates. Recommended for use.
+- **Web**: Includes most features, with some exceptions (e.g., data backup). Users can access it directly via a browser without downloading, and it supports multi-user login.
 
 # Download
 
-Please go to [website](https://tzfun.github.io/etcd-workbench/) to download the latest version. If you need to download historical versions, please go to [releases](https://github.com/tzfun/etcd-workbench/releases).
+Visit the [Etcd Workbench homepage](https://tzfun.github.io/etcd-workbench/) to download the latest version. For historical releases, go to [releases](https://github.com/tzfun/etcd-workbench/releases).
 
-- App: The version number is prefixed with **App**, for example `App-1.0.0`
-    - Support `windows-x86_64`
-    - Support `macos-x86_64`
-    - Support `macos-aarch64`
-- Web: Version numbers are prefixed with **Web**, for example `Web-1.1.4`
-    - Supported docker platforms: `linux/amd64`, `linux/arm64`, `windows/amd64`
+- **Desktop App**: Version numbers are prefixed with **App**, e.g., `App-1.0.0`.
+    - Supports `windows-x86_64`.
+    - Supports `macos-x86_64`.
+    - Supports `macos-aarch64`.
+- **Web**: Version numbers are prefixed with **Web**, e.g., `Web-1.1.4`.
+    - Supports pulling docker images from Docker Hub: [https://hub.docker.com/r/tzfun/etcd-workbench](https://hub.docker.com/r/tzfun/etcd-workbench)
+    - Supports docker platforms: `linux/amd64`, `linux/arm64`, `windows/amd64`.
 
-> Note: All versions on and before May 10, 2024 are web versions. This prefix rule will be used starting from the first app version released on August 30, 2024.
+> Note: Versions released on or before May 10, 2024, are Web-only. The first App version was released on August 30, 2024, and follows the new prefix rule.
 
-# About Web Version
+# About the Web Version
 
-Web supports **jar** package deployment and **Docker** deployment, manages etcd server in the browser, and supports multiple account logins.
+The Web version supports deployment via **Jar** or **Docker**, allowing you to manage Etcd Server in a browser with multi-account login support.
 
-> The Web version has been marked as **archived** and will not be maintained. For the usage documentation of the Web version, please go to: [etcd-workbench-web](https://github.com/tzfun/etcd-workbench-web/) repository.
+> The Web version has been **archived** and is no longer maintained. For documentation on the Web version, visit the [etcd-workbench-web](https://github.com/tzfun/etcd-workbench-web/) repository.
 
-# Screenshot
+# Desktop App Screenshots
 
 ![key-editor-light.png](screenshot/app/key-editor-light.png)
 
@@ -75,30 +76,29 @@ Web supports **jar** package deployment and **Docker** deployment, manages etcd 
 
 # Development Stack
 
-The front-end is developed based on Vue, and the back-end is developed based on Rust, with memory safety, low consumption and high performance.
+The frontend is built with Vue, and the backend is built with Rust, ensuring memory safety, low resource consumption, and high performance.
 
 - **Tauri** - App Framework
-- **Tokio** - Asynchronous IO communication
+- **Tokio** - Asynchronous I/O communication
 - **etcd-client** - Etcd Connector
 - **russh** - SSH Client
 - **Vuetify** - UI Framework
 
 # Donate
 
-Your support is the greatest motivation for the author's development. Thank you for the coffee🍵!
+Your support is the greatest motivation for the developer. Thank you for the coffee🍵!
 
 You can donate via
 <a href=https://paypal.me/beifengtz>
 <img src=https://www.paypalobjects.com/paypal-ui/logos/svg/paypal-color.svg width=80/>
 </a>
 
-
-Or donate via WeChat Rewards
+Or use WeChat Appreciation:
 <div>
 <img src=app/public/donate-wechat.jpg width=200/>
 </div>
 
-## Donation List (Irregularly Updated)
+## Donation List (Updated Periodically)
 - Machérie - WeChat - ￥30
 - whoops - WeChat - ￥12.9
 

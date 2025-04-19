@@ -7,6 +7,8 @@ import {onActivated, onMounted, onUnmounted, reactive, ref} from "vue";
 import {ConnectionInfo, DEFAULT_CONNECTION, ErrorPayload} from "~/common/transport/connection.ts";
 import {listen} from "@tauri-apps/api/event";
 
+const connectorRef = ref<InstanceType<typeof Connector>>()
+
 const connectionList = ref<ConnectionInfo[]>([])
 const currentConnection = ref<ConnectionInfo>(DEFAULT_CONNECTION)
 const eventUnListens = reactive<Function[]>([])
@@ -42,6 +44,9 @@ const selectConnection = ({id}: any) => {
     currentConnection.value = DEFAULT_CONNECTION
   } else {
     currentConnection.value = id
+  }
+  if (connectorRef.value) {
+    connectorRef.value.scrollToTop()
   }
 }
 
@@ -106,7 +111,7 @@ const removeConnectionConfig = (name: string) => {
       </v-list>
     </v-navigation-drawer>
     <v-main class="fill-height">
-      <Connector v-model="currentConnection" @on-save="loadConnectionList"></Connector>
+      <Connector ref="connectorRef" v-model="currentConnection" @on-save="loadConnectionList"></Connector>
     </v-main>
   </v-layout>
 </template>

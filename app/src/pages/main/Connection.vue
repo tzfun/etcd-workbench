@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {onActivated, onMounted, onUnmounted, PropType, reactive, ref} from "vue";
+import {computed, onActivated, onMounted, onUnmounted, PropType, reactive, ref} from "vue";
 import {KeyMonitorConfig, SessionData} from "~/common/transport/connection.ts";
 import Cluster from "~/pages/main/Cluster.vue";
 import Keys from "~/pages/main/Keys.vue";
@@ -7,12 +7,20 @@ import Users from "~/pages/main/Users.vue";
 import Roles from "~/pages/main/Roles.vue";
 import Leases from "~/pages/main/Leases.vue";
 import KeyMonitor from "~/pages/main/KeyMonitor.vue";
-import {_emitLocal, _listenLocal, _tipWarn, EventName, KeyMonitorEvent} from "~/common/events.ts";
+import {
+  _emitLocal,
+  _listenLocal,
+  _tipWarn,
+  _unListenLocal,
+  EventName,
+  KeyMonitorModifiedByServerEvent,
+  KeyWatchEvent
+} from "~/common/events.ts";
 import {_disconnect, _handleError, _removeKeyMonitor, _setKeyMonitor} from "~/common/services.ts";
 import {_isEmpty} from "~/common/utils.ts";
 import {appWindow} from "@tauri-apps/api/window";
+import {Handler} from "mitt";
 
-const DEFAULT_KEY_MONITOR_INTERVAL_SECONDS = 10
 const props = defineProps({
   session: {
     type: Object as PropType<SessionData>,
@@ -31,46 +39,72 @@ const keyMonitorDialog = reactive({
   edit: false,
   monitor: <KeyMonitorConfig>{
     key: "",
-    intervalSeconds: DEFAULT_KEY_MONITOR_INTERVAL_SECONDS,
-    monitorLeaseChange: true,
+    isPrefix: false,
     monitorValueChange: true,
     monitorCreate: true,
     monitorRemove: true,
+    paused: false,
   },
+  monitorBefore: <KeyMonitorConfig | undefined>undefined,
 })
 
 const keyMonitorEventLog = reactive({
   idCounter: 1,
   unreadNum: 0,
-  logs: <KeyMonitorEvent[]>[]
+  logs: <KeyWatchEvent[]>[]
+})
+
+const keyMonitorDialogCanConfirm = computed<boolean>(() => {
+  if (keyMonitorDialog.monitorBefore) {
+    return keyMonitorDialog.monitorBefore.isPrefix != keyMonitorDialog.monitor.isPrefix
+        || keyMonitorDialog.monitorBefore.monitorValueChange != keyMonitorDialog.monitor.monitorValueChange
+        || keyMonitorDialog.monitorBefore.monitorCreate != keyMonitorDialog.monitor.monitorCreate
+        || keyMonitorDialog.monitorBefore.monitorRemove != keyMonitorDialog.monitor.monitorRemove
+        || keyMonitorDialog.monitorBefore.paused != keyMonitorDialog.monitor.paused
+  }
+  return true
 })
 
 onMounted(async () => {
-  _listenLocal(EventName.EDIT_KEY_MONITOR, (e) => {
+  let editKeyMonitorEventHandler: Handler<any> = (e) => {
     if (e.session == props.session?.id) {
       if (e.edit) {
         keyMonitorDialog.edit = true
         keyMonitorDialog.monitor = e.monitor as KeyMonitorConfig;
+        keyMonitorDialog.monitorBefore = JSON.parse(JSON.stringify(keyMonitorDialog.monitor))
       } else {
         keyMonitorDialog.edit = false
-        keyMonitorDialog.monitor.key = e.key ? (e.key as string) : ''
-        keyMonitorDialog.monitor.intervalSeconds = DEFAULT_KEY_MONITOR_INTERVAL_SECONDS
-        keyMonitorDialog.monitor.monitorLeaseChange = true
-        keyMonitorDialog.monitor.monitorValueChange = true
-        keyMonitorDialog.monitor.monitorCreate = true
-        keyMonitorDialog.monitor.monitorRemove = true
+        keyMonitorDialog.monitor = {
+          key: e.key ? (e.key as string) : '',
+          isPrefix: false,
+          monitorValueChange: true,
+          monitorCreate: true,
+          monitorRemove: true,
+          paused: false
+        }
+        keyMonitorDialog.monitorBefore = undefined
       }
 
       keyMonitorDialog.show = true
     }
-  })
+  }
+  _listenLocal(EventName.EDIT_KEY_MONITOR, editKeyMonitorEventHandler)
+  eventUnListens.push(() => _unListenLocal(EventName.EDIT_KEY_MONITOR, editKeyMonitorEventHandler))
 
-  eventUnListens.push(await appWindow.listen(EventName.KEY_MONITOR_EVENT, e => {
-    let event = e.payload as KeyMonitorEvent
+  eventUnListens.push(await appWindow.listen<KeyWatchEvent>(EventName.KEY_WATCH_EVENT, e => {
+    let event = e.payload
     if (props.session!.id == event.session) {
       event.id = keyMonitorEventLog.idCounter++
+      event.eventKey = event.prevKv ? event.prevKv.key : event.curKv?.key
       keyMonitorEventLog.unreadNum++
       keyMonitorEventLog.logs.unshift(event)
+    }
+  }))
+
+  eventUnListens.push(await appWindow.listen<KeyMonitorModifiedByServerEvent>(EventName.KEY_MONITOR_MODIFIED_BY_SERVER, e => {
+    const event = e.payload
+    if (props.session!.id == event.session) {
+      props.session!.keyMonitorMap![event.config.key] = event.config
     }
   }))
 })
@@ -102,14 +136,6 @@ const keyMonitorConfirm = () => {
   if (_isEmpty(config.key)) {
     _tipWarn("Key cannot be empty")
     return
-  }
-
-  if(typeof config.intervalSeconds == 'string') {
-    config.intervalSeconds = parseInt(config.intervalSeconds as string)
-  }
-  if (config.intervalSeconds < 1) {
-    _tipWarn("Invalid interval")
-    return;
   }
 
   _setKeyMonitor(props.session?.id, config).then(() => {
@@ -218,9 +244,9 @@ const onReadKeyMonitorLog = (num: number) => {
                     color="green"
                     :content="keyMonitorEventLog.unreadNum"
                 >
-                  <v-icon>{{ session.keyMonitorPaused ? 'mdi-robot-dead-outline' : 'mdi-robot-happy' }}</v-icon>
+                  <v-icon>mdi-robot</v-icon>
                 </v-badge>
-                <v-icon v-else>{{ session.keyMonitorPaused ? 'mdi-robot-dead-outline' : 'mdi-robot-happy' }}</v-icon>
+                <v-icon v-else>mdi-robot</v-icon>
               </template>
 
             </v-list-item>
@@ -329,17 +355,19 @@ const onReadKeyMonitorLog = (num: number) => {
           </v-layout>
 
           <v-layout class="mb-5">
+            <span class="grant-form-label">Type: </span>
+            <v-radio-group v-model="keyMonitorDialog.monitor.isPrefix" inline hide-details>
+              <v-radio label="Key Only" :value="false"></v-radio>
+              <v-radio label="With Prefix" :value="true"></v-radio>
+            </v-radio-group>
+          </v-layout>
+
+          <v-layout class="mb-5">
             <span class="grant-form-label">Target: </span>
 
             <v-checkbox
                 v-model="keyMonitorDialog.monitor.monitorValueChange"
                 label="Value Change"
-                hide-details
-            ></v-checkbox>
-            <v-checkbox
-                v-model="keyMonitorDialog.monitor.monitorLeaseChange"
-                label="Lease Change"
-                class="ml-2"
                 hide-details
             ></v-checkbox>
             <v-checkbox
@@ -355,33 +383,6 @@ const onReadKeyMonitorLog = (num: number) => {
                 hide-details
             ></v-checkbox>
           </v-layout>
-
-          <v-layout class="mb-5">
-            <span class="grant-form-label">Interval: </span>
-            <v-text-field v-model="keyMonitorDialog.monitor.intervalSeconds"
-                          type="number"
-                          density="comfortable"
-                          hide-details
-                          persistent-hint
-                          suffix="S"
-                          max-width="200px"
-            ></v-text-field>
-
-            <v-tooltip location="end center"
-                       origin="start center"
-                       no-click-animation>
-              <template #default>
-                <p>Periodically query the key information from the etcd server.</p>
-                <p>The shorter the monitoring interval, the more computer resources are consumed and the higher the accuracy.</p>
-              </template>
-              <template v-slot:activator="{ props }">
-                <v-icon v-bind="props"
-                        class="ma-3 cursor-pointer"
-                >mdi-help-circle</v-icon>
-              </template>
-            </v-tooltip>
-
-          </v-layout>
         </v-card-item>
         <v-card-actions>
           <v-btn text="Remove Monitor"
@@ -395,6 +396,7 @@ const onReadKeyMonitorLog = (num: number) => {
                  variant="flat"
                  class="text-none"
                  color="primary"
+                 :disabled="!keyMonitorDialogCanConfirm"
                  @click="keyMonitorConfirm"
           ></v-btn>
         </v-card-actions>

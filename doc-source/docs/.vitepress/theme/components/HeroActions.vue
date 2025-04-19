@@ -12,9 +12,9 @@ const {lang, isDark} = useData()
 const downloadAppText = computed(() => {
   switch (lang.value) {
     case 'zh':
-      return '下载App'
+      return '下载'
     default:
-      return 'Download App'
+      return 'Download Desktop App'
   }
 })
 

@@ -2,7 +2,14 @@
 
 import Home from "~/pages/main/Home.vue";
 import Connection from "~/pages/main/Connection.vue";
-import {_confirm, _listenLocal, _loading, EventName} from "~/common/events.ts";
+import {
+  _alert,
+  _confirm,
+  _listenLocal,
+  _loading, _unListenLocal,
+  EventName,
+  SessionDisconnectedEvent
+} from "~/common/events.ts";
 import {_disconnect} from "~/common/services.ts";
 import {onMounted, onUnmounted, reactive, ref} from "vue";
 import {SessionData} from "~/common/transport/connection.ts";
@@ -13,6 +20,7 @@ import {_saveGlobalStore, _saveSettings, _useGlobalStore, _useSettings} from "~/
 import {listen} from "@tauri-apps/api/event";
 import {MAIN_WINDOW_MIN_HEIGHT, MAIN_WINDOW_MIN_WIDTH, SettingConfig} from "~/common/transport/setting.ts";
 import {loadModule, trackEvent} from "~/common/analytics.ts";
+import {Handler} from "mitt";
 
 type TabItem = {
   name: string,
@@ -30,6 +38,7 @@ const lastWindowSize = reactive({
   width: 0,
   height: 0
 })
+const connectorEventBuffer = reactive<Set<Number>>(new Set())
 
 onMounted(async () => {
   try {
@@ -94,7 +103,7 @@ onMounted(async () => {
       return
     }
     exitConfirmState.value = true
-    _confirm("Confirm Exit", "Are you sure you want to exit?").then(() => {
+    _confirm("Confirm Exit", "Are you sure you want to exit?", 20000).then(() => {
       _loading(true, 'Exiting...')
       trackEvent('exit').finally(() => {
         _exitApp().finally(() => {
@@ -108,7 +117,35 @@ onMounted(async () => {
     appWindow.show()
   }))
 
-  _listenLocal(EventName.NEW_CONNECTION, (e: any) => {
+  eventUnListens.push(await listen<SessionDisconnectedEvent>(EventName.SESSION_DISCONNECTED, event => {
+    const sessionId = event.payload.sessionId
+    if (connectorEventBuffer.has(sessionId) || findSession(sessionId) < 0) {
+      return
+    }
+    connectorEventBuffer.add(sessionId)
+    let message
+    if (typeof event.payload.case === "string") {
+      switch (event.payload.case) {
+        case "sshChannelEof":
+          message = 'ssh channel eof'
+          break
+        case 'sshChannelFailure':
+          message = 'ssh channel failure'
+          break
+        default:
+          message = event.payload.case
+      }
+    } else {
+      message = JSON.stringify(event.payload.case)
+    }
+
+    _alert(`Session connection lost, reason: ${message}`, 'Warn').then(() => {
+      connectorEventBuffer.delete(sessionId)
+      closeTabDirectly(sessionId)
+    })
+  }))
+
+  const newConnectionEventHandler:Handler<any> = (e: any) => {
     let name = e.name as string
     let session = e.session as SessionData
 
@@ -131,6 +168,10 @@ onMounted(async () => {
     tabList.push(tabItem)
 
     activeTab.value = tabItem.name
+  }
+  _listenLocal(EventName.NEW_CONNECTION, newConnectionEventHandler)
+  eventUnListens.push(() => {
+    _unListenLocal(EventName.NEW_CONNECTION, newConnectionEventHandler)
   })
 
   document.addEventListener('keydown', e => {
@@ -147,11 +188,12 @@ onMounted(async () => {
 
     }
   }, {capture: true})
-
-  _listenLocal(EventName.CLOSE_TAB, e => {
+  const closeTabEventHandler:Handler<any> = e => {
     closeTabDirectly(e as number)
     activeTab.value = HOME_TAB
-  })
+  }
+  _listenLocal(EventName.CLOSE_TAB, closeTabEventHandler)
+  eventUnListens.push(() => _unListenLocal(EventName.CLOSE_TAB, closeTabEventHandler))
 
   _openMainWindow()
 })
@@ -169,16 +211,12 @@ const closeTab = (id: number) => {
   })
 }
 
-/**
- * 不许确认关闭连接
- * @param sessionId 连接ID，如果为 undefined 则表示关闭当前tab
- */
-const closeTabDirectly = (sessionId?: number) => {
+const findSession = (sessionId?: number):number => {
+  let idx = -1;
   let currentTab = activeTab.value
   if (sessionId == undefined && currentTab == HOME_TAB) {
-    return
+    return idx
   }
-  let idx = -1;
   for (let i = 0; i < tabList.length; i++) {
     let item: TabItem = tabList[i]
     if (sessionId == undefined && item.name == currentTab) {
@@ -191,6 +229,16 @@ const closeTabDirectly = (sessionId?: number) => {
       break
     }
   }
+  return idx
+}
+
+/**
+ * 不许确认关闭连接
+ * @param sessionId 连接ID，如果为 undefined 则表示关闭当前tab
+ */
+const closeTabDirectly = (sessionId?: number) => {
+  let idx = findSession(sessionId)
+
   if (sessionId) {
     _disconnect(sessionId)
   }

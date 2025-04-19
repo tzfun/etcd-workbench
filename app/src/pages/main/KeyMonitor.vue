@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import {computed, onMounted, PropType, reactive, ref} from "vue";
+import {computed, onMounted, onUnmounted, PropType, reactive, ref} from "vue";
 import {SessionData, KeyMonitorConfig} from "~/common/transport/connection.ts";
-import {_confirmSystem, _emitLocal, _listenLocal, EventName, KeyMonitorEvent} from "~/common/events.ts";
+import {_confirmSystem, _emitLocal, EventName, KeyWatchEvent} from "~/common/events.ts";
 import {
   _decodeBytesToString,
   _isEmpty,
@@ -11,10 +11,9 @@ import {
 } from "~/common/utils.ts";
 import {CodeDiff} from "v-code-diff";
 import {useTheme} from "vuetify";
-import Tree from "~/components/tree/Tree.vue";
-import {_useSettings} from "~/common/store.ts";
-import {_handleError, _keyMonitorTogglePauseState, _removeKeyMonitor} from "~/common/services.ts";
-import { EditorHighlightLanguage } from "~/common/types";
+import {_handleError, _removeKeyMonitor, _setKeyMonitor} from "~/common/services.ts";
+import {EditorHighlightLanguage} from "~/common/types";
+import {KeyValue} from "~/common/transport/kv.ts";
 
 const theme = useTheme()
 
@@ -23,42 +22,49 @@ const valueDiffDialog = reactive({
   key: <string>"",
   beforeValue: <string>"",
   afterValue: <string>"",
-  language: <string>""
+  language: <string>"",
+  beforeKv: <KeyValue | undefined> undefined,
+  afterKv: <KeyValue | undefined> undefined,
 })
-const monitorTreeDialog = ref(false)
-const kvMonitorTree = ref<InstanceType<typeof Tree>>()
-const isDarkTheme = computed<boolean>(() => {
-  return theme.global.name.value === 'dark'
-})
-const KEY_SPLITTER = computed<string>(() => {
-  return _useSettings().value.kvPathSplitter
-})
-const togglePauseLoading = ref<boolean>(false)
 
-const emits = defineEmits(['on-read'])
 const props = defineProps({
   session: {
     type: Object as PropType<SessionData>,
     required: true
   },
   events: {
-    type: Array<KeyMonitorEvent>,
+    type: Array<KeyWatchEvent>,
     required: true,
   }
 })
+const monitorListDialog = ref(false)
+const searchKeyword = ref<string>("");
+const isDarkTheme = computed<boolean>(() => {
+  return theme.global.name.value === 'dark'
+})
 
-onMounted(() => {
-  _listenLocal(EventName.KEY_MONITOR_CONFIG_CHANGE, e => {
-    if (e.session == props.session?.id) {
-      let key = e.key as string
-      if (e.type == 'create') {
-        kvMonitorTree.value?.addItemToTree(key)
-      } else if (e.type == 'remove') {
-        kvMonitorTree.value?.removeItemFromTree(key)
-      }
+const emits = defineEmits(['on-read'])
+const eventUnListens = reactive<Function[]>([])
+const monitorList = computed<KeyMonitorConfig[]>(() => {
+  if (props.session!.keyMonitorMap) {
+    let list = Object.values(props.session!.keyMonitorMap)
+
+    list = list.sort((a, b) => a.key.localeCompare(b.key))
+    if (!_isEmpty(searchKeyword.value)) {
+      list = list.filter(monitor => monitor.key.toLowerCase().includes(searchKeyword.value.toLowerCase()))
     }
+    return list
+  }
+  return []
+})
+onMounted(() => {
 
-  })
+})
+
+onUnmounted(() => {
+  for (let eventUnListen of eventUnListens) {
+    eventUnListen()
+  }
 })
 
 const markAllRead = () => {
@@ -68,29 +74,34 @@ const markAllRead = () => {
   emits('on-read', -1)
 }
 
-const read = (e: KeyMonitorEvent) => {
+const read = (e: KeyWatchEvent) => {
   if (!e.read) {
     e.read = true
     emits('on-read', 1)
   }
 
-  if (e.eventType == 'ValueChange') {
-    valueDiffDialog.key = e.key
+  if (e.eventType == 'Modify') {
+    valueDiffDialog.key = e.eventKey!
 
     let editorLang;
-    if(e.previousFormatted && e.currentFormatted) {
-      valueDiffDialog.beforeValue = e.previousFormatted.value
-      valueDiffDialog.afterValue = e.currentFormatted.value
-      editorLang = e.previousFormatted?.language as EditorHighlightLanguage
-    } else {
-      valueDiffDialog.beforeValue = _decodeBytesToString(e.previous)
-      valueDiffDialog.afterValue = _decodeBytesToString(e.current)
-      let validContent = _isEmpty(valueDiffDialog.beforeValue) ? valueDiffDialog.afterValue : valueDiffDialog.beforeValue
-      editorLang = _tryParseEditorLanguage(e.key, validContent, undefined, props.session?.namespace)
+    if (e.prevKv && e.curKv) {
+      valueDiffDialog.beforeKv = e.prevKv
+      valueDiffDialog.afterKv = e.curKv
+
+      if (e.prevKv.formattedValue && e.curKv.formattedValue) {
+        valueDiffDialog.beforeValue = e.prevKv.formattedValue.value
+        valueDiffDialog.afterValue = e.curKv.formattedValue.value
+        editorLang = e.prevKv.formattedValue.language as EditorHighlightLanguage
+      } else {
+        valueDiffDialog.beforeValue = _decodeBytesToString(e.prevKv.value)
+        valueDiffDialog.afterValue = _decodeBytesToString(e.curKv.value)
+        let validContent = _isEmpty(valueDiffDialog.beforeValue) ? valueDiffDialog.afterValue : valueDiffDialog.beforeValue
+        editorLang = _tryParseEditorLanguage(e.key, validContent, undefined, props.session?.namespace)
+      }
+
+      valueDiffDialog.language = _tryParseDiffLanguage(editorLang)
+      valueDiffDialog.show = true
     }
-    
-    valueDiffDialog.language = _tryParseDiffLanguage(editorLang)
-    valueDiffDialog.show = true
   }
 }
 
@@ -133,25 +144,28 @@ const editKeyMonitor = (key: string) => {
   }
 }
 
-const addMonitor = () => {
-  _emitLocal(EventName.EDIT_KEY_MONITOR, {
-    session: props.session?.id,
-    edit: false
-  })
-}
-
-const togglePauseState = () => {
-  let state = !props.session?.keyMonitorPaused
-  togglePauseLoading.value = true
-  _keyMonitorTogglePauseState(props.session?.id, state).then(() => {
-    props.session!.keyMonitorPaused = state
-  }).catch((e) => {
+const pauseMonitor = (config: KeyMonitorConfig, paused: boolean) => {
+  config.paused = paused
+  _setKeyMonitor(props.session?.id, config).then(() => {
+    props.session!.keyMonitorMap![config.key] = config
+    _emitLocal(EventName.KEY_MONITOR_CONFIG_CHANGE, {
+      session: props.session?.id,
+      key: config.key,
+      type: 'create',
+      config
+    })
+  }).catch(e => {
     _handleError({
       e,
       session: props.session
     })
-  }).finally(() => {
-    togglePauseLoading.value = false
+  })
+}
+
+const addMonitor = () => {
+  _emitLocal(EventName.EDIT_KEY_MONITOR, {
+    session: props.session?.id,
+    edit: false
   })
 }
 
@@ -176,48 +190,16 @@ const togglePauseState = () => {
       </v-btn>
       <v-btn class="text-none ml-2"
              prepend-icon="mdi-robot"
-             @click="monitorTreeDialog = true"
+             @click="monitorListDialog = true"
              color="#cc8f53"
       >My Monitors
       </v-btn>
 
       <v-spacer/>
 
-      <v-btn class="text-none my-2"
-             density="comfortable"
-             variant="tonal"
-             size="small"
-             :icon="session.keyMonitorPaused ? 'mdi-play' : 'mdi-pause'"
-             :title="session.keyMonitorPaused ? 'Start the monitor' : 'Stop the monitor'"
-             @click="togglePauseState"
-             :loading="togglePauseLoading"
-      ></v-btn>
-      <v-chip
-        v-if="session.keyMonitorPaused"
-        class="ma-2"
-        size="small"
-        color="secondary"
-        variant="outlined"
-        style="width: 78px;"
-      >
-        <v-icon icon="mdi-robot-dead-outline" start></v-icon>
-        Paused
-      </v-chip>
-      <v-chip
-        v-else
-        class="ma-2"
-        size="small"
-        color="success"
-        variant="outlined"
-        style="width: 78px;"
-      >
-        <v-icon icon="mdi-robot-happy" start></v-icon>
-        Runing
-      </v-chip>
-      
     </v-layout>
     <div style="height: calc(100% - 56px); overflow-y: auto;">
-      <v-list class="pa-0 overflow-hidden"
+      <v-list class="pa-0 my-5 overflow-hidden"
               :selectable="false"
               lines="two"
               v-if="events.length > 0"
@@ -226,7 +208,7 @@ const togglePauseState = () => {
           <v-list-item
               v-for="e in events"
               :key="e.id"
-              :title="e.key"
+              :title="e.eventKey"
               :subtitle="_timeFormat(e.eventTime)"
               @click="read(e)"
               density="comfortable"
@@ -235,15 +217,27 @@ const togglePauseState = () => {
             <template #prepend>
               <v-icon v-if="e.eventType == 'Create'">mdi-folder-plus-outline</v-icon>
               <v-icon v-else-if="e.eventType == 'Remove'">mdi-folder-remove-outline</v-icon>
-              <v-icon v-else-if="e.eventType == 'LeaseChange'">mdi-clock-time-nine</v-icon>
-              <v-icon v-else-if="e.eventType == 'ValueChange'">mdi-content-save-all-outline</v-icon>
+              <v-icon v-else-if="e.eventType == 'Modify'">mdi-content-save-all-outline</v-icon>
             </template>
 
             <template #append>
               <span v-if="e.eventType == 'Create'" class="text-medium-emphasis">Created</span>
               <span v-else-if="e.eventType == 'Remove'" class="text-medium-emphasis">Removed</span>
-              <span v-else-if="e.eventType == 'LeaseChange'" class="text-medium-emphasis">Lease Changed</span>
-              <span v-else-if="e.eventType == 'ValueChange'" class="text-medium-emphasis">Value Changed</span>
+              <span v-else-if="e.eventType == 'Modify'" class="text-medium-emphasis">Value Changed</span>
+
+              <v-tooltip location="end center"
+                         origin="start center"
+                         no-click-animation
+                         :text="`From monitor: ${e.key}`">
+                <template v-slot:activator="{ props }">
+                  <v-icon color="green"
+                          v-bind="props"
+                          class="ml-2"
+                          size="small"
+                  >mdi-robot
+                  </v-icon>
+                </template>
+              </v-tooltip>
             </template>
           </v-list-item>
         </transition-group>
@@ -272,6 +266,28 @@ const togglePauseState = () => {
           <v-icon class="cursor-pointer" @click="valueDiffDialog.show = false">mdi-close</v-icon>
         </template>
         <v-card-text>
+          <v-layout class="diff-kv-info">
+            <div>{{ valueDiffDialog.beforeKv!.lease }}</div>
+            <v-spacer></v-spacer>
+            <span class="text-medium-emphasis">Lease</span>
+            <v-spacer></v-spacer>
+            <div>{{ valueDiffDialog.afterKv!.lease }}</div>
+          </v-layout>
+          <v-layout class="diff-kv-info">
+            <div>{{ valueDiffDialog.beforeKv!.version }}</div>
+            <v-spacer></v-spacer>
+            <span class="text-medium-emphasis">Version</span>
+            <v-spacer></v-spacer>
+            <div>{{ valueDiffDialog.afterKv!.version }}</div>
+          </v-layout>
+          <v-layout class="diff-kv-info">
+            <div>{{ valueDiffDialog.beforeKv!.modRevision }}</div>
+            <v-spacer></v-spacer>
+            <span class="text-medium-emphasis">Modify Revision</span>
+            <v-spacer></v-spacer>
+            <div>{{ valueDiffDialog.afterKv!.modRevision }}</div>
+          </v-layout>
+
           <code-diff
               style="max-height: 60vh;min-height: 40vh;"
               :old-string="valueDiffDialog.beforeValue"
@@ -287,11 +303,11 @@ const togglePauseState = () => {
 
     <!--   key monitor-->
     <v-dialog
-        v-model="monitorTreeDialog"
+        v-model="monitorListDialog"
         eager
-        transition="slide-x-reverse-transition"
+        transition="slide-y-reverse-transition"
         scrollable
-        class="collection-drawer"
+        class="collection-drawer-bottom"
         contained
     >
 
@@ -313,19 +329,104 @@ const togglePauseState = () => {
         </template>
         <v-card-item style="height: calc(100% - 64px);">
           <div class="full-width full-height overflow-y-auto" style="height: 100%;">
-            <Tree ref="kvMonitorTree"
-                  :tree-id="`kv-collection-tree-${new Date().getTime()}`"
-                  :key-splitter="KEY_SPLITTER"
-                  :session="session"
-                  :show-node-suffix="false"
-                  :show-check-box="false"
-                  show-hover-remove
-                  style="height: 100%;"
-                  :enable-select="false"
-                  :init-items="Object.keys(session.keyMonitorMap!)"
-                  @on-click="editKeyMonitor"
-                  @on-click-remove="removeMonitor"
-            ></Tree>
+            <v-table hover>
+              <thead>
+              <tr>
+                <th class="key-col text-left font-weight-bold">
+                  Key
+                </th>
+                <th class="prefix-col text-left font-weight-bold">
+                  Prefix
+                </th>
+                <th class="status-col text-left font-weight-bold">
+                  Watch Status
+                </th>
+                <th class="op-col text-left">
+                  <v-text-field
+                      v-model="searchKeyword"
+                      density="compact"
+                      label="Search"
+                      prepend-inner-icon="mdi-magnify"
+                      variant="solo-filled"
+                      flat
+                      hide-details
+                      single-line
+                  ></v-text-field>
+                </th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr v-for="monitor in monitorList"
+                  :key="monitor.key"
+              >
+                <td class="key-col">{{ monitor.key }}</td>
+                <td class="prefix-col">
+                  <v-chip
+                      v-if="monitor.isPrefix"
+                      size="small"
+                      color="success"
+                      variant="outlined"
+                  >
+                    Yes
+                  </v-chip>
+                  <v-chip
+                      v-else
+                      size="small"
+                      color="secondary"
+                      variant="outlined"
+                  >
+                    No
+                  </v-chip>
+
+                </td>
+                <td class="status-col">
+                  <v-chip
+                      v-if="monitor.paused"
+                      size="small"
+                      color="secondary"
+                      variant="outlined"
+                      style="width: 78px;"
+                  >
+                    <v-icon icon="mdi-robot-dead-outline" start></v-icon>
+                    Paused
+                  </v-chip>
+                  <v-chip
+                      v-else
+                      size="small"
+                      color="success"
+                      variant="outlined"
+                      style="width: 78px;"
+                  >
+                    <v-icon icon="mdi-robot-happy" start></v-icon>
+                    Running
+                  </v-chip>
+                </td>
+                <td class="op-col">
+                  <v-btn text="Edit"
+                         color="primary"
+                         class="text-none"
+                         size="small"
+                         prepend-icon="mdi-pencil"
+                         @click="editKeyMonitor(monitor.key)"
+                  ></v-btn>
+                  <v-btn :text="monitor.paused ? 'Start' : 'Stop'"
+                         :color="monitor.paused ? 'yellow' : 'green'"
+                         class="text-none ml-2"
+                         size="small"
+                         :prepend-icon="monitor.paused ? 'mdi-play-circle-outline' : 'mdi-stop-circle-outline'"
+                         @click="pauseMonitor(monitor, !monitor.paused)"
+                  ></v-btn>
+                  <v-btn text="Remove"
+                         color="red"
+                         class="text-none ml-2"
+                         size="small"
+                         prepend-icon="mdi-delete"
+                         @click="removeMonitor(monitor.key)"
+                  ></v-btn>
+                </td>
+              </tr>
+              </tbody>
+            </v-table>
           </div>
         </v-card-item>
       </v-card>
@@ -338,9 +439,22 @@ const togglePauseState = () => {
 .event-list-leave-active {
   transition: all 0.5s ease;
 }
+
 .event-list-enter-from,
 .event-list-leave-to {
   opacity: 0;
   transform: translateX(30px);
+}
+
+.op-col {
+  min-width: 100px;
+}
+
+.diff-kv-info {
+  margin: 15px 0;
+  padding: 5px;
+}
+.diff-kv-info:hover {
+  background-color: rgba(227, 225, 225, 0.3);
 }
 </style>

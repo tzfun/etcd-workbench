@@ -9,10 +9,12 @@ use std::pin::Pin;
 use std::sync::Arc;
 use std::time::Duration;
 use std::{fs, u8};
-
+use std::net::IpAddr;
+use std::str::FromStr;
 use crate::api::settings::get_settings;
 use crate::error::LogicError;
 use crate::etcd::wrapped_etcd_client::WrappedEtcdClient;
+use crate::ssh::ssh_client::SshClientHandler;
 use crate::ssh::ssh_tunnel::SshTunnel;
 use crate::transport::connection::{Connection, ConnectionUser};
 use crate::transport::kv::{
@@ -25,9 +27,7 @@ use crate::transport::maintenance::{
 use crate::transport::user::{SerializablePermission, SerializableUser};
 use crate::utils::k8s_formatter;
 use etcd_client::{
-    AlarmAction, AlarmType, Client, CompactionOptions, ConnectOptions, Error, GetOptions,
-    GetResponse, Identity, LeaseGrantOptions, LeaseTimeToLiveOptions, PutOptions,
-    RoleRevokePermissionOptions, SortOrder, SortTarget,
+    AlarmAction, AlarmType, Client, CompactionOptions, ConnectOptions, Error, GetOptions, GetResponse, Identity, LeaseGrantOptions, LeaseTimeToLiveOptions, PutOptions, RoleRevokePermissionOptions, SortOrder, SortTarget, WatchOptions, WatchStream, Watcher
 };
 use log::{debug, error, info, warn};
 use russh::client;
@@ -38,6 +38,8 @@ use tokio::select;
 use tokio::sync::{mpsc, oneshot};
 use tokio::task::JoinHandle;
 
+use super::etcd_connector_handler::EtcdConnectorHandler;
+
 pub struct EtcdConnector {
     namespace: Option<String>,
     client: WrappedEtcdClient,
@@ -46,11 +48,12 @@ pub struct EtcdConnector {
 }
 
 impl EtcdConnector {
-    pub async fn new(connection: Connection) -> Result<Self, LogicError> {
+    pub async fn new(connection: Connection, handler: EtcdConnectorHandler) -> Result<Self, LogicError> {
         let settings = get_settings().await?;
         let mut connection_config = connection.clone();
 
         let mut option = ConnectOptions::new()
+            .with_keep_alive(Duration::from_secs(10), Duration::from_secs(5))
             .with_keep_alive_while_idle(true)
             .with_tcp_keepalive(Duration::from_secs(5))
             .with_connect_timeout(Duration::from_secs(settings.connect_timeout_seconds))
@@ -122,9 +125,11 @@ impl EtcdConnector {
         let mut port = connection.port;
         let namespace = connection.namespace.clone();
 
+
         let ssh = if let Some(ssh) = connection.ssh {
+
             let ssh_context =
-                SshTunnel::new(ssh, Box::leak(host.clone().into_boxed_str()), port).await?;
+                SshTunnel::new(ssh, Box::leak(host.clone().into_boxed_str()), port, handler).await?;
             port = ssh_context.get_proxy_port();
             host.clear();
             host.push_str("127.0.0.1");
@@ -162,7 +167,7 @@ impl EtcdConnector {
     }
 
     pub async fn test_connection(&self) -> Result<(), Error> {
-        let key = self.prefix_namespace("/");
+        let key = self.fill_prefix_namespace("/");
         let response = self
             .client
             .get_inner()
@@ -189,7 +194,7 @@ impl EtcdConnector {
         let mut cursor: Vec<u8> = cursor_key.into();
         cursor.push(0);
 
-        let key = self.prefix_namespace(cursor);
+        let key = self.fill_prefix_namespace(cursor);
         let end_key = self.prefix_namespace_to_range_end(vec![0]);
 
         let get_options = GetOptions::new()
@@ -225,7 +230,7 @@ impl EtcdConnector {
         key: impl Into<Vec<u8>>,
         option: Option<GetOptions>,
     ) -> Result<GetResponse, Error> {
-        let path = self.prefix_namespace(key);
+        let path = self.fill_prefix_namespace(key);
         self.client.kv_get_request(path, option).await
     }
 
@@ -234,7 +239,7 @@ impl EtcdConnector {
         &mut self,
         key: impl Into<Vec<u8>>,
     ) -> Result<SerializableKeyValue, LogicError> {
-        let path = self.prefix_namespace(key);
+        let path = self.fill_prefix_namespace(key);
         let kv = self.kv_get_by_option(path, None).await?;
 
         self.find_first_kv(kv)
@@ -246,7 +251,7 @@ impl EtcdConnector {
         key: impl Into<Vec<u8>>,
         version: i64,
     ) -> Result<SerializableKeyValue, LogicError> {
-        let path = self.prefix_namespace(key);
+        let path = self.fill_prefix_namespace(key);
         let kv = self
             .kv_get_by_option(path, Some(GetOptions::new().with_revision(version)))
             .await?;
@@ -259,7 +264,7 @@ impl EtcdConnector {
         &mut self,
         prefix: impl Into<Vec<u8>>,
     ) -> Result<SearchResult, LogicError> {
-        let key = self.prefix_namespace(prefix);
+        let key = self.fill_prefix_namespace(prefix);
         let option = GetOptions::new()
             .with_prefix()
             .with_limit(50)
@@ -305,7 +310,7 @@ impl EtcdConnector {
 
     /// 获取Key的数量
     pub async fn kv_count(&mut self) -> Result<i64, Error> {
-        let key = self.prefix_namespace("/");
+        let key = self.fill_prefix_namespace("/");
         let response = self
             .client
             .kv_get_request(key, Some(GetOptions::new().with_count_only()))
@@ -321,7 +326,7 @@ impl EtcdConnector {
         ttl: Option<i64>,
     ) -> Result<Option<SerializableKeyValue>, Error> {
         let mut lease_id = 0;
-        let final_key = self.prefix_namespace(key);
+        let final_key = self.fill_prefix_namespace(key);
         if let Some(ttl_param) = ttl {
             let response = self.client.lease_grant(ttl_param, None).await?;
             lease_id = response.id()
@@ -362,7 +367,7 @@ impl EtcdConnector {
         value: impl Into<Vec<u8>>,
         lease: i64,
     ) -> Result<(), Error> {
-        let final_key = self.prefix_namespace(key);
+        let final_key = self.fill_prefix_namespace(key);
         self.client
             .kv_put_request(
                 final_key,
@@ -380,7 +385,7 @@ impl EtcdConnector {
         for key in keys {
             let result = self
                 .client
-                .kv_delete_request(self.prefix_namespace(key), None)
+                .kv_delete_request(self.fill_prefix_namespace(key), None)
                 .await;
             if result.is_ok() {
                 success += 1;
@@ -398,7 +403,7 @@ impl EtcdConnector {
         end: i64,
     ) -> Result<Vec<i64>, Error> {
         let mut history = Vec::new();
-        let final_key = self.prefix_namespace(key);
+        let final_key = self.fill_prefix_namespace(key);
         self.kv_get_history_versions0(final_key, end, start, end, &mut history)
             .await;
         Ok(history)
@@ -454,7 +459,7 @@ impl EtcdConnector {
         self.get_namespace_unchecked().clone().into_bytes()
     }
 
-    fn prefix_namespace(&self, end_key: impl Into<Vec<u8>>) -> Vec<u8> {
+    pub fn fill_prefix_namespace(&self, end_key: impl Into<Vec<u8>>) -> Vec<u8> {
         if self.has_namespace() {
             let mut full_key = self.root_key();
             full_key.append(&mut end_key.into());
@@ -894,19 +899,23 @@ impl EtcdConnector {
     pub async fn metrics(&self) -> Result<Vec<(String, String)>, LogicError> {
         let response = if let Some(tls) = &self.connection_config.tls {
             let mut client_builder = reqwest::Client::builder()
-                .use_native_tls()
-                .danger_accept_invalid_hostnames(true);
+                .use_rustls_tls()
+                .tls_sni(true);
             for cert in &tls.cert {
                 let certificate = reqwest::Certificate::from_pem(cert.as_slice())?;
                 client_builder = client_builder.add_root_certificate(certificate);
             }
 
             if let Some(identity) = &tls.identity {
-                let id = reqwest::Identity::from_pkcs8_pem(
-                    identity.cert.as_slice(),
-                    identity.key.as_slice(),
-                )?;
+                let buf = [&identity.key[..], &identity.cert[..]].concat();
+                let id = reqwest::Identity::from_pem(buf.as_slice())?;
                 client_builder = client_builder.identity(id);
+            }
+            
+            if let Some(domain) = &tls.domain {
+                if let Ok(ip_addr) = IpAddr::from_str(domain.as_str()) {
+                    client_builder = client_builder.local_address(Some(ip_addr));
+                }
             }
 
             let url = format!(
@@ -940,6 +949,13 @@ impl EtcdConnector {
         }
 
         Ok(metrics)
+    }
+
+    /// Key监听
+    pub async fn watch(&mut self, key: impl Into<Vec<u8>>, options: Option<WatchOptions>,) -> Result<(Watcher, WatchStream), LogicError> {
+        let full_key = self.fill_prefix_namespace(key);
+        let (watcher, stream) = self.client.watch(full_key, options).await?;
+        Ok((watcher, stream))
     }
 }
 

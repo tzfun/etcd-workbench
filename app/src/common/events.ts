@@ -5,7 +5,8 @@ import { WebviewWindow } from "@tauri-apps/api/window";
 import mitt, { Emitter, EventType, Handler } from "mitt";
 import { DialogItem, TipsItem } from "~/common/types.ts";
 import { _relativeTimeFormat } from "~/common/utils.ts";
-import { FormattedValue } from "./transport/kv";
+import {KeyValue} from "./transport/kv";
+import {KeyMonitorConfig} from "~/common/transport/connection.ts";
 
 const localEvents = mitt();
 
@@ -22,23 +23,34 @@ export enum EventName {
     CONFIRM_EXIT = 'confirm_exit',
     EDIT_KEY_MONITOR = 'editKeyMonitor',
     KEY_MONITOR_CONFIG_CHANGE = 'keyMonitorChange',
-    KEY_MONITOR_EVENT = 'key_monitor',
-    SET_SETTING_ANCHOR = 'setSettingAnchor'
+    KEY_WATCH_EVENT = 'key_watch_event',
+    KEY_MONITOR_MODIFIED_BY_SERVER  ="key_monitor_modified_by_server",
+    SET_SETTING_ANCHOR = 'setSettingAnchor',
+    SESSION_DISCONNECTED = 'sessionDisconnected',
 }
 
-export type KeyMonitorEventType = "Remove" | "Create" | "LeaseChange" | "ValueChange"
+export type KeyWatchEventType = "Remove" | "Create" | "Modify"
 
-export interface KeyMonitorEvent {
+export interface KeyWatchEvent {
     session: number,
     key: string,
-    eventType: KeyMonitorEventType,
+    eventType: KeyWatchEventType,
     eventTime: number,
-    previous: null | any,
-    current: null | any,
-    previousFormatted?: FormattedValue
-    currentFormatted?: FormattedValue
+    prevKv?: KeyValue,
+    curKv?: KeyValue,
     read?: boolean,
-    id?: number
+    id?: number,
+    eventKey?: string,
+}
+
+export interface KeyMonitorModifiedByServerEvent {
+    session: number,
+    config: KeyMonitorConfig,
+}
+
+export interface SessionDisconnectedEvent {
+    sessionId: number,
+    case: string | Record<string, string>,
 }
 
 export function _useLocalEvents(): Emitter<Record<EventType, any>> {
@@ -47,6 +59,10 @@ export function _useLocalEvents(): Emitter<Record<EventType, any>> {
 
 export function _listenLocal(type: EventName, handler: Handler<any>) {
     localEvents.on(type, handler)
+}
+
+export function _unListenLocal(type: EventName, handler: Handler<any>) {
+    localEvents.off(type, handler)
 }
 
 export function _emitLocal(eventName: EventName, eventPayload?: any) {
@@ -79,8 +95,8 @@ export function _loading(state: boolean, text?: string) {
     })
 }
 
-export function _confirm(title: string, text: string,): Promise<undefined> {
-    return new Promise((resolve, reject) => {
+export function _confirm(title: string, text: string, zIndex?: number): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
         let dialog: DialogItem = {
             value: true,
             content: text,
@@ -104,15 +120,15 @@ export function _confirm(title: string, text: string,): Promise<undefined> {
                         resolve(undefined)
                     }
                 }
-            ]
+            ],
+            zIndex
         }
 
         _emitLocal(EventName.DIALOG, dialog)
     })
-
 }
 
-export function _confirmSystem(text: string): Promise<undefined> {
+export function _confirmSystem(text: string): Promise<void> {
     return _confirm('System', text)
 }
 
@@ -160,24 +176,31 @@ export function _dialogContent(content: string) {
     _emitLocal(EventName.DIALOG, dialog)
 }
 
-export function _alertError(text: string) {
-    let dialog: DialogItem = {
-        value: true,
-        title: "Error",
-        content: text,
-        icon: 'mdi-alert-circle-outline',
-        iconColor: "red",
-        buttons: [
-            {
-                text: "Close",
-                callback: (item: DialogItem) => {
-                    item.value = false
-                }
-            }
-        ]
-    }
+export function _alertError(text: string):Promise<void> {
+    return _alert(text)
+}
 
-    _emitLocal(EventName.DIALOG, dialog)
+export function _alert(text: string, title?: string):Promise<void> {
+    return new Promise<void>(resolve => {
+        let dialog: DialogItem = {
+            value: true,
+            title: title ? title : "System",
+            content: text,
+            icon: 'mdi-alert-circle-outline',
+            iconColor: "red",
+            buttons: [
+                {
+                    text: "Close",
+                    callback: (item: DialogItem) => {
+                        item.value = false
+                        resolve()
+                    }
+                }
+            ]
+        }
+
+        _emitLocal(EventName.DIALOG, dialog)
+    })
 }
 
 export function _tipError(text: string) {
@@ -234,7 +257,7 @@ export function _genNewVersionUpdateMessage(manifest: UpdateManifest): string {
     const regex = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/;
     const match = manifest.date.match(regex);
 
-    let timeDes = undefined
+    let timeDes
     if (match) {
         // 构造新的日期字符串
         const formattedDateString = `${match[1]}T${match[2]}Z`

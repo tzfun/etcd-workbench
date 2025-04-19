@@ -69,9 +69,6 @@ pub struct ConnectionInfo {
     //  key监控列表
     #[serde(default = "default_key_monitor_list")]
     pub key_monitor_list: Vec<KeyMonitorConfig>,
-    //  key监控是否暂停
-    #[serde(default = "default_key_monitor_paused")]
-    pub key_monitor_paused: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -84,28 +81,33 @@ pub struct SessionData {
     pub namespace: Option<String>,
     pub key_collection: Option<Vec<String>>,
     pub key_monitor_list: Option<Vec<KeyMonitorConfig>>,
-    pub key_monitor_paused: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all="camelCase")]
 pub struct KeyMonitorConfig {
-    //  key值（全路径）
+    //  key值（相对路径）
     pub key: String,
-    pub interval_seconds: u64,
-    pub monitor_lease_change: bool,
+    #[serde(default = "default_key_monitor_is_prefix")]
+    pub is_prefix: bool,
     pub monitor_value_change: bool,
     pub monitor_create: bool,
     pub monitor_remove: bool,
+    //  监听是否暂停
+    #[serde(default = "default_key_monitor_paused")]
+    pub paused: bool,
+}
+
+unsafe impl Send for KeyMonitorConfig {
 }
 
 impl KeyMonitorConfig {
     pub fn merge(&mut self, other: &KeyMonitorConfig) {
-        self.interval_seconds = other.interval_seconds;
-        self.monitor_lease_change = other.monitor_lease_change;
+        self.is_prefix = other.is_prefix;
         self.monitor_value_change = other.monitor_value_change;
         self.monitor_create = other.monitor_create;
         self.monitor_remove = other.monitor_remove;
+        self.paused = other.paused;
     }
 }
 
@@ -119,6 +121,10 @@ fn default_key_collection() -> Vec<String> {
 
 fn default_key_monitor_list() -> Vec<KeyMonitorConfig> {
     vec![]
+}
+
+fn default_key_monitor_is_prefix() -> bool {
+    false
 }
 
 fn default_key_monitor_paused() -> bool {

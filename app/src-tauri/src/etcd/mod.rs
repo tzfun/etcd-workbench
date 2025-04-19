@@ -1,32 +1,36 @@
 #![allow(unused)]
-use std::sync::Arc;
 use std::sync::atomic::{AtomicI32, Ordering};
+use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use dashmap::mapref::one::{Ref, RefMut};
-use dashmap::DashMap;
-use etcd_client::Error;
-use lazy_static::lazy_static;
-use tauri::Window;
-use tokio::sync::Mutex;
 use crate::api::connection;
 use crate::error::LogicError;
 use crate::etcd::etcd_connector::EtcdConnector;
-use crate::etcd::key_monitor::KeyMonitor;
-use crate::transport::connection::{Connection, ConnectionInfo, SessionData};
+use crate::transport::connection::{Connection, ConnectionInfo, KeyMonitorConfig, SessionData};
+use crate::transport::event::KeyMonitorModifiedByServerEvent;
+use dashmap::mapref::one::{Ref, RefMut};
+use dashmap::DashMap;
+use etcd_client::Error;
+use etcd_connector_handler::EtcdConnectorHandler;
+use key_watcher::KeyWatcher;
+use lazy_static::lazy_static;
+use log::{error, info};
+use tauri::{AppHandle, Window};
+use tokio::sync::Mutex;
 
 pub mod etcd_connector;
-mod wrapped_etcd_client;
+pub mod etcd_connector_handler;
 mod test;
-pub mod key_monitor;
+mod wrapped_etcd_client;
+pub mod key_watcher;
 
 static CONNECTION_ID_COUNTER: AtomicI32 = AtomicI32::new(1);
 
 lazy_static! {
-    static ref CONNECTION_POOL:DashMap<i32, EtcdConnector> = DashMap::with_capacity(2);
-    static ref CONNECTION_CONFIG:DashMap<i32, Connection> = DashMap::with_capacity(2);
+    static ref CONNECTION_POOL: DashMap<i32, EtcdConnector> = DashMap::with_capacity(2);
+    static ref CONNECTION_CONFIG: DashMap<i32, Connection> = DashMap::with_capacity(2);
     static ref CONNECTION_INFO_POOL: DashMap<i32, ConnectionInfo> = DashMap::new();
-    static ref CONNECTION_KEY_MONITORS: DashMap<i32, Arc<Mutex<KeyMonitor>>> = DashMap::new();
+    static ref CONNECTION_KEY_WATCHERS: DashMap<i32, KeyWatcher> = DashMap::new();
 }
 
 fn gen_connection_id() -> i32 {
@@ -40,14 +44,22 @@ pub fn now_timestamp() -> u128 {
         .as_millis()
 }
 
-pub async fn new_connector(name: String, connection: Connection, window: Window) -> Result<SessionData, LogicError> {
+pub async fn new_connector(
+    name: String,
+    connection: Connection,
+    app_handle: AppHandle,
+    window: Window,
+) -> Result<SessionData, LogicError> {
     let user = if let Some(u) = &connection.user {
         Some(u.username.clone())
     } else {
         None
     };
     let namespace = connection.namespace.clone();
-    let mut connector = EtcdConnector::new(connection.clone()).await?;
+    let connector_id = gen_connection_id();
+
+    let handler = EtcdConnectorHandler::new(app_handle, connector_id);
+    let mut connector = EtcdConnector::new(connection.clone(), handler.clone()).await?;
     connector.test_connection().await?;
 
     let root = if let Some(u) = &user {
@@ -56,42 +68,32 @@ pub async fn new_connector(name: String, connection: Connection, window: Window)
         true
     };
 
-    let connector_id = gen_connection_id();
     CONNECTION_POOL.insert(connector_id, connector);
 
     CONNECTION_CONFIG.insert(connector_id, connection);
 
-
     let info_result = connection::get_connection(name).await?;
-    
+
     let mut connection_saved = false;
     let mut key_collection = None;
     let mut key_monitor_list = None;
-    let mut key_monitor_paused = false;
     if let Some(info) = info_result {
         key_collection = Some((&info.key_collection).clone());
         key_monitor_list = Some((&info.key_monitor_list).clone());
-        key_monitor_paused = info.key_monitor_paused;
         connection_saved = true;
-        
+
         CONNECTION_INFO_POOL.insert(connector_id, info);
     }
 
-    let mut key_monitor = KeyMonitor::new(connector_id, window);
+    let mut key_watcher = KeyWatcher::new(connector_id, window, handler);
     let mut has_key_monitor = false;
     if let Some(monitor_list) = &key_monitor_list {
         for config in monitor_list {
-            key_monitor.add_config(config.clone());
+            key_watcher.set_config(config.clone()).await?;
         }
         has_key_monitor = !monitor_list.is_empty();
     }
-
-    let key_monitor_lock = Arc::new(Mutex::new(key_monitor));
-    if has_key_monitor && !key_monitor_paused {
-        KeyMonitor::start(Arc::clone(&key_monitor_lock));
-        log::info!("Started key monitor when create: {}", connector_id);
-    }
-    CONNECTION_KEY_MONITORS.insert(connector_id, key_monitor_lock);
+    CONNECTION_KEY_WATCHERS.insert(connector_id, key_watcher);
 
     Ok(SessionData {
         id: connector_id,
@@ -101,7 +103,6 @@ pub async fn new_connector(name: String, connection: Connection, window: Window)
         connection_saved,
         key_collection,
         key_monitor_list,
-        key_monitor_paused
     })
 }
 
@@ -121,13 +122,33 @@ pub fn get_connection_info_optional(id: &i32) -> Option<RefMut<'_, i32, Connecti
     CONNECTION_INFO_POOL.get_mut(id)
 }
 
-pub fn get_key_monitor(id: &i32) -> Ref<'_, i32, Arc<Mutex<KeyMonitor>>> {
-    CONNECTION_KEY_MONITORS.get(id).unwrap()
+pub fn get_key_watcher(id: &i32) -> RefMut<'_, i32, KeyWatcher> {
+    CONNECTION_KEY_WATCHERS.get_mut(id).unwrap()
+}
+
+/// 重试key watcher
+pub fn retry_key_watcher(id: i32, window: Window, config: KeyMonitorConfig) {
+    tokio::spawn(async move {
+        let key = config.key.clone();
+        let mut config_clone = config.clone();
+        if let Err(e) = get_key_watcher(&id).retry_config(config).await {
+            error!("Failed to retry key watcher '{}': {:?}", key, e);
+            config_clone.paused = true;
+            connection::set_key_monitor(id, config_clone.clone()).await;
+            window.emit("key_monitor_modified_by_server", KeyMonitorModifiedByServerEvent {
+                session: id,
+                config: config_clone,
+            });
+        } else {
+            info!("Retry watcher successful '{}'", key);
+        }
+    });
 }
 
 pub async fn remove_connector(id: &i32) {
     if let Some((_, connector)) = CONNECTION_POOL.remove(id) {
-        drop(connector)
+        drop(connector);
+        info!("Removed connection: {}", id);
     }
 
     CONNECTION_CONFIG.remove(id);
@@ -136,7 +157,7 @@ pub async fn remove_connector(id: &i32) {
         drop(info)
     }
 
-    if let Some((_, lock)) = CONNECTION_KEY_MONITORS.remove(id) {
-        KeyMonitor::stop(lock).await;
+    if let Some((_, mut key_watcher)) = CONNECTION_KEY_WATCHERS.remove(id) {
+        key_watcher.remove_config_all().await;
     }
 }

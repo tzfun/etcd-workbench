@@ -56,7 +56,13 @@
         "icons/windows/128x128.png",
         "icons/windows/128x128@2x.png",
         "icons/windows/icon.ico"
-      ]
+      ],
+      "windows": {
+        "allowDowngrades": false,
+        "nsis": {
+          "installerIcon": "icons/windows/icon.ico"
+        }
+      }
     }
   }
 }

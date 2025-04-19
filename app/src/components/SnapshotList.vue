@@ -8,11 +8,12 @@ import {
 } from "~/common/services.ts";
 import {SnapshotInfo, SnapshotState, SnapshotStateEvent} from "~/common/transport/maintenance.ts";
 import {listen} from "@tauri-apps/api/event";
-import {_confirmSystem, _listenLocal, EventName} from "~/common/events.ts";
+import {_confirmSystem, _listenLocal, _unListenLocal, EventName} from "~/common/events.ts";
 import {_openFolder} from "~/common/windows.ts";
 import {_byteTextFormat, _nonEmpty, _pointInRect} from "~/common/utils.ts";
 import {appWindow} from "@tauri-apps/api/window";
 import {VSheet} from "vuetify/components";
+import {Handler} from "mitt";
 
 const snapshotList = ref<SnapshotInfo[]>([])
 const showList = ref<boolean>(false)
@@ -45,10 +46,14 @@ onMounted(async () => {
     })
   })
 
-  _listenLocal(EventName.SNAPSHOT_CREATE, e => {
+  const snapshotCreateEventHandler: Handler<any> = e => {
     console.log("list changed")
     snapshotList.value.push(e as SnapshotInfo)
     showList.value = true
+  }
+  _listenLocal(EventName.SNAPSHOT_CREATE, snapshotCreateEventHandler)
+  eventUnListens.push(() => {
+    _unListenLocal(EventName.SNAPSHOT_CREATE, snapshotCreateEventHandler)
   })
 
   eventUnListens.push(await listen(EventName.SNAPSHOT_STATE, e => {

@@ -24,6 +24,7 @@ const props = defineProps({
     required: true
   }
 })
+const logoRef = ref<InstanceType<typeof HTMLDivElement>>()
 
 const formData = ref<ConnectionForm>(JSON.parse(JSON.stringify(DefaultConnection)))
 const formRules = ref({
@@ -380,13 +381,25 @@ const saveConnection = () => {
 
   })
 }
+const scrollToTop = () => {
+  if (logoRef.value) {
+    logoRef.value.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    })
+  }
+}
+
+defineExpose({
+  scrollToTop
+})
 </script>
 
 <template>
   <v-layout class="fill-height w-100 overflow-y-auto ml-0 mr-0 pl-0 pr-0 pt-12 pb-12">
     <div class="mx-auto my-auto">
       <div class="header user-select-none cursor-default">
-        <div class="header-icon">
+        <div class="header-icon" ref="logoRef">
           <EtcdLogo :width="100" :height="100"></EtcdLogo>
         </div>
         <h1 class="pt-0 pb-0 pl-5 header-title">Server Connection</h1>

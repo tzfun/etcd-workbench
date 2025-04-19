@@ -150,3 +150,36 @@ button {
 .icon-monitor {
   background: url("/monitor.png") no-repeat scroll 0 0 transparent;
 }
+
+//  全屏抽屉 - 右侧
+.collection-drawer-right .v-overlay__content {
+  width: 600px;
+  height: 100%;
+  margin: 0;
+  position: absolute;
+  right: 0;
+  padding: 0;
+  border-radius: 0;
+}
+
+.collection-drawer-right .v-card-item__content {
+  height: 100%;
+  align-self: start;
+}
+
+//  全屏抽屉 - 底部
+.collection-drawer-bottom .v-overlay__content {
+  width: 100%;
+  max-width: 100%;
+  height: 70%;
+  margin: 0;
+  position: absolute;
+  bottom: 0;
+  padding: 0;
+  border-radius: 0;
+}
+
+.collection-drawer-bottom .v-card-item__content {
+  height: 100%;
+  align-self: start;
+}

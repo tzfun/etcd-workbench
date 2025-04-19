@@ -105,7 +105,7 @@ const showTitle = (_treeId: string, node: TreeNode) => {
 }
 
 const addDiyDom = (_treeId: string, node: TreeNode) => {
-  if (!node || node.isParent) {
+  if (!node) {
     return
   }
   diyDom(node, false)
@@ -119,21 +119,25 @@ const diyDom = (node: TreeNode, refresh: boolean) => {
       //  @ts-ignore
       let starDom = $(`#${node.tId}${IDMark_A} .icon-star-filled`)
 
-      if (props.session!.keyCollectionSet!.has(node.id)) {
-        if (!starDom || starDom.length == 0) {
-          //  @ts-ignore
-          aObj = $("#" + node.tId + IDMark_A)
-          let star = `<span class="icon-star-filled tree-node-icon" onfocus='this.blur();'></span>`
-          aObj.append(star)
-        }
-      } else {
-        if (starDom) {
-          starDom.remove()
+      if (!node.isParent) {
+        //  只作用于文件
+        if (props.session!.keyCollectionSet!.has(node.id)) {
+          if (!starDom || starDom.length == 0) {
+            //  @ts-ignore
+            aObj = $("#" + node.tId + IDMark_A)
+            let star = `<span class="icon-star-filled tree-node-icon" onfocus='this.blur();'></span>`
+            aObj.append(star)
+          }
+        } else {
+          if (starDom) {
+            starDom.remove()
+          }
         }
       }
 
       //  @ts-ignore
       let monitorDom = $(`#${node.tId}${IDMark_A} .icon-monitor`)
+      //  即可以作用于目录也可以作用于文件
       if (props.session!.keyMonitorMap![node.id]) {
         if (!monitorDom || monitorDom.length == 0) {
           if (!aObj) {
@@ -151,7 +155,7 @@ const diyDom = (node: TreeNode, refresh: boolean) => {
     } else {
       //  只添加
       let aObj
-      if (props.session!.keyCollectionSet!.has(node.id)) {
+      if (!node.isParent && props.session!.keyCollectionSet!.has(node.id)) {
         //  @ts-ignore
         aObj = $("#" + node.tId + IDMark_A)
         let star = `<span class="icon-star-filled tree-node-icon" onfocus='this.blur();'></span>`

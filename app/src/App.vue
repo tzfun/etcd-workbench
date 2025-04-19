@@ -7,7 +7,7 @@ import { useTheme } from "vuetify";
 import {
   _alertError,
   _listenLocal,
-  _loading,
+  _loading, _unListenLocal,
   EventName
 } from "~/common/events.ts";
 import { _isDebugModel } from "~/common/services.ts";
@@ -21,6 +21,8 @@ import WindowsSystemBar from "~/components/system-bar/WindowsSystemBar.vue";
 import AppMain from "~/pages/main/AppMain.vue";
 import AppSetting from "~/pages/setting/AppSetting.vue";
 import { _checkUpdate, _installUpdate } from './common/updater';
+import IconEtcd from "~/components/icon/IconEtcd.vue";
+import {Handler} from "mitt";
 
 const DEFAULT_LOADING_TEXT: string = "Loading..."
 const loading = ref<boolean>(false)
@@ -64,13 +66,16 @@ onMounted(async () => {
   if (_isMac() || _isLinux()) {
     document.getElementById("app")!.classList.add("main-window-radius")
   }
-
-  _listenLocal(EventName.LOADING, (e: { state: boolean, text: string | undefined }) => {
+  const loadingEventHandler: Handler<any> = (e: { state: boolean, text: string | undefined }) => {
     loadingText.value = e.text || DEFAULT_LOADING_TEXT
     loading.value = e.state
+  }
+  _listenLocal(EventName.LOADING, loadingEventHandler)
+  eventUnListens.push(() => {
+    _unListenLocal(EventName.LOADING, loadingEventHandler)
   })
 
-  _listenLocal(EventName.DIALOG, (e) => {
+  const dialogEventHandler: Handler<any> = (e) => {
     let dialog = e as DialogItem
     let idx = -1;
     for (let i = 0; i < dialogs.value.length; i++) {
@@ -86,9 +91,13 @@ onMounted(async () => {
     } else {
       dialogs.value[idx] = dialog
     }
+  }
+  _listenLocal(EventName.DIALOG, dialogEventHandler)
+  eventUnListens.push(() => {
+    _unListenLocal(EventName.DIALOG, dialogEventHandler)
   })
 
-  _listenLocal(EventName.TIP, (e) => {
+  const tipEventHandler: Handler<any> = (e) => {
     let tip = e as TipsItem
     let idx = -1;
     for (let i = 0; i < tips.value.length; i++) {
@@ -105,6 +114,10 @@ onMounted(async () => {
     } else {
       tips.value[idx] = tip
     }
+  }
+  _listenLocal(EventName.TIP, tipEventHandler)
+  eventUnListens.push(() => {
+    _unListenLocal(EventName.TIP, tipEventHandler)
   })
 
   if (windowLabel.value == 'main') {
@@ -200,7 +213,7 @@ const disableWebviewNativeEvents = () => {
     //  ctrl + i
     //  ctrl + u
     //  ctrl + j
-    if (e.ctrlKey && /^[priuj]$/.test(key) == true) {
+    if (e.ctrlKey && /^[priuj]$/.test(key)) {
       console.log("pass a",key)
       e.preventDefault()
       return false
@@ -250,6 +263,7 @@ const disableWebviewNativeEvents = () => {
         data-tauri-drag-region
         max-width="320"
         persistent
+        style="z-index: 2000;"
     >
       <v-list
           class="py-2"
@@ -262,16 +276,7 @@ const disableWebviewNativeEvents = () => {
         >
           <template v-slot:prepend>
             <div class="pe-4">
-              <v-icon size="x-large">
-                <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="30" height="30">
-                  <path
-                      d="M474.112 464a58.432 58.432 0 1 1-58.464-58.4 58.432 58.432 0 0 1 58.464 58.4zM549.632 464A58.432 58.432 0 1 0 608 405.632a58.432 58.432 0 0 0-58.368 58.368z"
-                      fill="#1296db" p-id="5837"></path>
-                  <path
-                      d="M947.2 527.424a152.8 152.8 0 0 1-12.8 0.512 168.256 168.256 0 0 1-74.144-17.312 686.176 686.176 0 0 0 9.984-131.2 681.344 681.344 0 0 0-84.896-100.608 168.768 168.768 0 0 1 59.84-64l10.976-6.816-8.544-9.6a446.88 446.88 0 0 0-156.16-113.92l-11.872-5.184-3.008 12.544a168.16 168.16 0 0 1-42.336 76.8A678.4 678.4 0 0 0 512 118.208a679.04 679.04 0 0 0-122.144 50.304 168.128 168.128 0 0 1-42.208-76.8l-3.04-12.544-11.84 5.152A451.424 451.424 0 0 0 176.48 198.4l-8.576 9.6 10.944 6.72A168.448 168.448 0 0 1 238.56 278.4a684.288 684.288 0 0 0-84.736 100.224 686.624 686.624 0 0 0 9.6 132.096 167.904 167.904 0 0 1-73.6 17.12c-4.544 0-8.8-0.16-12.8-0.512L64 526.432l1.216 12.8A444.416 444.416 0 0 0 125.248 723.2l6.4 11.104 9.824-8.352a168.128 168.128 0 0 1 79.584-37.28 682.016 682.016 0 0 0 68.096 110.944 689.088 689.088 0 0 0 129.088 31.712 167.776 167.776 0 0 1-10.752 88.096l-4.896 11.936 12.608 2.784a451.392 451.392 0 0 0 96.8 10.656l96.672-10.72 12.608-2.784-4.928-11.968a168.224 168.224 0 0 1-10.72-88.128 688.16 688.16 0 0 0 128.576-31.648 682.88 682.88 0 0 0 68.192-111.04 168.896 168.896 0 0 1 80 37.312l9.824 8.32 6.4-11.104a442.784 442.784 0 0 0 60-183.808l1.216-12.8z m-297.152 157.152a521.12 521.12 0 0 1-276.832 0 536.384 536.384 0 0 1-59.264-124.8 530.08 530.08 0 0 1-24.96-136.96 527.488 527.488 0 0 1 100.32-95.52A534.176 534.176 0 0 1 512 260.672a536.352 536.352 0 0 1 122.144 66.4 530.56 530.56 0 0 1 100.768 96 531.2 531.2 0 0 1-25.216 136.352 534.688 534.688 0 0 1-59.488 125.12z"
-                      fill="#1296db"></path>
-                </svg>
-              </v-icon>
+              <IconEtcd/>
             </div>
           </template>
 
@@ -294,6 +299,7 @@ const disableWebviewNativeEvents = () => {
         :persistent="item.persistent == undefined ? true : item.persistent"
         :scrollable="item.scrollable == undefined ? true : item.scrollable"
         width="auto"
+        :style="`z-index: ${item.zIndex ? item.zIndex : 2000};`"
     >
       <v-card
           :max-width="item.maxWidth ? item.maxWidth : 500"
@@ -332,7 +338,7 @@ const disableWebviewNativeEvents = () => {
         class="mt-12"
         :content-class="item.class"
         :timeout="item.timeout"
-        :z-index="2000"
+        style="z-index: 2000;"
     >
       <v-icon v-if="item.icon" class="mr-2">{{ item.icon }}</v-icon>
       {{ item.content }}
