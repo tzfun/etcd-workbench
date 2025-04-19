@@ -64,11 +64,15 @@ The Web version supports deployment via **Jar** or **Docker**, allowing you to m
 
 ![key-editor.png](screenshot/app/key-editor.png)
 
-![key-new.png](screenshot/app/key-new.png)
+![key-diff.png](screenshot/app/key-diff.png)
 
 ![key-merge.png](screenshot/app/merge.png)
 
+![key-monitor.png](screenshot/app/key-monitor.png)
+
 ![cluster.png](screenshot/app/cluster.png)
+
+![metrics.png](screenshot/app/metrics.png)
 
 ![leases.png](screenshot/app/leases.png)
 
