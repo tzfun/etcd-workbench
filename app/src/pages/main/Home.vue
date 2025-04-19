@@ -3,7 +3,7 @@
 import Connector from "~/components/Connector.vue";
 import {_getConnectionList, _handleError, _removeConnection} from "~/common/services.ts";
 import {_alertError, _confirm, EventName} from "~/common/events.ts";
-import {onActivated, onMounted, onUnmounted, reactive, ref} from "vue";
+import {nextTick, onActivated, onMounted, onUnmounted, reactive, ref} from "vue";
 import {ConnectionInfo, DEFAULT_CONNECTION, ErrorPayload} from "~/common/transport/connection.ts";
 import {listen} from "@tauri-apps/api/event";
 
@@ -45,9 +45,11 @@ const selectConnection = ({id}: any) => {
   } else {
     currentConnection.value = id
   }
-  if (connectorRef.value) {
-    connectorRef.value.scrollToTop()
-  }
+  nextTick(() => {
+    if (connectorRef.value) {
+      connectorRef.value.scrollToTop()
+    }
+  })
 }
 
 const removeConnectionConfig = (name: string) => {
