@@ -30,6 +30,8 @@ pub struct FormattedValue {
 #[serde(rename_all="camelCase")]
 pub struct SerializableKeyValue {
     pub key: String,
+    pub key_bytes: Vec<u8>,
+    pub key_encoded_utf8: bool,
     pub create_revision: i64,
     pub mod_revision: i64,
     pub version: i64,
@@ -43,6 +45,8 @@ impl SerializableKeyValue {
     pub fn from_ref(kv: &KeyValue) -> Self {
         unsafe {
             let key = String::from(kv.key_str_unchecked());
+            let key_bytes = Vec::from(kv.key());
+            let key_encoded_utf8 = std::str::from_utf8(kv.key()).is_ok();
             let value = Vec::from(kv.value());
             let create_revision = kv.create_revision();
             let mod_revision = kv.mod_revision();
@@ -51,6 +55,8 @@ impl SerializableKeyValue {
             let formatted_value = k8s_formatter::try_format_proto(&key, &value);
             SerializableKeyValue {
                 key,
+                key_bytes,
+                key_encoded_utf8,
                 value,
                 create_revision,
                 mod_revision,

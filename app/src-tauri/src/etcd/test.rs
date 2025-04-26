@@ -108,4 +108,39 @@ mod test_connect {
         println!("finished");
         Ok(())
     }
+
+    #[tokio::test]
+    async fn put_hex_key() -> Result<(), LogicError> {
+        let mut connector = get_connector().await?;
+
+        let key = hex_to_bytes("2f657463642d73746f72616765fd4100000010ffffff7f44323032352d30342d32312d3036027fffffff10000001").unwrap();
+
+        connector.kv_put(key, "hello world", None).await?;
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn utf8_key() {
+        let key = hex_to_bytes("2f657463642d73746f72616765fd4100000010ffffff7f44323032352d30342d32312d3036027fffffff10000001").unwrap();
+        assert_eq!(is_valid_utf8(key.as_slice()), false);
+    }
+
+    fn hex_to_bytes(hex_str: &str) -> Result<Vec<u8>, String> {
+        if hex_str.len() % 2 != 0 {
+            return Err("Hex string must have even length".to_string());
+        }
+    
+        (0..hex_str.len())
+            .step_by(2)
+            .map(|i| {
+                u8::from_str_radix(&hex_str[i..i + 2], 16)
+                    .map_err(|e| e.to_string())
+            })
+            .collect()
+    }
+
+    fn is_valid_utf8(bytes: &[u8]) -> bool {
+        std::str::from_utf8(bytes).is_ok()
+    }
 }

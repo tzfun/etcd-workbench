@@ -94,17 +94,19 @@ export function _getAllKeysPaging(sessionId: number, cursorKey: string, limit: n
     })
 }
 
-export function _getKV(sessionId: number, key: string): Promise<KeyValue> {
+export function _getKV(sessionId: number, key: string, keyBytes?: number[]): Promise<KeyValue> {
     return invoke('kv_get', {
         session: sessionId,
-        key
+        key,
+        keyBytes
     })
 }
 
-export function _getKVByVersion(sessionId: number, key: string, version: number): Promise<KeyValue> {
+export function _getKVByVersion(sessionId: number, key: string, version: number, keyBytes?: number[]): Promise<KeyValue> {
     return invoke('kv_get_by_version', {
         session: sessionId,
         key,
+        keyBytes,
         version
     })
 }
@@ -135,19 +137,21 @@ export function _putKVWithLease(sessionId: number, key: string, value: number[],
     })
 }
 
-export function _deleteKV(sessionId: number, keys: string[]): Promise<number> {
+export function _deleteKV(sessionId: number, keys: string[], keyBytes: number[][]): Promise<number> {
     return invoke('kv_delete', {
         session: sessionId,
-        keys
+        keys,
+        keyBytes
     })
 }
 
-export function _getKVHistoryVersions(sessionId: number, key: string, start: number, end: number): Promise<number[]> {
+export function _getKVHistoryVersions(sessionId: number, key: string, start: number, end: number, keyBytes?: number[]): Promise<number[]> {
     return invoke('kv_get_history_versions', {
         session: sessionId,
         key,
         start,
-        end
+        end,
+        keyBytes
     })
 }
 
