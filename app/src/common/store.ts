@@ -3,7 +3,6 @@ import {
     DEFAULT_SETTING_CONFIG,
     GlobalStoreConfig,
     SettingConfig,
-    UpdateInfo
 } from "~/common/transport/setting.ts";
 import {Ref, ref, UnwrapRef} from "vue";
 import {invoke} from "@tauri-apps/api";
@@ -12,9 +11,6 @@ import {EditorHighlightLanguage} from "~/common/types.ts";
 
 const SETTINGS = ref<SettingConfig>(DEFAULT_SETTING_CONFIG)
 const GLOBAL_STORE = ref<GlobalStoreConfig>(DEFAULT_GLOBAL_STORE)
-const updateInfo = ref<UpdateInfo>({
-    valid: false
-})
 const appVersion = ref<string>("0.0.0")
 
 export function _useSettings(): Ref<UnwrapRef<SettingConfig>> {
@@ -44,10 +40,6 @@ export function _saveSettings(settingConfig: SettingConfig) {
     }).catch(e => {
         console.error(e)
     })
-}
-
-export function _useUpdateInfo(): Ref<UnwrapRef<UpdateInfo>> {
-    return updateInfo
 }
 
 export function _loadAppVersion(): Promise<string> {

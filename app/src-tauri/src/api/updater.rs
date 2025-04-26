@@ -7,8 +7,8 @@ use crate::{
 };
 use lazy_static::lazy_static;
 use log::info;
-use tauri::{updater::UpdateResponse, AppHandle, Manager, UpdaterEvent, Wry};
-use tokio::sync::Mutex;
+use tauri::{updater::UpdateResponse, AppHandle, Manager, UpdaterEvent, Window, Wry};
+use tokio::sync::{Mutex, RwLock};
 
 use super::settings::get_settings;
 
@@ -24,11 +24,20 @@ static UPDATE_SOURCE_GITEE_CHECK_FROM_GITEE: &str =
 
 lazy_static! {
     static ref UPDATE_RESULT: Mutex<Option<UpdateResponse<Wry>>> = Mutex::new(None);
+    static ref UPDATE_CHECK_SOURCE: RwLock<String> = RwLock::new(String::from("main"));
 }
 
 #[tauri::command]
 pub async fn check_update(
     app_handle: AppHandle,
+    window: Window,
+) -> Result<(), LogicError> {
+    check_update_with_source(app_handle, String::from(window.label())).await
+}
+
+pub async fn check_update_with_source(
+    app_handle: AppHandle,
+    source: String,
 ) -> Result<(), LogicError> {
     let mut update_builder = tauri::updater::builder(app_handle);
 
@@ -53,9 +62,14 @@ pub async fn check_update(
             update.download_and_install().await?;
             return Ok(());
         }
+
+        let mut source_lock = UPDATE_CHECK_SOURCE.write().await;
+        *source_lock = source;
+        drop(source_lock);
         
         let mut lock = UPDATE_RESULT.lock().await;
         *lock = Some(update);
+        drop(lock);
     }
 
     Ok(())
@@ -83,13 +97,21 @@ pub fn handle_updater_event(app: &AppHandle, updater_event: UpdaterEvent) {
         } => {
             info!("update available body='{}', date={:?}, version={}", body, date, version);
             let date = date.map(|date_time| date_time.unix_timestamp());
-            let _ = app.emit_all(
-                "updateAvailable",
-                UpdateManifest {
-                    version,
-                    date,
-                    body,
-                });
+            let app = app.clone();
+            tokio::spawn(async move {
+                let source_lock = UPDATE_CHECK_SOURCE.read().await;
+                let source = source_lock.clone();
+                drop(source_lock);
+    
+                let _ = app.emit_all(
+                    "updateAvailable",
+                    UpdateManifest {
+                        version,
+                        date,
+                        body,
+                        source,
+                    });
+            });
         }
         // Emitted when the download is about to be started.
         tauri::UpdaterEvent::Pending => {
@@ -100,8 +122,6 @@ pub fn handle_updater_event(app: &AppHandle, updater_event: UpdaterEvent) {
             chunk_length,
             content_length,
         } => {
-            info!("downloaded {} of {:?}", chunk_length, content_length);
-
             let _ = app.emit_all(
                 "updateDownloadingProgress",
                 UpdateDownloadingProgressEvent {

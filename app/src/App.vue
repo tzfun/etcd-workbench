@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {platform as getPlatform} from "@tauri-apps/api/os";
 import {appWindow} from '@tauri-apps/api/window';
-import {computed, onMounted, onUnmounted, onUpdated, reactive, ref, watch} from "vue";
+import {computed, onMounted, onUnmounted, reactive, ref, watch} from "vue";
 import {useTheme} from "vuetify";
 import {
   _alertError,
@@ -155,7 +155,7 @@ const listenUpdaterEvent = async () => {
     console.log(e.payload)
 
     const autoUpdate = _useSettings().value.autoUpdate
-    if (!autoUpdate) {
+    if (!autoUpdate && e.payload.source == appWindow.label) {
       let manifest = e.payload
 
       let message = _genNewVersionUpdateMessage(manifest)
@@ -168,7 +168,6 @@ const listenUpdaterEvent = async () => {
       }).catch(() => {
       })
     }
-
   }))
 
   eventUnListens.push(await appWindow.listen(EventName.UPDATE_PENDING, () => {
@@ -179,7 +178,7 @@ const listenUpdaterEvent = async () => {
     updateInfo.state = 'downloading'
     updateInfo.chunkLength += e.payload.chunkLength
     if (e.payload.contentLength) {
-      updateInfo.contentLength += e.payload.contentLength
+      updateInfo.contentLength = e.payload.contentLength
     }
   }))
 

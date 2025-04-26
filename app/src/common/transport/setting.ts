@@ -1,4 +1,3 @@
-import {UpdateManifest} from "@tauri-apps/api/updater";
 import {EditorHighlightLanguage} from "~/common/types.ts";
 
 export const MAIN_WINDOW_MIN_HEIGHT = 500;
@@ -61,11 +60,6 @@ export const DEFAULT_SETTING_CONFIG: SettingConfig = {
     requestTimeoutSeconds: 15,
     sshConnectTimeoutSeconds: 10,
     connectionConfEncryptKey: 'workbench*#)&%.$'
-}
-
-export interface UpdateInfo {
-    valid: boolean,
-    latestVersion?: UpdateManifest,
 }
 
 export interface FileFormat {

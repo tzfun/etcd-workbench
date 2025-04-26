@@ -162,5 +162,6 @@ pub struct FileFormat {
 pub struct UpdateManifest {
     pub version: String,
     pub date: Option<i64>,
-    pub body: String
+    pub body: String,
+    pub source: String,
 }

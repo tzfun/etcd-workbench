@@ -10,7 +10,7 @@ use tokio::time::sleep;
 
 use crate::error::LogicError;
 
-use super::updater::check_update;
+use super::updater::check_update_with_source;
 
 #[tauri::command]
 pub fn client_error(info: String, err: String) {
@@ -55,7 +55,7 @@ pub async fn open_main_window(app_handle: tauri::AppHandle) {
 
     tokio::spawn(async move {
         //  启动时检查更新
-        if let Err(e) = check_update(app_handle.clone()).await {
+        if let Err(e) = check_update_with_source(app_handle.clone(), String::from("main")).await {
             log::error!("Update check error: {e:?}");
             return;
         }
@@ -63,7 +63,7 @@ pub async fn open_main_window(app_handle: tauri::AppHandle) {
         //  定期检查更新
         loop {
             sleep(Duration::from_secs(3600)).await;
-            let _ = check_update(app_handle.clone()).await;
+            let _ = check_update_with_source(app_handle.clone(), String::from("main")).await;
         }
     });
 }

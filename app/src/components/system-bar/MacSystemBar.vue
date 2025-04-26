@@ -2,7 +2,6 @@
 
 import {appWindow} from "@tauri-apps/api/window";
 import {computed, onMounted, PropType, reactive, ref} from "vue";
-import {_useUpdateInfo} from "~/common/store.ts";
 import {_openSettingWindow} from "~/common/windows.ts";
 import SnapshotList from "~/components/SnapshotList.vue";
 import {UpdateInfo} from "~/common/types.ts";
@@ -22,7 +21,6 @@ const props = defineProps({
 })
 
 const title = ref<string>('Etcd Workbench')
-const updateInfo = _useUpdateInfo();
 const snapshotListState = reactive({
   show: false,
   len: 0
