@@ -6,4 +6,4 @@ pub mod settings;
 pub mod lease;
 pub mod role;
 pub mod windows;
-
+pub mod updater;

@@ -1,11 +1,11 @@
 <script setup lang="ts">
 
-import { appWindow } from "@tauri-apps/api/window";
-import { computed, onMounted, reactive, ref } from "vue";
-import { _useUpdateInfo } from "~/common/store.ts";
-import { _checkUpdateAndInstall } from "~/common/updater.ts";
-import { _openSettingWindow } from "~/common/windows.ts";
+import {appWindow} from "@tauri-apps/api/window";
+import {computed, onMounted, PropType, reactive, ref} from "vue";
+import {_useUpdateInfo} from "~/common/store.ts";
+import {_openSettingWindow} from "~/common/windows.ts";
 import SnapshotList from "~/components/SnapshotList.vue";
+import {UpdateInfo} from "~/common/types.ts";
 
 const maximize = ref(false)
 
@@ -13,6 +13,10 @@ const props = defineProps({
   height: Number,
   windowLabel: {
     type: String,
+    required: true
+  },
+  updateInfo: {
+    type: Object as PropType<UpdateInfo>,
     required: true
   }
 })
@@ -138,7 +142,6 @@ const snapshotListShowChanged = (show: boolean) => {
              density="comfortable"
              prepend-icon="mdi-bell-ring-outline"
              size="small"
-             @click="_checkUpdateAndInstall"
       ></v-btn>
 
       <SnapshotList v-show="showSnapshotList"

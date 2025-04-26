@@ -4,26 +4,17 @@ use std::fs;
 
 use lazy_static::lazy_static;
 use log::debug;
-use tauri::updater::{Error, UpdateResponse};
-use tauri::{AppHandle, Wry};
-use tokio::sync::{Mutex, RwLock};
+use tauri::AppHandle;
+use tokio::sync::RwLock;
 
 use crate::api::connection::restore_connections;
 use crate::error::LogicError;
-use crate::transport::settings::{GlobalStoreConfig, SettingConfig, UpdateManifest, UpdateSource};
+use crate::transport::settings::{GlobalStoreConfig, SettingConfig};
 use crate::utils::{aes_util, file_util};
-
-/// 从Github拉取更新信息，并从Github下载更新
-static UPDATE_SOURCE_GITHUB: &str = "https://tzfun.github.io/etcd-workbench/etcd-workbench-update.json";
-/// 从Github拉取更新信息，并从Gitee下载更新
-static UPDATE_SOURCE_GITEE_CHECK_FROM_GITHUB: &str = "https://tzfun.gitee.io/etcd-workbench/etcd-workbench-update-gitee.json";
-/// 从Gitee拉取更新信息，并从Gitee下载更新
-static UPDATE_SOURCE_GITEE_CHECK_FROM_GITEE: &str = "https://gitee.com/tzfun/etcd-workbench/raw/master/docs/etcd-workbench-update-gitee.json";
 
 lazy_static! {
     static ref SETTING_CONFIG: RwLock<Option<SettingConfig>> = RwLock::new(None);
     static ref GLOBAL_STORE_CONFIG: RwLock<Option<GlobalStoreConfig>> = RwLock::new(None);
-    static ref UPDATE_RESULT: Mutex<Option<UpdateResponse<Wry>>> = Mutex::new(None);
 }
 
 /// 从文件中读取设置数据
@@ -162,56 +153,4 @@ pub fn is_debug_model() -> bool {
 #[cfg(not(debug_assertions))]
 pub fn is_debug_model() -> bool {
     false
-}
-
-#[tauri::command]
-pub async fn check_update(app_handle: AppHandle,) -> Result<Option<UpdateManifest>, LogicError> {
-    let mut update_builder = tauri::updater::builder(app_handle);
-
-    let setting = get_settings().await?;
-    update_builder = match setting.update_source {
-        UpdateSource::Github => {
-            update_builder.endpoints(&[String::from(UPDATE_SOURCE_GITHUB)])
-        },
-        UpdateSource::Gitee => {
-            //  从Gitee读取，从Gitee下载
-            update_builder = update_builder.endpoints(&[String::from(UPDATE_SOURCE_GITEE_CHECK_FROM_GITEE)]);
-            //  从GitHub读取，从Gitee下载
-            update_builder = update_builder.endpoints(&[String::from(UPDATE_SOURCE_GITEE_CHECK_FROM_GITHUB)]);
-            //  为了避免国内镜像连接失效，保底从GitHub读取，从GitHub下载
-            update_builder.endpoints(&[String::from(UPDATE_SOURCE_GITHUB)])
-        }
-    };
-
-    let update = update_builder.check().await?;
-    if update.is_update_available() {
-        let version = String::from(update.latest_version());
-        let body = update.body().map(|s| s.clone()).unwrap();
-        let date = update.date().unwrap().unix_timestamp();
-
-        let mut lock = UPDATE_RESULT.lock().await;
-        *lock = Some(update);
-
-        return Ok(Some(UpdateManifest {
-            version,
-            date,
-            body
-        }))
-    }
-    
-    Ok(None)
-}
-
-
-#[tauri::command]
-pub async fn install_update() -> Result<(), LogicError> {
-    let mut lock = UPDATE_RESULT.lock().await;
-    let update = lock.take();
-    drop(lock);
-    if update.is_none() {
-        return Err(LogicError::UpdateError(Error::UpToDate))
-    }
-    let update = update.unwrap();
-    update.download_and_install().await?;
-    Ok(())
 }

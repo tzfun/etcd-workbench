@@ -1,26 +1,28 @@
 <script setup lang="ts">
-import { platform as getPlatform } from "@tauri-apps/api/os";
-import { relaunch } from "@tauri-apps/api/process";
-import { appWindow } from '@tauri-apps/api/window';
-import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue";
-import { useTheme } from "vuetify";
+import {platform as getPlatform} from "@tauri-apps/api/os";
+import {appWindow} from '@tauri-apps/api/window';
+import {computed, onMounted, onUnmounted, onUpdated, reactive, ref, watch} from "vue";
+import {useTheme} from "vuetify";
 import {
   _alertError,
+  _confirmUpdateApp,
+  _genNewVersionUpdateMessage,
   _listenLocal,
-  _loading, _unListenLocal,
-  EventName
+  _unListenLocal,
+  EventName,
+  UpdateDownloadingProgressEvent
 } from "~/common/events.ts";
-import { _isDebugModel } from "~/common/services.ts";
-import { _loadAppVersion, _loadGlobalStore, _loadSettings, _useSettings, _useUpdateInfo } from "~/common/store.ts";
-import { DEFAULT_SETTING_CONFIG } from "~/common/transport/setting.ts";
-import { AppTheme, DialogItem, TipsItem } from "~/common/types.ts";
-import { _isLinux, _isMac, _isWindows, _setPlatform } from "~/common/windows.ts";
+import {_isDebugModel} from "~/common/services.ts";
+import {_loadAppVersion, _loadGlobalStore, _loadSettings, _useSettings} from "~/common/store.ts";
+import {DEFAULT_SETTING_CONFIG} from "~/common/transport/setting.ts";
+import {AppTheme, DialogItem, TipsItem, UpdateInfo} from "~/common/types.ts";
+import {_isLinux, _isMac, _isWindows, _setPlatform} from "~/common/windows.ts";
 import LinuxSystemBar from "~/components/system-bar/LinuxSystemBar.vue";
 import MacSystemBar from "~/components/system-bar/MacSystemBar.vue";
 import WindowsSystemBar from "~/components/system-bar/WindowsSystemBar.vue";
 import AppMain from "~/pages/main/AppMain.vue";
 import AppSetting from "~/pages/setting/AppSetting.vue";
-import { _checkUpdate, _installUpdate } from './common/updater';
+import {_installUpdate, CustomUpdateManifest} from './common/updater';
 import IconEtcd from "~/components/icon/IconEtcd.vue";
 import {Handler} from "mitt";
 
@@ -35,7 +37,12 @@ const tips = ref<TipsItem[]>([])
 const theme = useTheme()
 
 const eventUnListens = reactive<Function[]>([])
-const checkUpdateTimer = ref<number>()
+const updateInfo = reactive<UpdateInfo>({
+  state: 'none',
+  chunkLength: 0,
+  contentLength: 0,
+  error: ''
+})
 
 const windowLabel = computed<string>(() => {
   return appWindow.label
@@ -46,6 +53,7 @@ onMounted(async () => {
   await _loadGlobalStore()
   let settings = await _loadSettings()
   _setPlatform(await getPlatform())
+  await listenUpdaterEvent()
 
   let isDebug = await _isDebugModel()
   if (!isDebug) {
@@ -129,10 +137,6 @@ onMounted(async () => {
         setAppTheme(newVal.theme)
       }
     })
-
-    checkUpdate(settings.autoUpdate)
-
-    startCheckUpdateTimer()
   }
 })
 
@@ -140,50 +144,60 @@ onUnmounted(() => {
   for (let eventUnListen of eventUnListens) {
     eventUnListen()
   }
-  stopCheckUpdateTimer()
 })
 
-const checkUpdate = (autoUpdate: boolean) => {
-  let updateInfo = _useUpdateInfo().value
-  // 检查更新
-  _checkUpdate().then(async (manifest) => {
-    updateInfo.valid = true
-    updateInfo.latestVersion = manifest
+const listenUpdaterEvent = async () => {
+  eventUnListens.push(await appWindow.listen<CustomUpdateManifest>(EventName.UPDATE_AVAILABLE, e => {
+    updateInfo.state = 'available'
+    updateInfo.chunkLength = 0;
+    updateInfo.contentLength = 0;
+    updateInfo.error = '';
+    console.log(e.payload)
 
-    if (autoUpdate) {
-      _loading(true, "Installing new version...")
-      _installUpdate().then(() => {
-        _loading(true, "Relaunch...")
-        relaunch().catch((e: string) => {
+    const autoUpdate = _useSettings().value.autoUpdate
+    if (!autoUpdate) {
+      let manifest = e.payload
+
+      let message = _genNewVersionUpdateMessage(manifest)
+      _confirmUpdateApp(message).then(() => {
+        _installUpdate().then(() => {
+        }).catch(e => {
           console.error(e)
-          _alertError("Unable to relaunch, please relaunch manually.")
-        }).finally(() => {
-          _loading(false)
+          _alertError("Unable to update: " + e)
         })
-      }).catch(e => {
-        _loading(false)
-        console.error(e)
-        _alertError(`Install failed, please update manually or go to <span onclick='_goBrowserPage("https://github.com/tzfun/etcd-workbench")' class='simulate-tag-a text-green font-weight-bold' title='Click to view github'>GitHub</span> to download the latest version.`)
+      }).catch(() => {
       })
     }
-  }).catch(e => {
-    console.error("Failed to check update", e)
-    updateInfo.valid = false
-  })
-}
 
-const startCheckUpdateTimer = () => {
-  stopCheckUpdateTimer()
-  //  每1小时检查一次更新
-  checkUpdateTimer.value = window.setInterval(() => {
-    checkUpdate(false)
-  }, 3600_000)
-}
+  }))
 
-const stopCheckUpdateTimer = () => {
-  if (checkUpdateTimer.value) {
-    clearInterval(checkUpdateTimer.value)
-  }
+  eventUnListens.push(await appWindow.listen(EventName.UPDATE_PENDING, () => {
+    updateInfo.state = 'pending'
+  }))
+
+  eventUnListens.push(await appWindow.listen<UpdateDownloadingProgressEvent>(EventName.UPDATE_DOWNLOADING_PROGRESS, e => {
+    updateInfo.state = 'downloading'
+    updateInfo.chunkLength += e.payload.chunkLength
+    if (e.payload.contentLength) {
+      updateInfo.contentLength += e.payload.contentLength
+    }
+  }))
+
+  eventUnListens.push(await appWindow.listen(EventName.UPDATE_DOWNLOADED, () => {
+    updateInfo.state = 'downloaded'
+  }))
+
+  eventUnListens.push(await appWindow.listen(EventName.UPDATE_INSTALLED, () => {
+    updateInfo.state = 'installed'
+  }))
+
+  eventUnListens.push(await appWindow.listen<string>(EventName.UPDATE_ERRORS, e => {
+    console.error('update error', e.payload)
+    updateInfo.state = 'error'
+    updateInfo.error = e.payload
+
+    _alertError(`An exception occurred during the update: ${e.payload}`)
+  }))
 }
 
 const setAppTheme = (appTheme: AppTheme) => {
@@ -240,15 +254,18 @@ const disableWebviewNativeEvents = () => {
       <WindowsSystemBar v-if="_isWindows()"
                         :height="28"
                         :window-label="windowLabel"
-      ></WindowsSystemBar>
+                        :update-info="updateInfo"
+      />
       <MacSystemBar v-if="_isMac()"
                     :height="28"
                     :window-label="windowLabel"
-      ></MacSystemBar>
+                    :update-info="updateInfo"
+      />
       <LinuxSystemBar v-if="_isLinux()"
                       :window-label="windowLabel"
                       :height="28"
-      ></LinuxSystemBar>
+                      :update-info="updateInfo"
+      />
 
       <v-main class="fill-height position-relative" id="mainBody">
         <AppSetting v-if="windowLabel === 'setting'" class="app-setting"></AppSetting>

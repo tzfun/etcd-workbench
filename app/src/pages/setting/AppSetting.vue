@@ -1,28 +1,22 @@
 <script setup lang="ts">
-import { open, save } from "@tauri-apps/api/dialog";
-import { listen } from "@tauri-apps/api/event";
-import { appWindow } from "@tauri-apps/api/window";
-import { onMounted, onUnmounted, reactive, ref, watch } from "vue";
-import { useTheme } from "vuetify";
-import {
-  _alertError,
-  _confirmSystem,
-  _emitGlobal,
-  _tipSuccess,
-  EventName
-} from "~/common/events.ts";
-import { _exportConnection, _handleError, _importConnection } from "~/common/services.ts";
-import { _loadAppVersion, _loadSettings, _setLocalSettings, _useSettings } from "~/common/store.ts";
-import { DEFAULT_SETTING_CONFIG, SettingConfig } from "~/common/transport/setting.ts";
-import { AppTheme } from "~/common/types.ts";
-import { _checkUpdateAndInstall } from "~/common/updater.ts";
-import { _debounce, _encodeStringToBytes, _goBrowserPage } from "~/common/utils.ts";
-import { _getDownloadPath, _isLinux, _isMac, _isWindows } from "~/common/windows.ts";
+import {open, save} from "@tauri-apps/api/dialog";
+import {listen} from "@tauri-apps/api/event";
+import {appWindow} from "@tauri-apps/api/window";
+import {onMounted, onUnmounted, reactive, ref, watch} from "vue";
+import {useTheme} from "vuetify";
+import {_alertError, _confirmSystem, _emitGlobal, _tipSuccess, EventName} from "~/common/events.ts";
+import {_exportConnection, _handleError, _importConnection} from "~/common/services.ts";
+import {_loadAppVersion, _loadSettings, _setLocalSettings, _useSettings} from "~/common/store.ts";
+import {DEFAULT_SETTING_CONFIG, SettingConfig} from "~/common/transport/setting.ts";
+import {AppTheme} from "~/common/types.ts";
+import {_debounce, _encodeStringToBytes, _goBrowserPage} from "~/common/utils.ts";
+import {_getDownloadPath, _isLinux, _isMac, _isWindows} from "~/common/windows.ts";
 import EditorExample from "~/components/editor/EditorExample.vue";
 import IconGitee from "~/components/icon/IconGitee.vue";
 import IconPayPal from "~/components/icon/IconPayPal.vue";
 import Skeleton from "~/components/Skeleton.vue";
 import WorkbenchLogo from "~/components/WorkbenchLogo.vue";
+import {_checkUpdate} from "~/common/updater.ts";
 
 const theme = useTheme()
 
@@ -530,7 +524,7 @@ const onScroll = _debounce(() => {
                 <v-spacer></v-spacer>
                 <div>
                   <v-btn class="text-none mr-2" density="comfortable" text="Check Update" color="blue-lighten-1"
-                    prepend-icon="mdi-arrow-up-bold-circle-outline" @click="_checkUpdateAndInstall"></v-btn>
+                    prepend-icon="mdi-arrow-up-bold-circle-outline" @click="_checkUpdate"></v-btn>
                   or
                   <v-btn class="text-none ml-2" density="comfortable" text="Download in GitHub"
                     prepend-icon="mdi-github" color="grey-darken-4"

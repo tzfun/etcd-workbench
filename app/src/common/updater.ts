@@ -4,36 +4,50 @@ import { checkUpdate, installUpdate, UpdateManifest, UpdateResult } from "@tauri
 import { _alertError, _confirmUpdateApp, _genNewVersionUpdateMessage, _loading, _tipError, _tipSuccess } from "./events";
 import { ErrorPayload } from "./transport/connection";
 
-//  使用自定义更新逻辑
-const UPDATE_CUSTOM = true
+export type CustomUpdateManifest = {
+    version: string
+    body: string
+    date?: number
+}
 
 export function _checkUpdate(): Promise<UpdateManifest> {
-    if (UPDATE_CUSTOM) {
-        return checkUpdateCustom()
-    } else {
-        return checkUpdateNative()
-    }
+    return new Promise((resolve, reject) => {
+        invoke("check_update").then(data => {
+            if (data) {
+                resolve(data as UpdateManifest)
+            } else {
+                reject(undefined)
+            }
+        }).catch(e => {
+            reject((e as ErrorPayload).errMsg)
+        })
+    })
 }
 
 export function _installUpdate(): Promise<void> {
-    let installPromise: Promise<void>
-    if (UPDATE_CUSTOM) {
-        installPromise = installUpdateCustom()
-    } else {
-        installPromise = installUpdateNative()
-    }
-    return installPromise
+    return new Promise((resolve, reject) => {
+        invoke("install_update").then(() => {
+            resolve()
+        }).catch(e => {
+            reject((e as ErrorPayload).errMsg)
+        })
+    })
 }
 
 export function _checkUpdateAndInstall() {
     _loading(true, "Checking for update...")
 
-    let checkPromise: Promise<UpdateManifest>
-    if (UPDATE_CUSTOM) {
-        checkPromise = checkUpdateCustom()
-    } else {
-        checkPromise = checkUpdateNative()
-    }
+    let checkPromise: Promise<UpdateManifest> = new Promise((resolve, reject) => {
+        invoke("check_update").then(data => {
+            if (data) {
+                resolve(data as UpdateManifest)
+            } else {
+                reject(undefined)
+            }
+        }).catch(e => {
+            reject((e as ErrorPayload).errMsg)
+        })
+    })
 
     checkPromise.then(manifest => {
         _loading(false)
@@ -91,20 +105,6 @@ function checkUpdateCustom(): Promise<UpdateManifest> {
             } else {
                 reject(undefined)
             }
-        }).catch(e => {
-            reject((e as ErrorPayload).errMsg)
-        })
-    })
-}
-
-function installUpdateNative(): Promise<void> {
-    return installUpdate()
-}
-
-function installUpdateCustom(): Promise<void> {
-    return new Promise((resolve, reject) => {
-        invoke("install_update").then(() => {
-            resolve()
         }).catch(e => {
             reject((e as ErrorPayload).errMsg)
         })

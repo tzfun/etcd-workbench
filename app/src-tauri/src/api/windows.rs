@@ -1,12 +1,16 @@
 use std::path::PathBuf;
 use std::process::Command;
+use std::time::Duration;
 
 use log::error;
 use tauri::api::path::download_dir;
-use tauri::{Manager, WindowBuilder};
+use tauri::{AppHandle, Manager, WindowBuilder, WindowEvent};
 use tauri::utils::config::WindowConfig;
+use tokio::time::sleep;
 
 use crate::error::LogicError;
+
+use super::updater::check_update;
 
 #[tauri::command]
 pub fn client_error(info: String, err: String) {
@@ -46,8 +50,22 @@ pub fn open_main_window0(app_handle: &tauri::AppHandle) {
 }
 
 #[tauri::command]
-pub fn open_main_window(app_handle: tauri::AppHandle) {
-    open_main_window0(&app_handle)
+pub async fn open_main_window(app_handle: tauri::AppHandle) {
+    open_main_window0(&app_handle);
+
+    tokio::spawn(async move {
+        //  启动时检查更新
+        if let Err(e) = check_update(app_handle.clone()).await {
+            log::error!("Update check error: {e:?}");
+            return;
+        }
+
+        //  定期检查更新
+        loop {
+            sleep(Duration::from_secs(3600)).await;
+            let _ = check_update(app_handle.clone()).await;
+        }
+    });
 }
 
 #[tauri::command]
@@ -127,5 +145,30 @@ pub fn create_configured_window(app_handle: &tauri::AppHandle, name: &'static st
             w.show().unwrap();
             break;
         }
+    }
+}
+
+pub fn handle_window_event(app: &AppHandle, label: String, win_event: WindowEvent) {
+    match win_event {
+        WindowEvent::Resized(_) => {}
+        WindowEvent::Moved(_) => {}
+        WindowEvent::CloseRequested { api, .. } => {
+            if label.eq("main") {
+                app.emit_all("confirm_exit", ()).unwrap();
+                api.prevent_close();
+            } else if label.eq("splashscreen") {
+
+            } else {
+                let win = app.get_window(label.as_str()).unwrap();
+                win.hide().unwrap();
+                api.prevent_close();
+            }
+        }
+        WindowEvent::Destroyed => {}
+        WindowEvent::Focused(_) => {}
+        WindowEvent::ScaleFactorChanged { .. } => {}
+        WindowEvent::FileDrop(_) => {}
+        WindowEvent::ThemeChanged(_) => {},
+        _=>{}
     }
 }
