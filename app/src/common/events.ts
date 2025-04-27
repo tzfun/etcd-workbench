@@ -140,7 +140,7 @@ export function _confirm(title: string, text: string, zIndex?: number): Promise<
 }
 
 export function _confirmSystem(text: string): Promise<void> {
-    return _confirm('System', text)
+    return _confirm('Confirm', text)
 }
 
 export function _confirmUpdateApp(text: string): Promise<undefined> {

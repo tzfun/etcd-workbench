@@ -41,7 +41,7 @@ const downloadingProgress = computed(() => {
       return 100 * props.updateInfo.chunkLength / props.updateInfo.contentLength
     }
   }
-  return 70
+  return 0
 })
 
 onMounted(async () => {
@@ -142,7 +142,7 @@ const confirmRestart = () => {
           prepend-icon="mdi-check-bold"
           @click="confirmRestart"
       >
-        Installed
+        Installed Updates
       </v-chip>
 
       <SnapshotList v-show="showSnapshotList"

@@ -76,7 +76,7 @@ pub async fn check_update_with_source(
 }
 
 #[tauri::command]
-pub async fn install_update() -> Result<(), LogicError> {
+pub async fn install_update(app_handle: AppHandle,) -> Result<(), LogicError> {
     let mut lock = UPDATE_RESULT.lock().await;
     let update = lock.take();
     drop(lock);
@@ -84,6 +84,10 @@ pub async fn install_update() -> Result<(), LogicError> {
         return Err(LogicError::UpdateError(tauri::updater::Error::UpToDate));
     }
     let update = update.unwrap();
+    if let Some(window) = app_handle.get_window("setting") {
+        let _ = window.hide();
+    }
+    let _ = app_handle.get_window("main").unwrap().set_focus();
     update.download_and_install().await?;
     Ok(())
 }

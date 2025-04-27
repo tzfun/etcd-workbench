@@ -4,7 +4,7 @@ import {appWindow} from '@tauri-apps/api/window';
 import {computed, onMounted, onUnmounted, reactive, ref, watch} from "vue";
 import {useTheme} from "vuetify";
 import {
-  _alertError,
+  _alertError, _confirm, _confirmSystem,
   _confirmUpdateApp,
   _genNewVersionUpdateMessage,
   _listenLocal,
@@ -25,6 +25,8 @@ import AppSetting from "~/pages/setting/AppSetting.vue";
 import {_installUpdate, CustomUpdateManifest} from './common/updater';
 import IconEtcd from "~/components/icon/IconEtcd.vue";
 import {Handler} from "mitt";
+import {_byteTextFormat} from "~/common/utils.ts";
+import {relaunch} from "@tauri-apps/api/process";
 
 const DEFAULT_LOADING_TEXT: string = "Loading..."
 const loading = ref<boolean>(false)
@@ -46,6 +48,20 @@ const updateInfo = reactive<UpdateInfo>({
 
 const windowLabel = computed<string>(() => {
   return appWindow.label
+})
+const updaterDialogShow = computed<boolean>(() =>{
+  return updateInfo.state == 'pending'
+      || updateInfo.state == 'downloading'
+      ||  updateInfo.state == 'downloaded'
+      || updateInfo.state == 'error'
+})
+const downloadingProgress = computed(() => {
+  if (updateInfo.state == 'downloading') {
+    if (updateInfo.contentLength && updateInfo.contentLength > 0) {
+      return 100 * updateInfo.chunkLength / updateInfo.contentLength
+    }
+  }
+  return 0
 })
 
 onMounted(async () => {
@@ -152,7 +168,6 @@ const listenUpdaterEvent = async () => {
     updateInfo.chunkLength = 0;
     updateInfo.contentLength = 0;
     updateInfo.error = '';
-    console.log(e.payload)
 
     const autoUpdate = _useSettings().value.autoUpdate
     if (!autoUpdate && e.payload.source == appWindow.label) {
@@ -170,33 +185,38 @@ const listenUpdaterEvent = async () => {
     }
   }))
 
-  eventUnListens.push(await appWindow.listen(EventName.UPDATE_PENDING, () => {
-    updateInfo.state = 'pending'
-  }))
+  if (windowLabel.value == 'main') {
+    eventUnListens.push(await appWindow.listen(EventName.UPDATE_PENDING, () => {
+      updateInfo.state = 'pending'
+    }))
 
-  eventUnListens.push(await appWindow.listen<UpdateDownloadingProgressEvent>(EventName.UPDATE_DOWNLOADING_PROGRESS, e => {
-    updateInfo.state = 'downloading'
-    updateInfo.chunkLength += e.payload.chunkLength
-    if (e.payload.contentLength) {
-      updateInfo.contentLength = e.payload.contentLength
-    }
-  }))
+    eventUnListens.push(await appWindow.listen<UpdateDownloadingProgressEvent>(EventName.UPDATE_DOWNLOADING_PROGRESS, e => {
+      updateInfo.state = 'downloading'
+      updateInfo.chunkLength += e.payload.chunkLength
+      if (e.payload.contentLength) {
+        updateInfo.contentLength = e.payload.contentLength
+      }
+    }))
 
-  eventUnListens.push(await appWindow.listen(EventName.UPDATE_DOWNLOADED, () => {
-    updateInfo.state = 'downloaded'
-  }))
+    eventUnListens.push(await appWindow.listen(EventName.UPDATE_DOWNLOADED, () => {
+      updateInfo.state = 'downloaded'
+    }))
 
-  eventUnListens.push(await appWindow.listen(EventName.UPDATE_INSTALLED, () => {
-    updateInfo.state = 'installed'
-  }))
+    eventUnListens.push(await appWindow.listen(EventName.UPDATE_INSTALLED, () => {
+      updateInfo.state = 'installed'
+      _confirm('Update successful','Update installed successfully. Restart the app to apply changes. Restart now?').then(() => {
+        relaunch()
+      }).catch(() => {})
+    }))
 
-  eventUnListens.push(await appWindow.listen<string>(EventName.UPDATE_ERRORS, e => {
-    console.error('update error', e.payload)
-    updateInfo.state = 'error'
-    updateInfo.error = e.payload
+    eventUnListens.push(await appWindow.listen<string>(EventName.UPDATE_ERRORS, e => {
+      console.error('update error', e.payload)
+      updateInfo.state = 'error'
+      updateInfo.error = e.payload
 
-    _alertError(`An exception occurred during the update: ${e.payload}`)
-  }))
+      _alertError(`An exception occurred during the update: ${e.payload}`)
+    }))
+  }
 }
 
 const setAppTheme = (appTheme: AppTheme) => {
@@ -271,6 +291,63 @@ const disableWebviewNativeEvents = () => {
         <AppMain v-else-if="windowLabel === 'main'"></AppMain>
       </v-main>
     </v-layout>
+
+    <!--    更新组件       -->
+    <div class="updater" v-if="updaterDialogShow" data-tauri-drag-region>
+
+      <v-list
+          class="py-2"
+          color="primary"
+          elevation="12"
+          rounded="lg"
+          width="450px"
+      >
+        <v-list-item>
+          <template v-slot:prepend>
+            <v-icon v-if="updateInfo.state == 'pending'"
+            >mdi-arrow-down-bold</v-icon>
+            <v-icon v-else-if="updateInfo.state == 'downloading'"
+                    class="downloading-icon"
+            >mdi-arrow-down-bold</v-icon>
+            <v-icon v-else-if="updateInfo.state == 'downloaded'"
+                    color="green"
+            >mdi-check-circle-outline</v-icon>
+            <v-icon v-else-if="updateInfo.state == 'error'"
+                    color="red"
+            >mdi-alert-circle</v-icon>
+          </template>
+          <template v-slot:default>
+            <span v-if="updateInfo.state == 'pending'">Ready to download update...</span>
+            <div v-else-if="updateInfo.state == 'downloading'">
+              <v-progress-linear
+                  v-model="downloadingProgress"
+                  color="blue-lighten-1"
+                  class="my-2"
+                  height="20"
+              >
+                <strong>{{ Math.ceil(downloadingProgress) }}%</strong>
+              </v-progress-linear>
+              <v-layout>
+                Downloading updates...
+                <v-spacer/>
+                <span class="text-medium-emphasis">
+                  {{ _byteTextFormat(updateInfo.chunkLength) }} / {{ _byteTextFormat(updateInfo.contentLength) }}
+                </span>
+
+              </v-layout>
+            </div>
+            <span v-else-if="updateInfo.state == 'downloaded'">
+              Download completed. Installing now...
+            </span>
+            <v-layout v-else-if="updateInfo.state == 'error'">
+              Failed to update. {{ updateInfo.error }}
+              <v-spacer/>
+              <v-icon @click="updateInfo.state = 'none'">mdi-close</v-icon>
+            </v-layout>
+          </template>
+        </v-list-item>
+      </v-list>
+    </div>
 
     <!--    全局公共组件    -->
 
@@ -379,6 +456,37 @@ const disableWebviewNativeEvents = () => {
   z-index: 1;
   top: 28px;
   left: 0;
+}
+.updater {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.32);
+  z-index: 1500;
+  display: flex;
+  justify-content: center;
+  align-content:  center;
+  flex-wrap: wrap;
+
+  .downloading-icon {
+    animation: downloading 1s linear infinite;
+  }
+}
+
+@keyframes downloading {
+  0% {
+    transform: translateY(-50%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(50%);
+    opacity: 0;
+  }
 }
 </style>
 

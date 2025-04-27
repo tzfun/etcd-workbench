@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 use std::process::Command;
+use std::sync::OnceLock;
 use std::time::Duration;
 
 use log::error;
@@ -11,6 +12,8 @@ use tokio::time::sleep;
 use crate::error::LogicError;
 
 use super::updater::check_update_with_source;
+
+static STARTED_UPDATE_CHECKER: OnceLock<()> = OnceLock::new();
 
 #[tauri::command]
 pub fn client_error(info: String, err: String) {
@@ -53,18 +56,20 @@ pub fn open_main_window0(app_handle: &tauri::AppHandle) {
 pub async fn open_main_window(app_handle: tauri::AppHandle) {
     open_main_window0(&app_handle);
 
-    tokio::spawn(async move {
-        //  启动时检查更新
-        if let Err(e) = check_update_with_source(app_handle.clone(), String::from("main")).await {
-            log::error!("Update check error: {e:?}");
-            return;
-        }
-
-        //  定期检查更新
-        loop {
-            sleep(Duration::from_secs(3600)).await;
-            let _ = check_update_with_source(app_handle.clone(), String::from("main")).await;
-        }
+    STARTED_UPDATE_CHECKER.get_or_init(||{
+        tokio::spawn(async move {
+            //  启动时检查更新
+            if let Err(e) = check_update_with_source(app_handle.clone(), String::from("main")).await {
+                log::error!("Update check error: {e:?}");
+                return;
+            }
+    
+            //  定期检查更新
+            loop {
+                sleep(Duration::from_secs(3600)).await;
+                let _ = check_update_with_source(app_handle.clone(), String::from("main")).await;
+            }
+        });
     });
 }
 
