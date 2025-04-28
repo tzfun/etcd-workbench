@@ -1,12 +1,12 @@
-import { writeText } from "@tauri-apps/api/clipboard";
-import { emit } from "@tauri-apps/api/event";
-import { UpdateManifest } from "@tauri-apps/api/updater";
-import { WebviewWindow } from "@tauri-apps/api/window";
-import mitt, { Emitter, EventType, Handler } from "mitt";
-import { DialogItem, TipsItem } from "~/common/types.ts";
-import { _relativeTimeFormat } from "~/common/utils.ts";
+import {writeText} from "@tauri-apps/api/clipboard";
+import {emit} from "@tauri-apps/api/event";
+import {WebviewWindow} from "@tauri-apps/api/window";
+import mitt, {Emitter, EventType, Handler} from "mitt";
+import {DialogItem, TipsItem} from "~/common/types.ts";
+import {_relativeTimeFormat} from "~/common/utils.ts";
 import {KeyValue} from "./transport/kv";
 import {KeyMonitorConfig} from "~/common/transport/connection.ts";
+import {CustomUpdateManifest} from "~/common/updater.ts";
 
 const localEvents = mitt();
 
@@ -27,6 +27,12 @@ export enum EventName {
     KEY_MONITOR_MODIFIED_BY_SERVER  ="key_monitor_modified_by_server",
     SET_SETTING_ANCHOR = 'setSettingAnchor',
     SESSION_DISCONNECTED = 'sessionDisconnected',
+    UPDATE_AVAILABLE = 'updateAvailable',
+    UPDATE_PENDING = 'updatePending',
+    UPDATE_DOWNLOADING_PROGRESS = 'updateDownloadingProgress',
+    UPDATE_DOWNLOADED = 'updateDownloaded',
+    UPDATE_INSTALLED = 'updateInstalled',
+    UPDATE_ERRORS = 'updateErrors',
 }
 
 export type KeyWatchEventType = "Remove" | "Create" | "Modify"
@@ -51,6 +57,11 @@ export interface KeyMonitorModifiedByServerEvent {
 export interface SessionDisconnectedEvent {
     sessionId: number,
     case: string | Record<string, string>,
+}
+
+export interface UpdateDownloadingProgressEvent {
+    chunkLength: number,
+    contentLength?: number,
 }
 
 export function _useLocalEvents(): Emitter<Record<EventType, any>> {
@@ -129,7 +140,7 @@ export function _confirm(title: string, text: string, zIndex?: number): Promise<
 }
 
 export function _confirmSystem(text: string): Promise<void> {
-    return _confirm('System', text)
+    return _confirm('Confirm', text)
 }
 
 export function _confirmUpdateApp(text: string): Promise<undefined> {
@@ -251,29 +262,12 @@ export function _tipInfo(text: string) {
     _emitLocal(EventName.TIP, tip)
 }
 
-export function _genNewVersionUpdateMessage(manifest: UpdateManifest): string {
+export function _genNewVersionUpdateMessage(manifest: CustomUpdateManifest): string {
     const version = manifest.version
-    // 使用正则表达式提取日期和时间部分
-    const regex = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/;
-    const match = manifest.date.match(regex);
-
-    let timeDes
-    if (match) {
-        // 构造新的日期字符串
-        const formattedDateString = `${match[1]}T${match[2]}Z`
-    
-        // 创建 Date 对象
-        const dateObject = new Date(formattedDateString)
-        timeDes = _relativeTimeFormat(dateObject)
-    } else {
-        console.debug("The date string format is incorrect", manifest.date)
-        
-        const dateObject = new Date(parseInt(manifest.date))
-        timeDes = _relativeTimeFormat(dateObject)
-    }
     let message =  `New version <span onclick='_goBrowserPage("https://github.com/tzfun/etcd-workbench/releases/tag/App-${version}")' class="simulate-tag-a text-green font-weight-bold" title="Click to view updated content">${version}</span> released`
 
-    if(timeDes) {
+    if (manifest.date) {
+        const timeDes = _relativeTimeFormat(new Date(manifest.date * 1000))
         message += ` ${timeDes}`
     }
     message += ', install it now?'

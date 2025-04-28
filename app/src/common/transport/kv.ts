@@ -14,6 +14,8 @@ export interface FormattedValue {
 
 export interface KeyValue {
     key: string,
+    keyBytes: number[],
+    keyEncodedUtf8: boolean,
     createRevision: number,
     modRevision: number,
     version: number,

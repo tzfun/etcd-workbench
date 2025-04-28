@@ -12,6 +12,11 @@ import {SessionData} from "~/common/transport/connection.ts";
 
 const IDMark_A = "_a"
 
+export type TreeNodeKeyInfo = {
+  keyBytes: number[],
+  keyEncodedUtf8: boolean,
+}
+
 export type TreeNode = {
   //  节点ID，整棵树一定不能重复
   id: string,
@@ -32,7 +37,8 @@ export type TreeNode = {
   //  子节点数组
   children?: TreeNode[],
   //  初始化节点数据时，由 zTree 增加此属性，请勿提前赋值
-  tId?: string
+  tId?: string,
+  keyInfo?: TreeNodeKeyInfo,
 }
 
 const emits = defineEmits(['on-click', 'on-click-remove'])
@@ -93,7 +99,7 @@ const beforeClick = (_treeId: string, treeNode: TreeNode) => {
 
 const onClick = (_e: MouseEvent, _treeId: string, treeNode: TreeNode) => {
   if (!treeNode.isParent) {
-    emits('on-click', treeNode.id)
+    emits('on-click', treeNode.id, treeNode.keyInfo)
   }
   if (!props.enableSelect) {
     treeRootObj.value.cancelSelectedNode(treeNode)
@@ -277,7 +283,7 @@ const getTreeNodeById = (id: any): TreeNode | undefined => {
   return treeRootObj.value.getNodesByParam("id", id, null)[0]
 }
 
-const addItemToTree = (key: string, ignoreIfExist?: boolean) => {
+const addItemToTree = (key: string, ignoreIfExist?: boolean, keyInfo?: TreeNodeKeyInfo) => {
   if (ignoreIfExist) {
     let node = getTreeNodeById(key)
     if (node) {
@@ -315,7 +321,7 @@ const addItemToTree = (key: string, ignoreIfExist?: boolean) => {
   }
 
   id += fileName
-  let newNode: TreeNode = constructFileNode(id, fileName, parentNode ? parentNode.id : undefined)
+  let newNode: TreeNode = constructFileNode(id, fileName, parentNode ? parentNode.id : undefined, keyInfo)
   treeRootObj.value.addNodes(parentNode, newNode, true)
 }
 
@@ -352,28 +358,20 @@ const constructDirNode = (id: string, name: string, pId: string | undefined): Tr
   }
 }
 
-const constructFileNode = (id: string, name: string, pId: string | undefined): TreeNode => {
+const constructFileNode = (id: string, name: string, pId: string | undefined, keyInfo?: TreeNodeKeyInfo): TreeNode => {
   return {
-    id: id,
-    pId: pId,
-    name: name,
+    id,
+    pId,
+    name,
     isParent: false,
     open: false,
     icon: "/file-text.png",
+    keyInfo,
   }
 }
 
-const getSelectedItems = (): string[] => {
-  let nodes: TreeNode[] = treeRootObj.value.getCheckedNodes(true)
-  let items: string[] = []
-  if (nodes) {
-    for (let node of nodes) {
-      if (!node.isParent) {
-        items.push(node.id)
-      }
-    }
-  }
-  return items
+const getSelectedItems = (): TreeNode[] => {
+  return treeRootObj.value.getCheckedNodes(true) || []
 }
 
 const refreshDiyDom = (key: string) => {

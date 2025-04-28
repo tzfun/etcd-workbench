@@ -1,20 +1,24 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use api::settings::get_global_store_from_file;
+use api::{
+    settings::get_global_store_from_file,
+    updater::handle_updater_event,
+    windows::handle_window_event,
+};
 use log::{debug, info, LevelFilter};
-use tauri::{Manager, PhysicalSize, RunEvent, Size, WindowEvent};
+use tauri::{Manager, PhysicalSize, RunEvent, Size};
 
 // use crate::api::windows::tray_menu_handle;
 use crate::utils::file_util;
 
 mod api;
-mod transport;
-mod etcd;
-mod ssh;
 mod error;
-mod utils;
+mod etcd;
 mod proto;
+mod ssh;
+mod transport;
+mod utils;
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 10)]
 async fn main() {
@@ -27,7 +31,10 @@ async fn main() {
     }
     env_logger::Builder::from_default_env()
         .filter_level(log_level)
-        .filter_module("tao::platform_impl::platform::event_loop::runner", LevelFilter::Error)
+        .filter_module(
+            "tao::platform_impl::platform::event_loop::runner",
+            LevelFilter::Error,
+        )
         .init();
     info!("env logger initialized");
 
@@ -56,12 +63,18 @@ async fn main() {
                         } else if state.main_window_maximize {
                             debug!("The window returns to maximizable mode");
                             window.maximize().unwrap();
-                        } else if state.main_window_width > 0f64 && state.main_window_height > 0f64 {
-                            debug!("Window restored to size: {} x {}", state.main_window_width, state.main_window_height);
-                            window.set_size(Size::from(PhysicalSize {
-                                width: state.main_window_width,
-                                height: state.main_window_height,
-                            })).unwrap();
+                        } else if state.main_window_width > 0f64 && state.main_window_height > 0f64
+                        {
+                            debug!(
+                                "Window restored to size: {} x {}",
+                                state.main_window_width, state.main_window_height
+                            );
+                            window
+                                .set_size(Size::from(PhysicalSize {
+                                    width: state.main_window_width,
+                                    height: state.main_window_height,
+                                }))
+                                .unwrap();
                         }
                         debug!("main window size initialized");
                     } else {
@@ -96,8 +109,8 @@ async fn main() {
             api::settings::save_global_store,
             api::settings::get_app_version,
             api::settings::is_debug_model,
-            api::settings::check_update,
-            api::settings::install_update,
+            api::updater::check_update,
+            api::updater::install_update,
             api::kv::kv_get_all_keys,
             api::kv::kv_get_all_keys_paging,
             api::kv::kv_get,
@@ -136,42 +149,17 @@ async fn main() {
         ])
         .build(tauri::generate_context!())
         .expect("error while running tauri application")
-        .run(|app, event| {
-            match event {
-                RunEvent::Exit => {}
-                RunEvent::ExitRequested { .. } => {}
-                RunEvent::WindowEvent {
-                    label,
-                    event: win_event,
-                    ..
-                } => {
-                    match win_event {
-                        WindowEvent::Resized(_) => {}
-                        WindowEvent::Moved(_) => {}
-                        WindowEvent::CloseRequested { api, .. } => {
-                            if label.eq("main") {
-                                app.emit_all("confirm_exit", ()).unwrap();
-                                api.prevent_close();
-                            } else if label.eq("splashscreen") {
-
-                            } else {
-                                let win = app.get_window(label.as_str()).unwrap();
-                                win.hide().unwrap();
-                                api.prevent_close();
-                            }
-                        }
-                        WindowEvent::Destroyed => {}
-                        WindowEvent::Focused(_) => {}
-                        WindowEvent::ScaleFactorChanged { .. } => {}
-                        WindowEvent::FileDrop(_) => {}
-                        WindowEvent::ThemeChanged(_) => {},
-                        _=>{}
-                    }
-                }
-                RunEvent::Ready => {}
-                RunEvent::Resumed => {}
-                RunEvent::MainEventsCleared => {}
-                _=>{}
+        .run(|app, event| match event {
+            RunEvent::WindowEvent {
+                label,
+                event: win_event,
+                ..
+            } => {
+                handle_window_event(app, label, win_event);
             }
+            RunEvent::Updater(updater_event) => {
+                handle_updater_event(app, updater_event);
+            }
+            _ => {}
         });
 }

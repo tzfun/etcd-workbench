@@ -1,19 +1,19 @@
 {
-  "version": "1.1.5",
-  "notes": "Refactored the Key Monitor mechanism, optimized user experience, and fixed some bugs.",
-  "pub_date": "2025-04-19T05:13:00Z",
+  "version": "1.1.6",
+  "notes": "Improved updates and fixed non-UTF8 key reading issues.",
+  "pub_date": "2025-04-28T13:21:00Z",
   "platforms": {
     "darwin-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K0w2VlkyM0tqTzNGNit4dXBSVTN2QXNVVzRFcmxralI5N0RIL0VkK1NnRmJnc1JmRkR6cStJb1p3M3Y0RXlFSmk3NVpuZ0tmYnA0OGRtTzIzSVM2ZGdBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzQ1MDM4OTg4CWZpbGU6RXRjZCBXb3JrYmVuY2guYXBwLnRhci5negppcDAyVG1ra3JyTXpXekRYK3J2OXExN25FUC9tMkdUVjI2VXNVbmhUMGJDcExYbHVXcWdYS2dXdmo2bGQ5ZmtLbGpLYmhhZVdHM1dqSW5Wa3ZWZUFBQT09Cg==",
-      "url": "https://gitee.com/tzfun/etcd-workbench/releases/download/App-1.1.5/etcd-workbench-1.1.5-macos-x86_64.app.tar.gz"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K0xEdUJURVdYVW9FUW8wZGY3WXFlYTlWVG5jZlEwTXZYbDZmSUsrMkRIaUxaV2I5TVI5U1ZtdU5IV056M3c1SmdidHlUc2hkT3hlMU5qYXBXNXZzV2cwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzQ1ODQ2NzE2CWZpbGU6RXRjZCBXb3JrYmVuY2guYXBwLnRhci5negptMkRqTXVsa0ZGZUFxTlh2c2dJTmtxTTlyUmtnWW9DK0tMM2FXWTRkTzN0SDVPYUpoZXROQ25qc2ZjMklabDk3WGdzSU9tQUxnaHRsWWFTWWEvNFNEQT09Cg==",
+      "url": "https://gitee.com/tzfun/etcd-workbench/releases/download/App-1.1.6/etcd-workbench-1.1.6-macos-x86_64.app.tar.gz"
     },
     "darwin-aarch64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K0RUSWpyWmxqc3V4WnBlVDVkRkJRU05IcGUySVhyVFZaNnF1Nm8xU09xOXgxMkwzOVkrajhQTzc4Uk54OEhlWE5LLytaSTErVFJURm16aStSU3VBTGdRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzQ1MDM5MzA1CWZpbGU6RXRjZCBXb3JrYmVuY2guYXBwLnRhci5negpKc3A1TEh1VTg4akpFNXNpeVAva0VlWGljYVVyYkg0M0ZSY1owVGJOa1MxYU53YVpJSE4rWUZHQTBhbzE2RWk4ZElQaVRQcldYZGM2WEJOdGl0YnVEUT09Cg==",
-      "url": "https://gitee.com/tzfun/etcd-workbench/releases/download/App-1.1.5/etcd-workbench-1.1.5-macos-aarch64.app.tar.gz"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K09rRWorOGxaRDlseEMzSkhINW9FUE9PYjJDS01yQWM5bExsdzh1MUFBMkF0SWdtS1dnY3B1VVNxclVaTmljMCtQYWswL2dDcEUwV1Uxb1FoeFlzaGdnPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzQ1ODQ2OTk5CWZpbGU6RXRjZCBXb3JrYmVuY2guYXBwLnRhci5negpRVGREbXNxRGdGbk1YOTZDbDM3TTFIRE9OM3JDWktKUTlyaGpEWERlZHE3MzBMb3htSzRNbHFReWxUWlprVnNZT0ZpTUJBRjJ3eHlTdmFtcWRkTVZCQT09Cg==",
+      "url": "https://gitee.com/tzfun/etcd-workbench/releases/download/App-1.1.6/etcd-workbench-1.1.6-macos-aarch64.app.tar.gz"
     },
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K09acDl4UnpjS3VuUEo5NVBtNi9iLzZDWUpNWFdKQmFwc0xsb3QwbldBaFlMcm1pSGRZaEU5bUtSZko3aitDcVhaamRNeVpaUXBiYVB5ckFJL0hWRkFBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzQ1MDM5MTc5CWZpbGU6RXRjZCBXb3JrYmVuY2hfMS4xLjVfeDY0LXNldHVwLm5zaXMuemlwCnAxUzJXbDd5ME9HRmhocDU1Tk1xZUV5Z2locGVpWDdCdjRxZE9pSWs3dVQwcUtuM21hcWpJWTZCK0xzdXBtaFE0VWFIMVJ1dWh2N3Myb0Y1YThycUFnPT0K",
-      "url": "https://gitee.com/tzfun/etcd-workbench/releases/download/App-1.1.5/etcd-workbench-1.1.5-windows-x86_64.nsis.zip"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K0lmcisvZFdYQXN3dFF3b1dwKzBWdTJDUEczUFh1SER6N1pHTm5LM1h6UlIyZy9oc1VuaW85MzdoRi9NbWNVclZCZlhCeWZhUXlydEZqUW04ZmNKZ3dFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzQ1ODQ2MzMzCWZpbGU6RXRjZCBXb3JrYmVuY2hfMS4xLjZfeDY0LXNldHVwLm5zaXMuemlwCk9aVnFJbVFId3Vmem1lWUZ2TGN6VHYvdmg1azdPSDBIWDg3cFYzNzl3cS9SdHo4aS81VkdQemlJU25GVVhiUnVDY2pLZjdNdkZORVZPRnhnVmFYQUJnPT0K",
+      "url": "https://gitee.com/tzfun/etcd-workbench/releases/download/App-1.1.6/etcd-workbench-1.1.6-windows-x86_64.nsis.zip"
     }
   }
 }

@@ -173,3 +173,10 @@ export type LogicErrorInfo = {
 }
 
 export type AppTheme = 'light' | 'dark' | 'auto'
+
+export type UpdateInfo = {
+    state: 'none' | 'available' | 'pending' | 'downloading' | 'downloaded' | 'installed' | 'error'
+    chunkLength: number
+    contentLength: number
+    error: string
+}

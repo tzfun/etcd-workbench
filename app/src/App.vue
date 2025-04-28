@@ -1,28 +1,32 @@
 <script setup lang="ts">
-import { platform as getPlatform } from "@tauri-apps/api/os";
-import { relaunch } from "@tauri-apps/api/process";
-import { appWindow } from '@tauri-apps/api/window';
-import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue";
-import { useTheme } from "vuetify";
+import {platform as getPlatform} from "@tauri-apps/api/os";
+import {appWindow} from '@tauri-apps/api/window';
+import {computed, onMounted, onUnmounted, reactive, ref, watch} from "vue";
+import {useTheme} from "vuetify";
 import {
-  _alertError,
+  _alertError, _confirm, _confirmSystem,
+  _confirmUpdateApp,
+  _genNewVersionUpdateMessage,
   _listenLocal,
-  _loading, _unListenLocal,
-  EventName
+  _unListenLocal,
+  EventName,
+  UpdateDownloadingProgressEvent
 } from "~/common/events.ts";
-import { _isDebugModel } from "~/common/services.ts";
-import { _loadAppVersion, _loadGlobalStore, _loadSettings, _useSettings, _useUpdateInfo } from "~/common/store.ts";
-import { DEFAULT_SETTING_CONFIG } from "~/common/transport/setting.ts";
-import { AppTheme, DialogItem, TipsItem } from "~/common/types.ts";
-import { _isLinux, _isMac, _isWindows, _setPlatform } from "~/common/windows.ts";
+import {_isDebugModel} from "~/common/services.ts";
+import {_loadAppVersion, _loadGlobalStore, _loadSettings, _useSettings} from "~/common/store.ts";
+import {DEFAULT_SETTING_CONFIG} from "~/common/transport/setting.ts";
+import {AppTheme, DialogItem, TipsItem, UpdateInfo} from "~/common/types.ts";
+import {_isLinux, _isMac, _isWindows, _setPlatform} from "~/common/windows.ts";
 import LinuxSystemBar from "~/components/system-bar/LinuxSystemBar.vue";
 import MacSystemBar from "~/components/system-bar/MacSystemBar.vue";
 import WindowsSystemBar from "~/components/system-bar/WindowsSystemBar.vue";
 import AppMain from "~/pages/main/AppMain.vue";
 import AppSetting from "~/pages/setting/AppSetting.vue";
-import { _checkUpdate, _installUpdate } from './common/updater';
+import {_installUpdate, CustomUpdateManifest} from './common/updater';
 import IconEtcd from "~/components/icon/IconEtcd.vue";
 import {Handler} from "mitt";
+import {_byteTextFormat} from "~/common/utils.ts";
+import {relaunch} from "@tauri-apps/api/process";
 
 const DEFAULT_LOADING_TEXT: string = "Loading..."
 const loading = ref<boolean>(false)
@@ -35,10 +39,29 @@ const tips = ref<TipsItem[]>([])
 const theme = useTheme()
 
 const eventUnListens = reactive<Function[]>([])
-const checkUpdateTimer = ref<number>()
+const updateInfo = reactive<UpdateInfo>({
+  state: 'none',
+  chunkLength: 0,
+  contentLength: 0,
+  error: ''
+})
 
 const windowLabel = computed<string>(() => {
   return appWindow.label
+})
+const updaterDialogShow = computed<boolean>(() => {
+  return updateInfo.state == 'pending'
+      || updateInfo.state == 'downloading'
+      || updateInfo.state == 'downloaded'
+      || updateInfo.state == 'error'
+})
+const downloadingProgress = computed(() => {
+  if (updateInfo.state == 'downloading') {
+    if (updateInfo.contentLength && updateInfo.contentLength > 0) {
+      return 100 * updateInfo.chunkLength / updateInfo.contentLength
+    }
+  }
+  return 0
 })
 
 onMounted(async () => {
@@ -46,6 +69,7 @@ onMounted(async () => {
   await _loadGlobalStore()
   let settings = await _loadSettings()
   _setPlatform(await getPlatform())
+  await listenUpdaterEvent()
 
   let isDebug = await _isDebugModel()
   if (!isDebug) {
@@ -129,10 +153,6 @@ onMounted(async () => {
         setAppTheme(newVal.theme)
       }
     })
-
-    checkUpdate(settings.autoUpdate)
-
-    startCheckUpdateTimer()
   }
 })
 
@@ -140,49 +160,68 @@ onUnmounted(() => {
   for (let eventUnListen of eventUnListens) {
     eventUnListen()
   }
-  stopCheckUpdateTimer()
 })
 
-const checkUpdate = (autoUpdate: boolean) => {
-  let updateInfo = _useUpdateInfo().value
-  // 检查更新
-  _checkUpdate().then(async (manifest) => {
-    updateInfo.valid = true
-    updateInfo.latestVersion = manifest
+const listenUpdaterEvent = async () => {
+  eventUnListens.push(await appWindow.listen<CustomUpdateManifest>(EventName.UPDATE_AVAILABLE, e => {
+    if (updateInfo.state != 'pending') {
+      updateInfo.state = 'available'
+    }
 
-    if (autoUpdate) {
-      _loading(true, "Installing new version...")
-      _installUpdate().then(() => {
-        _loading(true, "Relaunch...")
-        relaunch().catch((e: string) => {
+    updateInfo.chunkLength = 0;
+    updateInfo.contentLength = 0;
+    updateInfo.error = '';
+
+    const autoUpdate = _useSettings().value.autoUpdate
+    if (!autoUpdate && e.payload.source == appWindow.label) {
+      let manifest = e.payload
+
+      let message = _genNewVersionUpdateMessage(manifest)
+      _confirmUpdateApp(message).then(() => {
+        _installUpdate().then(() => {
+        }).catch(e => {
           console.error(e)
-          _alertError("Unable to relaunch, please relaunch manually.")
-        }).finally(() => {
-          _loading(false)
+          _alertError("Unable to update: " + e)
         })
-      }).catch(e => {
-        _loading(false)
-        console.error(e)
-        _alertError(`Install failed, please update manually or go to <span onclick='_goBrowserPage("https://github.com/tzfun/etcd-workbench")' class='simulate-tag-a text-green font-weight-bold' title='Click to view github'>GitHub</span> to download the latest version.`)
+      }).catch(() => {
       })
     }
-  }).catch(e => {
-    console.error("Failed to check update", e)
-    updateInfo.valid = false
-  })
-}
+  }))
 
-const startCheckUpdateTimer = () => {
-  stopCheckUpdateTimer()
-  //  每1小时检查一次更新
-  checkUpdateTimer.value = window.setInterval(() => {
-    checkUpdate(false)
-  }, 3600_000)
-}
+  if (windowLabel.value == 'main') {
+    eventUnListens.push(await appWindow.listen(EventName.UPDATE_PENDING, () => {
+      updateInfo.state = 'pending'
+    }))
 
-const stopCheckUpdateTimer = () => {
-  if (checkUpdateTimer.value) {
-    clearInterval(checkUpdateTimer.value)
+    eventUnListens.push(await appWindow.listen<UpdateDownloadingProgressEvent>(EventName.UPDATE_DOWNLOADING_PROGRESS, e => {
+      updateInfo.state = 'downloading'
+      updateInfo.chunkLength += e.payload.chunkLength
+      if (e.payload.contentLength) {
+        updateInfo.contentLength = e.payload.contentLength
+      }
+    }))
+
+    eventUnListens.push(await appWindow.listen(EventName.UPDATE_DOWNLOADED, () => {
+      updateInfo.state = 'downloaded'
+    }))
+
+    eventUnListens.push(await appWindow.listen(EventName.UPDATE_INSTALLED, () => {
+      updateInfo.state = 'installed'
+      _confirm('Restart', 'Update complete. Restart now to apply?').then(() => {
+        relaunch().catch(e => {
+          console.error("Restart failed", e)
+        })
+      }).catch(() => {
+      })
+    }))
+
+    eventUnListens.push(await appWindow.listen<string>(EventName.UPDATE_ERRORS, e => {
+      console.error('update error', e.payload)
+      updateInfo.state = 'error'
+      updateInfo.error = e.payload
+
+      _alertError(`An exception occurred during the update: ${e.payload}`)
+    }))
   }
 }
 
@@ -214,7 +253,7 @@ const disableWebviewNativeEvents = () => {
     //  ctrl + u
     //  ctrl + j
     if (e.ctrlKey && /^[priuj]$/.test(key)) {
-      console.log("pass a",key)
+      console.log("pass a", key)
       e.preventDefault()
       return false
     }
@@ -240,21 +279,84 @@ const disableWebviewNativeEvents = () => {
       <WindowsSystemBar v-if="_isWindows()"
                         :height="28"
                         :window-label="windowLabel"
-      ></WindowsSystemBar>
+                        :update-info="updateInfo"
+      />
       <MacSystemBar v-if="_isMac()"
                     :height="28"
                     :window-label="windowLabel"
-      ></MacSystemBar>
+                    :update-info="updateInfo"
+      />
       <LinuxSystemBar v-if="_isLinux()"
                       :window-label="windowLabel"
                       :height="28"
-      ></LinuxSystemBar>
+                      :update-info="updateInfo"
+      />
 
       <v-main class="fill-height position-relative" id="mainBody">
         <AppSetting v-if="windowLabel === 'setting'" class="app-setting"></AppSetting>
         <AppMain v-else-if="windowLabel === 'main'"></AppMain>
       </v-main>
     </v-layout>
+
+    <!--    更新组件       -->
+    <div class="updater" v-if="updaterDialogShow" data-tauri-drag-region>
+      <v-list
+          class="py-2"
+          color="primary"
+          elevation="12"
+          rounded="lg"
+          width="450px"
+      >
+        <v-list-item>
+          <template v-slot:prepend>
+            <v-icon v-if="updateInfo.state == 'pending'"
+            >mdi-arrow-down-bold
+            </v-icon>
+            <v-icon v-else-if="updateInfo.state == 'downloading'"
+                    class="downloading-icon"
+            >mdi-arrow-down-bold
+            </v-icon>
+            <v-icon v-else-if="updateInfo.state == 'downloaded'"
+                    color="green"
+            >mdi-check-circle-outline
+            </v-icon>
+            <v-icon v-else-if="updateInfo.state == 'error'"
+                    color="red"
+            >mdi-alert-circle
+            </v-icon>
+          </template>
+          <template v-slot:default>
+            <span v-if="updateInfo.state == 'pending'">Preparing the update...</span>
+            <div v-else-if="updateInfo.state == 'downloading'">
+              <v-progress-linear
+                  v-model="downloadingProgress"
+                  color="blue-lighten-1"
+                  class="my-2"
+                  height="20"
+              >
+                <strong>{{ Math.ceil(downloadingProgress) }}%</strong>
+              </v-progress-linear>
+              <v-layout>
+                Downloading...
+                <v-spacer/>
+                <span class="text-medium-emphasis">
+                  {{ _byteTextFormat(updateInfo.chunkLength) }} / {{ _byteTextFormat(updateInfo.contentLength) }}
+                </span>
+
+              </v-layout>
+            </div>
+            <span v-else-if="updateInfo.state == 'downloaded'">
+              Download completed. Installing now...
+            </span>
+            <v-layout v-else-if="updateInfo.state == 'error'">
+              Failed to update. {{ updateInfo.error }}
+              <v-spacer/>
+              <v-icon @click="updateInfo.state = 'none'">mdi-close</v-icon>
+            </v-layout>
+          </template>
+        </v-list-item>
+      </v-list>
+    </div>
 
     <!--    全局公共组件    -->
 
@@ -363,6 +465,38 @@ const disableWebviewNativeEvents = () => {
   z-index: 1;
   top: 28px;
   left: 0;
+}
+
+.updater {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.32);
+  z-index: 1500;
+  display: flex;
+  justify-content: center;
+  align-content: center;
+  flex-wrap: wrap;
+
+  .downloading-icon {
+    animation: downloading 1s linear infinite;
+  }
+}
+
+@keyframes downloading {
+  0% {
+    transform: translateY(-50%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(50%);
+    opacity: 0;
+  }
 }
 </style>
 

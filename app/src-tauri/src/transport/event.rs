@@ -54,3 +54,10 @@ pub struct KeyMonitorModifiedByServerEvent {
     pub session: i32,
     pub config: KeyMonitorConfig,
 }
+
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(rename_all="camelCase")]
+pub struct UpdateDownloadingProgressEvent {
+    pub chunk_length: usize,
+    pub content_length: Option<u64>,
+}

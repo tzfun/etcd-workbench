@@ -161,6 +161,7 @@ pub struct FileFormat {
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct UpdateManifest {
     pub version: String,
-    pub date: i64,
-    pub body: String
+    pub date: Option<i64>,
+    pub body: String,
+    pub source: String,
 }

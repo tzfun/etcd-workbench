@@ -1,11 +1,14 @@
 <script setup lang="ts">
 
-import { appWindow } from "@tauri-apps/api/window";
-import { computed, onMounted, reactive, ref } from "vue";
-import { _useUpdateInfo } from "~/common/store.ts";
-import { _checkUpdateAndInstall } from "~/common/updater.ts";
-import { _openSettingWindow } from "~/common/windows.ts";
+import {appWindow} from "@tauri-apps/api/window";
+import {computed, onMounted, PropType, reactive, ref} from "vue";
+import {_openSettingWindow} from "~/common/windows.ts";
 import SnapshotList from "~/components/SnapshotList.vue";
+import {UpdateInfo} from "~/common/types.ts";
+import {_checkUpdate} from "~/common/updater.ts";
+import {_byteTextFormat} from "~/common/utils.ts";
+import {_confirm} from "~/common/events.ts";
+import {relaunch} from "@tauri-apps/api/process";
 
 const maximize = ref(false)
 
@@ -14,11 +17,14 @@ const props = defineProps({
   windowLabel: {
     type: String,
     required: true
+  },
+  updateInfo: {
+    type: Object as PropType<UpdateInfo>,
+    required: true
   }
 })
 
 const title = ref<string>('Etcd Workbench')
-const updateInfo = _useUpdateInfo();
 const snapshotListState = reactive({
   show: false,
   len: 0
@@ -26,6 +32,14 @@ const snapshotListState = reactive({
 
 const showSnapshotList = computed<boolean>(() => {
   return snapshotListState.show || snapshotListState.len > 0
+})
+const downloadingProgress = computed(() => {
+  if (props.updateInfo?.state == 'downloading') {
+    if (props.updateInfo.contentLength && props.updateInfo.contentLength > 0) {
+      return 100 * props.updateInfo.chunkLength / props.updateInfo.contentLength
+    }
+  }
+  return 0
 })
 
 onMounted(async () => {
@@ -59,6 +73,12 @@ const snapshotListLenChanged = (len: number) => {
 
 const snapshotListShowChanged = (show: boolean) => {
   snapshotListState.show = show
+}
+
+const confirmRestart = () => {
+  _confirm('Restart','Update installed. Restart now to apply changes?').then(() => {
+    relaunch()
+  }).catch(() => {})
 }
 
 </script>
@@ -129,17 +149,56 @@ const snapshotListShowChanged = (show: boolean) => {
     <v-spacer></v-spacer>
 
     <div v-if="windowLabel == 'main'">
-      <v-btn v-if="updateInfo.valid"
-             class="text-none ms-2 pr-2"
-             color="light-green-darken-1"
-             text="New Version"
-             variant="outlined"
-             rounded
-             density="comfortable"
-             prepend-icon="mdi-bell-ring-outline"
-             size="small"
-             @click="_checkUpdateAndInstall"
-      ></v-btn>
+      <v-chip
+          class="mx-2"
+          v-if="updateInfo.state == 'available'"
+          variant="outlined"
+          size="small"
+          density="comfortable"
+          color="light-green-darken-1"
+          prepend-icon="mdi-bell-ring-outline"
+          @click="_checkUpdate"
+      >
+        New Version
+      </v-chip>
+      <span class="mx-2"
+            v-else-if="updateInfo.state == 'downloading'"
+      >
+        <v-progress-circular
+            v-model="downloadingProgress"
+            size="20"
+            color="blue-lighten-3"
+            class="mr-2"
+            width="2"
+        >
+          <v-icon size="small">mdi-arrow-down-bold</v-icon>
+        </v-progress-circular>
+        <strong class="mr-2">{{ Math.ceil(downloadingProgress) }}%</strong>
+        {{ _byteTextFormat(updateInfo.chunkLength) }} / {{ _byteTextFormat(updateInfo.contentLength) }}
+      </span>
+      <v-chip
+          v-else-if="updateInfo.state == 'downloaded'"
+          class="mx-2"
+          variant="outlined"
+          size="small"
+          density="comfortable"
+          color="blue-lighten-3"
+          prepend-icon="mdi-download"
+      >
+        Downloaded
+      </v-chip>
+      <v-chip
+          v-else-if="updateInfo.state == 'installed'"
+          class="mx-2"
+          variant="outlined"
+          size="small"
+          density="comfortable"
+          color="light-green-darken-1"
+          prepend-icon="mdi-check-bold"
+          @click="confirmRestart"
+      >
+        Installed Updates
+      </v-chip>
 
       <SnapshotList v-show="showSnapshotList"
                     @length-changed="snapshotListLenChanged"
