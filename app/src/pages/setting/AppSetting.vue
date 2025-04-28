@@ -268,7 +268,11 @@ const onScroll = _debounce(() => {
 
 const checkUpdate = () => {
   _loading(true, "Checking updates...")
-  _checkUpdate().finally(()=> {
+  _checkUpdate().then(available => {
+    if (!available) {
+      _tipSuccess('Your version is already the latest')
+    }
+  }).finally(()=> {
     _loading(false)
   })
 }

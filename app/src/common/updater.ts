@@ -1,5 +1,4 @@
 import {invoke} from "@tauri-apps/api";
-import {UpdateManifest} from "@tauri-apps/api/updater";
 import {ErrorPayload} from "./transport/connection";
 
 export type CustomUpdateManifest = {
@@ -9,14 +8,10 @@ export type CustomUpdateManifest = {
     source: string
 }
 
-export function _checkUpdate(): Promise<UpdateManifest> {
+export function _checkUpdate(): Promise<boolean> {
     return new Promise((resolve, reject) => {
-        invoke("check_update").then(data => {
-            if (data) {
-                resolve(data as UpdateManifest)
-            } else {
-                reject(undefined)
-            }
+        invoke<boolean>("check_update").then(data => {
+            resolve(data)
         }).catch(e => {
             reject((e as ErrorPayload).errMsg)
         })

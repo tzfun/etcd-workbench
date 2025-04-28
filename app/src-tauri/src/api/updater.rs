@@ -31,14 +31,14 @@ lazy_static! {
 pub async fn check_update(
     app_handle: AppHandle,
     window: Window,
-) -> Result<(), LogicError> {
+) -> Result<bool, LogicError> {
     check_update_with_source(app_handle, String::from(window.label())).await
 }
 
 pub async fn check_update_with_source(
     app_handle: AppHandle,
     source: String,
-) -> Result<(), LogicError> {
+) -> Result<bool, LogicError> {
     let mut update_builder = tauri::updater::builder(app_handle.clone());
 
     let setting = get_settings().await?;
@@ -57,23 +57,25 @@ pub async fn check_update_with_source(
     };
 
     let update = update_builder.check().await?;
-    if update.is_update_available() {
+    let available = update.is_update_available();
+    if available {
         if get_settings().await?.auto_update {
-            show_main_window(&app_handle).await;
-            update.download_and_install().await?;
-            return Ok(());
+            tokio::spawn(async move {
+                show_main_window(&app_handle).await;
+                let _ = update.download_and_install().await;
+            });
+        } else {
+            let mut source_lock = UPDATE_CHECK_SOURCE.write().await;
+            *source_lock = source;
+            drop(source_lock);
+            
+            let mut lock = UPDATE_RESULT.lock().await;
+            *lock = Some(update);
+            drop(lock);
         }
-
-        let mut source_lock = UPDATE_CHECK_SOURCE.write().await;
-        *source_lock = source;
-        drop(source_lock);
-        
-        let mut lock = UPDATE_RESULT.lock().await;
-        *lock = Some(update);
-        drop(lock);
     }
 
-    Ok(())
+    Ok(available)
 }
 
 #[tauri::command]
