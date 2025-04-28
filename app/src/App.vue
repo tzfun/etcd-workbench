@@ -49,10 +49,10 @@ const updateInfo = reactive<UpdateInfo>({
 const windowLabel = computed<string>(() => {
   return appWindow.label
 })
-const updaterDialogShow = computed<boolean>(() =>{
+const updaterDialogShow = computed<boolean>(() => {
   return updateInfo.state == 'pending'
       || updateInfo.state == 'downloading'
-      ||  updateInfo.state == 'downloaded'
+      || updateInfo.state == 'downloaded'
       || updateInfo.state == 'error'
 })
 const downloadingProgress = computed(() => {
@@ -164,7 +164,10 @@ onUnmounted(() => {
 
 const listenUpdaterEvent = async () => {
   eventUnListens.push(await appWindow.listen<CustomUpdateManifest>(EventName.UPDATE_AVAILABLE, e => {
-    updateInfo.state = 'available'
+    if (updateInfo.state != 'pending') {
+      updateInfo.state = 'available'
+    }
+
     updateInfo.chunkLength = 0;
     updateInfo.contentLength = 0;
     updateInfo.error = '';
@@ -204,9 +207,12 @@ const listenUpdaterEvent = async () => {
 
     eventUnListens.push(await appWindow.listen(EventName.UPDATE_INSTALLED, () => {
       updateInfo.state = 'installed'
-      _confirm('Update successful','Update installed successfully. Restart the app to apply changes. Restart now?').then(() => {
-        relaunch()
-      }).catch(() => {})
+      _confirm('Restart', 'Update complete. Restart now to apply?').then(() => {
+        relaunch().catch(e => {
+          console.error("Restart failed", e)
+        })
+      }).catch(() => {
+      })
     }))
 
     eventUnListens.push(await appWindow.listen<string>(EventName.UPDATE_ERRORS, e => {
@@ -247,7 +253,7 @@ const disableWebviewNativeEvents = () => {
     //  ctrl + u
     //  ctrl + j
     if (e.ctrlKey && /^[priuj]$/.test(key)) {
-      console.log("pass a",key)
+      console.log("pass a", key)
       e.preventDefault()
       return false
     }
@@ -294,7 +300,6 @@ const disableWebviewNativeEvents = () => {
 
     <!--    更新组件       -->
     <div class="updater" v-if="updaterDialogShow" data-tauri-drag-region>
-
       <v-list
           class="py-2"
           color="primary"
@@ -305,19 +310,23 @@ const disableWebviewNativeEvents = () => {
         <v-list-item>
           <template v-slot:prepend>
             <v-icon v-if="updateInfo.state == 'pending'"
-            >mdi-arrow-down-bold</v-icon>
+            >mdi-arrow-down-bold
+            </v-icon>
             <v-icon v-else-if="updateInfo.state == 'downloading'"
                     class="downloading-icon"
-            >mdi-arrow-down-bold</v-icon>
+            >mdi-arrow-down-bold
+            </v-icon>
             <v-icon v-else-if="updateInfo.state == 'downloaded'"
                     color="green"
-            >mdi-check-circle-outline</v-icon>
+            >mdi-check-circle-outline
+            </v-icon>
             <v-icon v-else-if="updateInfo.state == 'error'"
                     color="red"
-            >mdi-alert-circle</v-icon>
+            >mdi-alert-circle
+            </v-icon>
           </template>
           <template v-slot:default>
-            <span v-if="updateInfo.state == 'pending'">Ready to download update...</span>
+            <span v-if="updateInfo.state == 'pending'">Preparing the update...</span>
             <div v-else-if="updateInfo.state == 'downloading'">
               <v-progress-linear
                   v-model="downloadingProgress"
@@ -328,7 +337,7 @@ const disableWebviewNativeEvents = () => {
                 <strong>{{ Math.ceil(downloadingProgress) }}%</strong>
               </v-progress-linear>
               <v-layout>
-                Downloading updates...
+                Downloading...
                 <v-spacer/>
                 <span class="text-medium-emphasis">
                   {{ _byteTextFormat(updateInfo.chunkLength) }} / {{ _byteTextFormat(updateInfo.contentLength) }}
@@ -457,6 +466,7 @@ const disableWebviewNativeEvents = () => {
   top: 28px;
   left: 0;
 }
+
 .updater {
   position: fixed;
   left: 0;
@@ -467,7 +477,7 @@ const disableWebviewNativeEvents = () => {
   z-index: 1500;
   display: flex;
   justify-content: center;
-  align-content:  center;
+  align-content: center;
   flex-wrap: wrap;
 
   .downloading-icon {

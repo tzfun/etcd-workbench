@@ -39,7 +39,7 @@ pub async fn check_update_with_source(
     app_handle: AppHandle,
     source: String,
 ) -> Result<(), LogicError> {
-    let mut update_builder = tauri::updater::builder(app_handle);
+    let mut update_builder = tauri::updater::builder(app_handle.clone());
 
     let setting = get_settings().await?;
     update_builder = match setting.update_source {
@@ -59,6 +59,7 @@ pub async fn check_update_with_source(
     let update = update_builder.check().await?;
     if update.is_update_available() {
         if get_settings().await?.auto_update {
+            show_main_window(&app_handle).await;
             update.download_and_install().await?;
             return Ok(());
         }
@@ -84,12 +85,16 @@ pub async fn install_update(app_handle: AppHandle,) -> Result<(), LogicError> {
         return Err(LogicError::UpdateError(tauri::updater::Error::UpToDate));
     }
     let update = update.unwrap();
+    show_main_window(&app_handle).await;
+    update.download_and_install().await?;
+    Ok(())
+}
+
+async fn show_main_window(app_handle: &AppHandle) {
     if let Some(window) = app_handle.get_window("setting") {
         let _ = window.hide();
     }
     let _ = app_handle.get_window("main").unwrap().set_focus();
-    update.download_and_install().await?;
-    Ok(())
 }
 
 pub fn handle_updater_event(app: &AppHandle, updater_event: UpdaterEvent) {

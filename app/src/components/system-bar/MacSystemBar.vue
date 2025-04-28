@@ -7,7 +7,7 @@ import SnapshotList from "~/components/SnapshotList.vue";
 import {UpdateInfo} from "~/common/types.ts";
 import {_checkUpdate} from "~/common/updater.ts";
 import {_byteTextFormat} from "~/common/utils.ts";
-import {_confirmSystem} from "~/common/events.ts";
+import {_confirm} from "~/common/events.ts";
 import {relaunch} from "@tauri-apps/api/process";
 
 const maximize = ref(false)
@@ -76,7 +76,7 @@ const snapshotListShowChanged = (show: boolean) => {
 }
 
 const confirmRestart = () => {
-  _confirmSystem('Update installed. Restart now to apply changes?').then(() => {
+  _confirm('Restart','Update installed. Restart now to apply changes?').then(() => {
     relaunch()
   }).catch(() => {})
 }

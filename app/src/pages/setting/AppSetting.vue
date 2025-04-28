@@ -4,7 +4,7 @@ import {listen} from "@tauri-apps/api/event";
 import {appWindow} from "@tauri-apps/api/window";
 import {onMounted, onUnmounted, reactive, ref, watch} from "vue";
 import {useTheme} from "vuetify";
-import {_alertError, _confirmSystem, _emitGlobal, _tipSuccess, EventName} from "~/common/events.ts";
+import {_alertError, _confirmSystem, _emitGlobal, _loading, _tipSuccess, EventName} from "~/common/events.ts";
 import {_exportConnection, _handleError, _importConnection} from "~/common/services.ts";
 import {_loadAppVersion, _loadSettings, _setLocalSettings, _useSettings} from "~/common/store.ts";
 import {DEFAULT_SETTING_CONFIG, SettingConfig} from "~/common/transport/setting.ts";
@@ -266,6 +266,12 @@ const onScroll = _debounce(() => {
   }
 }, 200)
 
+const checkUpdate = () => {
+  _loading(true, "Checking updates...")
+  _checkUpdate().finally(()=> {
+    _loading(false)
+  })
+}
 </script>
 
 <template>
@@ -524,7 +530,7 @@ const onScroll = _debounce(() => {
                 <v-spacer></v-spacer>
                 <div>
                   <v-btn class="text-none mr-2" density="comfortable" text="Check Update" color="blue-lighten-1"
-                    prepend-icon="mdi-arrow-up-bold-circle-outline" @click="_checkUpdate"></v-btn>
+                    prepend-icon="mdi-arrow-up-bold-circle-outline" @click="checkUpdate"></v-btn>
                   or
                   <v-btn class="text-none ml-2" density="comfortable" text="Download in GitHub"
                     prepend-icon="mdi-github" color="grey-darken-4"
