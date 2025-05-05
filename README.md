@@ -52,13 +52,13 @@ Visit the [Etcd Workbench homepage](https://tzfun.github.io/etcd-workbench/) to 
 
 > Note: Versions released on or before May 10, 2024, are Web-only. The first App version was released on August 30, 2024, and follows the new prefix rule.
 
-# About the Web Version
+# Web Deployment
 
 The Web version supports deployment via **Jar** or **Docker**, allowing you to manage Etcd Server in a browser with multi-account login support.
 
 > The Web version has been **archived** and is no longer maintained. For documentation on the Web version, visit the [etcd-workbench-web](https://github.com/tzfun/etcd-workbench-web/) repository.
 
-# Desktop App Screenshots
+# App Screenshots
 
 ![key-editor-light.png](screenshot/app/key-editor-light.png)
 
@@ -105,6 +105,7 @@ Or use WeChat Appreciation:
 ## Donation List (Updated Periodically)
 - Machérie - WeChat - ￥30
 - whoops - WeChat - ￥12.9
+- [8liang](https://github.com/8liang) - WeChat - ￥20
 
 
 # License

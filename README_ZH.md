@@ -105,6 +105,7 @@ Web 支持 **Jar** 包部署和 **Docker** 部署，在浏览器中管理Etcd Se
 ## 捐赠列表（不定期更新）
 - Machérie - 微信 - 30元
 - whoops - 微信 - 12.9元
+- [8liang](https://github.com/8liang) - 微信 - 20元
 
 # License
 
