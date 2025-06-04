@@ -1,16 +1,4 @@
 #![allow(unused)]
-use std::any::Any;
-use std::collections::HashMap;
-use std::ffi::{OsStr, OsString};
-use std::future::Future;
-use std::ops::DerefMut;
-use std::path::PathBuf;
-use std::pin::Pin;
-use std::sync::Arc;
-use std::time::Duration;
-use std::{fs, u8};
-use std::net::IpAddr;
-use std::str::FromStr;
 use crate::api::settings::get_settings;
 use crate::error::LogicError;
 use crate::etcd::wrapped_etcd_client::WrappedEtcdClient;
@@ -27,11 +15,25 @@ use crate::transport::maintenance::{
 use crate::transport::user::{SerializablePermission, SerializableUser};
 use crate::utils::k8s_formatter;
 use etcd_client::{
-    AlarmAction, AlarmType, Client, CompactionOptions, ConnectOptions, Error, GetOptions, GetResponse, Identity, LeaseGrantOptions, LeaseTimeToLiveOptions, PutOptions, RoleRevokePermissionOptions, SortOrder, SortTarget, WatchOptions, WatchStream, Watcher
+    AlarmAction, AlarmType, Client, CompactionOptions, ConnectOptions, Error, GetOptions,
+    GetResponse, Identity, LeaseGrantOptions, LeaseTimeToLiveOptions, PutOptions,
+    RoleRevokePermissionOptions, SortOrder, SortTarget, WatchOptions, WatchStream, Watcher,
 };
 use log::{debug, error, info, warn};
 use russh::client;
 use serde::{Deserialize, Serialize};
+use std::any::Any;
+use std::collections::HashMap;
+use std::ffi::{OsStr, OsString};
+use std::future::Future;
+use std::net::IpAddr;
+use std::ops::DerefMut;
+use std::path::PathBuf;
+use std::pin::Pin;
+use std::str::FromStr;
+use std::sync::Arc;
+use std::time::Duration;
+use std::{fs, u8};
 use tokio::fs::{File, OpenOptions};
 use tokio::io::AsyncWriteExt;
 use tokio::select;
@@ -48,7 +50,10 @@ pub struct EtcdConnector {
 }
 
 impl EtcdConnector {
-    pub async fn new(connection: Connection, handler: EtcdConnectorHandler) -> Result<Self, LogicError> {
+    pub async fn new(
+        connection: Connection,
+        handler: EtcdConnectorHandler,
+    ) -> Result<Self, LogicError> {
         let settings = get_settings().await?;
         let mut connection_config = connection.clone();
 
@@ -125,11 +130,10 @@ impl EtcdConnector {
         let mut port = connection.port;
         let namespace = connection.namespace.clone();
 
-
         let ssh = if let Some(ssh) = connection.ssh {
-
             let ssh_context =
-                SshTunnel::new(ssh, Box::leak(host.clone().into_boxed_str()), port, handler).await?;
+                SshTunnel::new(ssh, Box::leak(host.clone().into_boxed_str()), port, handler)
+                    .await?;
             port = ssh_context.get_proxy_port();
             host.clear();
             host.push_str("127.0.0.1");
@@ -160,10 +164,6 @@ impl EtcdConnector {
         } else {
             false
         }
-    }
-
-    pub fn get_namespace_unchecked(&self) -> &String {
-        &self.namespace.as_ref().unwrap()
     }
 
     pub async fn test_connection(&self) -> Result<(), Error> {
@@ -456,7 +456,11 @@ impl EtcdConnector {
     }
 
     fn root_key(&self) -> Vec<u8> {
-        self.get_namespace_unchecked().clone().into_bytes()
+        if let Some(namespace) = self.namespace.as_ref() {
+            namespace.clone().into_bytes()
+        } else {
+            vec![]
+        }
     }
 
     pub fn fill_prefix_namespace(&self, end_key: impl Into<Vec<u8>>) -> Vec<u8> {
@@ -472,7 +476,7 @@ impl EtcdConnector {
     fn prefix_namespace_to_range_end(&self, end_key: impl Into<Vec<u8>>) -> Vec<u8> {
         if self.has_namespace() {
             let mut end_key_bytes: Vec<u8> = end_key.into();
-            let mut prefix = self.get_namespace_unchecked().clone().into_bytes();
+            let mut prefix = self.namespace.as_ref().unwrap().clone().into_bytes();
             // range end is '\0', calculate the prefixed range end by (key + 1)
             if end_key_bytes.len() == 1 && end_key_bytes[0] == 0 {
                 key_next(&mut prefix);
@@ -898,9 +902,7 @@ impl EtcdConnector {
     /// 读取server的检测数据
     pub async fn metrics(&self) -> Result<Vec<(String, String)>, LogicError> {
         let response = if let Some(tls) = &self.connection_config.tls {
-            let mut client_builder = reqwest::Client::builder()
-                .use_rustls_tls()
-                .tls_sni(true);
+            let mut client_builder = reqwest::Client::builder().use_rustls_tls().tls_sni(true);
             for cert in &tls.cert {
                 let certificate = reqwest::Certificate::from_pem(cert.as_slice())?;
                 client_builder = client_builder.add_root_certificate(certificate);
@@ -911,7 +913,7 @@ impl EtcdConnector {
                 let id = reqwest::Identity::from_pem(buf.as_slice())?;
                 client_builder = client_builder.identity(id);
             }
-            
+
             if let Some(domain) = &tls.domain {
                 if let Ok(ip_addr) = IpAddr::from_str(domain.as_str()) {
                     client_builder = client_builder.local_address(Some(ip_addr));
@@ -952,7 +954,11 @@ impl EtcdConnector {
     }
 
     /// Key监听
-    pub async fn watch(&mut self, key: impl Into<Vec<u8>>, options: Option<WatchOptions>,) -> Result<(Watcher, WatchStream), LogicError> {
+    pub async fn watch(
+        &mut self,
+        key: impl Into<Vec<u8>>,
+        options: Option<WatchOptions>,
+    ) -> Result<(Watcher, WatchStream), LogicError> {
         let full_key = self.fill_prefix_namespace(key);
         let (watcher, stream) = self.client.watch(full_key, options).await?;
         Ok((watcher, stream))
