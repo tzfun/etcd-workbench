@@ -40,8 +40,10 @@ impl KeyWatchEventType {
 #[serde(rename_all="camelCase")]
 pub struct KeyWatchEvent {
     pub session: i32,
-    //  key值（全路径）
+    //  配置key值（全路径）
     pub key: String,
+    //  事件触发的key值（全路径）
+    pub event_key: String,
     pub event_type: KeyWatchEventType,
     pub event_time: u64,
     pub prev_kv: Option<SerializableKeyValue>,

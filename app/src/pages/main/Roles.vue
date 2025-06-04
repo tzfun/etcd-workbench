@@ -286,7 +286,7 @@ const grantPerm = () => {
                           <span v-else>{{ perm.key }}</span>
                         </td>
                         <td>
-                          <span v-if="perm.allKeys" >/</span>
+                          <span v-if="perm.allKeys" ></span>
                           <span v-else-if="perm.prefix" class="text-blue">Yes</span>
                           <span v-else class="text-grey">No</span>
                         </td>

@@ -215,9 +215,18 @@ const addMonitor = () => {
               :variant="e.read ? 'plain' : 'tonal'"
           >
             <template #prepend>
-              <v-icon v-if="e.eventType == 'Create'">mdi-folder-plus-outline</v-icon>
-              <v-icon v-else-if="e.eventType == 'Remove'">mdi-folder-remove-outline</v-icon>
-              <v-icon v-else-if="e.eventType == 'Modify'">mdi-content-save-all-outline</v-icon>
+              <v-icon
+                  v-if="e.eventType == 'Create'"
+                  color="light-blue-darken-1"
+              >mdi-folder-plus-outline</v-icon>
+              <v-icon
+                  v-else-if="e.eventType == 'Remove'"
+                  color="red-darken-2"
+              >mdi-folder-remove-outline</v-icon>
+              <v-icon
+                  v-else-if="e.eventType == 'Modify'"
+                  color="yellow-lighten-1"
+              >mdi-content-save-all-outline</v-icon>
             </template>
 
             <template #append>

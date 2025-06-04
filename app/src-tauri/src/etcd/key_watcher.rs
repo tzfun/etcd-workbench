@@ -176,6 +176,7 @@ impl KeyWatcher {
                                                 KeyWatchEvent {
                                                     session: session_id,
                                                     key: config_clone.key.clone(),
+                                                    event_key: String::from_utf8_lossy(kv.key()).to_string(),
                                                     event_type: KeyWatchEventType::Create,
                                                     event_time: now,
                                                     prev_kv: None,
@@ -188,6 +189,7 @@ impl KeyWatcher {
                                                 KeyWatchEvent {
                                                     session: session_id,
                                                     key: config_clone.key.clone(),
+                                                    event_key: String::from_utf8_lossy(kv.key()).to_string(),
                                                     event_type: KeyWatchEventType::Modify,
                                                     event_time: now,
                                                     prev_kv: event.prev_kv().map(|p_kv| {
@@ -210,6 +212,7 @@ impl KeyWatcher {
                                             let watch_event = KeyWatchEvent {
                                                 session: session_id,
                                                 key: config_clone.key.clone(),
+                                                event_key: String::from_utf8_lossy(kv.key()).to_string(),
                                                 event_type: KeyWatchEventType::Remove,
                                                 event_time: now,
                                                 prev_kv: Some(SerializableKeyValue::from_ref(kv)),
@@ -295,7 +298,7 @@ impl KeyWatcher {
             if now >= lock.deref() + 3000 {
                 let res = Notification::new("com.beifengtz.etcdworkbench")
                     .title(event.event_type.desc())
-                    .body(event.key.clone())
+                    .body(event.event_key.clone())
                     .show();
                 if res.is_ok() {
                     *lock = now;
