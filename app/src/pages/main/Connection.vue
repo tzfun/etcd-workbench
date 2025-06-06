@@ -351,6 +351,7 @@ const onReadKeyMonitorLog = (num: number) => {
                           hide-details
                           prepend-inner-icon="mdi-file-document"
                           persistent-hint
+                          :readonly="keyMonitorDialog.edit"
             ></v-text-field>
           </v-layout>
 
