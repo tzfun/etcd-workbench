@@ -66,16 +66,16 @@ export function fuzzySearch(zTreeId, searchField, isHighLight, isExpand) {
             }
 
             //  搜索全路径
-            if (node.id) {
-                let id = node.id
-                if (typeof id !== 'string') {
-                    id = id.toString()
-                }
-                if (id.toLowerCase().indexOf(keywordsLowerCase) >= 0) {
-                    zTreeObj.showNode(node);//show node with matching keywords
-                    return true; //return true and show this node
-                }
-            }
+            // if (node.id) {
+            //     let id = node.id
+            //     if (typeof id !== 'string') {
+            //         id = id.toString()
+            //     }
+            //     if (id.toLowerCase().indexOf(keywordsLowerCase) >= 0) {
+            //         zTreeObj.showNode(node);//show node with matching keywords
+            //         return true; //return true and show this node
+            //     }
+            // }
 
             zTreeObj.hideNode(node); // hide node that not matched
             return false; //return false for node not matched
