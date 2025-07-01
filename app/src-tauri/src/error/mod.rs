@@ -70,7 +70,6 @@ impl Serialize for LogicError {
                 }.serialize(serializer)
             },
             LogicError::EtcdClientError(e) => {
-                error!("[ETCD] {:?}", e);
                 match e {
                     etcd_client::Error::GRpcStatus(status) => {
                         let code = status.code();
@@ -106,6 +105,13 @@ impl Serialize for LogicError {
                         ErrorPayload {
                             err_type: ErrorType::EtcdClientError,
                             err_msg: msg,
+                        }.serialize(serializer)
+                    }
+                    etcd_client::Error::TransportError(msg) => {
+                        let msg = msg.to_string();
+                        ErrorPayload {
+                            err_type: ErrorType::EtcdClientError,
+                            err_msg: msg.as_str(),
                         }.serialize(serializer)
                     }
                     _ => {
