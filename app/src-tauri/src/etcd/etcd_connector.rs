@@ -212,15 +212,7 @@ impl EtcdConnector {
     ) -> Result<Vec<SerializableKeyValue>, Error> {
         let mut response = self.client.kv_get_request(key, option).await?;
 
-        let kvs = response.take_kvs();
-        let mut arr = Vec::with_capacity(kvs.len());
-        for kv in kvs {
-            let mut s_kv = SerializableKeyValue::from(kv);
-            if let Some(namespace) = &self.namespace {
-                s_kv.remove_prefix(namespace);
-            }
-            arr.push(s_kv);
-        }
+        let arr = SerializableKeyValue::from_vec(response.take_kvs(), self.namespace.as_ref());
         Ok(arr)
     }
 
@@ -272,15 +264,7 @@ impl EtcdConnector {
 
         let mut response = self.client.kv_get_request(key, Some(option)).await?;
 
-        let kvs = response.take_kvs();
-        let mut arr = Vec::with_capacity(kvs.len());
-        for kv in kvs {
-            let mut s_kv = SerializableKeyValue::from(kv);
-            if let Some(namespace) = &self.namespace {
-                s_kv.remove_prefix(namespace);
-            }
-            arr.push(s_kv);
-        }
+        let arr = SerializableKeyValue::from_vec(response.take_kvs(), self.namespace.as_ref());
 
         Ok(SearchResult {
             count: response.count() as usize,
@@ -298,9 +282,9 @@ impl EtcdConnector {
             ))
         } else {
             let mut s_kv = kv[0].clone();
-            let full_key = s_kv.key.clone();
+            let mut full_key = s_kv.key.clone();
             if let Some(namespace) = &self.namespace {
-                s_kv.remove_prefix(namespace);
+                full_key = format!("{}{}", namespace, full_key);
             }
 
             s_kv.formatted_value = k8s_formatter::try_format_proto(&full_key, &s_kv.value);

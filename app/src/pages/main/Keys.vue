@@ -710,7 +710,7 @@ const loadVersionDiff = () => {
   } else {
     versionDiffInfo.keyBytes = currentKv.value?.keyBytes
   }
-  _getKV(props.session?.id, key, currentKv.value?.keyBytes).then(dataB => {
+  _getKV(props.session?.id, key, versionDiffInfo.keyBytes).then(dataB => {
     versionDiffInfo.version = dataB.version
     versionDiffInfo.createRevision = dataB.createRevision
     versionDiffInfo.modRevision = dataB.modRevision

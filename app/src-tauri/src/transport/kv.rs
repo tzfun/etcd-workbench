@@ -43,29 +43,41 @@ pub struct SerializableKeyValue {
 
 impl SerializableKeyValue {
     pub fn from_ref(kv: &KeyValue) -> Self {
-        unsafe {
-            let key = String::from(kv.key_str_unchecked());
-            let key_bytes = Vec::from(kv.key());
-            let key_encoded_utf8 = std::str::from_utf8(kv.key()).is_ok();
-            let value = Vec::from(kv.value());
-            let create_revision = kv.create_revision();
-            let mod_revision = kv.mod_revision();
-            let version = kv.version();
-            let lease = kv.lease().to_string();
-            let formatted_value = k8s_formatter::try_format_proto(&key, &value);
-            SerializableKeyValue {
-                key,
-                key_bytes,
-                key_encoded_utf8,
-                value,
-                create_revision,
-                mod_revision,
-                version,
-                lease,
-                lease_info: None,
-                formatted_value,
-            }
+        //  全路径，包含namespace
+        let key = String::from_utf8_lossy(kv.key()).to_string();
+        let key_bytes = Vec::from(kv.key());
+        let key_encoded_utf8 = std::str::from_utf8(kv.key()).is_ok();
+        let value = Vec::from(kv.value());
+        let create_revision = kv.create_revision();
+        let mod_revision = kv.mod_revision();
+        let version = kv.version();
+        let lease = kv.lease().to_string();
+        let formatted_value = k8s_formatter::try_format_proto(&key, &value);
+        SerializableKeyValue {
+            key,
+            key_bytes,
+            key_encoded_utf8,
+            value,
+            create_revision,
+            mod_revision,
+            version,
+            lease,
+            lease_info: None,
+            formatted_value,
         }
+    }
+
+    /// 从集合中转换，并从key中移除namespace
+    pub fn from_vec(kvs: Vec<KeyValue>, namespace: Option<&String>) -> Vec<SerializableKeyValue> {
+        let mut arr = Vec::with_capacity(kvs.len());
+        for kv in kvs {
+            let mut s_kv = SerializableKeyValue::from(kv);
+            if let Some(namespace) = namespace {
+                s_kv.remove_prefix(namespace);
+            }
+            arr.push(s_kv);
+        }
+        arr
     }
 }
 
@@ -77,7 +89,8 @@ impl From<KeyValue> for SerializableKeyValue {
 
 impl SerializableKeyValue {
     pub fn remove_prefix(&mut self, prefix: &String) {
-        self.key = self.key.replace(prefix.as_str(), "")
+        self.key_bytes.drain(0..prefix.as_bytes().len());
+        self.key = String::from_utf8_lossy(&self.key_bytes).to_string();
     }
 }
 
