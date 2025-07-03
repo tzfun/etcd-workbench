@@ -3,22 +3,21 @@ use std::io::{Error, ErrorKind};
 use std::sync::Arc;
 use std::time::Duration;
 
-use log::{debug, error, info, warn};
-use russh::{client, kex, Preferred};
-use russh::client::Handle;
-use russh::keys::key::PrivateKeyWithHashAlg;
-use russh::keys::{decode_secret_key, HashAlg};
-use tokio::net::{TcpListener, TcpStream};
-use tokio::sync::{oneshot, watch};
-use tokio::time::timeout;
-use tokio::{io, select};
-
 use crate::api::settings::get_settings;
 use crate::error::LogicError;
 use crate::etcd::etcd_connector_handler::EtcdConnectorHandler;
 use crate::ssh::ssh_client::SshClientHandler;
 use crate::transport::connection::ConnectionSsh;
 use crate::transport::event::DisconnectCase;
+use log::{debug, error, info, warn};
+use russh::client::{AuthResult, Handle};
+use russh::keys::key::PrivateKeyWithHashAlg;
+use russh::keys::{decode_secret_key, HashAlg};
+use russh::{client, kex, Preferred};
+use tokio::net::{TcpListener, TcpStream};
+use tokio::sync::{oneshot, watch};
+use tokio::time::timeout;
+use tokio::{io, select};
 
 pub struct SshTunnel {
     proxy_port: u16,
@@ -33,9 +32,9 @@ impl SshTunnel {
         handler: EtcdConnectorHandler,
     ) -> Result<Self, LogicError> {
         let config = client::Config {
-            inactivity_timeout: Some(Duration::from_secs(30)),
+            inactivity_timeout: None,
             keepalive_interval: Some(Duration::from_secs(10)),
-            keepalive_max: 6,
+            keepalive_max: 0,
             preferred: Preferred {
                 kex: Cow::Borrowed(&[
                     kex::CURVE25519,
@@ -56,9 +55,15 @@ impl SshTunnel {
             },
             ..<_>::default()
         };
+
         let config = Arc::new(config);
 
-        let ssh_handler = SshClientHandler::new(ssh_config.user.clone(), ssh_config.host.clone(), ssh_config.port, handler.clone());
+        let ssh_handler = SshClientHandler::new(
+            ssh_config.user.clone(),
+            ssh_config.host.clone(),
+            ssh_config.port,
+            handler.clone(),
+        );
 
         let ssh_simple_info = format!(
             "{}@{}:{}",
@@ -95,16 +100,7 @@ impl SshTunnel {
                         let res = session
                             .authenticate_publickey(ssh_config.user, private_key)
                             .await?;
-                        match res {
-                            client::AuthResult::Failure { remaining_methods, partial_success } => {
-                                debug!("Ssh authentication failed, methods:{:?}, partial_success: {}", remaining_methods, partial_success);
-                                return Err(LogicError::IoError(Error::new(
-                                    ErrorKind::ConnectionAborted,
-                                    "SSH connection rejected: authentication failure",
-                                )));
-                            },
-                            _=>{}
-                        }
+                        Self::handle_auth_result(res)?;
                     }
                     Err(e) => {
                         error!("decode ssh key failed: {}", e);
@@ -118,16 +114,7 @@ impl SshTunnel {
                 let res = session
                     .authenticate_password(ssh_config.user, password)
                     .await?;
-                match res {
-                    client::AuthResult::Failure { remaining_methods, partial_success } => {
-                        debug!("Ssh authentication failed, methods:{:?}, partial_success: {}", remaining_methods, partial_success);
-                        return Err(LogicError::IoError(Error::new(
-                            ErrorKind::ConnectionAborted,
-                            "SSH connection rejected: authentication failure",
-                        )));
-                    },
-                    _=>{}
-                }
+                Self::handle_auth_result(res)?;
             }
         }
 
@@ -156,6 +143,25 @@ impl SshTunnel {
             proxy_port,
             send_abort,
         })
+    }
+
+    fn handle_auth_result(res: AuthResult) -> Result<(), LogicError> {
+        match res {
+            client::AuthResult::Failure {
+                remaining_methods,
+                partial_success,
+            } => {
+                debug!(
+                            "Ssh authentication failed, methods:{:?}, partial_success: {}",
+                            remaining_methods, partial_success
+                        );
+                Err(LogicError::IoError(Error::new(
+                    ErrorKind::ConnectionAborted,
+                    "SSH connection rejected: authentication failure",
+                )))
+            }
+            _ => Ok(())
+        }
     }
 
     pub fn get_proxy_port(&self) -> u16 {
@@ -238,7 +244,9 @@ impl SshTunnel {
                                 }
                                 Err(e) => {
                                     error!("Unable to forward messages via ssh: {e}");
-                                    handler.disconnected(DisconnectCase::SshTunnelError(e.to_string()));
+                                    handler.disconnected(DisconnectCase::SshTunnelError(
+                                        e.to_string(),
+                                    ));
                                     continue;
                                 }
                             }

@@ -44,6 +44,30 @@ impl client::Handler for SshClientHandler {
         async { Ok(true) }
     }
 
+    /// Called when the server signals failure.
+    #[allow(unused_variables)]
+    fn channel_failure(
+        &mut self,
+        channel: ChannelId,
+        session: &mut Session,
+    ) -> impl Future<Output = Result<(), Self::Error>> + Send {
+        self.connector_handler
+            .disconnected(DisconnectCase::SshChannelFailure);
+        async { Ok(()) }
+    }
+
+    /// Called when the server sends EOF to a channel.
+    #[allow(unused_variables)]
+    fn channel_eof(
+        &mut self,
+        channel: ChannelId,
+        session: &mut Session,
+    ) -> impl Future<Output = Result<(), Self::Error>> + Send {
+        // self.connector_handler
+        //     .disconnected(DisconnectCase::SshChannelEof);
+        async { Ok(()) }
+    }
+
     #[allow(unused_variables)]
     fn disconnected(
         &mut self,
@@ -65,29 +89,5 @@ impl client::Handler for SshClientHandler {
                 }
             }
         }
-    }
-
-    /// Called when the server signals failure.
-    #[allow(unused_variables)]
-    fn channel_failure(
-        &mut self,
-        channel: ChannelId,
-        session: &mut Session,
-    ) -> impl Future<Output = Result<(), Self::Error>> + Send {
-        self.connector_handler
-            .disconnected(DisconnectCase::SshChannelFailure);
-        async { Ok(()) }
-    }
-
-    /// Called when the server sends EOF to a channel.
-    #[allow(unused_variables)]
-    fn channel_eof(
-        &mut self,
-        channel: ChannelId,
-        session: &mut Session,
-    ) -> impl Future<Output = Result<(), Self::Error>> + Send {
-        self.connector_handler
-            .disconnected(DisconnectCase::SshChannelEof);
-        async { Ok(()) }
     }
 }
