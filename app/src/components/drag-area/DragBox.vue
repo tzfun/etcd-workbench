@@ -88,6 +88,11 @@ const onMouseMove = (e: Event) => {
   const targetBoxWidth = resizeItem.targetBoxWidth + moveLen
   const rightBoxWidth = dragBoxRef.value!.clientWidth - targetBoxWidth - resizeItem.otherBoxWidth
 
+  let selection = window.getSelection()
+  if (selection) {
+    selection.removeAllRanges()
+  }
+
   if (targetBoxWidth < props.itemMinWidth || rightBoxWidth < props.itemMinWidth) {
     return
   }
