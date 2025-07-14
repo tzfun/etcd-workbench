@@ -20,7 +20,7 @@ mod ssh;
 mod transport;
 mod utils;
 
-#[tokio::main(flavor = "multi_thread", worker_threads = 10)]
+#[tokio::main(flavor = "multi_thread", worker_threads = 4)]
 async fn main() {
     let mut log_level = LevelFilter::Info;
     if api::settings::is_debug_model() {

@@ -27,6 +27,9 @@ pub struct SettingConfig {
     /// KV保存之前是否检查格式
     #[serde(default = "default_kv_check_format_before_save")]
     pub kv_check_format_before_save: bool,
+    /// KV树状搜索是否包含文件夹
+    #[serde(default = "default_kv_tree_search_with_folder")]
+    pub kv_tree_search_with_folder: bool,
 
     /// 自动更新
     #[serde(default = "default_auto_update")]
@@ -76,6 +79,11 @@ fn default_kv_check_format_before_save() -> bool {
     true
 }
 
+fn default_kv_tree_search_with_folder() -> bool {
+    true
+}
+
+
 fn default_connect_timeout_seconds() -> u64 {
     5
 }
@@ -110,6 +118,7 @@ impl Default for SettingConfig {
             kv_pagination_query: true,
             kv_limit_per_page: default_kv_limit_per_page(),
             kv_check_format_before_save: default_kv_check_format_before_save(),
+            kv_tree_search_with_folder: default_kv_tree_search_with_folder(),
             auto_update: default_auto_update(),
             update_source: default_update_source(),
             close_tab_use_ctrl_w: true,

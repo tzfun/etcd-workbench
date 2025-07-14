@@ -3,10 +3,11 @@
  * @param searchField selector of your input for fuzzy search
  * @param isHighLight whether highlight the match words, default true
  * @param isExpand whether to expand the node, default false
+ * @param appSettings the app settings
  *
  * @returns
  */
-export function fuzzySearch(zTreeId, searchField, isHighLight, isExpand) {
+export function fuzzySearch(zTreeId, searchField, isHighLight, isExpand, appSettings) {
     let zTreeObj = $.fn.zTree.getZTreeObj(zTreeId);//get the ztree object by ztree id
     if (!zTreeObj) {
         alert("fail to get ztree object");
@@ -39,6 +40,15 @@ export function fuzzySearch(zTreeId, searchField, isHighLight, isExpand) {
                 return true;
             }
 
+            const isSearchWithFolder = appSettings.value.kvTreeSearchWithFolder
+
+            if (!isSearchWithFolder) {
+                if(node.isParent) {
+                    zTreeObj.hideNode(node);
+                    return false;
+                }
+            }
+
             let keywordsLowerCase = _keywords.toLowerCase()
             //transform node name and keywords to lowercase
             if (node[nameKey] && node[nameKey].toLowerCase().indexOf(keywordsLowerCase) !== -1) {
@@ -66,16 +76,18 @@ export function fuzzySearch(zTreeId, searchField, isHighLight, isExpand) {
             }
 
             //  搜索全路径
-            // if (node.id) {
-            //     let id = node.id
-            //     if (typeof id !== 'string') {
-            //         id = id.toString()
-            //     }
-            //     if (id.toLowerCase().indexOf(keywordsLowerCase) >= 0) {
-            //         zTreeObj.showNode(node);//show node with matching keywords
-            //         return true; //return true and show this node
-            //     }
-            // }
+            if (isSearchWithFolder) {
+                if (node.id) {
+                    let id = node.id
+                    if (typeof id !== 'string') {
+                        id = id.toString()
+                    }
+                    if (id.toLowerCase().indexOf(keywordsLowerCase) >= 0) {
+                        zTreeObj.showNode(node);//show node with matching keywords
+                        return true; //return true and show this node
+                    }
+                }
+            }
 
             zTreeObj.hideNode(node); // hide node that not matched
             return false; //return false for node not matched

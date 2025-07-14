@@ -20,6 +20,7 @@ export interface SettingConfig {
     kvLimitPerPage: number | string,
     //  KV保存之前是否检查格式
     kvCheckFormatBeforeSave: boolean,
+    kvTreeSearchWithFolder: boolean,
 
     //  自动下载更新
     autoUpdate: boolean,
@@ -53,6 +54,7 @@ export const DEFAULT_SETTING_CONFIG: SettingConfig = {
     kvPaginationQuery: true,
     kvLimitPerPage: 2000,
     kvCheckFormatBeforeSave: true,
+    kvTreeSearchWithFolder: true,
     closeTabUseCtrlW: true,
     autoUpdate: true,
     updateSource: 'github',

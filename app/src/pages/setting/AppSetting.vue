@@ -458,6 +458,23 @@ const checkUpdate = () => {
               <v-divider class="mt-5 mb-5"></v-divider>
               <v-layout>
                 <div>
+                  <div class="form-label text-high-emphasis">Search Directories in Tree</div>
+                  <div class="v-messages">Enable or disable directory matching during tree searches.</div>
+                </div>
+                <v-spacer></v-spacer>
+                <div>
+                  <v-switch v-model="settingForm.kvTreeSearchWithFolder"
+                            inset
+                            density="compact"
+                            color="primary"
+                            hide-details
+                            true-icon="mdi-check"/>
+                </div>
+              </v-layout>
+
+              <v-divider class="mt-5 mb-5"></v-divider>
+              <v-layout>
+                <div>
                   <div class="form-label text-high-emphasis">Check Format Before Saving</div>
                   <div class="v-messages">Before saving the currently edited key each time, check whether the value
                     format is correct.

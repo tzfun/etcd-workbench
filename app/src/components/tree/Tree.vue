@@ -9,6 +9,7 @@ import '@ztree/ztree_v3/js/jquery.ztree.exedit.js';
 //  @ts-ignore
 import {fuzzySearch} from './ztree-fuzzysearch'
 import {SessionData} from "~/common/transport/connection.ts";
+import {_useSettings} from "~/common/store.ts";
 
 const IDMark_A = "_a"
 
@@ -41,6 +42,7 @@ export type TreeNode = {
   keyInfo?: TreeNodeKeyInfo,
 }
 
+const appSettings = _useSettings()
 const emits = defineEmits(['on-click', 'on-click-remove'])
 const props = defineProps({
   treeId: {
@@ -271,7 +273,14 @@ const rerender = () => {
   }
   //  @ts-ignore
   treeRootObj.value = $.fn.zTree.init($(`#${props.treeId}`), settings, [])
-  fuzzySearch(props.treeId, `#${keyId.value}`, null, false)
+
+  fuzzySearch(
+      props.treeId,
+      `#${keyId.value}`,
+      null,
+      false,
+      appSettings
+  )
 }
 
 /**
@@ -421,8 +430,18 @@ defineExpose({
 <template>
   <div>
     <div v-if="enableSearch" class="position-relative">
-      <v-icon class="search-icon">mdi-magnify</v-icon>
+      <v-tooltip location="top"
+                 no-click-animation
+                 text="To enable/disable directory search, go to settings.">
+        <template v-slot:activator="{ props }">
+          <v-icon class="search-icon"
+                  v-bind="props"
+          >mdi-magnify
+          </v-icon>
+        </template>
+      </v-tooltip>
       <input type="text" :id="keyId" value="" class="search-input" placeholder="Type to search"/>
+
       <v-btn class="expand-icon"
              icon="mdi-arrow-expand-vertical"
              title="Expand or collapse all"
@@ -430,7 +449,6 @@ defineExpose({
              variant="plain"
              @click="toggleExpand"
       ></v-btn>
-
     </div>
     <div :id="treeId" class="ztree key-tree overflow-auto px-1"
          :style="`height:${enableSearch ? 'calc(100% - 46px)' : '100%'};`"></div>
@@ -445,15 +463,15 @@ $--search-black-border-color: #4c4d4f;
 $--search-hover-border-color: #6c6e72;
 $--search-focus-border-color: rgb(33, 150, 243);
 
+$--expand-icon-width: 32px;
+$--expand-icon-margin: 3px;
+
 .search-icon {
   $--fixed-margin: 5px;
   position: absolute;
   left: calc($--search-input-x-margin + $--fixed-margin);
   top: calc($--search-input-x-margin + $--fixed-margin);
 }
-
-$--expand-icon-width: 32px;
-$--expand-icon-margin: 3px;
 
 .expand-icon {
   width: $--expand-icon-width;
@@ -463,6 +481,7 @@ $--expand-icon-margin: 3px;
 
 .search-input {
   padding-left: 30px;
+  padding-right: 30px;
   border: 1px solid;
   border-radius: 3px;
   font-size: 0.9em;
