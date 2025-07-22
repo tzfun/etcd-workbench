@@ -106,7 +106,8 @@ Or use WeChat Appreciation:
 - Machérie - WeChat - ￥30
 - whoops - WeChat - ￥12.9
 - [8liang](https://github.com/8liang) - WeChat - ￥20
-
+- *Anonymous* - WeChat - ￥5
+- [M1NGS](https://github.com/M1NGS) - WeChat - ￥500
 
 # License
 

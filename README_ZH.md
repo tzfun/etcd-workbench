@@ -106,6 +106,8 @@ Web 支持 **Jar** 包部署和 **Docker** 部署，在浏览器中管理Etcd Se
 - Machérie - 微信 - 30元
 - whoops - 微信 - 12.9元
 - [8liang](https://github.com/8liang) - 微信 - 20元
+- *匿名* - 微信 - 5元
+- [M1NGS](https://github.com/M1NGS) - 微信 - 500元
 
 # License
 
