@@ -14,7 +14,7 @@ import {
   _copyToClipboard,
   _emitLocal,
   _listenLocal,
-  _loading,
+  _loading, _tipError,
   _tipInfo,
   _tipSuccess,
   _tipWarn, _unListenLocal,
@@ -1012,6 +1012,26 @@ const searchNext = (value: string | null, includeFile: boolean): Promise<string[
   })
 }
 
+const putAnyway = (key: string, value: string, version: number) => {
+  _confirmSystem(`Are you sure you want to put the content of version <strong>${version}</strong> to the latest?`).then(() => {
+    _loading(true)
+    _putKV(props.session?.id, key, _encodeStringToBytes(value), -1).then((result) => {
+      if (result.success) {
+        versionDiffInfo.show = false
+        showKV(key)
+      } else {
+        _tipError('Put failed')
+      }
+    }).catch((e) => {
+      _handleError({
+        e,
+        session: props.session
+      })
+    }).finally(() => {
+      _loading(false)
+    })
+  })
+}
 </script>
 
 <template>
@@ -1282,7 +1302,13 @@ const searchNext = (value: string | null, includeFile: boolean): Promise<string[
     </v-layout>
 
     <!--    Diff弹窗  -->
-    <v-dialog v-model="versionDiffInfo.show" persistent max-width="1200px" scrollable>
+    <v-dialog
+        v-model="versionDiffInfo.show"
+        persistent
+        max-width="1200px"
+        scrollable
+        style="z-index:1200;"
+    >
       <v-card :min-width="500" :title="versionDiffInfo.key" :key="versionDiffInfo.key">
         <template v-slot:prepend>
           <v-icon>mdi-vector-difference</v-icon>
@@ -1341,6 +1367,21 @@ const searchNext = (value: string | null, includeFile: boolean): Promise<string[
               :language="versionDiffInfo.language"
               output-format="side-by-side"
           />
+          <v-layout>
+            <v-btn class="text-none ml-2"
+                   prepend-icon="mdi-file-document-plus-outline"
+                   color="primary"
+                   @click="putAnyway(versionDiffInfo.key, versionDiffInfo.A.content, versionDiffInfo.A.version)"
+                   text="Put This Version"
+            />
+            <v-spacer></v-spacer>
+            <v-btn class="text-none ml-2"
+                   prepend-icon="mdi-file-document-plus-outline"
+                   color="primary"
+                   @click="putAnyway(versionDiffInfo.key, versionDiffInfo.B.content, versionDiffInfo.B.version)"
+                   text="Put This Version"
+            />
+          </v-layout>
         </v-card-text>
       </v-card>
     </v-dialog>

@@ -96,19 +96,23 @@ pub async fn kv_put(
 ) -> Result<KVPutResult, LogicError> {
     let mut connector = etcd::get_connector(&session)?;
 
-    let response = connector.kv_get_request(key.clone(), None).await?;
-    if !response.kvs().is_empty() {
-        let kv = &response.kvs()[0];
-        if version != kv.version() {
-            return Ok(KVPutResult {
-                success: false,
-                final_kv: None,
-                exist_value: Some(Vec::from(kv.value())),
-                exist_version: Some(kv.version()),
-            });
+    //  version用于冲突判断，如果当前版本号和最新的版本号不匹配则需要客户端解决冲突
+    //  如果version < 0则直接插入无需判断
+    if version >= 0 {
+        let response = connector.kv_get_request(key.clone(), None).await?;
+        if !response.kvs().is_empty() {
+            let kv = &response.kvs()[0];
+            if version != kv.version() {
+                return Ok(KVPutResult {
+                    success: false,
+                    final_kv: None,
+                    exist_value: Some(Vec::from(kv.value())),
+                    exist_version: Some(kv.version()),
+                });
+            }
         }
     }
-
+    
     let final_kv = connector.kv_put(key, value, ttl).await?;
 
     Ok(KVPutResult {

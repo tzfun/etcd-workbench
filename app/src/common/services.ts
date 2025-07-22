@@ -118,6 +118,15 @@ export function _searchByPrefix(sessionId: number, prefix: string): Promise<Sear
     })
 }
 
+/**
+ * 插入/更新一个新的key
+ *
+ * @param sessionId 会话ID
+ * @param key 插入的Key
+ * @param value 插入的值，字节数组
+ * @param version 客户端读取的最新版本号，如果 >=0 则会进行冲突判断，如果 <0 则不判断冲突直接插入
+ * @param ttl key过期时间
+ */
 export function _putKV(sessionId: number, key: string, value: number[], version: number, ttl?: number): Promise<KVPutResult> {
     return invoke('kv_put', {
         session: sessionId,
