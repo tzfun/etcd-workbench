@@ -133,6 +133,9 @@ onMounted(async () => {
     if (typeof setting.kvLimitPerPage === 'string') {
       setting.kvLimitPerPage = parseInt(setting.kvLimitPerPage)
     }
+    if (typeof setting.kvSearchNextDirLimit === 'string') {
+      setting.kvSearchNextDirLimit = parseInt(setting.kvSearchNextDirLimit)
+    }
     if (typeof setting.connectTimeoutSeconds === 'string') {
       setting.connectTimeoutSeconds = parseInt(setting.connectTimeoutSeconds)
     }
@@ -144,7 +147,12 @@ onMounted(async () => {
     }
     let keyBytes = _encodeStringToBytes(setting.connectionConfEncryptKey)
     if (keyBytes.length != 16) {
+      console.debug("The length of 'connectionConfEncryptKey' must be 16", setting.connectionConfEncryptKey)
       return
+    }
+    if (setting.kvPathSplitter.length != 1) {
+      console.debug("'kvPathSplitter' must be a single char",setting.kvPathSplitter)
+      return;
     }
     _setLocalSettings(setting)
     _emitGlobal(EventName.SETTING_UPDATE, setting)
@@ -152,7 +160,6 @@ onMounted(async () => {
     deep: true
   })
 
-  console.log(appWindow.label)
   eventUnListens.push(await listen(EventName.SET_SETTING_ANCHOR, (e) => {
     const anchor = e.payload as string
     console.log(anchor)
@@ -420,8 +427,30 @@ const checkUpdate = () => {
                 </div>
                 <v-spacer></v-spacer>
                 <div class="form-input">
-                  <v-text-field v-model="settingForm.kvPathSplitter" variant="outlined" density="compact"
-                    hide-details></v-text-field>
+                  <v-text-field
+                      v-model="settingForm.kvPathSplitter"
+                      variant="outlined"
+                      density="compact"
+                      hide-details
+                  />
+                </div>
+              </v-layout>
+              <v-divider class="mt-5 mb-5"></v-divider>
+
+              <v-layout>
+                <div>
+                  <div class="form-label text-high-emphasis">Keys Search Limit</div>
+                  <div class="v-messages">Limit the number of keys to be queried when automatically completing the search for the next level of directory.</div>
+                </div>
+                <v-spacer></v-spacer>
+                <div class="form-input">
+                  <v-text-field
+                      v-model="settingForm.kvSearchNextDirLimit"
+                      type="number"
+                      variant="outlined"
+                      density="compact"
+                      hide-details
+                  />
                 </div>
               </v-layout>
               <v-divider class="mt-5 mb-5"></v-divider>

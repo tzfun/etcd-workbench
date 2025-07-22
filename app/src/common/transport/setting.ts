@@ -21,6 +21,8 @@ export interface SettingConfig {
     //  KV保存之前是否检查格式
     kvCheckFormatBeforeSave: boolean,
     kvTreeSearchWithFolder: boolean,
+    //  KV搜索下一级目录时所需查询的Keys数量限制
+    kvSearchNextDirLimit: number,
 
     //  自动下载更新
     autoUpdate: boolean,
@@ -55,6 +57,7 @@ export const DEFAULT_SETTING_CONFIG: SettingConfig = {
     kvLimitPerPage: 2000,
     kvCheckFormatBeforeSave: true,
     kvTreeSearchWithFolder: true,
+    kvSearchNextDirLimit: 100,
     closeTabUseCtrlW: true,
     autoUpdate: true,
     updateSource: 'github',

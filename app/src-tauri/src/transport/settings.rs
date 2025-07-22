@@ -30,8 +30,8 @@ pub struct SettingConfig {
     /// KV树状搜索是否包含文件夹
     #[serde(default = "default_kv_tree_search_with_folder")]
     pub kv_tree_search_with_folder: bool,
-    /// KV搜索下一级目录时查询的数量限制
-    #[serde(default = "default_kv_search_next_dict_limit")]
+    /// KV搜索下一级目录时所需查询的Keys数量限制
+    #[serde(default = "default_kv_search_next_dir_limit")]
     pub kv_search_next_dir_limit: u32,
 
     /// 自动更新
@@ -86,7 +86,7 @@ fn default_kv_tree_search_with_folder() -> bool {
     true
 }
 
-fn default_kv_search_next_dict_limit() -> u32 {
+fn default_kv_search_next_dir_limit() -> u32 {
     100
 }
 
@@ -125,7 +125,7 @@ impl Default for SettingConfig {
             kv_limit_per_page: default_kv_limit_per_page(),
             kv_check_format_before_save: default_kv_check_format_before_save(),
             kv_tree_search_with_folder: default_kv_tree_search_with_folder(),
-            kv_search_next_dir_limit: default_kv_search_next_dict_limit(),
+            kv_search_next_dir_limit: default_kv_search_next_dir_limit(),
             auto_update: default_auto_update(),
             update_source: default_update_source(),
             close_tab_use_ctrl_w: true,
