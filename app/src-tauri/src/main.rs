@@ -120,6 +120,7 @@ async fn main() {
             api::kv::kv_put,
             api::kv::kv_put_with_lease,
             api::kv::kv_delete,
+            api::kv::kv_search_next_dir,
             api::maintenance::get_cluster,
             api::maintenance::maintenance_defragment,
             api::maintenance::maintenance_compact,

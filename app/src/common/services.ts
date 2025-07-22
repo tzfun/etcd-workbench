@@ -283,26 +283,26 @@ export function _revokeRolePermissions(sessionId: number, role: string, permissi
     })
 }
 
-export function _maintenanceCreateSnapshotTask(sessionId: number, filepath: string):Promise<SnapshotInfo> {
+export function _maintenanceCreateSnapshotTask(sessionId: number, filepath: string): Promise<SnapshotInfo> {
     return invoke('maintenance_create_snapshot_task', {
         session: sessionId,
         filepath
     })
 }
 
-export function _maintenanceStopSnapshotTask(taskId: number):Promise<undefined> {
+export function _maintenanceStopSnapshotTask(taskId: number): Promise<undefined> {
     return invoke('maintenance_stop_snapshot_task', {
         taskId
     })
 }
 
-export function _maintenanceRemoveSnapshotTask(taskId: number):Promise<undefined> {
+export function _maintenanceRemoveSnapshotTask(taskId: number): Promise<undefined> {
     return invoke('maintenance_remove_snapshot_task', {
         taskId
     })
 }
 
-export function _maintenanceListSnapshotTask():Promise<SnapshotInfo[]> {
+export function _maintenanceListSnapshotTask(): Promise<SnapshotInfo[]> {
     return invoke('maintenance_list_snapshot_task')
 }
 
@@ -324,5 +324,13 @@ export function _removeKeyMonitor(session: number, key: string): Promise<undefin
     return invoke('remove_key_monitor', {
         session,
         key
+    })
+}
+
+export function _kvSearchNextDir(session: number, prefix: string, includeFile: boolean): Promise<string[]> {
+    return invoke<string[]>('kv_search_next_dir', {
+        session,
+        prefix,
+        includeFile
     })
 }

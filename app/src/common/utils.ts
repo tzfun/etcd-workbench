@@ -203,7 +203,7 @@ export function _shuffleArray(arr: any[]) {
  */
 export function _debounce(fn: Function, delay: number = 200) {
     let timer: NodeJS.Timeout | null = null;
-    return function () {
+    return function (_?: unknown) {
         //  @ts-ignore
         let _this: any = this
         let args = arguments

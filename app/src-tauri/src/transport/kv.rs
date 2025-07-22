@@ -38,7 +38,7 @@ pub struct SerializableKeyValue {
     pub value: Vec<u8>,
     pub lease: String,
     pub lease_info: Option<SerializableLeaseSimpleInfo>,
-    pub formatted_value: Option<FormattedValue>
+        pub formatted_value: Option<FormattedValue>
 }
 
 impl SerializableKeyValue {
@@ -70,11 +70,16 @@ impl SerializableKeyValue {
     /// 从集合中转换，并从key中移除namespace
     pub fn from_vec(kvs: Vec<KeyValue>, namespace: Option<&String>) -> Vec<SerializableKeyValue> {
         let mut arr = Vec::with_capacity(kvs.len());
+
+        let prefix_len = if let Some(namespace) = namespace {
+            namespace.as_bytes().len()
+        } else {
+            0
+        };
+
         for kv in kvs {
             let mut s_kv = SerializableKeyValue::from(kv);
-            if let Some(namespace) = namespace {
-                s_kv.remove_prefix(namespace);
-            }
+            s_kv.remove_prefix(prefix_len);
             arr.push(s_kv);
         }
         arr
@@ -88,8 +93,12 @@ impl From<KeyValue> for SerializableKeyValue {
 }
 
 impl SerializableKeyValue {
-    pub fn remove_prefix(&mut self, prefix: &String) {
-        self.key_bytes.drain(0..prefix.as_bytes().len());
+    /// 从key中移除指定字节长度的前缀
+    pub fn remove_prefix(&mut self, prefix_len: usize) {
+        if prefix_len <= 0 {
+            return;
+        }
+        self.key_bytes.drain(0..prefix_len);
         self.key = String::from_utf8_lossy(&self.key_bytes).to_string();
     }
 }

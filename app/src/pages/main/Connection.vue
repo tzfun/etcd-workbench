@@ -16,10 +16,11 @@ import {
   KeyMonitorModifiedByServerEvent,
   KeyWatchEvent
 } from "~/common/events.ts";
-import {_disconnect, _handleError, _removeKeyMonitor, _setKeyMonitor} from "~/common/services.ts";
+import {_disconnect, _handleError, _kvSearchNextDir, _removeKeyMonitor, _setKeyMonitor} from "~/common/services.ts";
 import {_isEmpty} from "~/common/utils.ts";
 import {appWindow} from "@tauri-apps/api/window";
 import {Handler} from "mitt";
+import CompleteInput from "~/components/CompleteInput.vue";
 
 const props = defineProps({
   session: {
@@ -183,6 +184,21 @@ const onReadKeyMonitorLog = (num: number) => {
   }
 }
 
+const searchNextNode = (value: string | null): Promise<string[]> => {
+  return searchNext(value, true)
+}
+
+const searchNext = (value: string | null, includeFile: boolean): Promise<string[]> => {
+  const prefix = value || ""
+  return _kvSearchNextDir(props.session?.id, prefix, includeFile).catch(e => {
+    _handleError({
+      e,
+      session: props.session
+    })
+    return []
+  })
+}
+
 </script>
 
 <template>
@@ -337,25 +353,29 @@ const onReadKeyMonitorLog = (num: number) => {
         <template v-slot:append>
           <v-icon class="cursor-pointer" @click="keyMonitorDialog.show = false">mdi-close</v-icon>
         </template>
-        <v-card-item>
+        <v-card-item class="overflow-visible">
           <v-alert
               density="compact"
               text="The monitor is bound to the connection, and it will stop running when the connection session is closed."
           ></v-alert>
-          <v-layout class="mb-5 mt-5">
+          <v-layout class="mb-5 mt-5 overflow-visible">
             <span class="grant-form-label">Key: </span>
-            <v-text-field v-model="keyMonitorDialog.monitor.key"
-                          type="text"
-                          density="comfortable"
-                          :prefix="session.namespace"
-                          hide-details
-                          prepend-inner-icon="mdi-file-document"
-                          persistent-hint
-                          :readonly="keyMonitorDialog.edit"
-            ></v-text-field>
+
+            <CompleteInput
+                :search-func="searchNextNode"
+                v-model="keyMonitorDialog.monitor.key"
+                density="comfortable"
+                :prefix="session.namespace"
+                hide-details
+                prepend-inner-icon="mdi-file-document"
+                persistent-hint
+                :readonly="keyMonitorDialog.edit"
+                elevation="16"
+                suggestion-max-height="150"
+            ></CompleteInput>
           </v-layout>
 
-          <v-layout class="mb-5">
+          <v-layout class="mb-5" style="z-index: unset">
             <span class="grant-form-label">Type: </span>
             <v-radio-group v-model="keyMonitorDialog.monitor.isPrefix" inline hide-details>
               <v-radio label="Key Only" :value="false"></v-radio>
@@ -363,7 +383,7 @@ const onReadKeyMonitorLog = (num: number) => {
             </v-radio-group>
           </v-layout>
 
-          <v-layout class="mb-5">
+          <v-layout class="mb-5" style="z-index: unset">
             <span class="grant-form-label">Target: </span>
 
             <v-checkbox

@@ -17,17 +17,17 @@ regex = "1.11.1"
 [dependencies]
 tauri = { version = "1.8.3", features = [ "os-all", "shell-open", "window-all", "dialog-open", "dialog-save", "dialog-ask", "updater", "clipboard-write-text", "process-relaunch", "macos-private-api", "notification"] }
 #fix-path-env = { git = "https://github.com/tauri-apps/fix-path-env-rs" }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.141"
 window-shadows = "0.2.2"
 
-tokio = { version = "1.45.1", features = ["full"] }
+tokio = { version = "1.46.1", features = ["full"] }
 log = "0.4.27"
 env_logger = "0.11.8"
 dashmap = "6.1.0"
-etcd-client = { version = "0.15.0", features = [] }
+etcd-client = { version = "0.16.1", features = [] }
 lazy_static = "1.5.0"
-russh = { version = "0.52.1", features = ["default"] }
+russh = { version = "0.52.1" }
 uuid = "1.17.0"
 md5 = "0.8.0"
 base64 = "0.22.1"

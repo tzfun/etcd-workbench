@@ -17,7 +17,7 @@ pub struct SettingConfig {
 
     /// KV路径分割符号，用于树状展示
     #[serde(default = "default_kv_path_splitter")]
-    pub kv_path_splitter: String,
+    pub kv_path_splitter: char,
     /// KV分页查询
     #[serde(default)]
     pub kv_pagination_query: bool,
@@ -30,6 +30,9 @@ pub struct SettingConfig {
     /// KV树状搜索是否包含文件夹
     #[serde(default = "default_kv_tree_search_with_folder")]
     pub kv_tree_search_with_folder: bool,
+    /// KV搜索下一级目录时查询的数量限制
+    #[serde(default = "default_kv_search_next_dict_limit")]
+    pub kv_search_next_dir_limit: u32,
 
     /// 自动更新
     #[serde(default = "default_auto_update")]
@@ -67,8 +70,8 @@ fn default_editor_light_theme() -> String {
     String::from("smoothy")
 }
 
-fn default_kv_path_splitter() -> String {
-    String::from("/")
+fn default_kv_path_splitter() -> char {
+    '/'
 }
 
 fn default_kv_limit_per_page() -> u32 {
@@ -83,6 +86,9 @@ fn default_kv_tree_search_with_folder() -> bool {
     true
 }
 
+fn default_kv_search_next_dict_limit() -> u32 {
+    100
+}
 
 fn default_connect_timeout_seconds() -> u64 {
     5
@@ -119,6 +125,7 @@ impl Default for SettingConfig {
             kv_limit_per_page: default_kv_limit_per_page(),
             kv_check_format_before_save: default_kv_check_format_before_save(),
             kv_tree_search_with_folder: default_kv_tree_search_with_folder(),
+            kv_search_next_dir_limit: default_kv_search_next_dict_limit(),
             auto_update: default_auto_update(),
             update_source: default_update_source(),
             close_tab_use_ctrl_w: true,

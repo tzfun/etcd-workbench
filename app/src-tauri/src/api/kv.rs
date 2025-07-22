@@ -148,3 +148,13 @@ pub async fn kv_delete(
     let size = connector.kv_delete(key_bytes).await?;
     Ok(size)
 }
+
+#[tauri::command]
+pub async fn kv_search_next_dir(
+    session: i32,
+    prefix: String,
+    include_file: bool,
+) -> Result<Vec<String>, LogicError> {
+    let mut connector = etcd::get_connector(&session)?;
+    connector.kv_search_next_dir(prefix, include_file).await
+}

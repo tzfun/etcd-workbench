@@ -23,7 +23,7 @@ use log::{debug, error, info, warn};
 use russh::client;
 use serde::{Deserialize, Serialize};
 use std::any::Any;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::ffi::{OsStr, OsString};
 use std::future::Future;
 use std::net::IpAddr;
@@ -437,6 +437,72 @@ impl EtcdConnector {
                 ()
             }
         })
+    }
+
+    /// 搜索下一级目录
+    pub async fn kv_search_next_dir(&mut self, prefix: impl Into<Vec<u8>>, include_file: bool) -> Result<Vec<String>, LogicError> {
+        let prefix = prefix.into();
+        let final_key = self.fill_prefix_namespace(prefix);
+        let prefix_len = final_key.len();
+
+        let settings = get_settings().await?;
+
+        let mut res = self.client.kv_get_request(
+            final_key, 
+            Some(
+                GetOptions::new()
+                .with_limit(settings.kv_search_next_dir_limit as i64)
+                .with_keys_only()
+                .with_prefix()
+            )
+        ).await?;
+
+        let mut dir_set = HashSet::new();
+        let splitter = settings.kv_path_splitter;
+        for kv in res.take_kvs() {
+            let mut key_vec = kv.key().to_vec();
+            //  移除前缀
+            if prefix_len > 0 {
+                key_vec.drain(0..prefix_len);
+            }
+            if let Ok(k) = String::from_utf8(key_vec) {
+                if k.is_empty() {
+                    continue;
+                }
+                if !include_file {
+                    //  过滤掉非目录节点
+                    let nk: String = k.chars().skip(1).collect();
+                    if !nk.contains(splitter) {
+                        continue;
+                    }
+                }
+                
+                let mut dir = String::new();
+                let chars = k.chars();
+
+                for c in chars {
+                    if c == splitter {
+                        if dir.is_empty() {
+                            dir.push(c);
+                        } else {
+                            break;
+                        }
+                    } else {
+                        dir.push(c);
+                    }
+                }
+
+                if dir.is_empty() {
+                    continue;
+                }
+
+                dir_set.insert(dir);
+            }
+        }
+        let mut v = dir_set.into_iter().collect::<Vec<String>>();
+        v.sort();
+
+        Ok(v)
     }
 
     fn root_key(&self) -> Vec<u8> {
