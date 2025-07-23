@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import {PropType, ref, watch} from "vue";
+import {onMounted, PropType, ref, watch} from "vue";
 import {_debounce} from "~/common/utils.ts";
 import {VListItem, VTextField} from "vuetify/components";
 
@@ -8,7 +8,8 @@ type SearchFunc = (s: string) => Promise<string[]>;
 
 const props = defineProps({
   modelValue:{
-    type: String
+    type: String,
+    required: true
   },
   searchFunc: {
     type: Function as PropType<SearchFunc>,
@@ -49,6 +50,10 @@ watch(
       emits('update:modelValue', v);
     }
 )
+
+onMounted(() => {
+  inputValue.value = props.modelValue
+})
 
 const search = _debounce((value: string) => {
   searchLoading.value = true;

@@ -360,7 +360,6 @@ const searchNext = (value: string | null, includeFile: boolean): Promise<string[
           ></v-alert>
           <v-layout class="mb-5 mt-5 overflow-visible">
             <span class="grant-form-label">Key: </span>
-
             <CompleteInput
                 :search-func="searchNextNode"
                 v-model="keyMonitorDialog.monitor.key"
