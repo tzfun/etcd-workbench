@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {computed, onActivated, onMounted, onUnmounted, PropType, reactive, ref} from "vue";
+import {computed, onMounted, onUnmounted, PropType, reactive, ref} from "vue";
 import {KeyMonitorConfig, SessionData} from "~/common/transport/connection.ts";
 import Cluster from "~/pages/main/Cluster.vue";
 import Keys from "~/pages/main/Keys.vue";
@@ -77,7 +77,7 @@ onMounted(async () => {
         keyMonitorDialog.edit = false
         keyMonitorDialog.monitor = {
           key: e.key ? (e.key as string) : '',
-          isPrefix: false,
+          isPrefix: e.isPrefix || false,
           monitorValueChange: true,
           monitorCreate: true,
           monitorRemove: true,
@@ -116,10 +116,6 @@ onUnmounted(() => {
   }
 
   _disconnect(props.session?.id)
-})
-
-onActivated(() => {
-  console.log("mounted", props.session)
 })
 
 const selectList = ({id}: any) => {

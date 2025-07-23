@@ -146,11 +146,18 @@ export function _putKVWithLease(sessionId: number, key: string, value: number[],
     })
 }
 
-export function _deleteKV(sessionId: number, keys: string[], keyBytes: number[][]): Promise<number> {
+/**
+ * 删除Key。最终会删除 keys 和 keyBytes 中所有的key
+ *
+ * @param sessionId 会话ID
+ * @param utf8EncodedKeys 可 UTF8 编码的key数组
+ * @param unUtf8EncodedKeys 无法 UTF8 编码的key数组
+ */
+export function _deleteKV(sessionId: number, utf8EncodedKeys: string[], unUtf8EncodedKeys: number[][]): Promise<number> {
     return invoke('kv_delete', {
         session: sessionId,
-        keys,
-        keyBytes
+        keys: utf8EncodedKeys,
+        keyBytes: unUtf8EncodedKeys
     })
 }
 

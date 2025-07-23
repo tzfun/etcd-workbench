@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {computed, onMounted, PropType, ref} from "vue";
+import {computed, onMounted, onUnmounted, PropType, reactive, ref} from "vue";
 
 import '@ztree/ztree_v3/js/jquery-1.4.4.min';
 import '@ztree/ztree_v3/js/jquery.ztree.core.js';
@@ -10,13 +10,11 @@ import '@ztree/ztree_v3/js/jquery.ztree.exedit.js';
 import {fuzzySearch} from './ztree-fuzzysearch'
 import {SessionData} from "~/common/transport/connection.ts";
 import {_useSettings} from "~/common/store.ts";
+import {VCard} from "vuetify/components";
+import {appWindow} from "@tauri-apps/api/window";
+import {KeyExtendInfo} from "~/common/transport/kv.ts";
 
 const IDMark_A = "_a"
-
-export type TreeNodeKeyInfo = {
-  keyBytes: number[],
-  keyEncodedUtf8: boolean,
-}
 
 export type TreeNode = {
   //  节点ID，整棵树一定不能重复
@@ -39,11 +37,27 @@ export type TreeNode = {
   children?: TreeNode[],
   //  初始化节点数据时，由 zTree 增加此属性，请勿提前赋值
   tId?: string,
-  keyInfo?: TreeNodeKeyInfo,
+  keyInfo?: KeyExtendInfo,
 }
 
+export type ContextmenuKeyword = 'delete' | 'rename' | 'addToMonitor' | 'editMonitor' | 'addToCollection' | 'removeFromCollection'
+
+export type ContextmenuItem = {
+  title: string,
+  keyword: ContextmenuKeyword,
+  icon?: string,
+  iconColor?: string,
+  baseColor?: string,
+}
+
+export type ContextmenuExtend = {
+  type: 'divider'
+}
+
+export type Contextmenu = ContextmenuItem | ContextmenuExtend
+
 const appSettings = _useSettings()
-const emits = defineEmits(['on-click', 'on-click-remove'])
+const emits = defineEmits(['on-click', 'on-click-remove', 'click:contextmenu'])
 const props = defineProps({
   treeId: {
     type: String,
@@ -79,6 +93,10 @@ const props = defineProps({
   enableSelect: {
     type: Boolean,
     default: () => true
+  },
+  enableContextmenu: {
+    type: Boolean,
+    default: () => false
   }
 })
 const keyId = computed<string>(() => {
@@ -87,6 +105,39 @@ const keyId = computed<string>(() => {
 const treeRootObj = ref()
 const triggerRemovedKey = ref<string>()
 const expandState = ref<boolean>(false)
+const contextmenuRef = ref<VCard>()
+const contextmenuStorage = reactive({
+  treeId: "",
+  treeNode: <null | TreeNode>null,
+})
+const contextmenu = ref<Contextmenu[]>([])
+const tauriBlurUnListen = ref<Function>()
+
+onMounted(async () => {
+  if (props.enableContextmenu) {
+    document.addEventListener('click', () => {
+      setTimeout(() => {
+        if (contextmenuRef.value) {
+          const element: Element = contextmenuRef.value.$el
+          element.removeAttribute('style')
+        }
+      }, 30)
+    })
+
+    tauriBlurUnListen.value = await appWindow.listen('tauri://blur', () => {
+      if (contextmenuRef.value) {
+        const element: Element = contextmenuRef.value.$el
+        element.removeAttribute('style')
+      }
+    })
+  }
+})
+
+onUnmounted(() => {
+  if (tauriBlurUnListen.value) {
+    tauriBlurUnListen.value()
+  }
+})
 
 const beforeClick = (_treeId: string, treeNode: TreeNode) => {
   if (!treeNode) {
@@ -105,6 +156,80 @@ const onClick = (_e: MouseEvent, _treeId: string, treeNode: TreeNode) => {
   }
   if (!props.enableSelect) {
     treeRootObj.value.cancelSelectedNode(treeNode)
+  }
+}
+
+const onRightClick = (e: MouseEvent, treeId: string, treeNode: TreeNode) => {
+  contextmenuStorage.treeId = treeId
+  contextmenuStorage.treeNode = treeNode
+  if (contextmenuRef.value) {
+    const element:Element = contextmenuRef.value.$el
+    if (treeNode) {
+      const menu: Contextmenu[] = [
+        {
+          title: 'Rename',
+          keyword: 'rename',
+          icon: 'mdi-rename',
+        },
+        {
+          type:'divider'
+        },
+      ]
+
+      //  位于monitor列表中
+      if (props.session!.keyMonitorMap![treeNode.id]) {
+        menu.push({
+          title: 'Edit monitor',
+          keyword: 'editMonitor',
+          icon: 'mdi-robot',
+          iconColor: '#cc8f53',
+        })
+      } else {
+        menu.push({
+          title: 'Add to monitors',
+          keyword: 'addToMonitor',
+          icon: 'mdi-robot-outline',
+          iconColor: '#cc8f53',
+        })
+      }
+
+      //  文件节点
+      if (!treeNode.isParent) {
+        //  位于收藏列表中
+        if (props.session!.keyCollectionSet!.has(treeNode.id)) {
+          menu.push({
+            title: 'Remove from collections',
+            keyword: 'removeFromCollection',
+            icon: 'mdi-star',
+            iconColor: '#ced10a',
+          })
+        } else {
+          menu.push({
+            title: 'Add to collections',
+            keyword: 'addToCollection',
+            icon: 'mdi-star-outline',
+            iconColor: '#ced10a',
+          })
+        }
+
+        menu.push({
+          type:'divider'
+        })
+        menu.push({
+          title: 'Delete',
+          keyword: 'delete',
+          icon: 'mdi-trash-can-outline',
+          baseColor: 'red'
+        })
+      }
+
+      contextmenu.value = menu
+      const style = `left: ${e.clientX}px; top: ${e.clientY}px; display:unset;`
+      element.setAttribute("style", style)
+    } else {
+      //  右击空白处
+      element.removeAttribute('style')
+    }
   }
 }
 
@@ -241,7 +366,8 @@ const settings = {
   },
   callback: {
     beforeClick: beforeClick,
-    onClick: onClick
+    onClick: onClick,
+    onRightClick: props.enableContextmenu ? onRightClick : undefined
   },
   check: {
     enable: true
@@ -292,7 +418,7 @@ const getTreeNodeById = (id: any): TreeNode | undefined => {
   return treeRootObj.value.getNodesByParam("id", id, null)[0]
 }
 
-const addItemToTree = (key: string, ignoreIfExist?: boolean, keyInfo?: TreeNodeKeyInfo) => {
+const addItemToTree = (key: string, ignoreIfExist?: boolean, keyInfo?: KeyExtendInfo) => {
   if (ignoreIfExist) {
     let node = getTreeNodeById(key)
     if (node) {
@@ -367,7 +493,7 @@ const constructDirNode = (id: string, name: string, pId: string | undefined): Tr
   }
 }
 
-const constructFileNode = (id: string, name: string, pId: string | undefined, keyInfo?: TreeNodeKeyInfo): TreeNode => {
+const constructFileNode = (id: string, name: string, pId: string | undefined, keyInfo?: KeyExtendInfo): TreeNode => {
   return {
     id,
     pId,
@@ -414,6 +540,10 @@ const toggleExpand = () => {
   expandAll(expandState.value)
 }
 
+const onclickContextmenu = (item: ContextmenuItem) => {
+  emits('click:contextmenu', item.keyword, contextmenuStorage.treeNode)
+}
+
 defineExpose({
   addItemToTree,
   removeItemFromTree,
@@ -452,6 +582,34 @@ defineExpose({
     </div>
     <div :id="treeId" class="ztree key-tree overflow-auto px-1"
          :style="`height:${enableSearch ? 'calc(100% - 46px)' : '100%'};`"></div>
+    <v-card
+        ref="contextmenuRef"
+        elevation="16"
+        border
+        class="contextmenu pa-0"
+        density="compact"
+    >
+      <v-list
+          density="compact"
+          color="light-blue"
+          lines="one"
+      >
+        <div v-for="(item,i) in contextmenu" :key="i">
+          <v-divider class="my-2" v-if="(item as ContextmenuExtend).type == 'divider'"/>
+          <v-list-item
+              v-else
+              density="compact"
+              @click="onclickContextmenu(item as ContextmenuItem)"
+              :title="(item as ContextmenuItem).title"
+              :base-color="(item as ContextmenuItem).baseColor"
+          >
+            <template #prepend v-if="(item as ContextmenuItem).icon">
+              <v-icon :color="(item as ContextmenuItem).iconColor">{{ (item as ContextmenuItem).icon }}</v-icon>
+            </template>
+          </v-list-item>
+        </div>
+      </v-list>
+    </v-card>
   </div>
 </template>
 
@@ -768,4 +926,21 @@ $--expand-icon-margin: 3px;
   }
 }
 
+.contextmenu {
+  display: none;
+  position: fixed;
+  z-index: 10000;
+  width: 260px;
+  height: fit-content;
+
+  .v-list {
+    padding: 5px 0;
+
+    .v-list-item {
+      padding-inline: 8px;
+      font-size: 0.85em;
+      min-height: 30px;
+    }
+  }
+}
 </style>

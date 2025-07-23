@@ -12,10 +12,13 @@ export interface FormattedValue {
     value: string
 }
 
-export interface KeyValue {
-    key: string,
+export interface KeyExtendInfo {
     keyBytes: number[],
     keyEncodedUtf8: boolean,
+}
+
+export interface KeyValue extends KeyExtendInfo {
+    key: string,
     createRevision: number,
     modRevision: number,
     version: number,

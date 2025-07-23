@@ -35,7 +35,7 @@ import {
 } from "~/common/services.ts";
 import {_saveGlobalStore, _useGlobalStore, _useSettings} from "~/common/store.ts";
 import {ErrorPayload, KeyMonitorConfig, SessionData} from "~/common/transport/connection.ts";
-import {SearchResult} from "~/common/transport/kv";
+import {KeyExtendInfo, SearchResult} from "~/common/transport/kv";
 import {KeyValue} from "~/common/transport/kv.ts";
 import {EditorConfig, EditorHighlightLanguage} from "~/common/types.ts";
 import {_debounce, arraysEqual} from "~/common/utils";
@@ -53,7 +53,7 @@ import DragItem from "~/components/drag-area/DragItem.vue";
 import Editor from "~/components/editor/Editor.vue";
 import {getLanguage} from "~/components/editor/languages.ts";
 import {getTheme} from "~/components/editor/themes.ts";
-import Tree, {TreeNode, TreeNodeKeyInfo} from "~/components/tree/Tree.vue";
+import Tree, {ContextmenuKeyword, TreeNode} from "~/components/tree/Tree.vue";
 import {Handler} from "mitt";
 import CompleteInput from "~/components/CompleteInput.vue";
 
@@ -146,6 +146,7 @@ const newKeyDialog = reactive({
   ttl: '',
   lease: '',
   model: <'none' | 'ttl' | 'lease'>'none',
+  deleteFromKey: false
 })
 
 const versionDiffInfo = reactive({
@@ -351,24 +352,21 @@ const showNewKeyDialog = () => {
   newKeyDialog.title = 'New Key'
   newKeyDialog.copyAndSave = false
   newKeyDialog.show = true
-  newKeyDialog.searchLoading = false
-  newKeyDialog.searchItems = []
 
   newKeyEditorConfig.language = editorConfig.language
 }
 
-const showCopyAndSaveDialog = (fromKey: string, fromValue: string) => {
+const showCopyAndSaveDialog = (title: string, fromKey: string, fromValue: string, deleteFromKey: boolean) => {
   newKeyDialog.key = ''
   newKeyDialog.ttl = ''
   newKeyDialog.lease = ''
   newKeyDialog.model = 'none'
   newKeyDialog.fromKey = fromKey
   newKeyDialog.value = fromValue
-  newKeyDialog.title = 'Copy And Save'
+  newKeyDialog.title = title
   newKeyDialog.copyAndSave = true
+  newKeyDialog.deleteFromKey = deleteFromKey
   newKeyDialog.show = true
-  newKeyDialog.searchLoading = false
-  newKeyDialog.searchItems = []
 
   newKeyEditorConfig.language = editorConfig.language
 }
@@ -421,7 +419,23 @@ const putKey = () => {
     _tipSuccess("Succeeded!")
     newKeyDialog.show = false
 
-    kvTree.value?.addItemToTree(key)
+    //  重命名：删除源key
+    if (newKeyDialog.copyAndSave && newKeyDialog.deleteFromKey) {
+      const fromKey = newKeyDialog.fromKey
+      _deleteKV(props.session?.id, [fromKey], []).then(() => {
+        if (currentKv.value && currentKv.value.key == fromKey) {
+          currentKv.value = undefined
+        }
+        removeKeysFromTree([fromKey])
+      }).catch(e => {
+        _handleError({
+          e,
+          session: props.session
+        })
+      })
+    }
+
+    kvTree.value?.addItemToTree(key, true)
   }).catch(e => {
     _handleError({
       e,
@@ -511,7 +525,7 @@ const deleteKeyBatch = () => {
   })
 }
 
-const showKV = (key: string, keyInfo?: TreeNodeKeyInfo): Promise<void> => {
+const showKV = (key: string, keyInfo?: KeyExtendInfo): Promise<void> => {
   return new Promise((resolve, reject) => {
     loadingStore.getKey = true
     _getKV(props.session?.id, key, keyInfo && !keyInfo.keyEncodedUtf8 ? keyInfo.keyBytes : undefined).then((kv) => {
@@ -549,7 +563,7 @@ const showKV = (key: string, keyInfo?: TreeNodeKeyInfo): Promise<void> => {
   })
 }
 
-const showKVUnwrapped = (key: string, keyInfo?: TreeNodeKeyInfo) => {
+const showKVUnwrapped = (key: string, keyInfo?: KeyExtendInfo) => {
   showKV(key, keyInfo).then(() => {
   }).catch(e => {
     console.error(e)
@@ -804,17 +818,22 @@ const versionSelectItemProps = (version: number) => {
   return item
 }
 
-const deleteKey = () => {
-  if (!currentKv.value) {
-    return
-  }
-  let key = currentKv.value.key
+const deleteKey = (key: string, info?: KeyExtendInfo) => {
   _confirmSystem(`Please confirm to permanently delete key: <strong>${key}</strong>`).then(() => {
     loadingStore.delete = true
+    const utf8EncodedKeys: string[] = []
+    const unUtf8EncodedKeys: number[][] = []
+
+    if (info && !info.keyEncodedUtf8) {
+      unUtf8EncodedKeys.push(info.keyBytes)
+    } else {
+      utf8EncodedKeys.push(key)
+    }
+
     _deleteKV(
         props.session?.id,
-        currentKv.value?.keyEncodedUtf8 ? [key] : [],
-        currentKv.value?.keyEncodedUtf8 ? [] : [currentKv.value?.keyBytes!]
+        utf8EncodedKeys,
+        unUtf8EncodedKeys
     ).then(() => {
       currentKv.value = undefined
       removeKeysFromTree([key])
@@ -847,7 +866,7 @@ const clearAllKeyLeaseListener = () => {
   }
 }
 
-const onClickKeyCollectionTreeItem = (key: string, keyInfo?: TreeNodeKeyInfo) => {
+const onClickKeyCollectionTreeItem = (key: string, keyInfo?: KeyExtendInfo) => {
   kvTree.value?.addItemToTree(key, true, keyInfo)
   kvTree.value?.selectItem(key)
   showKV(key, keyInfo).then(() => {
@@ -868,7 +887,7 @@ const editKeyMonitor = (key: string) => {
   }
 }
 
-const addKeyMonitor = (key: string, keyEncodedUtf8?: boolean) => {
+const addKeyMonitor = (key: string, isPrefix: boolean, keyEncodedUtf8?: boolean) => {
   if (!keyEncodedUtf8) {
     _alertError('Unable to monitor non-utf8 encoded key!')
     return
@@ -876,7 +895,8 @@ const addKeyMonitor = (key: string, keyEncodedUtf8?: boolean) => {
   _emitLocal(EventName.EDIT_KEY_MONITOR, {
     session: props.session?.id,
     edit: false,
-    key
+    key,
+    isPrefix
   })
 }
 
@@ -1030,7 +1050,53 @@ const putAnyway = (key: string, value: string, version: number) => {
     }).finally(() => {
       _loading(false)
     })
+  }).catch(() => {
   })
+}
+
+const onClickContextmenu = (keyword: ContextmenuKeyword, node: TreeNode) => {
+  console.log("click:contextmenu ==>", keyword, node)
+  if (node) {
+    const key = node.id
+    if (keyword == 'addToMonitor') {
+      addKeyMonitor(key, node.isParent, true)
+      return
+    } else if (keyword == 'editMonitor') {
+      editKeyMonitor(key)
+      return
+    }
+
+    if (node.isParent) {
+      //  修改目录名字
+      if (keyword == 'rename') {
+
+      }
+    } else {
+      //  修改key名字
+      if (keyword == 'rename') {
+        _loading(true)
+        _getKV(props.session?.id, key).then((kv) => {
+          showCopyAndSaveDialog('Rename', key, _decodeBytesToString(kv.value), true)
+        }).catch(e => {
+          if (e.errType && e.errType == 'ResourceNotExist') {
+            removeKeysFromTree([key])
+          }
+          _handleError({
+            e,
+            session: props.session
+          })
+        }).finally(() => {
+          _loading(false)
+        })
+      } else if (keyword == 'delete') {
+        deleteKey(key)
+      } else if (keyword == 'addToCollection') {
+        addCollectionKey(key, true)
+      } else if (keyword == 'removeFromCollection') {
+        removeCollectionKey(key)
+      }
+    }
+  }
 }
 </script>
 
@@ -1108,8 +1174,10 @@ const putAnyway = (key: string, value: string, version: number) => {
                 :tree-id="`kv-tree-${new Date().getTime()}`"
                 :key-splitter="KEY_SPLITTER"
                 :session="session"
+                enable-contextmenu
                 class="kvTree"
                 @on-click="showKVUnwrapped"
+                @click:contextmenu="onClickContextmenu"
           />
           <v-sheet class="loadMoreArea d-flex align-center justify-center">
             <v-btn v-if="paginationKeyCursor != undefined"
@@ -1158,8 +1226,13 @@ const putAnyway = (key: string, value: string, version: number) => {
                   <v-icon color="#ced10a" class="mr-2">mdi-star</v-icon>
                 </template>
               </v-chip>
-              <v-chip v-else class="ml-2 mt-2" density="compact" title="Add to collections"
-                      @click="addCollectionKey(currentKv.key, currentKv.keyEncodedUtf8)" text="Collect">
+              <v-chip v-else
+                      class="ml-2 mt-2"
+                      density="compact"
+                      title="Add to collections"
+                      @click="addCollectionKey(currentKv.key, currentKv.keyEncodedUtf8)"
+                      text="Collect"
+              >
                 <template #prepend>
                   <v-icon color="#ced10a" class="mr-2">mdi-star-outline</v-icon>
                 </template>
@@ -1180,7 +1253,7 @@ const putAnyway = (key: string, value: string, version: number) => {
                       class="ml-2 mt-2"
                       density="compact"
                       title="Add to monitor list"
-                      @click="addKeyMonitor(currentKv.key, currentKv.keyEncodedUtf8)"
+                      @click="addKeyMonitor(currentKv.key, false, currentKv.keyEncodedUtf8)"
                       text="Add"
               >
                 <template #prepend>
@@ -1220,12 +1293,13 @@ const putAnyway = (key: string, value: string, version: number) => {
                      text="Copy And Save"
                      class="mr-2 text-none"
                      prepend-icon="mdi-content-copy"
-                     @click="showCopyAndSaveDialog(currentKv.key, _decodeBytesToString(currentKv.value))"
+                     @click="showCopyAndSaveDialog('Copy And Save', currentKv.key, _decodeBytesToString(currentKv.value), false)"
               />
               <v-btn color="deep-orange-darken-1"
                      size="small"
-                     @click="deleteKey"
+                     @click="deleteKey(currentKv.key, currentKv)"
                      :loading="loadingStore.delete"
+                     :disabled="!currentKv"
                      text="Delete"
                      class="mr-2 text-none"
                      prepend-icon="mdi-trash-can-outline"
@@ -1395,7 +1469,7 @@ const putAnyway = (key: string, value: string, version: number) => {
       <v-card :title="newKeyDialog.title">
         <v-card-text>
           <v-layout class="mb-5" v-show="newKeyDialog.copyAndSave">
-            <span class="new-key-form-label">From Key: </span>
+            <span class="new-key-form-label">From: </span>
             <v-text-field
                 v-model="newKeyDialog.fromKey"
                 density="comfortable"
@@ -1405,8 +1479,13 @@ const putAnyway = (key: string, value: string, version: number) => {
                 readonly
             />
           </v-layout>
+          <v-layout class="mb-5" v-show="newKeyDialog.copyAndSave">
+            <span class="new-key-form-label"></span>
+            <v-checkbox label="Delete From key" v-model="newKeyDialog.deleteFromKey" hide-details></v-checkbox>
+          </v-layout>
           <v-layout class="mb-5 overflow-visible">
-            <span class="new-key-form-label">Key: </span>
+            <span class="new-key-form-label" v-if="newKeyDialog.copyAndSave">To: </span>
+            <span class="new-key-form-label" v-else>Key: </span>
             <CompleteInput
                 v-model="newKeyDialog.key"
                 :search-func="searchNextDir"
@@ -1448,7 +1527,7 @@ const putAnyway = (key: string, value: string, version: number) => {
                 persistent-hint
             />
           </v-layout>
-          <div style="height: 50vh;width:100%">
+          <div style="height: 40vh;width:100%">
             <editor ref="newKeyEditorRef" :value="newKeyDialog.value" :config="newKeyEditorConfig"></editor>
           </div>
         </v-card-text>

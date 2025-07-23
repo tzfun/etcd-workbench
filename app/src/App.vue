@@ -4,8 +4,10 @@ import {appWindow} from '@tauri-apps/api/window';
 import {computed, onMounted, onUnmounted, reactive, ref, watch} from "vue";
 import {useTheme} from "vuetify";
 import {
-  _alertError, _confirm, _confirmSystem,
+  _alertError,
+  _confirm,
   _confirmUpdateApp,
+  _emitLocal,
   _genNewVersionUpdateMessage,
   _listenLocal,
   _unListenLocal,
@@ -76,6 +78,12 @@ onMounted(async () => {
     //  频闭Webview原生事件
     disableWebviewNativeEvents()
   }
+
+  document.addEventListener('contextmenu', (e: MouseEvent) => {
+    e.preventDefault()
+    _emitLocal(EventName.CONTEXTMENU, e)
+    return false
+  }, {capture: true})
 
   setAppTheme(settings.theme)
 
@@ -263,11 +271,6 @@ const disableWebviewNativeEvents = () => {
       e.preventDefault()
       return false
     }
-  }, {capture: true})
-
-  document.addEventListener('contextmenu', e => {
-    e.preventDefault()
-    return false
   }, {capture: true})
 }
 

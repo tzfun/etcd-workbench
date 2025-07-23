@@ -11,6 +11,7 @@ import {CustomUpdateManifest} from "~/common/updater.ts";
 const localEvents = mitt();
 
 export enum EventName {
+    CONTEXTMENU = 'contextmenu',
     LOADING = 'loading',
     DIALOG = 'dialog',
     TIP = 'tip',
