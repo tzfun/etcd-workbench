@@ -1335,13 +1335,24 @@ const putAnyway = (key: string, value: string, version: number) => {
                 :width="10"
                 hide-details
                 persistent-hint
-                class="mr-3"
                 label="Version A"
                 @update:model-value="loadDiff(versionDiffInfo.A)"
             />
-
+            <v-btn class="text-none ml-2"
+                   prepend-icon="mdi-gesture-swipe-up"
+                   color="primary"
+                   @click="putAnyway(versionDiffInfo.key, versionDiffInfo.A.content, versionDiffInfo.A.version)"
+                   text="Put This Version"
+                   :density="null"
+            />
             <v-spacer></v-spacer>
-
+            <v-btn class="text-none mr-2"
+                   prepend-icon="mdi-gesture-swipe-up"
+                   color="primary"
+                   @click="putAnyway(versionDiffInfo.key, versionDiffInfo.B.content, versionDiffInfo.B.version)"
+                   text="Put This Version"
+                   :density="null"
+            />
             <v-select
                 variant="outlined"
                 v-model="versionDiffInfo.B.version"
@@ -1367,21 +1378,6 @@ const putAnyway = (key: string, value: string, version: number) => {
               :language="versionDiffInfo.language"
               output-format="side-by-side"
           />
-          <v-layout>
-            <v-btn class="text-none ml-2"
-                   prepend-icon="mdi-file-document-plus-outline"
-                   color="primary"
-                   @click="putAnyway(versionDiffInfo.key, versionDiffInfo.A.content, versionDiffInfo.A.version)"
-                   text="Put This Version"
-            />
-            <v-spacer></v-spacer>
-            <v-btn class="text-none ml-2"
-                   prepend-icon="mdi-file-document-plus-outline"
-                   color="primary"
-                   @click="putAnyway(versionDiffInfo.key, versionDiffInfo.B.content, versionDiffInfo.B.version)"
-                   text="Put This Version"
-            />
-          </v-layout>
         </v-card-text>
       </v-card>
     </v-dialog>
