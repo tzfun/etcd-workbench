@@ -1013,7 +1013,7 @@ const searchNext = (value: string | null, includeFile: boolean): Promise<string[
 }
 
 const putAnyway = (key: string, value: string, version: number) => {
-  _confirmSystem(`Are you sure you want to put the content of version <strong>${version}</strong> to the latest?`).then(() => {
+  _confirmSystem(`Are you sure you want to put the content of version <strong style="color: #CDDC39;">${version}</strong> to the latest?`).then(() => {
     _loading(true)
     _putKV(props.session?.id, key, _encodeStringToBytes(value), -1).then((result) => {
       if (result.success) {
@@ -1344,6 +1344,7 @@ const putAnyway = (key: string, value: string, version: number) => {
                    @click="putAnyway(versionDiffInfo.key, versionDiffInfo.A.content, versionDiffInfo.A.version)"
                    text="Put This Version"
                    :density="null"
+                   :disabled="versionDiffInfo.A.version == versionDiffInfo.modRevision"
             />
             <v-spacer></v-spacer>
             <v-btn class="text-none mr-2"
@@ -1352,6 +1353,7 @@ const putAnyway = (key: string, value: string, version: number) => {
                    @click="putAnyway(versionDiffInfo.key, versionDiffInfo.B.content, versionDiffInfo.B.version)"
                    text="Put This Version"
                    :density="null"
+                   :disabled="versionDiffInfo.B.version == versionDiffInfo.modRevision"
             />
             <v-select
                 variant="outlined"
