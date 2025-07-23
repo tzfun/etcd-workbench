@@ -1,7 +1,7 @@
 import {invoke} from "@tauri-apps/api";
 import {Connection, ConnectionInfo, KeyMonitorConfig, SessionData} from "~/common/transport/connection.ts";
 import {Cluster, SnapshotInfo} from "~/common/transport/maintenance.ts";
-import {KeyValue, KVPutResult, LeaseInfo, SearchResult} from "~/common/transport/kv.ts";
+import {KeyValue, KVPutResult, LeaseInfo, PutStrategy, SearchResult} from "~/common/transport/kv.ts";
 import {_emitLocal, _tipError, EventName} from "~/common/events.ts";
 import {LogicErrorInfo} from "~/common/types.ts";
 import {RolePermission, User} from "~/common/transport/user.ts";
@@ -348,5 +348,21 @@ export function _kvSearchNextDir(session: number, prefix: string, includeFile: b
         session,
         prefix,
         includeFile
+    })
+}
+
+export function _kvRenameDir(
+    session: number,
+    originPrefix: string,
+    newPrefix: string,
+    deleteOriginKeys: boolean,
+    putStrategy: PutStrategy
+): Promise<string[]> {
+    return invoke<string[]>('kv_rename_dir', {
+        session,
+        originPrefix,
+        newPrefix,
+        deleteOriginKeys,
+        putStrategy
     })
 }

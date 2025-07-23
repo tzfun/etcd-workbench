@@ -11,7 +11,6 @@ import {CustomUpdateManifest} from "~/common/updater.ts";
 const localEvents = mitt();
 
 export enum EventName {
-    CONTEXTMENU = 'contextmenu',
     LOADING = 'loading',
     DIALOG = 'dialog',
     TIP = 'tip',
@@ -34,6 +33,10 @@ export enum EventName {
     UPDATE_DOWNLOADED = 'updateDownloaded',
     UPDATE_INSTALLED = 'updateInstalled',
     UPDATE_ERRORS = 'updateErrors',
+    RENAME_DIR_EVENT = 'renameDirEvent',
+    RENAME_DIR_START_EVENT = 'renameDirStartEvent',
+    RENAME_DIR_END_EVENT = 'renameDirEndEvent',
+    RENAME_DIR_ERR_EVENT = 'renameDirErrEvent',
 }
 
 export type KeyWatchEventType = "Remove" | "Create" | "Modify"
@@ -63,6 +66,15 @@ export interface SessionDisconnectedEvent {
 export interface UpdateDownloadingProgressEvent {
     chunkLength: number,
     contentLength?: number,
+}
+
+export type RenameAction = 'Put' | 'Delete'
+
+export interface KVRenameDirEvent {
+    key: string
+    action: RenameAction
+    success: boolean
+    failedMsg: string
 }
 
 export function _useLocalEvents(): Emitter<Record<EventType, any>> {

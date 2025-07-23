@@ -1,6 +1,6 @@
-use std::string::String;
 use std::io;
 use std::string::FromUtf8Error;
+use std::string::String;
 
 use log::error;
 use serde::{Deserialize, Serialize, Serializer};
@@ -30,16 +30,19 @@ enum ErrorType {
     UpdateFailed,
     /// http请求失败
     HttpRequestError,
+    /// 超限制
+    LimitedError,
 }
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all="camelCase")]
+#[serde(rename_all = "camelCase")]
 pub struct ErrorPayload<'a> {
     err_type: ErrorType,
     err_msg: &'a str,
+    data: Option<serde_json::Value>,
 }
 
 #[derive(Debug)]
-pub enum LogicError<> {
+pub enum LogicError {
     MsgError(String),
     ConnectionLose,
     ArgumentError,
@@ -54,6 +57,7 @@ pub enum LogicError<> {
     StringConvertError(FromUtf8Error),
     UpdateError(tauri::updater::Error),
     ReqwestError(reqwest::Error),
+    LimitedError(i64),
 }
 
 impl Serialize for LogicError {
@@ -63,12 +67,12 @@ impl Serialize for LogicError {
     {
         error!("{:?}", self);
         match self {
-            LogicError::MsgError(e) => {
-                ErrorPayload {
-                    err_type: ErrorType::ResourceNotExist,
-                    err_msg: e.as_str(),
-                }.serialize(serializer)
-            },
+            LogicError::MsgError(e) => ErrorPayload {
+                err_type: ErrorType::ResourceNotExist,
+                err_msg: e.as_str(),
+                data: None,
+            }
+            .serialize(serializer),
             LogicError::EtcdClientError(e) => {
                 match e {
                     etcd_client::Error::GRpcStatus(status) => {
@@ -84,42 +88,54 @@ impl Serialize for LogicError {
 
                         let msg = msg.as_str();
 
-                        if code == 16 { //  Unauthenticated
+                        if code == 16 {
+                            //  Unauthenticated
                             ErrorPayload {
                                 err_type: ErrorType::Unauthenticated,
                                 err_msg: msg,
-                            }.serialize(serializer)
-                        } else if code == 7 {   //  PermissionDenied
+                                data: None,
+                            }
+                            .serialize(serializer)
+                        } else if code == 7 {
+                            //  PermissionDenied
                             ErrorPayload {
                                 err_type: ErrorType::PermissionDenied,
                                 err_msg: msg,
-                            }.serialize(serializer)
+                                data: None,
+                            }
+                            .serialize(serializer)
                         } else {
                             ErrorPayload {
                                 err_type: ErrorType::EtcdClientError,
                                 err_msg: msg,
-                            }.serialize(serializer)
+                                data: None,
+                            }
+                            .serialize(serializer)
                         }
                     }
-                    etcd_client::Error::InvalidArgs(msg) => {
-                        ErrorPayload {
-                            err_type: ErrorType::EtcdClientError,
-                            err_msg: msg,
-                        }.serialize(serializer)
+                    etcd_client::Error::InvalidArgs(msg) => ErrorPayload {
+                        err_type: ErrorType::EtcdClientError,
+                        err_msg: msg,
+                        data: None,
                     }
+                    .serialize(serializer),
                     etcd_client::Error::TransportError(msg) => {
                         let msg = msg.to_string();
                         ErrorPayload {
                             err_type: ErrorType::EtcdClientError,
                             err_msg: msg.as_str(),
-                        }.serialize(serializer)
+                            data: None,
+                        }
+                        .serialize(serializer)
                     }
                     _ => {
                         let msg = e.to_string();
                         ErrorPayload {
                             err_type: ErrorType::EtcdClientError,
                             err_msg: msg.as_str(),
-                        }.serialize(serializer)
+                            data: None,
+                        }
+                        .serialize(serializer)
                     }
                 }
             }
@@ -129,7 +145,9 @@ impl Serialize for LogicError {
                 ErrorPayload {
                     err_type: ErrorType::SshClientError,
                     err_msg: msg.as_str(),
-                }.serialize(serializer)
+                    data: None,
+                }
+                .serialize(serializer)
             }
             LogicError::SshKeysError(e) => {
                 error!("[SSH Key] {:?}", e);
@@ -137,7 +155,9 @@ impl Serialize for LogicError {
                 ErrorPayload {
                     err_type: ErrorType::SshKeysError,
                     err_msg: msg.as_str(),
-                }.serialize(serializer)
+                    data: None,
+                }
+                .serialize(serializer)
             }
             LogicError::IoError(e) => {
                 error!("[IO] {:?}", e);
@@ -145,7 +165,9 @@ impl Serialize for LogicError {
                 ErrorPayload {
                     err_type: ErrorType::AppError,
                     err_msg: msg.as_str(),
-                }.serialize(serializer)
+                    data: None,
+                }
+                .serialize(serializer)
             }
             LogicError::SerdeError(e) => {
                 error!("[Serde] {:?}", e);
@@ -153,7 +175,9 @@ impl Serialize for LogicError {
                 ErrorPayload {
                     err_type: ErrorType::AppError,
                     err_msg: msg.as_str(),
-                }.serialize(serializer)
+                    data: None,
+                }
+                .serialize(serializer)
             }
             LogicError::AesError(e) => {
                 error!("[AesError] {:?}", e);
@@ -161,54 +185,72 @@ impl Serialize for LogicError {
                 ErrorPayload {
                     err_type: ErrorType::AppError,
                     err_msg: msg.as_str(),
-                }.serialize(serializer)
+                    data: None,
+                }
+                .serialize(serializer)
             }
             LogicError::ChannelRcvError(e) => {
                 let msg = e.to_string();
                 ErrorPayload {
                     err_type: ErrorType::AppError,
                     err_msg: msg.as_str(),
-                }.serialize(serializer)
+                    data: None,
+                }
+                .serialize(serializer)
             }
             LogicError::StringConvertError(e) => {
                 error!("[StrConvert] {:?}", e);
                 ErrorPayload {
                     err_type: ErrorType::AppError,
                     err_msg: "Can not convert string with utf-8",
-                }.serialize(serializer)
+                    data: None,
+                }
+                .serialize(serializer)
             }
-            LogicError::ConnectionLose => {
-                ErrorPayload {
-                    err_type: ErrorType::Unauthenticated,
-                    err_msg: "connection lose",
-                }.serialize(serializer)
+            LogicError::ConnectionLose => ErrorPayload {
+                err_type: ErrorType::Unauthenticated,
+                err_msg: "connection lose",
+                data: None,
             }
-            LogicError::ArgumentError => {
-                ErrorPayload {
-                    err_type: ErrorType::ArgumentError,
-                    err_msg: "invalid argument",
-                }.serialize(serializer)
+            .serialize(serializer),
+            LogicError::ArgumentError => ErrorPayload {
+                err_type: ErrorType::ArgumentError,
+                err_msg: "invalid argument",
+                data: None,
             }
-            LogicError::ResourceNotExist(e) => {
-                ErrorPayload {
-                    err_type: ErrorType::ResourceNotExist,
-                    err_msg: e,
-                }.serialize(serializer)
+            .serialize(serializer),
+            LogicError::ResourceNotExist(e) => ErrorPayload {
+                err_type: ErrorType::ResourceNotExist,
+                err_msg: e,
+                data: None,
             }
+            .serialize(serializer),
             LogicError::UpdateError(e) => {
                 error!("Update error: {}", e);
                 ErrorPayload {
                     err_type: ErrorType::UpdateFailed,
                     err_msg: "Could not fetch a valid release version",
-                }.serialize(serializer)
+                    data: None,
+                }
+                .serialize(serializer)
             }
             LogicError::ReqwestError(e) => {
                 error!("Http request error: {}", e);
                 ErrorPayload {
                     err_type: ErrorType::HttpRequestError,
                     err_msg: "HTTP request failed",
-                }.serialize(serializer)
+                    data: None,
+                }
+                .serialize(serializer)
             }
+            LogicError::LimitedError(n) => ErrorPayload {
+                err_type: ErrorType::LimitedError,
+                err_msg: "Operation exceeds the limit",
+                data: Some(serde_json::json!({
+                    "count": n
+                })),
+            }
+            .serialize(serializer),
         }
     }
 }

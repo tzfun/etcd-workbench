@@ -134,3 +134,39 @@ pub struct KVPutResult {
     pub exist_value: Option<Vec<u8>>,
     pub exist_version: Option<i64>
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum RenameAction {
+    Put,
+    Delete,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all="camelCase")]
+pub struct KVRenameDirEvent {
+    pub key: Vec<u8>,
+    pub action: RenameAction,
+    pub success: bool,
+    pub failed_msg: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+pub enum PutStrategy {
+    Cover,
+    Rename,
+    AskMerge,
+}
+
+impl PutStrategy {
+    pub fn rename(key: &[u8]) -> Vec<u8> {
+        let key_str=  String::from_utf8_lossy(key).to_string();
+        let (name, ext) = if let Some(dot_pos) = key_str.rfind('.') {
+            (&key_str[..dot_pos], &key_str[dot_pos..])
+        } else {
+            (key_str.as_str(), "")
+        };
+
+        let new_name = format!("{}(rename){}", name, ext);
+        new_name.into_bytes().to_vec()
+    }
+}

@@ -14,11 +14,13 @@ import {
   _copyToClipboard,
   _emitLocal,
   _listenLocal,
-  _loading, _tipError,
+  _loading,
+  _tipError,
   _tipInfo,
   _tipSuccess,
-  _tipWarn, _unListenLocal,
-  EventName
+  _tipWarn,
+  _unListenLocal,
+  EventName, KVRenameDirEvent
 } from "~/common/events.ts";
 import {
   _deleteKV,
@@ -27,7 +29,8 @@ import {
   _getKV,
   _getKVByVersion,
   _getKVHistoryVersions,
-  _handleError, _kvSearchNextDir,
+  _handleError, _kvRenameDir,
+  _kvSearchNextDir,
   _putKV,
   _putKVWithLease,
   _searchByPrefix,
@@ -35,7 +38,7 @@ import {
 } from "~/common/services.ts";
 import {_saveGlobalStore, _useGlobalStore, _useSettings} from "~/common/store.ts";
 import {ErrorPayload, KeyMonitorConfig, SessionData} from "~/common/transport/connection.ts";
-import {KeyExtendInfo, SearchResult} from "~/common/transport/kv";
+import {KeyExtendInfo, PutStrategy, SearchResult} from "~/common/transport/kv";
 import {KeyValue} from "~/common/transport/kv.ts";
 import {EditorConfig, EditorHighlightLanguage} from "~/common/types.ts";
 import {_debounce, arraysEqual} from "~/common/utils";
@@ -56,6 +59,7 @@ import {getTheme} from "~/components/editor/themes.ts";
 import Tree, {ContextmenuKeyword, TreeNode} from "~/components/tree/Tree.vue";
 import {Handler} from "mitt";
 import CompleteInput from "~/components/CompleteInput.vue";
+import {appWindow} from "@tauri-apps/api/window";
 
 const theme = useTheme()
 const settings = _useSettings()
@@ -133,7 +137,8 @@ const loadingStore = reactive({
   deleteBatch: false,
   confirmNewKey: false,
   loadMore: false,
-  getKey: false
+  getKey: false,
+  renameDir: false
 })
 
 const newKeyDialog = reactive({
@@ -189,6 +194,16 @@ const putMergeDialog = reactive({
   failedCallback: <Function | undefined>undefined
 })
 
+const renameDirDialog = reactive({
+  show: false,
+  originPrefix: "",
+  newPrefix: "",
+  deleteOriginKeys: true,
+  putStrategy: <PutStrategy> 'Cover',
+  state: <'none' | 'started' | 'ended' | 'failed'> 'none',
+  logs: <KVRenameDirEvent[]>[]
+})
+
 watch(
     () => theme,
     () => {
@@ -230,7 +245,7 @@ const editorContent = computed<string>(() => {
   return ""
 })
 
-onMounted(() => {
+onMounted(async () => {
   //  海量数据加载时会导致页面其他动画卡顿，这里延迟加载
   setTimeout(() => {
     nextTick(() => {
@@ -264,6 +279,24 @@ onMounted(() => {
     },
     parent: putMergeEditorRef.value!
   })
+
+  eventUnListens.push(await appWindow.listen<KVRenameDirEvent>(EventName.RENAME_DIR_EVENT, e => {
+    renameDirDialog.logs.push(e.payload)
+  }))
+
+  eventUnListens.push(await appWindow.listen(EventName.RENAME_DIR_START_EVENT, () => {
+    renameDirDialog.state = 'started'
+  }))
+
+  eventUnListens.push(await appWindow.listen(EventName.RENAME_DIR_END_EVENT, () => {
+    renameDirDialog.state = 'ended'
+    loadingStore.renameDir = false
+  }))
+
+  eventUnListens.push(await appWindow.listen(EventName.RENAME_DIR_ERR_EVENT, () => {
+    renameDirDialog.state = 'failed'
+    loadingStore.renameDir = false
+  }))
 })
 
 onUnmounted(() => {
@@ -1055,7 +1088,6 @@ const putAnyway = (key: string, value: string, version: number) => {
 }
 
 const onClickContextmenu = (keyword: ContextmenuKeyword, node: TreeNode) => {
-  console.log("click:contextmenu ==>", keyword, node)
   if (node) {
     const key = node.id
     if (keyword == 'addToMonitor') {
@@ -1069,7 +1101,13 @@ const onClickContextmenu = (keyword: ContextmenuKeyword, node: TreeNode) => {
     if (node.isParent) {
       //  修改目录名字
       if (keyword == 'rename') {
-
+        renameDirDialog.originPrefix = key
+        renameDirDialog.newPrefix = key
+        renameDirDialog.deleteOriginKeys = true
+        renameDirDialog.putStrategy = 'Cover'
+        renameDirDialog.state = 'none'
+        renameDirDialog.logs = []
+        renameDirDialog.show = true
       }
     } else {
       //  修改key名字
@@ -1097,6 +1135,28 @@ const onClickContextmenu = (keyword: ContextmenuKeyword, node: TreeNode) => {
       }
     }
   }
+}
+
+const renameDir = () => {
+  if(renameDirDialog.originPrefix === renameDirDialog.newPrefix) {
+    _tipWarn("The path name does not change")
+    return
+  }
+  loadingStore.renameDir = true
+  _kvRenameDir(
+      props.session?.id,
+      renameDirDialog.originPrefix,
+      renameDirDialog.newPrefix,
+      renameDirDialog.deleteOriginKeys,
+      renameDirDialog.putStrategy
+  ).then(() => {
+  }).catch(e => {
+    _handleError({
+      e,
+      session: props.session
+    })
+    loadingStore.renameDir = false
+  })
 }
 </script>
 
@@ -1469,7 +1529,7 @@ const onClickContextmenu = (keyword: ContextmenuKeyword, node: TreeNode) => {
       <v-card :title="newKeyDialog.title">
         <v-card-text>
           <v-layout class="mb-5" v-show="newKeyDialog.copyAndSave">
-            <span class="new-key-form-label">From: </span>
+            <span class="custom-form-label">From: </span>
             <v-text-field
                 v-model="newKeyDialog.fromKey"
                 density="comfortable"
@@ -1480,12 +1540,12 @@ const onClickContextmenu = (keyword: ContextmenuKeyword, node: TreeNode) => {
             />
           </v-layout>
           <v-layout class="mb-5" v-show="newKeyDialog.copyAndSave">
-            <span class="new-key-form-label"></span>
+            <span class="custom-form-label"></span>
             <v-checkbox label="Delete From key" v-model="newKeyDialog.deleteFromKey" hide-details></v-checkbox>
           </v-layout>
           <v-layout class="mb-5 overflow-visible">
-            <span class="new-key-form-label" v-if="newKeyDialog.copyAndSave">To: </span>
-            <span class="new-key-form-label" v-else>Key: </span>
+            <span class="custom-form-label" v-if="newKeyDialog.copyAndSave">To: </span>
+            <span class="custom-form-label" v-else>Key: </span>
             <CompleteInput
                 v-model="newKeyDialog.key"
                 :search-func="searchNextDir"
@@ -1498,7 +1558,7 @@ const onClickContextmenu = (keyword: ContextmenuKeyword, node: TreeNode) => {
             ></CompleteInput>
           </v-layout>
           <v-layout class="mb-5" style="z-index: unset">
-            <span class="new-key-form-label"></span>
+            <span class="custom-form-label"></span>
             <v-radio-group v-model="newKeyDialog.model" inline hide-details>
               <v-radio label="Never Expire" value="none"></v-radio>
               <v-radio label="With TTL" value="ttl"></v-radio>
@@ -1506,7 +1566,7 @@ const onClickContextmenu = (keyword: ContextmenuKeyword, node: TreeNode) => {
             </v-radio-group>
           </v-layout>
           <v-layout class="mb-5" style="z-index: unset" v-if="newKeyDialog.model == 'ttl'">
-            <span class="new-key-form-label">TTL(s): </span>
+            <span class="custom-form-label">TTL(s): </span>
             <v-text-field
                 v-model="newKeyDialog.ttl"
                 type="number"
@@ -1517,7 +1577,7 @@ const onClickContextmenu = (keyword: ContextmenuKeyword, node: TreeNode) => {
             />
           </v-layout>
           <v-layout class="mb-5" style="z-index: unset" v-if="newKeyDialog.model == 'lease'">
-            <span class="new-key-form-label">Lease: </span>
+            <span class="custom-form-label">Lease: </span>
             <v-text-field
                 v-model="newKeyDialog.lease"
                 type="number"
@@ -1540,7 +1600,7 @@ const onClickContextmenu = (keyword: ContextmenuKeyword, node: TreeNode) => {
           />
 
           <v-btn
-              text="Confirm"
+              text="Commit"
               variant="flat"
               class="text-none"
               color="primary"
@@ -1690,6 +1750,92 @@ const onClickContextmenu = (keyword: ContextmenuKeyword, node: TreeNode) => {
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!--   重命名目录-->
+    <v-dialog
+        v-model="renameDirDialog.show"
+        max-width="800px"
+        scrollable
+        persistent
+    >
+      <v-card>
+        <v-card-title class="d-flex justify-space-between align-center">
+          <div class="text-h5 ps-2">
+            Rename Path
+          </div>
+          <v-btn
+              icon="mdi-close"
+              variant="text"
+              v-show="renameDirDialog.state == 'ended' || renameDirDialog.state == 'failed'"
+              @click="() => {renameDirDialog.show = false;renameDirDialog.logs=[];}"
+          />
+        </v-card-title>
+        <v-card-text class="rename-form">
+          <v-layout class="mb-5">
+            <span class="custom-form-label">Path: </span>
+            <v-text-field
+                v-model="renameDirDialog.newPrefix"
+                density="comfortable"
+                prepend-inner-icon="mdi-file-document"
+                :prefix="session.namespace"
+                hide-details
+            />
+          </v-layout>
+          <v-layout class="mb-5">
+            <span class="custom-form-label"></span>
+            <v-checkbox
+                v-model="renameDirDialog.deleteOriginKeys"
+                label="Delete Origin Keys"
+                hide-details
+            ></v-checkbox>
+          </v-layout>
+          <v-layout class="mb-5">
+            <span class="custom-form-label">Put Strategy: </span>
+            <v-radio-group v-model="renameDirDialog.putStrategy" inline hide-details style="flex-direction: row;">
+              <v-radio label="Cover" value="Cover"></v-radio>
+              <v-radio label="Rename" value="Rename"></v-radio>
+            </v-radio-group>
+          </v-layout>
+
+          <v-layout style="max-height: 40vh;" v-if="renameDirDialog.state != 'none'">
+            <div v-for="(log, idx) in renameDirDialog.logs" :key="idx">
+              <div v-if="log.success">
+                [<span style="color: green;">Success</span>]
+                <span>{{log.action}}</span>
+                {{log.key}}
+              </div>
+              <div v-else>
+                <p>
+                  [<span style="color: red;">Failed</span>]
+                  <span>{{log.action}}</span>
+                  {{log.key}}
+                </p>
+                <p style="color: red;">{{log.failedMsg}}</p>
+              </div>
+            </div>
+          </v-layout>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn
+              text="Cancel"
+              variant="text"
+              class="text-none"
+              v-if="renameDirDialog.state == 'none'"
+              @click="renameDirDialog.show = false"
+          />
+
+          <v-btn
+              text="Commit"
+              variant="flat"
+              class="text-none"
+              color="primary"
+              @click="renameDir"
+              :disabled="renameDirDialog.state != 'none'"
+              :loading="loadingStore.renameDir"
+          />
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -1747,13 +1893,18 @@ $--load-more-area-height: 32px;
       }
     }
   }
-
 }
 
-.new-key-form-label {
+.custom-form-label {
   display: inline-block;
   width: 80px;
   line-height: 48px;
+}
+
+.rename-form {
+  .custom-form-label {
+    width: 120px;
+  }
 }
 
 .kvTree {

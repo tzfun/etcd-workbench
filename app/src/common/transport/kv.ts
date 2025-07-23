@@ -51,3 +51,5 @@ export interface KVPutResult {
     existValue?: number[],
     existVersion?: number,
 }
+
+export type PutStrategy = "Cover" | "Rename" | "AskMerge"

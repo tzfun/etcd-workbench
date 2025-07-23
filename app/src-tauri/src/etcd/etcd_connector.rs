@@ -166,6 +166,10 @@ impl EtcdConnector {
         }
     }
 
+    pub fn inner(&mut self) -> &mut WrappedEtcdClient {
+        &mut self.client
+    }
+
     pub async fn test_connection(&self) -> Result<(), Error> {
         let key = self.fill_prefix_namespace("/");
         let response = self
@@ -520,6 +524,14 @@ impl EtcdConnector {
             full_key
         } else {
             end_key.into()
+        }
+    }
+
+    pub fn namespace_bytes_len(&self) -> usize {
+        if let Some(ref namespace) = self.namespace {
+            namespace.as_bytes().len()
+        } else {
+            0
         }
     }
 

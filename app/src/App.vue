@@ -7,7 +7,6 @@ import {
   _alertError,
   _confirm,
   _confirmUpdateApp,
-  _emitLocal,
   _genNewVersionUpdateMessage,
   _listenLocal,
   _unListenLocal,
@@ -81,7 +80,6 @@ onMounted(async () => {
 
   document.addEventListener('contextmenu', (e: MouseEvent) => {
     e.preventDefault()
-    _emitLocal(EventName.CONTEXTMENU, e)
     return false
   }, {capture: true})
 

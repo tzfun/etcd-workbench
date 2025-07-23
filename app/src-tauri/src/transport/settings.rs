@@ -33,6 +33,10 @@ pub struct SettingConfig {
     /// KV搜索下一级目录时所需查询的Keys数量限制
     #[serde(default = "default_kv_search_next_dir_limit")]
     pub kv_search_next_dir_limit: u32,
+    /// KV重命名目录时所需重命名的Keys数量限制
+    /// 该限制用于避免重命名目录时操作过多Keys导致性能问题
+    #[serde(default = "default_kv_dir_rename_keys_limit")]
+    pub kv_dir_rename_keys_limit: i64,
 
     /// 自动更新
     #[serde(default = "default_auto_update")]
@@ -90,6 +94,10 @@ fn default_kv_search_next_dir_limit() -> u32 {
     100
 }
 
+fn default_kv_dir_rename_keys_limit() -> i64 {
+    100
+}
+
 fn default_connect_timeout_seconds() -> u64 {
     5
 }
@@ -126,6 +134,7 @@ impl Default for SettingConfig {
             kv_check_format_before_save: default_kv_check_format_before_save(),
             kv_tree_search_with_folder: default_kv_tree_search_with_folder(),
             kv_search_next_dir_limit: default_kv_search_next_dir_limit(),
+            kv_dir_rename_keys_limit: default_kv_dir_rename_keys_limit(),
             auto_update: default_auto_update(),
             update_source: default_update_source(),
             close_tab_use_ctrl_w: true,
