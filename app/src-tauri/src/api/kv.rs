@@ -261,7 +261,7 @@ async fn rename_dir(
             .kv_put_request(
                 full_new_key,
                 kv.value().to_vec(),
-                Some(PutOptions::new().with_ignore_lease().with_lease(kv.lease())),
+                Some(PutOptions::new().with_lease(kv.lease())),
             )
             .await;
         if let Err(e) = put_result {

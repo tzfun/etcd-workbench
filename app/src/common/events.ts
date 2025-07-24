@@ -71,7 +71,7 @@ export interface UpdateDownloadingProgressEvent {
 export type RenameAction = 'Put' | 'Delete'
 
 export interface KVRenameDirEvent {
-    key: string
+    key: number[]
     action: RenameAction
     success: boolean
     failedMsg: string

@@ -16,7 +16,7 @@ import {KeyExtendInfo} from "~/common/transport/kv.ts";
 
 const IDMark_A = "_a"
 
-export type TreeNode = {
+export interface TreeNode {
   //  节点ID，整棵树一定不能重复
   id: string,
   //  父节点ID
@@ -38,6 +38,7 @@ export type TreeNode = {
   //  初始化节点数据时，由 zTree 增加此属性，请勿提前赋值
   tId?: string,
   keyInfo?: KeyExtendInfo,
+  getParentNode?(): TreeNode | null,
 }
 
 export type ContextmenuKeyword = 'delete' | 'rename' | 'addToMonitor' | 'editMonitor' | 'addToCollection' | 'removeFromCollection'
@@ -165,27 +166,43 @@ const onRightClick = (e: MouseEvent, treeId: string, treeNode: TreeNode) => {
   if (contextmenuRef.value) {
     const element:Element = contextmenuRef.value.$el
     if (treeNode) {
-      const menu: Contextmenu[] = [
-        {
-          title: 'Rename',
-          keyword: 'rename',
-          icon: 'mdi-rename',
-        },
-        {
-          type:'divider'
-        },
-      ]
+      let menuHeight = 10
+      const menu: Contextmenu[] = []
+
+      function pushItem(item: ContextmenuItem) {
+        menu.push(item)
+        menuHeight += 32
+      }
+
+      function pushExtend(extend: ContextmenuExtend) {
+        menu.push(extend)
+        if (extend.type === 'divider') {
+          //  margin: 8px 0
+          //  height: 1px
+          menuHeight += 17
+        }
+      }
+
+      pushItem({
+        title: 'Rename',
+        keyword: 'rename',
+        icon: 'mdi-rename',
+      })
+
+      pushExtend({
+        type:'divider'
+      })
 
       //  位于monitor列表中
       if (props.session!.keyMonitorMap![treeNode.id]) {
-        menu.push({
+        pushItem({
           title: 'Edit monitor',
           keyword: 'editMonitor',
           icon: 'mdi-robot',
           iconColor: '#cc8f53',
         })
       } else {
-        menu.push({
+        pushItem({
           title: 'Add to monitors',
           keyword: 'addToMonitor',
           icon: 'mdi-robot-outline',
@@ -197,14 +214,14 @@ const onRightClick = (e: MouseEvent, treeId: string, treeNode: TreeNode) => {
       if (!treeNode.isParent) {
         //  位于收藏列表中
         if (props.session!.keyCollectionSet!.has(treeNode.id)) {
-          menu.push({
+          pushItem({
             title: 'Remove from collections',
             keyword: 'removeFromCollection',
             icon: 'mdi-star',
             iconColor: '#ced10a',
           })
         } else {
-          menu.push({
+          pushItem({
             title: 'Add to collections',
             keyword: 'addToCollection',
             icon: 'mdi-star-outline',
@@ -212,10 +229,10 @@ const onRightClick = (e: MouseEvent, treeId: string, treeNode: TreeNode) => {
           })
         }
 
-        menu.push({
+        pushExtend({
           type:'divider'
         })
-        menu.push({
+        pushItem({
           title: 'Delete',
           keyword: 'delete',
           icon: 'mdi-trash-can-outline',
@@ -223,8 +240,17 @@ const onRightClick = (e: MouseEvent, treeId: string, treeNode: TreeNode) => {
         })
       }
 
+      let left = e.clientX
+      let top = e.clientY
+      //  下边界保护
+      const windowHeight = window.innerHeight
+      if (top + menuHeight >= windowHeight) {
+        //  20px边距
+        top = windowHeight - menuHeight - 20
+      }
+
       contextmenu.value = menu
-      const style = `left: ${e.clientX}px; top: ${e.clientY}px; display:unset;`
+      const style = `left: ${left}px; top: ${top}px; display:unset;`
       element.setAttribute("style", style)
     } else {
       //  右击空白处

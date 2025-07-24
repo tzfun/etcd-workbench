@@ -111,6 +111,7 @@ const newKeyEditorRef = ref<InstanceType<typeof Editor>>()
 const putMergeEditorRef = ref<InstanceType<typeof HTMLElement>>()
 const putMergeEditor = ref<MergeView>()
 const eventUnListens = reactive<Function[]>([])
+const renameDirLogListRef = ref<InstanceType<typeof HTMLDivElement>>()
 
 const defaultEditorConfig: EditorConfig = {
   disabled: false,
@@ -196,6 +197,7 @@ const putMergeDialog = reactive({
 
 const renameDirDialog = reactive({
   show: false,
+  fixedPrefix: "",
   originPrefix: "",
   newPrefix: "",
   deleteOriginKeys: true,
@@ -281,7 +283,17 @@ onMounted(async () => {
   })
 
   eventUnListens.push(await appWindow.listen<KVRenameDirEvent>(EventName.RENAME_DIR_EVENT, e => {
-    renameDirDialog.logs.push(e.payload)
+    const event = e.payload
+    renameDirDialog.logs.push(event)
+    if (event.success && kvTree.value) {
+      const key = _decodeBytesToString(event.key)
+      if (event.action == 'Put') {
+        kvTree.value.addItemToTree(key, true)
+      } else if (event.action == 'Delete') {
+        removeKeysFromTree([key])
+      }
+    }
+    renameDirLogScrollToBottom()
   }))
 
   eventUnListens.push(await appWindow.listen(EventName.RENAME_DIR_START_EVENT, () => {
@@ -291,11 +303,13 @@ onMounted(async () => {
   eventUnListens.push(await appWindow.listen(EventName.RENAME_DIR_END_EVENT, () => {
     renameDirDialog.state = 'ended'
     loadingStore.renameDir = false
+    renameDirLogScrollToBottom()
   }))
 
   eventUnListens.push(await appWindow.listen(EventName.RENAME_DIR_ERR_EVENT, () => {
     renameDirDialog.state = 'failed'
     loadingStore.renameDir = false
+    renameDirLogScrollToBottom()
   }))
 })
 
@@ -390,7 +404,7 @@ const showNewKeyDialog = () => {
 }
 
 const showCopyAndSaveDialog = (title: string, fromKey: string, fromValue: string, deleteFromKey: boolean) => {
-  newKeyDialog.key = ''
+  newKeyDialog.key = fromKey
   newKeyDialog.ttl = ''
   newKeyDialog.lease = ''
   newKeyDialog.model = 'none'
@@ -416,6 +430,10 @@ const putKey = () => {
   if (newKeyDialog.model === 'lease' && _isEmpty(newKeyDialog.lease)) {
     _tipWarn("Please input a valid lease id")
     return
+  }
+  if (newKeyDialog.copyAndSave && newKeyDialog.key === newKeyDialog.fromKey) {
+    _tipWarn("The key does not change")
+    return;
   }
   let key = newKeyDialog.key
   let value: number[] = newKeyEditorRef.value!.readDataBytes()
@@ -505,6 +523,9 @@ const deleteKeyBatch = () => {
   const keyBytes: number[][] = []
   let containsCurrentKV = false
   for (const node of nodes) {
+    if (node.isParent) {
+      continue
+    }
     keysEncodedUtf8.push(node.id)
     if (node.keyInfo) {
       if (node.keyInfo.keyEncodedUtf8) {
@@ -938,7 +959,6 @@ const openSearchDialog = () => {
   searchDialog.searchResult = null
   searchDialog.show = true
   searchDialog.loading = false
-
 }
 
 const selectSearchItem = (kv: KeyValue) => {
@@ -1055,7 +1075,6 @@ const searchNextNode = (value: string | null): Promise<string[]> => {
 
 const searchNext = (value: string | null, includeFile: boolean): Promise<string[]> => {
   const prefix = value || ""
-  console.log(prefix)
   return _kvSearchNextDir(props.session?.id, prefix, includeFile).catch(e => {
     _handleError({
       e,
@@ -1101,8 +1120,22 @@ const onClickContextmenu = (keyword: ContextmenuKeyword, node: TreeNode) => {
     if (node.isParent) {
       //  修改目录名字
       if (keyword == 'rename') {
-        renameDirDialog.originPrefix = key
-        renameDirDialog.newPrefix = key
+        let parent = ""
+        if(node.getParentNode) {
+          const parentNode = node.getParentNode()
+          if(parentNode) {
+            parent = parentNode.id
+          }
+        }
+        let editPrefix
+        if (parent.length > 0) {
+          editPrefix = key.substring(parent.length)
+        } else {
+          editPrefix = node.id
+        }
+        renameDirDialog.fixedPrefix = parent
+        renameDirDialog.originPrefix = editPrefix
+        renameDirDialog.newPrefix = editPrefix
         renameDirDialog.deleteOriginKeys = true
         renameDirDialog.putStrategy = 'Cover'
         renameDirDialog.state = 'none'
@@ -1145,8 +1178,8 @@ const renameDir = () => {
   loadingStore.renameDir = true
   _kvRenameDir(
       props.session?.id,
-      renameDirDialog.originPrefix,
-      renameDirDialog.newPrefix,
+      renameDirDialog.fixedPrefix + renameDirDialog.originPrefix,
+      renameDirDialog.fixedPrefix + renameDirDialog.newPrefix,
       renameDirDialog.deleteOriginKeys,
       renameDirDialog.putStrategy
   ).then(() => {
@@ -1156,6 +1189,14 @@ const renameDir = () => {
       session: props.session
     })
     loadingStore.renameDir = false
+  })
+}
+
+const renameDirLogScrollToBottom = () => {
+  nextTick(() => {
+    if (renameDirLogListRef.value) {
+      renameDirLogListRef.value.scrollTop = renameDirLogListRef.value.scrollHeight
+    }
   })
 }
 </script>
@@ -1758,26 +1799,15 @@ const renameDir = () => {
         scrollable
         persistent
     >
-      <v-card>
-        <v-card-title class="d-flex justify-space-between align-center">
-          <div class="text-h5 ps-2">
-            Rename Path
-          </div>
-          <v-btn
-              icon="mdi-close"
-              variant="text"
-              v-show="renameDirDialog.state == 'ended' || renameDirDialog.state == 'failed'"
-              @click="() => {renameDirDialog.show = false;renameDirDialog.logs=[];}"
-          />
-        </v-card-title>
+      <v-card title="Rename Path">
         <v-card-text class="rename-form">
           <v-layout class="mb-5">
             <span class="custom-form-label">Path: </span>
             <v-text-field
                 v-model="renameDirDialog.newPrefix"
+                :prefix="(session.namespace || '') + renameDirDialog.fixedPrefix"
                 density="comfortable"
                 prepend-inner-icon="mdi-file-document"
-                :prefix="session.namespace"
                 hide-details
             />
           </v-layout>
@@ -1791,37 +1821,42 @@ const renameDir = () => {
           </v-layout>
           <v-layout class="mb-5">
             <span class="custom-form-label">Put Strategy: </span>
-            <v-radio-group v-model="renameDirDialog.putStrategy" inline hide-details style="flex-direction: row;">
+            <v-radio-group v-model="renameDirDialog.putStrategy"
+                           inline hide-details
+                           style="flex-direction: row;">
               <v-radio label="Cover" value="Cover"></v-radio>
               <v-radio label="Rename" value="Rename"></v-radio>
             </v-radio-group>
           </v-layout>
 
-          <v-layout style="max-height: 40vh;" v-if="renameDirDialog.state != 'none'">
-            <div v-for="(log, idx) in renameDirDialog.logs" :key="idx">
-              <div v-if="log.success">
-                [<span style="color: green;">Success</span>]
-                <span>{{log.action}}</span>
-                {{log.key}}
-              </div>
-              <div v-else>
-                <p>
-                  [<span style="color: red;">Failed</span>]
-                  <span>{{log.action}}</span>
-                  {{log.key}}
-                </p>
-                <p style="color: red;">{{log.failedMsg}}</p>
+          <div v-if="renameDirDialog.state != 'none'">
+            <v-divider v-if="renameDirDialog.logs.length > 0">Logs</v-divider>
+            <div style="max-height: 30vh;" class="overflow-auto" ref="renameDirLogListRef">
+              <div v-for="(log, idx) in renameDirDialog.logs" :key="idx">
+                <div v-if="log.success">
+                  [<strong style="color: #4CAF50;">Success</strong>]
+                  <span style="color: #00BCD4;">{{log.action}}</span>
+                  {{_decodeBytesToString(log.key)}}
+                </div>
+                <div v-else>
+                  <p>
+                    [<strong style="color: #E57373;">Failed</strong>]
+                    <span style="color: #00BCD4;">{{log.action}}</span>
+                    {{_decodeBytesToString(log.key)}}
+                  </p>
+                  <p style="color: #E57373;">{{log.failedMsg}}</p>
+                </div>
               </div>
             </div>
-          </v-layout>
+          </div>
         </v-card-text>
         <v-card-actions>
           <v-btn
-              text="Cancel"
+              :text="renameDirDialog.state == 'none' ? 'Cancel' : 'Close'"
               variant="text"
               class="text-none"
-              v-if="renameDirDialog.state == 'none'"
-              @click="renameDirDialog.show = false"
+              :disabled="renameDirDialog.state == 'started'"
+              @click="() => {renameDirDialog.show = false;renameDirDialog.logs=[];}"
           />
 
           <v-btn
@@ -1830,7 +1865,8 @@ const renameDir = () => {
               class="text-none"
               color="primary"
               @click="renameDir"
-              :disabled="renameDirDialog.state != 'none'"
+              v-if="renameDirDialog.state == 'none' || renameDirDialog.state == 'started'"
+              :disabled="renameDirDialog.state == 'started'"
               :loading="loadingStore.renameDir"
           />
         </v-card-actions>

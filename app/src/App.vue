@@ -441,7 +441,7 @@ const disableWebviewNativeEvents = () => {
         class="mt-12"
         :content-class="item.class"
         :timeout="item.timeout"
-        style="z-index: 2000;"
+        style="z-index: 3000;"
     >
       <v-icon v-if="item.icon" class="mr-2">{{ item.icon }}</v-icon>
       {{ item.content }}
