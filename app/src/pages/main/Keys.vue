@@ -389,8 +389,8 @@ const removeKeysFromTree = (keys: string[]) => {
   }
 }
 
-const showNewKeyDialog = () => {
-  newKeyDialog.key = ''
+const showNewKeyDialog = (presetKey?: string) => {
+  newKeyDialog.key = presetKey || ''
   newKeyDialog.ttl = ''
   newKeyDialog.lease = ''
   newKeyDialog.value = ''
@@ -770,18 +770,18 @@ const saveKV = () => {
   }
 }
 
-const loadVersionDiff = () => {
-  let key = currentKv.value ? currentKv.value.key : null
+const loadVersionDiff = (key: string, info?: KeyExtendInfo) => {
   if (!key) {
     return
   }
 
   loadingStore.diff = true
   versionDiffInfo.key = key
-  if (currentKv.value?.keyEncodedUtf8) {
-    versionDiffInfo.keyBytes = undefined
+
+  if (info && !info.keyEncodedUtf8) {
+    versionDiffInfo.keyBytes = info.keyBytes
   } else {
-    versionDiffInfo.keyBytes = currentKv.value?.keyBytes
+    versionDiffInfo.keyBytes = undefined
   }
   _getKV(props.session?.id, key, versionDiffInfo.keyBytes).then(dataB => {
     versionDiffInfo.version = dataB.version
@@ -1142,6 +1142,9 @@ const onClickContextmenu = (keyword: ContextmenuKeyword, node: TreeNode) => {
         renameDirDialog.logs = []
         renameDirDialog.show = true
       }
+      else if (keyword == 'addKey') {
+        showNewKeyDialog(key)
+      }
     } else {
       //  修改key名字
       if (keyword == 'rename') {
@@ -1165,6 +1168,8 @@ const onClickContextmenu = (keyword: ContextmenuKeyword, node: TreeNode) => {
         addCollectionKey(key, true)
       } else if (keyword == 'removeFromCollection') {
         removeCollectionKey(key)
+      } else if (keyword == 'versionDiff') {
+        loadVersionDiff(key)
       }
     }
   }
@@ -1216,7 +1221,7 @@ const renameDirLogScrollToBottom = () => {
       <v-btn class="text-none ml-2"
              prepend-icon="mdi-file-document-plus-outline"
              color="green"
-             @click="showNewKeyDialog"
+             @click="showNewKeyDialog()"
              text="Add Key"
       />
       <v-btn class="text-none ml-2"
@@ -1383,7 +1388,7 @@ const renameDirLogScrollToBottom = () => {
 
               <v-btn color="cyan-darken-1"
                      size="small"
-                     @click="loadVersionDiff"
+                     @click="loadVersionDiff(currentKv!.key, currentKv)"
                      text="Version Diff"
                      class="mr-2 text-none"
                      :loading="loadingStore.diff"
@@ -1820,9 +1825,10 @@ const renameDirLogScrollToBottom = () => {
             ></v-checkbox>
           </v-layout>
           <v-layout class="mb-5">
-            <span class="custom-form-label">Put Strategy: </span>
+            <span class="custom-form-label" style="line-height: 40px;">Put Strategy: </span>
             <v-radio-group v-model="renameDirDialog.putStrategy"
-                           inline hide-details
+                           inline
+                           hide-details
                            style="flex-direction: row;">
               <v-radio label="Cover" value="Cover"></v-radio>
               <v-radio label="Rename" value="Rename"></v-radio>

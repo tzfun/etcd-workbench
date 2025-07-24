@@ -38,10 +38,19 @@ export interface TreeNode {
   //  初始化节点数据时，由 zTree 增加此属性，请勿提前赋值
   tId?: string,
   keyInfo?: KeyExtendInfo,
+
   getParentNode?(): TreeNode | null,
 }
 
-export type ContextmenuKeyword = 'delete' | 'rename' | 'addToMonitor' | 'editMonitor' | 'addToCollection' | 'removeFromCollection'
+export type ContextmenuKeyword =
+    'delete'
+    | 'rename'
+    | 'addToMonitor'
+    | 'editMonitor'
+    | 'addToCollection'
+    | 'removeFromCollection'
+    | 'versionDiff'
+    | 'addKey'
 
 export type ContextmenuItem = {
   title: string,
@@ -164,7 +173,7 @@ const onRightClick = (e: MouseEvent, treeId: string, treeNode: TreeNode) => {
   contextmenuStorage.treeId = treeId
   contextmenuStorage.treeNode = treeNode
   if (contextmenuRef.value) {
-    const element:Element = contextmenuRef.value.$el
+    const element: Element = contextmenuRef.value.$el
     if (treeNode) {
       let menuHeight = 10
       const menu: Contextmenu[] = []
@@ -189,8 +198,24 @@ const onRightClick = (e: MouseEvent, treeId: string, treeNode: TreeNode) => {
         icon: 'mdi-rename',
       })
 
+      if (treeNode.isParent) {
+        pushItem({
+          title: 'Add Key',
+          keyword: 'addKey',
+          icon: 'mdi-file-document-plus-outline',
+          iconColor: 'green'
+        })
+      } else {
+        pushItem({
+          title: 'Version Diff',
+          keyword: 'versionDiff',
+          icon: 'mdi-vector-difference',
+          iconColor: 'cyan-darken-1'
+        })
+      }
+
       pushExtend({
-        type:'divider'
+        type: 'divider'
       })
 
       //  位于monitor列表中
@@ -230,7 +255,7 @@ const onRightClick = (e: MouseEvent, treeId: string, treeNode: TreeNode) => {
         }
 
         pushExtend({
-          type:'divider'
+          type: 'divider'
         })
         pushItem({
           title: 'Delete',
