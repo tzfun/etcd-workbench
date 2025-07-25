@@ -67,7 +67,12 @@ pub async fn open_main_window(app_handle: tauri::AppHandle) {
             //  定期检查更新
             loop {
                 sleep(Duration::from_secs(3600)).await;
-                let _ = check_update_with_source(app_handle.clone(), String::from("main")).await;
+                if let Ok(available) = check_update_with_source(app_handle.clone(), String::from("main")).await {
+                    //  检测出有更新就不再继续检查，只需给客户端通知一次
+                    if(available) {
+                        break;
+                    }
+                }
             }
         });
     });
