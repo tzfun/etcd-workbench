@@ -6,7 +6,9 @@ import {_alertError, _confirm, EventName} from "~/common/events.ts";
 import {nextTick, onActivated, onMounted, onUnmounted, reactive, ref} from "vue";
 import {ConnectionInfo, DEFAULT_CONNECTION, ErrorPayload} from "~/common/transport/connection.ts";
 import {listen} from "@tauri-apps/api/event";
+import {useI18n} from "vue-i18n";
 
+const { t } = useI18n()
 const connectorRef = ref<InstanceType<typeof Connector>>()
 
 const connectionList = ref<ConnectionInfo[]>([])
@@ -91,12 +93,12 @@ const removeConnectionConfig = (name: string) => {
               nav
       >
         <v-list-item value="new">
-          New Connection
+          {{ t("main.home.newConnection") }}
           <template v-slot:prepend>
             <v-icon>mdi-transit-connection-variant</v-icon>
           </template>
         </v-list-item>
-        <v-list-subheader>Favorites List</v-list-subheader>
+        <v-list-subheader>{{ t("main.home.favoritesList") }}</v-list-subheader>
         <v-list-item v-for="item in connectionList"
                      :key="item.name"
                      :value="item"

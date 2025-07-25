@@ -6,6 +6,7 @@ import '~/styles/main.scss'
 import {_onClientError} from "~/common/windows.ts";
 import {_goBrowserPage} from "~/common/utils.ts";
 import {_useLocalEvents} from "~/common/events.ts";
+import i18n from "~/language";
 
 const setup = () => {
     try {
@@ -15,6 +16,7 @@ const setup = () => {
         window._localEvent = _useLocalEvents()
         const app = createApp(App)
         app.use(vuetify)
+        app.use(i18n)
 
         app.config.errorHandler = (err: any, instance, info) => {
             console.error(err, info, instance)

@@ -3,16 +3,16 @@ import {onMounted, PropType, ref, watch} from "vue";
 import {FileForm} from "~/common/types.ts";
 import {_byteTextFormat, _timeFormat} from "~/common/utils.ts";
 import {_dialogContent, _tipError} from "~/common/events.ts";
+import {useI18n} from "vue-i18n";
+
+const { t } = useI18n()
 
 const props = defineProps({
   modelValue: {
     type: Object as PropType<FileForm>,
     required: true
   },
-  text: {
-    type: String,
-    default: () => "Select File"
-  },
+  text: String,
   promptText: String,
   accept: {
     type: String,
@@ -57,7 +57,7 @@ const fileInputChange = (event: Event) => {
   if (ele.files && ele.files.length > 0) {
     let file = ele.files[0]
     if (file.size >= props.maxSize) {
-      _tipError("Selected file is too large!")
+      _tipError(t('component.fileSelector.sizeTip'))
       return
     }
     modelValueMirror.value.file = file
@@ -71,7 +71,7 @@ const fileInputChange = (event: Event) => {
     }
     reader.onerror = function () {
       modelValueMirror.value.file = undefined
-      _tipError(`Read file error: ${reader.error?.message}`)
+      _tipError(`${t('component.fileSelector.readFileError')}: ${reader.error?.message}`)
       fileReadStatus.value = 'error'
     }
   } else {
@@ -96,12 +96,12 @@ const showFileContent = () => {
         density="comfortable"
         prepend-icon="mdi-file-document-outline"
         @click="clickFileInput"
-    >{{ text }}
+    >{{ text || t("common.selectFile") }}
     </v-btn>
     <p v-if="promptText" class="v-messages mt-2">{{ promptText }}</p>
     <div class="file-detail mt-2">
       <div class="d-flex" v-if="fileReadStatus != 'none'">
-        <span class="label text-cyan">File:</span>
+        <span class="label text-cyan">{{ t('common.file') }}:</span>
         <span class="file-name mr-2" v-if="modelValue.file">{{ modelValue.file.name }}</span>
 
         <v-progress-circular
@@ -110,7 +110,7 @@ const showFileContent = () => {
             size="16"
             width="2"
             indeterminate
-        ></v-progress-circular>
+        />
         <v-btn v-else-if="fileReadStatus == 'success'"
                class="text-none"
                density="comfortable"
@@ -119,19 +119,19 @@ const showFileContent = () => {
                color="green"
                variant="text"
                @click="showFileContent"
-        >view</v-btn>
+        >{{ t('common.view') }}</v-btn>
         <span v-else-if="fileReadStatus == 'error'"
               class="text-red"
-        >Read Error</span>
+        >{{ t('common.readError') }}</span>
       </div>
 
       <div v-if="modelValue.file">
-        <span class="label text-cyan">Size:</span>
+        <span class="label text-cyan">{{ t('common.size') }}:</span>
         <span>{{ _byteTextFormat(modelValue.file.size) }}</span>
       </div>
 
       <div v-if="modelValue.file">
-        <span class="label text-cyan">Last Modify:</span>
+        <span class="label text-cyan">{{ t('common.lastModified') }}:</span>
         <span>{{ _timeFormat(modelValue.file.lastModified) }}</span>
       </div>
     </div>

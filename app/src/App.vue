@@ -276,185 +276,187 @@ const disableWebviewNativeEvents = () => {
 
 <template>
   <v-app id="vuetify-app">
-    <v-layout>
-      <WindowsSystemBar v-if="_isWindows()"
-                        :height="28"
-                        :window-label="windowLabel"
-                        :update-info="updateInfo"
-      />
-      <MacSystemBar v-if="_isMac()"
-                    :height="28"
-                    :window-label="windowLabel"
-                    :update-info="updateInfo"
-      />
-      <LinuxSystemBar v-if="_isLinux()"
-                      :window-label="windowLabel"
+    <v-locale-provider locale="zh-CN">
+      <v-layout>
+        <WindowsSystemBar v-if="_isWindows()"
+                          :height="28"
+                          :window-label="windowLabel"
+                          :update-info="updateInfo"
+        />
+        <MacSystemBar v-if="_isMac()"
                       :height="28"
+                      :window-label="windowLabel"
                       :update-info="updateInfo"
-      />
+        />
+        <LinuxSystemBar v-if="_isLinux()"
+                        :window-label="windowLabel"
+                        :height="28"
+                        :update-info="updateInfo"
+        />
 
-      <v-main class="fill-height position-relative" id="mainBody">
-        <AppSetting v-if="windowLabel === 'setting'" class="app-setting"></AppSetting>
-        <AppMain v-else-if="windowLabel === 'main'"></AppMain>
-      </v-main>
-    </v-layout>
+        <v-main class="fill-height position-relative" id="mainBody">
+          <AppSetting v-if="windowLabel === 'setting'" class="app-setting"></AppSetting>
+          <AppMain v-else-if="windowLabel === 'main'"></AppMain>
+        </v-main>
+      </v-layout>
 
-    <!--    更新组件       -->
-    <div class="updater" v-if="updaterDialogShow" data-tauri-drag-region>
-      <v-list
-          class="py-2"
-          color="primary"
-          elevation="12"
-          rounded="lg"
-          width="450px"
-      >
-        <v-list-item>
-          <template v-slot:prepend>
-            <v-icon v-if="updateInfo.state == 'pending'"
-            >mdi-arrow-down-bold
-            </v-icon>
-            <v-icon v-else-if="updateInfo.state == 'downloading'"
-                    class="downloading-icon"
-            >mdi-arrow-down-bold
-            </v-icon>
-            <v-icon v-else-if="updateInfo.state == 'downloaded'"
-                    color="green"
-            >mdi-check-circle-outline
-            </v-icon>
-            <v-icon v-else-if="updateInfo.state == 'error'"
-                    color="red"
-            >mdi-alert-circle
-            </v-icon>
-          </template>
-          <template v-slot:default>
-            <span v-if="updateInfo.state == 'pending'">Preparing the update...</span>
-            <div v-else-if="updateInfo.state == 'downloading'">
-              <v-progress-linear
-                  v-model="downloadingProgress"
-                  color="blue-lighten-1"
-                  class="my-2"
-                  height="20"
-              >
-                <strong>{{ Math.ceil(downloadingProgress) }}%</strong>
-              </v-progress-linear>
-              <v-layout>
-                Downloading...
-                <v-spacer/>
-                <span class="text-medium-emphasis">
+      <!--    更新组件       -->
+      <div class="updater" v-if="updaterDialogShow" data-tauri-drag-region>
+        <v-list
+            class="py-2"
+            color="primary"
+            elevation="12"
+            rounded="lg"
+            width="450px"
+        >
+          <v-list-item>
+            <template v-slot:prepend>
+              <v-icon v-if="updateInfo.state == 'pending'"
+              >mdi-arrow-down-bold
+              </v-icon>
+              <v-icon v-else-if="updateInfo.state == 'downloading'"
+                      class="downloading-icon"
+              >mdi-arrow-down-bold
+              </v-icon>
+              <v-icon v-else-if="updateInfo.state == 'downloaded'"
+                      color="green"
+              >mdi-check-circle-outline
+              </v-icon>
+              <v-icon v-else-if="updateInfo.state == 'error'"
+                      color="red"
+              >mdi-alert-circle
+              </v-icon>
+            </template>
+            <template v-slot:default>
+              <span v-if="updateInfo.state == 'pending'">Preparing the update...</span>
+              <div v-else-if="updateInfo.state == 'downloading'">
+                <v-progress-linear
+                    v-model="downloadingProgress"
+                    color="blue-lighten-1"
+                    class="my-2"
+                    height="20"
+                >
+                  <strong>{{ Math.ceil(downloadingProgress) }}%</strong>
+                </v-progress-linear>
+                <v-layout>
+                  Downloading...
+                  <v-spacer/>
+                  <span class="text-medium-emphasis">
                   {{ _byteTextFormat(updateInfo.chunkLength) }} / {{ _byteTextFormat(updateInfo.contentLength) }}
                 </span>
 
-              </v-layout>
-            </div>
-            <span v-else-if="updateInfo.state == 'downloaded'">
+                </v-layout>
+              </div>
+              <span v-else-if="updateInfo.state == 'downloaded'">
               Download completed. Installing now...
             </span>
-            <v-layout v-else-if="updateInfo.state == 'error'">
-              Failed to update. {{ updateInfo.error }}
-              <v-spacer/>
-              <v-icon @click="updateInfo.state = 'none'">mdi-close</v-icon>
-            </v-layout>
-          </template>
-        </v-list-item>
-      </v-list>
-    </div>
+              <v-layout v-else-if="updateInfo.state == 'error'">
+                Failed to update. {{ updateInfo.error }}
+                <v-spacer/>
+                <v-icon @click="updateInfo.state = 'none'">mdi-close</v-icon>
+              </v-layout>
+            </template>
+          </v-list-item>
+        </v-list>
+      </div>
 
-    <!--    全局公共组件    -->
+      <!--    全局公共组件    -->
 
-    <v-dialog
-        v-model="loading"
-        data-tauri-drag-region
-        max-width="320"
-        persistent
-        style="z-index: 6000;"
-    >
-      <v-list
-          class="py-2"
-          color="primary"
-          elevation="12"
-          rounded="lg"
+      <v-dialog
+          v-model="loading"
+          data-tauri-drag-region
+          max-width="320"
+          persistent
+          style="z-index: 6000;"
       >
-        <v-list-item
-            :title="loadingText"
+        <v-list
+            class="py-2"
+            color="primary"
+            elevation="12"
+            rounded="lg"
         >
-          <template v-slot:prepend>
-            <div class="pe-4">
-              <IconEtcd/>
-            </div>
-          </template>
+          <v-list-item
+              :title="loadingText"
+          >
+            <template v-slot:prepend>
+              <div class="pe-4">
+                <IconEtcd/>
+              </div>
+            </template>
 
-          <template v-slot:append>
-            <v-progress-circular
-                color="primary"
-                indeterminate="disable-shrink"
-                size="16"
-                width="2"
-            ></v-progress-circular>
-          </template>
-        </v-list-item>
-      </v-list>
-    </v-dialog>
+            <template v-slot:append>
+              <v-progress-circular
+                  color="primary"
+                  indeterminate="disable-shrink"
+                  size="16"
+                  width="2"
+              ></v-progress-circular>
+            </template>
+          </v-list-item>
+        </v-list>
+      </v-dialog>
 
-    <v-dialog
-        v-for="(item, key) in dialogs"
-        :key="key"
-        v-model="item.value"
-        :persistent="item.persistent == undefined ? true : item.persistent"
-        :scrollable="item.scrollable == undefined ? true : item.scrollable"
-        width="auto"
-        :style="`z-index: ${item.zIndex ? item.zIndex : 3000};`"
-    >
-      <v-card
-          :max-width="item.maxWidth ? item.maxWidth : 500"
-          :min-width="item.minWidth ? item.minWidth : 400"
-          :title="item.title"
+      <v-dialog
+          v-for="(item, key) in dialogs"
+          :key="key"
+          v-model="item.value"
+          :persistent="item.persistent == undefined ? true : item.persistent"
+          :scrollable="item.scrollable == undefined ? true : item.scrollable"
+          width="auto"
+          :style="`z-index: ${item.zIndex ? item.zIndex : 3000};`"
       >
-        <template v-slot:text>
-          <div v-html="item.content"></div>
-        </template>
+        <v-card
+            :max-width="item.maxWidth ? item.maxWidth : 500"
+            :min-width="item.minWidth ? item.minWidth : 400"
+            :title="item.title"
+        >
+          <template v-slot:text>
+            <div v-html="item.content"></div>
+          </template>
 
-        <template v-slot:prepend>
-          <v-icon :color="item.iconColor" v-if="item.icon">{{ item.icon }}</v-icon>
-        </template>
-        <template v-slot:append v-if="item.closeBtn">
-          <v-icon class="cursor-pointer" @click="item.value = false">mdi-close</v-icon>
-        </template>
-        <template v-slot:actions v-if="item.buttons">
+          <template v-slot:prepend>
+            <v-icon :color="item.iconColor" v-if="item.icon">{{ item.icon }}</v-icon>
+          </template>
+          <template v-slot:append v-if="item.closeBtn">
+            <v-icon class="cursor-pointer" @click="item.value = false">mdi-close</v-icon>
+          </template>
+          <template v-slot:actions v-if="item.buttons">
+            <v-btn
+                v-for="(btn,k ) in item.buttons"
+                :key="k"
+                :class="(btn.class ? btn.class : '') + ' text-none'"
+                :text="btn.text"
+                :variant="btn.variant ? btn.variant : 'text'"
+                :color="btn.color"
+                @click="btn.callback(item, $event)"
+            ></v-btn>
+          </template>
+        </v-card>
+      </v-dialog>
+
+      <v-snackbar
+          v-for="item in tips"
+          :key="item.id"
+          v-model="item.value"
+          location="top"
+          class="mt-12"
+          :content-class="item.class"
+          :timeout="item.timeout"
+          style="z-index: 4000;"
+      >
+        <v-icon v-if="item.icon" class="mr-2">{{ item.icon }}</v-icon>
+        {{ item.content }}
+
+        <template v-slot:actions v-if="item.close">
           <v-btn
-              v-for="(btn,k ) in item.buttons"
-              :key="k"
-              :class="(btn.class ? btn.class : '') + ' text-none'"
-              :text="btn.text"
-              :variant="btn.variant ? btn.variant : 'text'"
-              :color="btn.color"
-              @click="btn.callback(item, $event)"
-          ></v-btn>
+              color="pink"
+              variant="text"
+              icon="mdi-close"
+              @click="item.value = false; item.close()"
+          />
         </template>
-      </v-card>
-    </v-dialog>
-
-    <v-snackbar
-        v-for="item in tips"
-        :key="item.id"
-        v-model="item.value"
-        location="top"
-        class="mt-12"
-        :content-class="item.class"
-        :timeout="item.timeout"
-        style="z-index: 4000;"
-    >
-      <v-icon v-if="item.icon" class="mr-2">{{ item.icon }}</v-icon>
-      {{ item.content }}
-
-      <template v-slot:actions v-if="item.close">
-        <v-btn
-            color="pink"
-            variant="text"
-            icon="mdi-close"
-            @click="item.value = false; item.close()"
-        />
-      </template>
-    </v-snackbar>
+      </v-snackbar>
+    </v-locale-provider>
   </v-app>
 </template>
 

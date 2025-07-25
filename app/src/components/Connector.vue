@@ -16,6 +16,9 @@ import {_emitLocal, _loading, _tipSuccess, _tipWarn, EventName} from "~/common/e
 import {VForm} from "vuetify/components";
 import EtcdLogo from "~/components/EtcdLogo.vue";
 import {trackEvent} from "~/common/analytics.ts";
+import {useI18n} from "vue-i18n";
+
+const { t } = useI18n()
 
 const emits = defineEmits(['on-save'])
 const props = defineProps({
@@ -29,39 +32,27 @@ const logoRef = ref<InstanceType<typeof HTMLDivElement>>()
 const formData = ref<ConnectionForm>(JSON.parse(JSON.stringify(DefaultConnection)))
 const formRules = ref({
   host: [
-    (v?: string) => !!v || 'Host is required'
+    (v?: string) => !!v || t('main.home.connector.form.ruleHost')
   ],
   port: [
-    (v?: string) => !!v || 'Port is required',
+    (v?: string) => !!v || t('main.home.connector.form.rulePort'),
     (v: string) => {
       try {
         let num = parseInt(v)
         if (num <= 0 || num > 65535) {
-          return 'Invalid port'
+          return t('main.home.connector.form.rulePortInvalid')
         }
         return true
       } catch (e) {
-        return 'Invalid port'
+        return t('main.home.connector.form.rulePortInvalid')
       }
-    }
-  ],
-  namespace: [
-    (v?: string) => {
-      if (v && v.length > 0) {
-        if (v.startsWith("/")) {
-          return true
-        } else {
-          return 'Namespace must be start with \'/\''
-        }
-      }
-      return true
     }
   ],
   user: {
     username: [
       (v?: string) => {
         if (formData.value.user.enable) {
-          return !!v || 'Username is required'
+          return !!v || t('main.home.connector.form.ruleUsername')
         }
         return true
       },
@@ -69,7 +60,7 @@ const formRules = ref({
     password: [
       (v?: string) => {
         if (formData.value.user.enable) {
-          return !!v || 'Password is required'
+          return !!v || t('main.home.connector.form.rulePassword')
         }
         return true
       },
@@ -86,7 +77,7 @@ const formRules = ref({
     host: [
       (v?: string) => {
         if (formData.value.ssh.enable) {
-          return !!v || 'SSH host is required'
+          return !!v || t('main.home.connector.form.ruleSshHost')
         }
         return true
       },
@@ -98,7 +89,7 @@ const formRules = ref({
           } else if (v.toLowerCase() === 'localhost') {
             return true
           } else {
-            return 'Invalid SSH host'
+            return t('main.home.connector.form.ruleHostInvalid')
           }
         }
         return true
@@ -107,7 +98,7 @@ const formRules = ref({
     port: [
       (v?: string) => {
         if (formData.value.ssh.enable) {
-          return !!v || 'SSH port is required'
+          return !!v || t('main.home.connector.form.rulePort')
         }
         return true
       },
@@ -116,11 +107,11 @@ const formRules = ref({
           try {
             let num = parseInt(v)
             if (num <= 0 || num > 65535) {
-              return 'Invalid SSH port'
+              return t('main.home.connector.form.rulePortInvalid')
             }
             return true
           } catch (e) {
-            return 'Invalid SSH port'
+            return t('main.home.connector.form.rulePortInvalid')
           }
         }
         return true
@@ -129,7 +120,7 @@ const formRules = ref({
     user: [
       (v?: string) => {
         if (formData.value.ssh.enable) {
-          return !!v || 'SSH user is required'
+          return !!v || t('main.home.connector.form.ruleUser')
         }
         return true
       },
@@ -138,7 +129,7 @@ const formRules = ref({
       password: [
         (v?: string) => {
           if (formData.value.ssh.identity.model == 'password') {
-            return !!v || 'Password is required'
+            return !!v || t('main.home.connector.form.rulePassword')
           }
           return true
         },
@@ -305,13 +296,13 @@ const resetFormValidation = () => {
 
 const testConnect = () => {
   checkForm().then((connection: Connection) => {
-    _loading(true, "Connection testing...")
+    _loading(true, t('main.home.connector.connectionTesting'))
     _connectTest(connection).then(() => {
-      _tipSuccess("Succeeded!")
+      _tipSuccess(t('main.home.connector.testSuccess'))
     }).catch((e: ErrorPayload | string) => {
       _handleError({
         e,
-        prefix: "Failed: "
+        prefix: `${t('common.failed')}: `
       })
     }).finally(() => {
       _loading(false)
@@ -329,7 +320,7 @@ const connect = () => {
     if (_isEmpty(name)) {
       name = fd.host + ":" + fd.port
     }
-    _loading(true, "Connecting")
+    _loading(true, t('main.home.connector.connecting'))
     _connect(name, connection).then((session: SessionData) => {
 
       let keyCollection = session.keyCollection
@@ -354,7 +345,7 @@ const connect = () => {
     }).catch((e: ErrorPayload | string) => {
       _handleError({
         e,
-        prefix: "Failed: "
+        prefix: `${t('common.failed')}: `
       })
     }).finally(() => {
       _loading(false)
@@ -368,7 +359,7 @@ const saveConnection = () => {
   trackEvent('save_connection')
   let name = formData.value.name
   if (_isEmpty(name)) {
-    _tipWarn("Connection name can not be empty")
+    _tipWarn(t('main.home.connector.nameEmptyTip'))
     return
   }
   checkForm().then(connection => {
@@ -402,7 +393,7 @@ defineExpose({
         <div class="header-icon" ref="logoRef">
           <EtcdLogo :width="100" :height="100"></EtcdLogo>
         </div>
-        <h1 class="pt-0 pb-0 pl-5 header-title">Server Connection</h1>
+        <h1 class="pt-0 pb-0 pl-5 header-title">{{ t("main.home.connector.serverConnection") }}</h1>
       </div>
       <v-sheet class="justify-center mx-auto mt-5">
         <v-card width="600" class="connection-card card-box-shadow" border>
@@ -410,34 +401,34 @@ defineExpose({
             <v-form ref="formRef" validate-on="submit lazy">
               <div class="d-flex">
                 <div class="form-label">
-                  Name
+                  {{ t("main.home.connector.form.name") }}
                 </div>
                 <div class="form-input">
                   <v-text-field
                       v-model="formData.name"
                       density="comfortable"
-                      placeholder="Customize the name of the current connection"
+                      :placeholder="t('main.home.connector.form.namePlaceholder')"
                   ></v-text-field>
                 </div>
               </div>
 
               <div class="d-flex">
                 <div class="form-label">
-                  Host
+                  {{ t("main.home.connector.form.host") }}
                 </div>
                 <div class="form-input">
                   <v-text-field
                       v-model="formData.host"
                       :rules="formRules.host"
                       density="comfortable"
-                      placeholder="Etcd server host"
+                      :placeholder="t('main.home.connector.form.hostPlaceholder')"
                   ></v-text-field>
                 </div>
               </div>
 
               <div class="d-flex">
                 <div class="form-label">
-                  Port
+                  {{ t("main.home.connector.form.port") }}
                 </div>
                 <div class="form-input">
                   <v-text-field
@@ -452,50 +443,56 @@ defineExpose({
 
               <div class="d-flex">
                 <div class="form-label">
-                  Namespace
+                  {{ t("main.home.connector.form.namespace") }}
                 </div>
                 <div class="form-input">
                   <v-text-field
                       v-model="formData.namespace"
                       :rules="formRules.namespace"
                       density="comfortable"
-                      placeholder="Default is empty"
+                      :placeholder="t('main.home.connector.form.namespacePlaceholder')"
                   ></v-text-field>
                 </div>
               </div>
 
               <v-row>
                 <v-col class="align-content-center">
-                  <v-checkbox label="Auth" v-model="formData.user.enable"></v-checkbox>
+                  <v-checkbox
+                      :label="t('main.home.connector.form.auth')"
+                      v-model="formData.user.enable"/>
                 </v-col>
                 <v-col>
-                  <v-checkbox label="SSL" v-model="formData.tls.enable"></v-checkbox>
+                  <v-checkbox
+                      :label="t('main.home.connector.form.ssl')"
+                      v-model="formData.tls.enable"/>
                 </v-col>
                 <v-col>
-                  <v-checkbox label="SSH" v-model="formData.ssh.enable"></v-checkbox>
+                  <v-checkbox
+                      :label="t('main.home.connector.form.ssh')"
+                      v-model="formData.ssh.enable"/>
                 </v-col>
               </v-row>
 
               <v-sheet v-show="formData.user.enable">
-                <v-divider>Authentication</v-divider>
+                <v-divider>{{ t("main.home.connector.form.authDivider") }}</v-divider>
 
                 <div class="d-flex mt-5">
                   <div class="form-label">
-                    Username
+                    {{ t("main.home.connector.form.authUsername") }}
                   </div>
                   <div class="form-input">
                     <v-text-field
                         v-model="formData.user.username"
                         :rules="formRules.user.username"
                         density="comfortable"
-                        placeholder="Etcd auth username"
+                        :placeholder="t('main.home.connector.form.authUsernamePlaceholder')"
                     ></v-text-field>
                   </div>
                 </div>
 
                 <div class="d-flex">
                   <div class="form-label">
-                    Password
+                    {{ t("common.password") }}
                   </div>
                   <div class="form-input">
                     <v-text-field
@@ -506,95 +503,101 @@ defineExpose({
                         @click:append-inner="formPasswordShow.show1 = !formPasswordShow.show1"
                         density="comfortable"
                         autocomplete
-                        placeholder="Etcd auth password"
+                        :placeholder="t('main.home.connector.form.authPasswordPlaceholder')"
                     ></v-text-field>
                   </div>
                 </div>
               </v-sheet>
 
               <v-sheet v-show="formData.tls.enable">
-                <v-divider>SSL/TLS</v-divider>
+                <v-divider>{{ t("main.home.connector.form.sslDivider") }}</v-divider>
 
                 <div class="d-flex mt-5">
                   <div class="form-label">
-                    Authority
+                    {{ t("main.home.connector.form.sslAuthority") }}
                   </div>
                   <div class="form-input">
                     <v-text-field
                         v-model="formData.tls.domain"
                         :rules="formRules.tls.domain"
                         density="comfortable"
-                        placeholder="Domain"
+                        :placeholder="t('main.home.connector.form.sslAuthorityPlaceholder')"
                     ></v-text-field>
                   </div>
                 </div>
 
                 <div class="d-flex mt-5">
                   <div class="form-label">
-                    CA File
+                    {{ t("main.home.connector.form.sslCAFile") }}
                   </div>
                   <div class="form-input">
-                    <SingleFileSelector v-model="formData.tls.cert"
-                                        :max-size="128*1024"
-                                        prompt-text="PEM encoded X509 certificate, less than 128KB."
+                    <SingleFileSelector
+                        v-model="formData.tls.cert"
+                        :max-size="128*1024"
+                        :prompt-text="t('main.home.connector.form.sslCAFilePlaceholder')"
                     ></SingleFileSelector>
                   </div>
                 </div>
 
                 <div class="d-flex mt-5">
                   <div class="form-label">
-                    Identity
+                    {{ t('main.home.connector.form.identity') }}
                   </div>
                   <div class="form-input">
-                    <v-checkbox v-model="formData.tls.identity.enable" label="Enable"></v-checkbox>
+                    <v-checkbox
+                        v-model="formData.tls.identity.enable"
+                        :label="t('common.enable')"
+                    />
                   </div>
                 </div>
 
                 <div class="d-flex mt-5" v-if="formData.tls.identity.enable">
                   <div class="form-label">
-                    Cert File
+                    {{ t('main.home.connector.form.certFile') }}
                   </div>
                   <div class="form-input">
-                    <SingleFileSelector v-model="formData.tls.identity.cert"
-                                        :max-size="128*1024"
-                                        prompt-text="PEM encoded certificate, less than 128KB."
+                    <SingleFileSelector
+                        v-model="formData.tls.identity.cert"
+                        :max-size="128*1024"
+                        :prompt-text="t('main.home.connector.form.certFilePlaceholder')"
                     ></SingleFileSelector>
                   </div>
                 </div>
 
                 <div class="d-flex mt-5" v-if="formData.tls.identity.enable">
                   <div class="form-label">
-                    Cert Key File
+                    {{ t('main.home.connector.form.certKetFile') }}
                   </div>
                   <div class="form-input">
-                    <SingleFileSelector v-model="formData.tls.identity.key"
-                                        :max-size="128*1024"
-                                        prompt-text="PEM encoded private key, less than 128KB."
+                    <SingleFileSelector
+                        v-model="formData.tls.identity.key"
+                        :max-size="128*1024"
+                        :prompt-text="t('main.home.connector.form.certKetFilePlaceholder')"
                     ></SingleFileSelector>
                   </div>
                 </div>
               </v-sheet>
 
               <v-sheet v-show="formData.ssh.enable">
-                <v-divider>SSH Tunnel</v-divider>
+                <v-divider>{{ t('main.home.connector.form.sshDivider') }}</v-divider>
 
                 <div class="d-flex mt-5">
                   <div class="form-label">
-                    Host
+                    {{ t('main.home.connector.form.host') }}
                   </div>
                   <div class="form-input">
                     <v-text-field
                         v-model="formData.ssh.host"
                         :rules="formRules.ssh.host"
                         density="comfortable"
-                        placeholder="Host"
+                        :placeholder="t('main.home.connector.form.sshHostPlaceholder')"
                     ></v-text-field>
                   </div>
                 </div>
 
                 <div class="d-flex mt-5">
                   <div class="form-label">
-                    Port
+                    {{ t('main.home.connector.form.port') }}
                   </div>
                   <div class="form-input">
                     <v-text-field
@@ -602,45 +605,45 @@ defineExpose({
                         :rules="formRules.ssh.port"
                         type="number"
                         density="comfortable"
-                        placeholder="Port"
+                        :placeholder="t('main.home.connector.form.sshPortPlaceholder')"
                     ></v-text-field>
                   </div>
                 </div>
 
                 <div class="d-flex mt-5">
                   <div class="form-label">
-                    User
+                    {{ t('common.user') }}
                   </div>
                   <div class="form-input">
                     <v-text-field
                         v-model="formData.ssh.user"
                         :rules="formRules.ssh.user"
                         density="comfortable"
-                        placeholder="User"
+                        :placeholder="t('main.home.connector.form.sshUserPlaceholder')"
                     ></v-text-field>
                   </div>
                 </div>
 
                 <div class="d-flex mt-5">
                   <div class="form-label">
-                    Identity
+                    {{ t('main.home.connector.form.identity') }}
                   </div>
                   <div class="form-input">
                     <v-radio-group v-model="formData.ssh.identity.model"
                                    inline
                     >
                       <v-radio
-                          label="None"
+                          :label="t('common.none')"
                           value="none"
                       ></v-radio>
                       <v-radio
                           class="ml-2"
-                          label="Password"
+                          :label="t('common.password')"
                           value="password"
                       ></v-radio>
                       <v-radio
                           class="ml-2"
-                          label="Private Key"
+                          :label="t('common.privateKey')"
                           value="key"
                       ></v-radio>
                     </v-radio-group>
@@ -654,12 +657,13 @@ defineExpose({
                         @click:append-inner="formPasswordShow.show2 = !formPasswordShow.show2"
                         density="comfortable"
                         autocomplete
-                        placeholder="Password"
+                        :placeholder="t('main.home.connector.form.sshPasswordPlaceholder')"
                     ></v-text-field>
                     <div v-else-if="formData.ssh.identity.model == 'key'">
-                      <SingleFileSelector v-model="formData.ssh.identity.key.key"
-                                          :max-size="128*1024"
-                                          prompt-text="Supported private key formats: Openssh, RSA, PKCS8, PKCS8 Encrypted. Less than 128KB."
+                      <SingleFileSelector
+                          v-model="formData.ssh.identity.key.key"
+                          :max-size="128*1024"
+                          :prompt-text="t('main.home.connector.form.sshKeyPlaceholder')"
                       ></SingleFileSelector>
 
                       <div  class="mt-10 mb-3">
@@ -669,19 +673,19 @@ defineExpose({
                         >
                           <v-radio
                               class="ml-0"
-                              label="Sha256"
+                              :label="t('common.sha256')"
                               value="sha256"
-                          ></v-radio>
+                          />
                           <v-radio
                               class="ml-2"
-                              label="Sha512"
+                              :label="t('common.sha512')"
                               value="sha512"
-                          ></v-radio>
+                          />
                           <v-radio
                               class="ml-2"
-                              label="Other"
+                              :label="t('common.other')"
                               value=""
-                          ></v-radio>
+                          />
                         </v-radio-group>
                       </div>
 
@@ -692,7 +696,7 @@ defineExpose({
                           @click:append-inner="formPasswordShow.show3 = !formPasswordShow.show3"
                           density="comfortable"
                           autocomplete
-                          placeholder="Passphrase (optional)"
+                          :placeholder="t('main.home.connector.form.sshKeyPasswordPlaceholder')"
                       ></v-text-field>
                     </div>
                   </div>
@@ -701,23 +705,23 @@ defineExpose({
             </v-form>
 
             <div class="text-center pt-7 pb-7">
-              <v-btn class="mt-2 pa-0 text-capitalize"
+              <v-btn class="mt-2 pa-0 text-capitalize text-none"
                      variant="text"
                      :ripple="false"
                      color="primary"
                      @click="testConnect"
-              >Test Connect
-              </v-btn>
-              <v-btn class="mt-2 ml-4 text-capitalize"
+                     :text="t('main.home.connector.form.testConnect')"
+              />
+              <v-btn class="mt-2 ml-4 text-capitalize text-none"
                      variant="outlined"
                      @click="saveConnection"
-              >Save to Favorites
-              </v-btn>
-              <v-btn class="mt-2 ml-4 text-capitalize"
+                     :text="t('main.home.connector.form.save')"
+              />
+              <v-btn class="mt-2 ml-4 text-capitalize text-none"
                      color="blue-darken-1"
                      @click="connect"
-              >Connect
-              </v-btn>
+                     :text="t('common.connect')"
+              />
             </div>
 
           </v-card-text>
