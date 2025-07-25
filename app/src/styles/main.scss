@@ -183,3 +183,21 @@ button {
   height: 100%;
   align-self: start;
 }
+
+.inline-label {
+  display: inline-block;
+  user-select: none;
+  width: 180px;
+}
+
+.input-label {
+  line-height: 48px;
+}
+
+.checkbox-label, .select-label {
+  line-height: 56px;
+}
+
+.radio-label {
+  line-height: 40px;
+}

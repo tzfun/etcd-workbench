@@ -109,7 +109,7 @@ const getRoleInfo = (role: any) => {
 }
 
 const revokeRolePermission = (role: string, perm: RolePermission, permIdx: number) => {
-  _confirmSystem(`Confirm to revoke this permission from role ${role}?`).then(() => {
+  _confirmSystem(`Confirm to revoke this permission from role: ${role}?`).then(() => {
     loadingStore.revokeRolePerm = true
     _revokeRolePermissions(props.session?.id, role, perm).then(() => {
       if (currentRoleInfo.value) {
@@ -369,7 +369,7 @@ const grantPerm = () => {
                  @click="newRoleDialog.show = false"
           ></v-btn>
 
-          <v-btn text="Confirm"
+          <v-btn text="Commit"
                  variant="flat"
                  class="text-none"
                  color="primary"
@@ -390,7 +390,7 @@ const grantPerm = () => {
       <v-card title="Grant Permission">
         <v-card-text>
           <v-layout class="mt-5">
-            <div class="grant-form-label">Role:</div>
+            <div class="inline-label input-label">Role:</div>
             <v-text-field v-model="grantPermDialog.role"
                           density="comfortable"
                           prepend-inner-icon="mdi-account"
@@ -401,7 +401,7 @@ const grantPerm = () => {
           </v-layout>
 
           <v-layout class="mt-5">
-            <div class="grant-form-label">Key Type:</div>
+            <div class="inline-label checkbox-label">Key Type:</div>
             <v-checkbox v-model="grantPermDialog.perm.allKeys"
                         label="All Keys"
                         hide-details
@@ -414,7 +414,7 @@ const grantPerm = () => {
           </v-layout>
 
           <v-layout class="mt-5" v-if="!grantPermDialog.perm.allKeys">
-            <div class="grant-form-label">Key:</div>
+            <div class="inline-label input-label">Key:</div>
             <v-text-field v-model="grantPermDialog.perm.key"
                           density="comfortable"
                           prepend-inner-icon="mdi-file-document"
@@ -427,7 +427,7 @@ const grantPerm = () => {
           </v-layout>
 
           <v-layout class="mt-5">
-            <div class="grant-form-label">Permission:</div>
+            <div class="inline-label select-label">Permission:</div>
             <v-select :items="permissionSelections"
                       v-model="grantPermDialog.perm.permType"
             >
@@ -441,7 +441,7 @@ const grantPerm = () => {
                  @click="grantPermDialog.show = false"
           ></v-btn>
 
-          <v-btn text="Confirm"
+          <v-btn text="Commit"
                  variant="flat"
                  class="text-none"
                  color="primary"
@@ -455,9 +455,7 @@ const grantPerm = () => {
 </template>
 
 <style scoped lang="scss">
-.grant-form-label {
-  display: inline-block;
+.inline-label {
   width: 120px;
-  line-height: 48px;
 }
 </style>

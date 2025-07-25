@@ -355,7 +355,7 @@ const searchNext = (value: string | null, includeFile: boolean): Promise<string[
               text="The monitor is bound to the connection, and it will stop running when the connection session is closed."
           ></v-alert>
           <v-layout class="mb-5 mt-5 overflow-visible">
-            <span class="grant-form-label">Key: </span>
+            <span class="inline-label input-label">Key: </span>
             <CompleteInput
                 :search-func="searchNextNode"
                 v-model="keyMonitorDialog.monitor.key"
@@ -371,7 +371,7 @@ const searchNext = (value: string | null, includeFile: boolean): Promise<string[
           </v-layout>
 
           <v-layout class="mb-5" style="z-index: unset">
-            <span class="grant-form-label">Type: </span>
+            <span class="inline-label radio-label" style="line-height: 40px;">Type: </span>
             <v-radio-group v-model="keyMonitorDialog.monitor.isPrefix" inline hide-details>
               <v-radio label="Key Only" :value="false"></v-radio>
               <v-radio label="With Prefix" :value="true"></v-radio>
@@ -379,7 +379,7 @@ const searchNext = (value: string | null, includeFile: boolean): Promise<string[
           </v-layout>
 
           <v-layout class="mb-5" style="z-index: unset">
-            <span class="grant-form-label">Target: </span>
+            <span class="inline-label checkbox-label" style="line-height: 56px;">Target: </span>
 
             <v-checkbox
                 v-model="keyMonitorDialog.monitor.monitorValueChange"
@@ -422,10 +422,7 @@ const searchNext = (value: string | null, includeFile: boolean): Promise<string[
 </template>
 
 <style scoped lang="scss">
-.grant-form-label {
-  display: inline-block;
+.inline-label {
   width: 90px;
-  line-height: 48px;
-  user-select: none;
 }
 </style>

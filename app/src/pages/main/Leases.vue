@@ -278,7 +278,7 @@ const grantLease = () => {
       <v-card title="New Lease">
         <v-card-text>
           <v-layout class="mb-5">
-            <span class="grant-form-label">TTL(s): </span>
+            <span class="inline-label input-label">TTL(s): </span>
             <v-text-field v-model="grantNewDialog.ttl"
                           type="number"
                           density="comfortable"
@@ -289,7 +289,7 @@ const grantLease = () => {
             ></v-text-field>
           </v-layout>
           <v-layout class="mb-5">
-            <span class="grant-form-label">Custom ID: </span>
+            <span class="inline-label input-label">Custom ID: </span>
             <v-text-field v-model="grantNewDialog.lease"
                           type="number"
                           density="comfortable"
@@ -308,7 +308,7 @@ const grantLease = () => {
                  @click="grantNewDialog.show = false"
           ></v-btn>
 
-          <v-btn text="Confirm"
+          <v-btn text="Commit"
                  variant="flat"
                  class="text-none"
                  color="primary"
@@ -322,10 +322,7 @@ const grantLease = () => {
 </template>
 
 <style scoped lang="scss">
-.grant-form-label {
-  display: inline-block;
-  width: 180px;
-  line-height: 48px;
-  user-select: none;
+.inline-label {
+  width: 120px;
 }
 </style>

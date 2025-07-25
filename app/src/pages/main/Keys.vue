@@ -56,10 +56,11 @@ import DragItem from "~/components/drag-area/DragItem.vue";
 import Editor from "~/components/editor/Editor.vue";
 import {getLanguage} from "~/components/editor/languages.ts";
 import {getTheme} from "~/components/editor/themes.ts";
-import Tree, {ContextmenuKeyword, TreeNode} from "~/components/tree/Tree.vue";
+import Tree, {ContextmenuKeyword} from "~/components/tree/Tree.vue";
 import {Handler} from "mitt";
 import CompleteInput from "~/components/CompleteInput.vue";
 import {appWindow} from "@tauri-apps/api/window";
+import {_deepSearchTreeNodes, TreeNode} from "~/components/tree/types.ts";
 
 const theme = useTheme()
 const settings = _useSettings()
@@ -510,8 +511,7 @@ const addDataListToTree = (data: KeyValue[], ignoreIfExist?: boolean) => {
   }
 }
 
-const deleteKeyBatch = () => {
-  const nodes: TreeNode[] = kvTree.value!.getSelectedItems()
+const deleteKeyBatch = (nodes: TreeNode[]) => {
   if (nodes.length == 0) {
     _tipInfo('Please select at least one key')
     return
@@ -1130,7 +1130,9 @@ const onClickContextmenu = (keyword: ContextmenuKeyword, node: TreeNode) => {
       else if (keyword == 'addKey') {
         showNewKeyDialog(key)
       } else if (keyword == 'delete') {
-        console.log(node)
+        const nodes:TreeNode[] = [node]
+        _deepSearchTreeNodes(node, nodes)
+        deleteKeyBatch(nodes)
       }
     } else {
       //  修改key名字
@@ -1224,7 +1226,7 @@ const renameDirLogScrollToBottom = () => {
       <v-btn class="text-none ml-2"
              prepend-icon="mdi-file-document-minus-outline"
              color="red"
-             @click="deleteKeyBatch"
+             @click="deleteKeyBatch(kvTree!.getSelectedItems())"
              :loading="loadingStore.deleteBatch"
              text="Delete Keys"
       />
@@ -1572,7 +1574,7 @@ const renameDirLogScrollToBottom = () => {
       <v-card :title="newKeyDialog.title">
         <v-card-text>
           <v-layout class="mb-5" v-show="newKeyDialog.copyAndSave">
-            <span class="custom-form-label">From: </span>
+            <span class="inline-label input-label">From: </span>
             <v-text-field
                 v-model="newKeyDialog.fromKey"
                 density="comfortable"
@@ -1583,12 +1585,12 @@ const renameDirLogScrollToBottom = () => {
             />
           </v-layout>
           <v-layout class="mb-5" v-show="newKeyDialog.copyAndSave">
-            <span class="custom-form-label"></span>
+            <span class="inline-label checkbox-label"></span>
             <v-checkbox label="Delete From key" v-model="newKeyDialog.deleteFromKey" hide-details></v-checkbox>
           </v-layout>
           <v-layout class="mb-5 overflow-visible">
-            <span class="custom-form-label" v-if="newKeyDialog.copyAndSave">To: </span>
-            <span class="custom-form-label" v-else>Key: </span>
+            <span class="inline-label input-label" v-if="newKeyDialog.copyAndSave">To: </span>
+            <span class="inline-label input-label" v-else>Key: </span>
             <CompleteInput
                 v-model="newKeyDialog.key"
                 :search-func="searchNextDir"
@@ -1601,7 +1603,7 @@ const renameDirLogScrollToBottom = () => {
             ></CompleteInput>
           </v-layout>
           <v-layout class="mb-5" style="z-index: unset">
-            <span class="custom-form-label"></span>
+            <span class="inline-label radio-label"></span>
             <v-radio-group v-model="newKeyDialog.model" inline hide-details>
               <v-radio label="Never Expire" value="none"></v-radio>
               <v-radio label="With TTL" value="ttl"></v-radio>
@@ -1609,7 +1611,7 @@ const renameDirLogScrollToBottom = () => {
             </v-radio-group>
           </v-layout>
           <v-layout class="mb-5" style="z-index: unset" v-if="newKeyDialog.model == 'ttl'">
-            <span class="custom-form-label">TTL(s): </span>
+            <span class="inline-label input-label">TTL(s): </span>
             <v-text-field
                 v-model="newKeyDialog.ttl"
                 type="number"
@@ -1620,7 +1622,7 @@ const renameDirLogScrollToBottom = () => {
             />
           </v-layout>
           <v-layout class="mb-5" style="z-index: unset" v-if="newKeyDialog.model == 'lease'">
-            <span class="custom-form-label">Lease: </span>
+            <span class="inline-label input-label">Lease: </span>
             <v-text-field
                 v-model="newKeyDialog.lease"
                 type="number"
@@ -1804,7 +1806,7 @@ const renameDirLogScrollToBottom = () => {
       <v-card title="Rename Path">
         <v-card-text class="rename-form">
           <v-layout class="mb-5">
-            <span class="custom-form-label">Path: </span>
+            <span class="inline-label input-label">Path: </span>
             <v-text-field
                 v-model="renameDirDialog.newPrefix"
                 :prefix="session.namespace"
@@ -1814,7 +1816,7 @@ const renameDirLogScrollToBottom = () => {
             />
           </v-layout>
           <v-layout class="mb-5">
-            <span class="custom-form-label"></span>
+            <span class="inline-label checkbox-label"></span>
             <v-checkbox
                 v-model="renameDirDialog.deleteOriginKeys"
                 label="Delete Origin Keys"
@@ -1822,7 +1824,7 @@ const renameDirLogScrollToBottom = () => {
             ></v-checkbox>
           </v-layout>
           <v-layout class="mb-5">
-            <span class="custom-form-label" style="line-height: 40px;">Put Strategy: </span>
+            <span class="inline-label radio-label" style="line-height: 40px;">Put Strategy: </span>
             <v-radio-group v-model="renameDirDialog.putStrategy"
                            inline
                            hide-details
@@ -1934,14 +1936,12 @@ $--load-more-area-height: 32px;
   }
 }
 
-.custom-form-label {
-  display: inline-block;
+.inline-label {
   width: 80px;
-  line-height: 48px;
 }
 
 .rename-form {
-  .custom-form-label {
+  .inline-label {
     width: 120px;
   }
 }

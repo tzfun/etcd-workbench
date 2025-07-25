@@ -425,7 +425,7 @@ const roleSelectionProps = (item: string) => {
       <v-card :title="editUserDialog.title">
         <v-card-text>
           <v-layout class="mb-5">
-            <span class="dialog-form-label">User: </span>
+            <span class="inline-label input-label">User: </span>
             <v-text-field v-model="editUserDialog.user"
                           density="comfortable"
                           prepend-inner-icon="mdi-account"
@@ -436,7 +436,7 @@ const roleSelectionProps = (item: string) => {
             ></v-text-field>
           </v-layout>
           <v-layout class="mb-5">
-            <span class="dialog-form-label">New Password: </span>
+            <span class="inline-label input-label">New Password: </span>
             <v-text-field v-model="editUserDialog.password"
                           type="password"
                           density="comfortable"
@@ -454,7 +454,7 @@ const roleSelectionProps = (item: string) => {
                  @click="editUserDialog.show = false"
           ></v-btn>
 
-          <v-btn text="Confirm"
+          <v-btn text="Commit"
                  variant="flat"
                  class="text-none"
                  color="primary"
@@ -493,7 +493,7 @@ const roleSelectionProps = (item: string) => {
                  @click="grantRoleDialog.show = false"
           ></v-btn>
 
-          <v-btn text="Confirm"
+          <v-btn text="Commit"
                  variant="flat"
                  class="text-none"
                  color="primary"
@@ -531,10 +531,7 @@ const roleSelectionProps = (item: string) => {
   }
 }
 
-.dialog-form-label {
-  display: inline-block;
+.inline-label {
   width: 180px;
-  line-height: 48px;
-  user-select: none;
 }
 </style>

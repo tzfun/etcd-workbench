@@ -22,7 +22,7 @@ const props = defineProps({
   prefix: String,
   hint: String,
   persistentHint: Boolean,
-  hideDetails: [Boolean, String],
+  hideDetails: [Boolean, String] as PropType<boolean | 'auto'>,
   variant: String as PropType<"filled" | "underlined" | "outlined" | "plain" | "solo" | "solo-inverted" | "solo-filled">,
   clearable: Boolean,
   singleLine: Boolean,
@@ -56,6 +56,9 @@ onMounted(() => {
 })
 
 const search = _debounce((value: string) => {
+  if (props.readonly) {
+    return
+  }
   searchLoading.value = true;
   props.searchFunc(value).then((data) => {
     suggestions.value = data;

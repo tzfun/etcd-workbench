@@ -479,7 +479,7 @@ const loadMetrics = ():Promise<Array<string[]>> => {
                  @click="compactDialog.show = false"
           ></v-btn>
 
-          <v-btn text="Confirm"
+          <v-btn text="Commit"
                  variant="flat"
                  class="text-none"
                  color="primary"
