@@ -366,7 +366,7 @@ const disableWebviewNativeEvents = () => {
         data-tauri-drag-region
         max-width="320"
         persistent
-        style="z-index: 2000;"
+        style="z-index: 6000;"
     >
       <v-list
           class="py-2"
@@ -402,7 +402,7 @@ const disableWebviewNativeEvents = () => {
         :persistent="item.persistent == undefined ? true : item.persistent"
         :scrollable="item.scrollable == undefined ? true : item.scrollable"
         width="auto"
-        :style="`z-index: ${item.zIndex ? item.zIndex : 2000};`"
+        :style="`z-index: ${item.zIndex ? item.zIndex : 3000};`"
     >
       <v-card
           :max-width="item.maxWidth ? item.maxWidth : 500"
@@ -441,7 +441,7 @@ const disableWebviewNativeEvents = () => {
         class="mt-12"
         :content-class="item.class"
         :timeout="item.timeout"
-        style="z-index: 3000;"
+        style="z-index: 4000;"
     >
       <v-icon v-if="item.icon" class="mr-2">{{ item.icon }}</v-icon>
       {{ item.content }}

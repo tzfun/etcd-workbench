@@ -197,7 +197,6 @@ const putMergeDialog = reactive({
 
 const renameDirDialog = reactive({
   show: false,
-  fixedPrefix: "",
   originPrefix: "",
   newPrefix: "",
   deleteOriginKeys: true,
@@ -415,7 +414,7 @@ const showCopyAndSaveDialog = (title: string, fromKey: string, fromValue: string
   newKeyDialog.deleteFromKey = deleteFromKey
   newKeyDialog.show = true
 
-  newKeyEditorConfig.language = editorConfig.language
+  newKeyEditorConfig.language = _tryParseEditorLanguage(fromKey, fromValue, undefined, props.session?.namespace)
 }
 
 const putKey = () => {
@@ -1120,22 +1119,8 @@ const onClickContextmenu = (keyword: ContextmenuKeyword, node: TreeNode) => {
     if (node.isParent) {
       //  修改目录名字
       if (keyword == 'rename') {
-        let parent = ""
-        if(node.getParentNode) {
-          const parentNode = node.getParentNode()
-          if(parentNode) {
-            parent = parentNode.id
-          }
-        }
-        let editPrefix
-        if (parent.length > 0) {
-          editPrefix = key.substring(parent.length)
-        } else {
-          editPrefix = node.id
-        }
-        renameDirDialog.fixedPrefix = parent
-        renameDirDialog.originPrefix = editPrefix
-        renameDirDialog.newPrefix = editPrefix
+        renameDirDialog.originPrefix = key
+        renameDirDialog.newPrefix = key
         renameDirDialog.deleteOriginKeys = true
         renameDirDialog.putStrategy = 'Cover'
         renameDirDialog.state = 'none'
@@ -1144,13 +1129,20 @@ const onClickContextmenu = (keyword: ContextmenuKeyword, node: TreeNode) => {
       }
       else if (keyword == 'addKey') {
         showNewKeyDialog(key)
+      } else if (keyword == 'delete') {
+        console.log(node)
       }
     } else {
       //  修改key名字
-      if (keyword == 'rename') {
+      if (keyword == 'rename' || keyword == 'copyAndSave') {
         _loading(true)
         _getKV(props.session?.id, key).then((kv) => {
-          showCopyAndSaveDialog('Rename', key, _decodeBytesToString(kv.value), true)
+          showCopyAndSaveDialog(
+              keyword == 'rename' ? 'Rename' : 'Copy and Save',
+              key,
+              _decodeBytesToString(kv.value),
+              keyword == 'rename'
+          )
         }).catch(e => {
           if (e.errType && e.errType == 'ResourceNotExist') {
             removeKeysFromTree([key])
@@ -1183,16 +1175,21 @@ const renameDir = () => {
   loadingStore.renameDir = true
   _kvRenameDir(
       props.session?.id,
-      renameDirDialog.fixedPrefix + renameDirDialog.originPrefix,
-      renameDirDialog.fixedPrefix + renameDirDialog.newPrefix,
+      renameDirDialog.originPrefix,
+      renameDirDialog.newPrefix,
       renameDirDialog.deleteOriginKeys,
       renameDirDialog.putStrategy
   ).then(() => {
   }).catch(e => {
-    _handleError({
-      e,
-      session: props.session
-    })
+    if (e.errType && e.errType == 'LimitedError') {
+      const count = (e as ErrorPayload).data!.count
+      _alertError(`Rename failed: prefix key count (${count}) exceeds limit. Adjust in Settings.`)
+    } else {
+      _handleError({
+        e,
+        session: props.session
+      })
+    }
     loadingStore.renameDir = false
   })
 }
@@ -1396,10 +1393,10 @@ const renameDirLogScrollToBottom = () => {
               />
               <v-btn color="light-green-darken-1"
                      size="small"
-                     text="Copy And Save"
+                     text="Copy and Save"
                      class="mr-2 text-none"
                      prepend-icon="mdi-content-copy"
-                     @click="showCopyAndSaveDialog('Copy And Save', currentKv.key, _decodeBytesToString(currentKv.value), false)"
+                     @click="showCopyAndSaveDialog('Copy and Save', currentKv.key, _decodeBytesToString(currentKv.value), false)"
               />
               <v-btn color="deep-orange-darken-1"
                      size="small"
@@ -1810,7 +1807,7 @@ const renameDirLogScrollToBottom = () => {
             <span class="custom-form-label">Path: </span>
             <v-text-field
                 v-model="renameDirDialog.newPrefix"
-                :prefix="(session.namespace || '') + renameDirDialog.fixedPrefix"
+                :prefix="session.namespace"
                 density="comfortable"
                 prepend-inner-icon="mdi-file-document"
                 hide-details

@@ -51,6 +51,7 @@ export type ContextmenuKeyword =
     | 'removeFromCollection'
     | 'versionDiff'
     | 'addKey'
+    | 'copyAndSave'
 
 export type ContextmenuItem = {
   title: string,
@@ -207,6 +208,12 @@ const onRightClick = (e: MouseEvent, treeId: string, treeNode: TreeNode) => {
         })
       } else {
         pushItem({
+          title: 'Copy and Save',
+          keyword: 'copyAndSave',
+          icon: 'mdi-content-copy',
+          iconColor: 'light-green-darken-1'
+        })
+        pushItem({
           title: 'Version Diff',
           keyword: 'versionDiff',
           icon: 'mdi-vector-difference',
@@ -253,17 +260,17 @@ const onRightClick = (e: MouseEvent, treeId: string, treeNode: TreeNode) => {
             iconColor: '#ced10a',
           })
         }
-
-        pushExtend({
-          type: 'divider'
-        })
-        pushItem({
-          title: 'Delete',
-          keyword: 'delete',
-          icon: 'mdi-trash-can-outline',
-          baseColor: 'red'
-        })
       }
+
+      pushExtend({
+        type: 'divider'
+      })
+      pushItem({
+        title: 'Delete',
+        keyword: 'delete',
+        icon: 'mdi-trash-can-outline',
+        baseColor: 'red'
+      })
 
       let left = e.clientX
       let top = e.clientY

@@ -23,6 +23,9 @@ export interface SettingConfig {
     kvTreeSearchWithFolder: boolean,
     //  KV搜索下一级目录时所需查询的Keys数量限制
     kvSearchNextDirLimit: number,
+    //  KV重命名目录时所需重命名的Keys数量限制
+    //  该限制用于避免重命名目录时操作过多Keys导致性能问题
+    kvDirRenameKeysLimit: number,
 
     //  自动下载更新
     autoUpdate: boolean,
@@ -58,6 +61,7 @@ export const DEFAULT_SETTING_CONFIG: SettingConfig = {
     kvCheckFormatBeforeSave: true,
     kvTreeSearchWithFolder: true,
     kvSearchNextDirLimit: 100,
+    kvDirRenameKeysLimit: 100,
     closeTabUseCtrlW: true,
     autoUpdate: true,
     updateSource: 'github',

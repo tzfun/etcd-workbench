@@ -78,7 +78,8 @@ export interface SessionData {
 
 export interface ErrorPayload {
     errType: string,
-    errMsg: string
+    errMsg: string,
+    data?: Record<string, unknown>,
 }
 
 export interface KeyMonitorConfig {

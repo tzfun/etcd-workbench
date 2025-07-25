@@ -136,6 +136,9 @@ onMounted(async () => {
     if (typeof setting.kvSearchNextDirLimit === 'string') {
       setting.kvSearchNextDirLimit = parseInt(setting.kvSearchNextDirLimit)
     }
+    if (typeof setting.kvDirRenameKeysLimit === 'string') {
+      setting.kvDirRenameKeysLimit = parseInt(setting.kvDirRenameKeysLimit)
+    }
     if (typeof setting.connectTimeoutSeconds === 'string') {
       setting.connectTimeoutSeconds = parseInt(setting.connectTimeoutSeconds)
     }
@@ -439,13 +442,31 @@ const checkUpdate = () => {
 
               <v-layout>
                 <div>
-                  <div class="form-label text-high-emphasis">Keys Search Limit</div>
-                  <div class="v-messages">Limit the number of keys to be queried when automatically completing the search for the next level of directory.</div>
+                  <div class="form-label text-high-emphasis">Max Keys for Search Suggestions</div>
+                  <div class="v-messages">Limits the number of keys searched for input suggestions. Higher values improve accuracy but reduce performance.</div>
                 </div>
                 <v-spacer></v-spacer>
                 <div class="form-input">
                   <v-text-field
                       v-model="settingForm.kvSearchNextDirLimit"
+                      type="number"
+                      variant="outlined"
+                      density="compact"
+                      hide-details
+                  />
+                </div>
+              </v-layout>
+              <v-divider class="mt-5 mb-5"></v-divider>
+
+              <v-layout>
+                <div>
+                  <div class="form-label text-high-emphasis">Path Rename Key Limit</div>
+                  <div class="v-messages">Prevents renaming if the path contains more than this number of keys.</div>
+                </div>
+                <v-spacer></v-spacer>
+                <div class="form-input">
+                  <v-text-field
+                      v-model="settingForm.kvDirRenameKeysLimit"
                       type="number"
                       variant="outlined"
                       density="compact"
