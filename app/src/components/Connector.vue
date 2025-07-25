@@ -667,7 +667,7 @@ defineExpose({
                       ></SingleFileSelector>
 
                       <div  class="mt-10 mb-3">
-                        <p>Hash algorithm for RSA key</p>
+                        <p>{{ t('main.home.connector.form.rsaAlgorithm') }}</p>
                         <v-radio-group v-model="formData.ssh.identity.key.hashAlgorithm"
                                        inline
                         >
@@ -690,6 +690,7 @@ defineExpose({
                       </div>
 
                       <v-text-field
+                          :label="t('common.password')"
                           v-model="formData.ssh.identity.key.passphrase"
                           :type="formPasswordShow.show3 ? 'text' : 'password'"
                           :append-inner-icon="formPasswordShow.show3 ? 'mdi-eye-off' : 'mdi-eye'"

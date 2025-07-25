@@ -55,6 +55,7 @@ export default {
                     sslCAFile: "CA File",
                     sslCAFilePlaceholder: "PEM encoded X509 certificate, less than 128KB.",
                     identity: "Identity",
+                    rsaAlgorithm: "Hash algorithm for RSA key",
                     certFile: "Cert file",
                     certFilePlaceholder: "PEM encoded certificate, less than 128KB.",
                     certKetFile: "Cert Key File",
