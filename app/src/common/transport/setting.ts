@@ -1,10 +1,13 @@
 import {EditorHighlightLanguage} from "~/common/types.ts";
+import {AppLanguage} from "~/language";
 
 export const MAIN_WINDOW_MIN_HEIGHT = 500;
 export const MAIN_WINDOW_MIN_WIDTH = 900;
 export type UpdateSource = 'github' | 'gitee';
 
 export interface SettingConfig {
+    //  本地化语言
+    language: AppLanguage,
     //  应用主题
     theme: 'dark' | 'light' | 'auto',
     //  编辑器黑色主题
@@ -52,6 +55,7 @@ export interface SettingWindowState {
 }
 
 export const DEFAULT_SETTING_CONFIG: SettingConfig = {
+    language: 'en_US',
     theme: 'auto',
     editorDarkTheme: 'barf',
     editorLightTheme: 'smoothy',

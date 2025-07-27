@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all="camelCase")]
 pub struct SettingConfig {
+    #[serde(default = "default_language")]
+    pub language: String,
     /// 应用主题
     #[serde(default = "default_theme")]
     pub theme: String,
@@ -60,6 +62,10 @@ pub struct SettingConfig {
     /// 连接存储加密密钥，bytes字符长度必须为16位
     #[serde(default = "default_connection_conf_encrypt_key")]
     pub connection_conf_encrypt_key: String,
+}
+
+fn default_language() -> String {
+    String::from("en_US")
 }
 
 fn default_theme() -> String {
@@ -125,6 +131,7 @@ fn default_connection_conf_encrypt_key() -> String {
 impl Default for SettingConfig {
     fn default() -> Self {
         SettingConfig {
+            language: default_language(),
             theme: default_theme(),
             editor_dark_theme: default_editor_dark_theme(),
             editor_light_theme: default_editor_light_theme(),

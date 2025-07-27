@@ -28,6 +28,8 @@ import IconEtcd from "~/components/icon/IconEtcd.vue";
 import {Handler} from "mitt";
 import {_byteTextFormat} from "~/common/utils.ts";
 import {relaunch} from "@tauri-apps/api/process";
+import {useI18n} from "vue-i18n";
+import {AppLanguage} from "~/language";
 
 const DEFAULT_LOADING_TEXT: string = "Loading..."
 const loading = ref<boolean>(false)
@@ -38,6 +40,7 @@ const tipsCounter = ref<number>(0)
 const tips = ref<TipsItem[]>([])
 
 const theme = useTheme()
+const {locale} = useI18n()
 
 const eventUnListens = reactive<Function[]>([])
 const updateInfo = reactive<UpdateInfo>({
@@ -84,6 +87,7 @@ onMounted(async () => {
   }, {capture: true})
 
   setAppTheme(settings.theme)
+  setAppLanguage(settings.language)
 
   eventUnListens.push(await appWindow.listen('tauri://theme-changed', (e) => {
     let systemTheme = e.payload as string
@@ -157,6 +161,9 @@ onMounted(async () => {
       }
       if (newVal.theme !== oldVal.theme) {
         setAppTheme(newVal.theme)
+      }
+      if (newVal.language !== oldVal.language) {
+        setAppLanguage(newVal.language)
       }
     })
   }
@@ -241,6 +248,10 @@ const setAppTheme = (appTheme: AppTheme) => {
   } else {
     theme.global.name.value = appTheme
   }
+}
+
+const setAppLanguage = (language: AppLanguage) => {
+  locale.value = language
 }
 
 const disableWebviewNativeEvents = () => {

@@ -17,8 +17,11 @@ import IconPayPal from "~/components/icon/IconPayPal.vue";
 import Skeleton from "~/components/Skeleton.vue";
 import WorkbenchLogo from "~/components/WorkbenchLogo.vue";
 import {_checkUpdate} from "~/common/updater.ts";
+import {AllAppLanguages, AppLanguage} from "~/language";
+import {useI18n} from "vue-i18n";
 
 const theme = useTheme()
+const {locale} = useI18n()
 
 const groups = ['theme', 'connection', 'keys', 'update', 'about']
 const activatedGroup = ref<string>('theme')
@@ -190,12 +193,16 @@ const setAppTheme = (appTheme: AppTheme) => {
   }
 }
 
+const setAppLanguage = (language: AppLanguage) => {
+  locale.value = language
+}
+
 const resetSettingConfig = () => {
   _confirmSystem('Are you sure you want to reset all settings?').then(() => {
     settingForm.value = JSON.parse(JSON.stringify(DEFAULT_SETTING_CONFIG))
 
     setAppTheme(settingForm.value.theme)
-
+    setAppLanguage(settingForm.value.language)
   }).catch(() => {
   })
 }
@@ -317,20 +324,42 @@ const checkUpdate = () => {
                 @click="resetSettingConfig"></v-btn>
             </v-layout>
 
-            <h3 class="group-title mt-5" id="setting-theme">App Theme</h3>
-            <v-sheet class="d-flex mt-2 form-area">
-              <div class="mx-auto my-5 cursor-pointer position-relative" @click="setAppTheme('light')">
-                <Skeleton theme="light" :active="settingForm.theme === 'light'"></Skeleton>
-                <p class="text-center text-medium-emphasis mt-2">Light</p>
-              </div>
-              <div class="mx-auto my-5 cursor-pointer position-relative" @click="setAppTheme('dark')">
-                <Skeleton theme="dark" :active="settingForm.theme === 'dark'"></Skeleton>
-                <p class="text-center text-medium-emphasis mt-2">Dark</p>
-              </div>
-              <div class="mx-auto my-5 cursor-pointer position-relative" @click="setAppTheme('auto')">
-                <Skeleton theme="auto" :active="settingForm.theme === 'auto'"></Skeleton>
-                <p class="text-center text-medium-emphasis mt-2">System</p>
-              </div>
+            <h3 class="group-title mt-5" id="setting-theme">App</h3>
+            <v-sheet class="mt-2 form-area pa-3">
+
+              <div class="text-high-emphasis">Theme</div>
+              <v-layout>
+                <div class="mx-auto my-5 cursor-pointer position-relative" @click="setAppTheme('light')">
+                  <Skeleton theme="light" :active="settingForm.theme === 'light'"></Skeleton>
+                  <p class="text-center text-medium-emphasis mt-2">Light</p>
+                </div>
+                <div class="mx-auto my-5 cursor-pointer position-relative" @click="setAppTheme('dark')">
+                  <Skeleton theme="dark" :active="settingForm.theme === 'dark'"></Skeleton>
+                  <p class="text-center text-medium-emphasis mt-2">Dark</p>
+                </div>
+                <div class="mx-auto my-5 cursor-pointer position-relative" @click="setAppTheme('auto')">
+                  <Skeleton theme="auto" :active="settingForm.theme === 'auto'"></Skeleton>
+                  <p class="text-center text-medium-emphasis mt-2">System</p>
+                </div>
+              </v-layout>
+              <v-divider class="mb-5"></v-divider>
+
+              <v-layout>
+                <div>
+                  <div class="form-label text-high-emphasis">Language</div>
+                </div>
+                <v-spacer></v-spacer>
+                <div style="width: 200px;">
+                  <v-select v-model="settingForm.language"
+                            :items="AllAppLanguages"
+                            variant="outlined"
+                            density="compact"
+                            hide-details
+                            @change="setAppLanguage"
+                  />
+                </div>
+              </v-layout>
+
             </v-sheet>
 
             <h3 class="group-title mt-5" id="setting-connection">Connection</h3>
@@ -343,8 +372,14 @@ const checkUpdate = () => {
                 </div>
                 <v-spacer></v-spacer>
                 <div class="form-input">
-                  <v-text-field v-model="settingForm.connectTimeoutSeconds" variant="outlined" type="number"
-                    density="compact" append-inner-icon="mdi-alpha-s" hide-details></v-text-field>
+                  <v-text-field
+                      v-model="settingForm.connectTimeoutSeconds"
+                      variant="outlined"
+                      type="number"
+                      density="compact"
+                      append-inner-icon="mdi-alpha-s"
+                      hide-details
+                  />
                 </div>
               </v-layout>
 
@@ -357,8 +392,14 @@ const checkUpdate = () => {
                 </div>
                 <v-spacer></v-spacer>
                 <div class="form-input">
-                  <v-text-field v-model="settingForm.requestTimeoutSeconds" variant="outlined" type="number"
-                    density="compact" append-inner-icon="mdi-alpha-s" hide-details></v-text-field>
+                  <v-text-field
+                      v-model="settingForm.requestTimeoutSeconds"
+                      variant="outlined"
+                      type="number"
+                      density="compact"
+                      append-inner-icon="mdi-alpha-s"
+                      hide-details
+                  />
                 </div>
               </v-layout>
 
