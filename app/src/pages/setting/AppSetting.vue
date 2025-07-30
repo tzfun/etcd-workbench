@@ -860,7 +860,7 @@ const checkUpdate = () => {
                     @click="_goBrowserPage('https://tzfun.github.io/etcd-workbench/')"
                     title="Etcd Workbench App"
                 />
-                <p class="description my-3">{{ t('slogan') }}</p>
+                <p class="description my-3"><i>{{ t('slogan') }}</i></p>
                 <p class="copyright">
                   Copyright &copy; 2024 <span class="link cursor-pointer"
                     @click="_goBrowserPage('https://github.com/tzfun')">beifengtz</span>. All
