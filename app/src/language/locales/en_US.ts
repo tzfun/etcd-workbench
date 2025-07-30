@@ -1,4 +1,8 @@
+import {en} from 'vuetify/locale';
+
 export default {
+    $vuetify: en,
+    slogan: "Make managing ETCD easier.",
     common: {
         confirm: "Confirm",
         cancel: "Cancel",
@@ -20,8 +24,10 @@ export default {
         other: "Other",
         connect: "Connect",
         failed: "Failed",
+        or: "or",
+        submit: "Submit",
     },
-    component:{
+    component: {
         fileSelector: {
             sizeTip: "Selected file is too large!",
             readFileError: "An error occurred while reading the file"
@@ -33,7 +39,7 @@ export default {
             favoritesList: "Favorites List",
             connector: {
                 serverConnection: "Server Connection",
-                form:{
+                form: {
                     name: "Name",
                     namePlaceholder: "Customize the name of the current connection",
                     host: "Host",
@@ -86,6 +92,75 @@ export default {
         }
     },
     setting: {
-
+        nav: {
+            app: "App",
+            connection: "Connection",
+            keys: "Keys",
+            update: "Update",
+            donate: "Donate",
+            about: "About",
+        },
+        resetAll: "Reset All",
+        theme: "Theme",
+        lightTheme: "Light",
+        darkTheme: "Dark",
+        systemTheme: "System",
+        language: "Language",
+        connectTimeout: "Connect Timeout",
+        connectTimeoutDesc: "Timeout for connecting to etcd server, in seconds.",
+        requestTimeout: "Request Timeout",
+        requestTimeoutDesc: "Timeout for requesting etcd server, in seconds.",
+        sshConnectTimeout: "SSH Connect Timeout",
+        sshConnectTimeoutDesc: "Timeout for connecting to ssh server, in seconds.",
+        closeTab: "Shortcut to close Tab",
+        closeTabDesc: "Use the {shortcut} shortcut key to close the current connection.",
+        fileEncryptKey: "File Encrypt Key",
+        fileEncryptKeyDesc: "An encryption key with a byte length of 16 used to store connection information locally",
+        exportConf: "Export Connections Configuration",
+        importConf: "Import Connections Configuration",
+        keySplitter: "Key Splitter",
+        keySplitterDesc: "Parse the key path into a tree structure separator.",
+        maxKeysForSearchSuggestions: "Max Keys for Search Suggestions",
+        maxKeysForSearchSuggestionsDesc: "Limits the number of keys searched for input suggestions. Higher values improve accuracy but reduce performance.",
+        pathRenameKeyLimit: "Path Rename Keys Limit",
+        pathRenameKeyLimitDesc: "Prevents renaming if the path contains more than this number of keys.",
+        paginationQuery: "Pagination Query",
+        paginationQueryDesc: "When the number of keys is large, you can enable paging query to optimize the experience.",
+        paginationLimit: "Pagination Limit",
+        paginationLimitDesc: "Number of queries per page when querying all keys in pagination.",
+        searchDirInTree: "Search Directories in Tree",
+        searchDirInTreeDesc: "Enable or disable directory matching during tree searches.",
+        checkFormatBeforeSave: "Check Format Before Saving",
+        checkFormatBeforeSaveDesc: "Before saving the currently edited key each time, check whether the value format is correct.",
+        editorTheme: "Editor Theme",
+        editorThemeDesc: "Set the Key-Value editor personalized theme.",
+        editorLightTheme: "Light Theme",
+        editorDarkTheme: "Dark Theme",
+        curVersion: "Version",
+        checkUpdate: "Check Update",
+        downloadInGithub: "Download In GitHub",
+        autoUpdate: "Automatic Update",
+        autoUpdateDesc: "Automatically update when a new version is available.",
+        updateSource: "Update Source",
+        updateSourceDesc: "During the update check or installation, content will be read from the specified source.",
+        donateDesc: "Open-source is a labor of love, but even passion projects need to recharge sometimes. You can fuel my coding adventures here:🍵",
+        wechatRewards: "Wechat Rewards",
+        supportAuthorCoffee: "Support the author with a coffee",
+        donateViaPayPal: "Donate via PayPal",
+        donateViaWechat: "Donate via WeChat",
+        opensource: "Open Source",
+        license: "License",
+        reportBug: "Report Bug",
+        goToSubmit: "Go to Submit",
+        author: "Author",
+        emailMe: "Email Me",
+        contactOnGithub: "Contact on Github",
+        contactOnWechat: "Contact on WeChat",
+        encryptKeyLengthTip: "The key length must be 16",
+        resetAllConfirm: "Are you sure you want to reset all settings?",
+        exportConnectionTip: "Export file successfully",
+        importConnectionTip: "Import file successfully",
+        checkingUpdate: "Checking updates...",
+        alreadyLatestVersionTip: "Your version is already the latest",
     }
 }

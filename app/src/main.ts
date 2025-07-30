@@ -15,8 +15,8 @@ const setup = () => {
         //  @ts-ignore
         window._localEvent = _useLocalEvents()
         const app = createApp(App)
-        app.use(vuetify)
         app.use(i18n)
+        app.use(vuetify)
 
         app.config.errorHandler = (err: any, instance, info) => {
             console.error(err, info, instance)

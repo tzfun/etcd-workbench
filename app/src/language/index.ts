@@ -18,12 +18,16 @@ export const AllAppLanguages = [
 ]
 
 const i18n = createI18n({
+    //  @ts-nocheck
+    legacy: false,
+    fallbackLocale: 'en_US',
     locale: 'en_US',
     messages: {
         'en_US': enUS,
         'zh_CN': zhCN,
         'zh_HK': zhHK,
-    }
+    },
+    warnHtmlInMessage: 'off'
 })
 
 export default i18n;

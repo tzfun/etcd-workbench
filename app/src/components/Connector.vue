@@ -5,7 +5,8 @@ import SingleFileSelector from "~/components/SingleFileSelector.vue";
 import {
   Connection,
   ConnectionInfo,
-  ErrorPayload, HashAlgorithm,
+  ErrorPayload,
+  HashAlgorithm,
   KeyMonitorConfig,
   SessionData,
   SshIdentity

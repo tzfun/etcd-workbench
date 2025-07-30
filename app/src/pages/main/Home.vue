@@ -2,7 +2,7 @@
 
 import Connector from "~/components/Connector.vue";
 import {_getConnectionList, _handleError, _removeConnection} from "~/common/services.ts";
-import {_alertError, _confirm, EventName} from "~/common/events.ts";
+import {_confirm, EventName} from "~/common/events.ts";
 import {nextTick, onActivated, onMounted, onUnmounted, reactive, ref} from "vue";
 import {ConnectionInfo, DEFAULT_CONNECTION, ErrorPayload} from "~/common/transport/connection.ts";
 import {listen} from "@tauri-apps/api/event";
