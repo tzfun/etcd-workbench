@@ -4,6 +4,7 @@ export default {
     $vuetify: zhHans,
     slogan: "让管理 ETCD 变得更简单",
     common: {
+        confirmTitle: "请确认",
         confirm: "确认",
         cancel: "取消",
         commit: "提交",
@@ -25,7 +26,21 @@ export default {
         connect: "连接",
         failed: "失败",
         or: "或",
-        submit: "Submit",
+        submit: "提交",
+        appUpdate: "应用更新",
+        install: "安装",
+        content: "内容",
+        appTip: "应用提示",
+        copied: "复制成功",
+    },
+    feedback: {
+        copyError: "无法写入剪切板",
+        updateMessage: "新版本 {version} 已发布{releaseDate}，立即安装？",
+        appErrorIssue: "软件发生错误，为了帮助解决问题，是否将错误信息提交给作者？",
+        appExitNotice: "应用将会退出",
+        updateErrorTip: "更新时发生错误",
+        updateRestartConfirm: "更新完成，是否立即重启软件？",
+        updateUnableTip: "无法更新",
     },
     component:{
         fileSelector: {
@@ -162,5 +177,6 @@ export default {
         importConnectionTip: "导入连接配置成功",
         checkingUpdate: "检查更新中...",
         alreadyLatestVersionTip: "你当前是最新版本",
+        clickToView: "点击查看详细内容",
     }
 }

@@ -4,6 +4,7 @@ import {trackEvent} from "~/common/analytics.ts";
 import {appWindow} from "@tauri-apps/api/window";
 import {ask} from "@tauri-apps/api/dialog";
 import { _emitWindow, EventName } from "./events";
+import i18n from "~/language";
 
 const platform = ref<PlatformType>()
 export const isMaximizeState = ref<boolean>(false)
@@ -44,12 +45,12 @@ export function _updateMaximizeState() {
 }
 
 export function _onClientError(info: string, err: string, exitAppFinally: boolean = false) {
-    let message = "An error occurred. To help resolve the issue, do you want to report it to the author?"
+    let message = i18n.global.t('feedback.appErrorIssue')
     if (exitAppFinally) {
-        message += `\n\n(App will exit later)`
+        message += `\n\n(${i18n.global.t('feedback.appExitNotice')})`
     }
     ask(message, {
-        title: "System",
+        title: i18n.global.t('common.appTip'),
         type: "error"
     }).then(sure => {
         if (sure) {

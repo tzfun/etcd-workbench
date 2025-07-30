@@ -893,7 +893,7 @@ const checkUpdate = () => {
                 <div>
                   <p class="text-blue cursor-pointer"
                     @click="_goBrowserPage('https://github.com/tzfun/etcd-workbench/blob/master/LICENSE')"
-                    title="Click to view details">GPL 3.0</p>
+                    :title="t('setting.clickToView')">GPL 3.0</p>
                 </div>
               </v-layout>
 

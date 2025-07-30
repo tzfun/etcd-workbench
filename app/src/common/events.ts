@@ -7,6 +7,7 @@ import {_relativeTimeFormat} from "~/common/utils.ts";
 import {KeyValue} from "./transport/kv";
 import {KeyMonitorConfig} from "~/common/transport/connection.ts";
 import {CustomUpdateManifest} from "~/common/updater.ts";
+import i18n from "~/language";
 
 const localEvents = mitt();
 
@@ -24,7 +25,7 @@ export enum EventName {
     EDIT_KEY_MONITOR = 'editKeyMonitor',
     KEY_MONITOR_CONFIG_CHANGE = 'keyMonitorChange',
     KEY_WATCH_EVENT = 'key_watch_event',
-    KEY_MONITOR_MODIFIED_BY_SERVER  ="key_monitor_modified_by_server",
+    KEY_MONITOR_MODIFIED_BY_SERVER = "key_monitor_modified_by_server",
     SET_SETTING_ANCHOR = 'setSettingAnchor',
     SESSION_DISCONNECTED = 'sessionDisconnected',
     UPDATE_AVAILABLE = 'updateAvailable',
@@ -129,14 +130,14 @@ export function _confirm(title: string, text: string, zIndex?: number): Promise<
             iconColor: 'yellow-darken-4',
             buttons: [
                 {
-                    text: "Cancel",
+                    text: i18n.global.t('common.cancel'),
                     callback: (item: DialogItem) => {
                         item.value = false
                         reject()
                     }
                 },
                 {
-                    text: "Confirm",
+                    text: i18n.global.t('common.confirm'),
                     variant: "elevated",
                     color: 'primary',
                     callback: (item: DialogItem) => {
@@ -153,7 +154,7 @@ export function _confirm(title: string, text: string, zIndex?: number): Promise<
 }
 
 export function _confirmSystem(text: string): Promise<void> {
-    return _confirm('Confirm', text)
+    return _confirm(i18n.global.t('common.confirmTitle'), text)
 }
 
 export function _confirmUpdateApp(text: string): Promise<undefined> {
@@ -161,19 +162,19 @@ export function _confirmUpdateApp(text: string): Promise<undefined> {
         let dialog: DialogItem = {
             value: true,
             content: text,
-            title: "Update",
+            title: i18n.global.t('common.appUpdate'),
             icon: 'mdi-update',
             iconColor: 'green',
             buttons: [
                 {
-                    text: "Cancel",
+                    text: i18n.global.t('common.cancel'),
                     callback: (item: DialogItem) => {
                         item.value = false
                         reject()
                     }
                 },
                 {
-                    text: "Install",
+                    text: i18n.global.t('common.install'),
                     variant: "elevated",
                     color: 'primary',
                     callback: (item: DialogItem) => {
@@ -191,7 +192,7 @@ export function _confirmUpdateApp(text: string): Promise<undefined> {
 export function _dialogContent(content: string) {
     let dialog: DialogItem = {
         value: true,
-        title: 'Content',
+        title: i18n.global.t('common.content'),
         content: content,
         maxWidth: 1200,
         closeBtn: true
@@ -200,21 +201,21 @@ export function _dialogContent(content: string) {
     _emitLocal(EventName.DIALOG, dialog)
 }
 
-export function _alertError(text: string):Promise<void> {
+export function _alertError(text: string): Promise<void> {
     return _alert(text)
 }
 
-export function _alert(text: string, title?: string):Promise<void> {
+export function _alert(text: string, title?: string): Promise<void> {
     return new Promise<void>(resolve => {
         let dialog: DialogItem = {
             value: true,
-            title: title ? title : "System",
+            title: title ? title : i18n.global.t('common.appTip'),
             content: text,
             icon: 'mdi-alert-circle-outline',
             iconColor: "red",
             buttons: [
                 {
-                    text: "Close",
+                    text: i18n.global.t('common.close'),
                     callback: (item: DialogItem) => {
                         item.value = false
                         resolve()
@@ -277,14 +278,10 @@ export function _tipInfo(text: string) {
 
 export function _genNewVersionUpdateMessage(manifest: CustomUpdateManifest): string {
     const version = manifest.version
-    let message =  `New version <span onclick='_goBrowserPage("https://github.com/tzfun/etcd-workbench/releases/tag/App-${version}")' class="simulate-tag-a text-green font-weight-bold" title="Click to view updated content">${version}</span> released`
-
-    if (manifest.date) {
-        const timeDes = _relativeTimeFormat(new Date(manifest.date * 1000))
-        message += ` ${timeDes}`
-    }
-    message += ', install it now?'
-    return message
+    return i18n.global.t('feedback.updateMessage', {
+        version: `<span onclick='_goBrowserPage("https://github.com/tzfun/etcd-workbench/releases/tag/App-${version}")' class="simulate-tag-a text-green font-weight-bold" title="Click to view updated content">${version}</span>`,
+        releaseDate: manifest.date ? ` (${_relativeTimeFormat(new Date(manifest.date * 1000))})` : ''
+    })
 }
 
 export function _copyToClipboard(content: any) {
@@ -292,9 +289,9 @@ export function _copyToClipboard(content: any) {
         content = content.toString()
     }
     writeText(content).then(() => {
-        _tipSuccess("Copied")
+        _tipSuccess(i18n.global.t('common.copied'))
     }).catch(e => {
-        _tipError("Can not write to clipboard")
+        _tipError(i18n.global.t('feedback.copyError'))
         console.error(e)
     })
 }

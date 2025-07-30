@@ -40,7 +40,7 @@ const tipsCounter = ref<number>(0)
 const tips = ref<TipsItem[]>([])
 
 const theme = useTheme()
-const {locale} = useI18n()
+const {t, locale} = useI18n()
 
 const eventUnListens = reactive<Function[]>([])
 const updateInfo = reactive<UpdateInfo>({
@@ -194,7 +194,7 @@ const listenUpdaterEvent = async () => {
         _installUpdate().then(() => {
         }).catch(e => {
           console.error(e)
-          _alertError("Unable to update: " + e)
+          _alertError(`${t('feedback.updateUnableTip')}: ${e}`)
         })
       }).catch(() => {
       })
@@ -220,7 +220,7 @@ const listenUpdaterEvent = async () => {
 
     eventUnListens.push(await appWindow.listen(EventName.UPDATE_INSTALLED, () => {
       updateInfo.state = 'installed'
-      _confirm('Restart', 'Update complete. Restart now to apply?').then(() => {
+      _confirm(t('common.restart'), t('feedback.updateRestartConfirm')).then(() => {
         relaunch().catch(e => {
           console.error("Restart failed", e)
         })
@@ -233,7 +233,7 @@ const listenUpdaterEvent = async () => {
       updateInfo.state = 'error'
       updateInfo.error = e.payload
 
-      _alertError(`An exception occurred during the update: ${e.payload}`)
+      _alertError(`${t('feedback.updateErrorTip')}: ${e.payload}`)
     }))
   }
 }
@@ -259,7 +259,6 @@ const disableWebviewNativeEvents = () => {
     let key = e.key.toLowerCase()
 
     if (e.ctrlKey && e.shiftKey && key == 'i') {
-      console.log("pass b")
       e.preventDefault()
       return false
     }
@@ -270,13 +269,11 @@ const disableWebviewNativeEvents = () => {
     //  ctrl + u
     //  ctrl + j
     if (e.ctrlKey && /^[priuj]$/.test(key)) {
-      console.log("pass a", key)
       e.preventDefault()
       return false
     }
 
     if (key.match(/^f\d+$/)) {
-      console.log("pass c")
       e.preventDefault()
       return false
     }

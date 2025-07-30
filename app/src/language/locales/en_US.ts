@@ -4,6 +4,7 @@ export default {
     $vuetify: en,
     slogan: "Make managing ETCD easier.",
     common: {
+        confirmTitle: "Please confirm",
         confirm: "Confirm",
         cancel: "Cancel",
         commit: "Commit",
@@ -26,6 +27,21 @@ export default {
         failed: "Failed",
         or: "or",
         submit: "Submit",
+        appUpdate: "Update",
+        install: "Install",
+        content: "Content",
+        appTip: "System",
+        copied: "Copied",
+        restart: "Restart",
+    },
+    feedback: {
+        copyError:"Can not write to clipboard",
+        updateMessage: "New version {version} released{releaseDate}, install it now?",
+        appErrorIssue: "An error occurred. To help resolve the issue, do you want to report it to the author?",
+        appExitNotice: "App will exit later",
+        updateErrorTip: "An exception occurred during the update",
+        updateRestartConfirm: "Update complete. Restart now to apply?",
+        updateUnableTip: "Unable to update",
     },
     component: {
         fileSelector: {
@@ -162,5 +178,6 @@ export default {
         importConnectionTip: "Import file successfully",
         checkingUpdate: "Checking updates...",
         alreadyLatestVersionTip: "Your version is already the latest",
+        clickToView:"Click to view details",
     }
 }
