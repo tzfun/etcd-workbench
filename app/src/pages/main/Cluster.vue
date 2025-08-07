@@ -286,7 +286,7 @@ const loadMetrics = ():Promise<Array<string[]>> => {
                   :xs="INFO_COL.xs"
                   class="d-flex info-item"
               >
-                <div class="info-label text-medium-emphasis">{{ t('main.cluster.revision') }}</div>
+                <div class="info-label text-medium-emphasis">{{ t('common.revision') }}</div>
                 <div class="info-value text-high-emphasis">{{ cluster.revision }}</div>
               </v-col>
             </v-row>
@@ -536,7 +536,7 @@ const loadMetrics = ():Promise<Array<string[]>> => {
           {{ t('main.cluster.compactNotice') }}
           <v-layout class="mt-5">
             <v-text-field v-model="compactDialog.revision"
-                          :label="t('main.cluster.revision')"
+                          :label="t('common.revision')"
                           type="number" 
                           density="comfortable"
             />

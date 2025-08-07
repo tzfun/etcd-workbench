@@ -5,7 +5,7 @@ import {EditorState, Extension} from "@codemirror/state";
 import {basicSetup, EditorView} from "codemirror";
 import {CodeDiff} from "v-code-diff";
 import {computed, nextTick, onMounted, onUnmounted, PropType, reactive, ref, watch} from "vue";
-import {useTheme} from "vuetify";
+import {useLocale, useTheme} from "vuetify";
 import {VTextField} from "vuetify/components";
 import {
   _alertError,
@@ -62,6 +62,7 @@ import CompleteInput from "~/components/CompleteInput.vue";
 import {appWindow} from "@tauri-apps/api/window";
 import {_deepSearchTreeNodes, TreeNode} from "~/components/tree/types.ts";
 
+const {t} = useLocale()
 const theme = useTheme()
 const settings = _useSettings()
 
@@ -396,7 +397,7 @@ const showNewKeyDialog = (presetKey?: string) => {
   newKeyDialog.value = ''
   newKeyDialog.fromKey = ''
   newKeyDialog.model = 'none'
-  newKeyDialog.title = 'New Key'
+  newKeyDialog.title = t('main.keys.addKey')
   newKeyDialog.copyAndSave = false
   newKeyDialog.show = true
 
@@ -420,19 +421,19 @@ const showCopyAndSaveDialog = (title: string, fromKey: string, fromValue: string
 
 const putKey = () => {
   if (_isEmpty(newKeyDialog.key)) {
-    _tipWarn("Key can not be empty")
+    _tipWarn(t('main.keys.emptyKeyTip'))
     return
   }
   if (newKeyDialog.model === 'ttl' && _isEmpty(newKeyDialog.ttl)) {
-    _tipWarn("Please input a valid ttl")
+    _tipWarn(t('main.keys.invalidTtlTip'))
     return
   }
   if (newKeyDialog.model === 'lease' && _isEmpty(newKeyDialog.lease)) {
-    _tipWarn("Please input a valid lease id")
+    _tipWarn(t('main.keys.invalidLeaseTip'))
     return
   }
   if (newKeyDialog.copyAndSave && newKeyDialog.key === newKeyDialog.fromKey) {
-    _tipWarn("The key does not change")
+    _tipWarn(t('main.keys.keyNotChangedTip'))
     return;
   }
   let key = newKeyDialog.key
@@ -467,7 +468,7 @@ const putKey = () => {
 
   loadingStore.confirmNewKey = true
   promise.then(() => {
-    _tipSuccess("Succeeded!")
+    _tipSuccess(t('common.successTip'))
     newKeyDialog.show = false
 
     //  重命名：删除源key
@@ -513,7 +514,7 @@ const addDataListToTree = (data: KeyValue[], ignoreIfExist?: boolean) => {
 
 const deleteKeyBatch = (nodes: TreeNode[]) => {
   if (nodes.length == 0) {
-    _tipInfo('Please select at least one key')
+    _tipInfo(t('main.keys.deleteEmptyKeyTip'))
     return
   }
 
@@ -546,19 +547,19 @@ const deleteKeyBatch = (nodes: TreeNode[]) => {
     }
   }
 
-  let message = "Please confirm to permanently delete these keys:<br/><br/><strong>"
+  let message = t('main.keys.deleteConfirm') + "<br/><br/><strong>"
 
   const showCount = 20
   if (keysEncodedUtf8.length >= showCount) {
     message += keysEncodedUtf8.slice(0, showCount).join('<br/>')
-    message += `<br/><br/> ... Omit ${keysEncodedUtf8.length - showCount} keys`
+    message += `<br/><br/> ... ${t('common.omit')} ${keysEncodedUtf8.length - showCount} keys`
   } else {
     message += keysEncodedUtf8.join('<br/>')
   }
 
   message += '</strong>'
   _confirmSystem(message).then(() => {
-    _loading(true, "Deleting keys...")
+    _loading(true, t('main.keys.deletingKeyTip'))
     loadingStore.deleteBatch = true
     _deleteKV(props.session?.id, keys, keyBytes).then(() => {
       if (containsCurrentKV) {
@@ -628,7 +629,7 @@ const addCollectionKey = (key: string, keyEncodedUtf8?: boolean) => {
     return
   }
   if (!keyEncodedUtf8) {
-    _alertError('Unable to add non-utf8 encoded key to collections!')
+    _alertError(t('main.keys.addNonUtf8ToCollectionTip'))
     return;
   }
   let set = props.session!.keyCollectionSet!
@@ -758,7 +759,7 @@ const saveKV = () => {
       editorRef.value.tryFormatContent().then(() => {
         doSave()
       }).catch(() => {
-        _confirm("Warning", "The format checker found incorrect content. Do you want to submit it anyway?").then(() => {
+        _confirm(t('common.warning'), t('main.keys.formatCheckConfirm')).then(() => {
           doSave()
         }).catch(() => {
         })
@@ -808,7 +809,7 @@ const loadVersionDiff = (key: string, info?: KeyExtendInfo) => {
         versionDiffInfo.keyBytes,
     ).then(versions => {
       if (versions.length < 2) {
-        _tipWarn('No multiple versions, required revision has been compacted')
+        _tipWarn(t('main.keys.noMultipleVersionTip'))
         return;
       }
 
@@ -846,7 +847,7 @@ const loadDiff = (info: DiffInfo) => {
   }).catch(e => {
     _handleError({
       e,
-      prefix: `Failed to load revision ${info.version}: `,
+      prefix: t('main.keys.failedToLoadReversion', {version: info.version}),
       session: props.session
     })
     info.content = ''
@@ -861,18 +862,18 @@ const versionSelectItemProps = (version: number) => {
   }
 
   if (version == versionDiffInfo.createRevision) {
-    item.subtitle = 'create'
+    item.subtitle = t('main.keys.versionTagCreate')
     item['append-icon'] = 'mdi-creation-outline'
   }
   if (version == versionDiffInfo.modRevision) {
-    item.subtitle = 'latest'
+    item.subtitle = t('main.keys.versionTagLatest')
     item['append-icon'] = 'mdi-new-box'
   }
   return item
 }
 
 const deleteKey = (key: string, info?: KeyExtendInfo) => {
-  _confirmSystem(`Please confirm to permanently delete key: <strong>${key}</strong>`).then(() => {
+  _confirmSystem(`${t('main.keys.deleteKeyConfirm')} <strong>${key}</strong>`).then(() => {
     loadingStore.delete = true
     const utf8EncodedKeys: string[] = []
     const unUtf8EncodedKeys: number[][] = []
@@ -942,7 +943,7 @@ const editKeyMonitor = (key: string) => {
 
 const addKeyMonitor = (key: string, isPrefix: boolean, keyEncodedUtf8?: boolean) => {
   if (!keyEncodedUtf8) {
-    _alertError('Unable to monitor non-utf8 encoded key!')
+    _alertError(t('main.keys.addNonUtf8ToMonitorTip'))
     return
   }
   _emitLocal(EventName.EDIT_KEY_MONITOR, {
@@ -1084,14 +1085,14 @@ const searchNext = (value: string | null, includeFile: boolean): Promise<string[
 }
 
 const putAnyway = (key: string, value: string, version: number) => {
-  _confirmSystem(`Are you sure you want to put the content of version <strong style="color: #CDDC39;">${version}</strong> to the latest?`).then(() => {
+  _confirmSystem(t('main.keys.putAnywayConfirm',{ version })).then(() => {
     _loading(true)
     _putKV(props.session?.id, key, _encodeStringToBytes(value), -1).then((result) => {
       if (result.success) {
         versionDiffInfo.show = false
         showKV(key)
       } else {
-        _tipError('Put failed')
+        _tipError(t('common.failed'))
       }
     }).catch((e) => {
       _handleError({
@@ -1140,7 +1141,7 @@ const onClickContextmenu = (keyword: ContextmenuKeyword, node: TreeNode) => {
         _loading(true)
         _getKV(props.session?.id, key).then((kv) => {
           showCopyAndSaveDialog(
-              keyword == 'rename' ? 'Rename' : 'Copy and Save',
+              keyword == 'rename' ? t('main.keys.rename') : t('main.keys.copyAndSave'),
               key,
               _decodeBytesToString(kv.value),
               keyword == 'rename'
@@ -1171,7 +1172,7 @@ const onClickContextmenu = (keyword: ContextmenuKeyword, node: TreeNode) => {
 
 const renameDir = () => {
   if(renameDirDialog.originPrefix === renameDirDialog.newPrefix) {
-    _tipWarn("The path name does not change")
+    _tipWarn(t('main.keys.pathNameNotChanged'))
     return
   }
   loadingStore.renameDir = true
@@ -1185,7 +1186,7 @@ const renameDir = () => {
   }).catch(e => {
     if (e.errType && e.errType == 'LimitedError') {
       const count = (e as ErrorPayload).data!.count
-      _alertError(`Rename failed: prefix key count (${count}) exceeds limit. Adjust in Settings.`)
+      _alertError(t('main.keys.renameFailed', { count }))
     } else {
       _handleError({
         e,
@@ -1214,28 +1215,28 @@ const renameDirLogScrollToBottom = () => {
              icon="mdi-refresh"
              @click="refreshAllKeys"
              :loading="loadingStore.loadMore"
-             title="Refresh"
+             :title="t('common.refresh')"
       />
 
       <v-btn class="text-none ml-2"
              prepend-icon="mdi-file-document-plus-outline"
              color="green"
              @click="showNewKeyDialog()"
-             text="Add Key"
+             :text="t('main.keys.addKey')"
       />
       <v-btn class="text-none ml-2"
              prepend-icon="mdi-file-document-minus-outline"
              color="red"
              @click="deleteKeyBatch(kvTree!.getSelectedItems())"
              :loading="loadingStore.deleteBatch"
-             text="Delete Keys"
+             :text="t('main.keys.deleteKeys')"
       />
 
       <v-btn class="text-none ml-2"
              prepend-icon="mdi-star"
              color="yellow"
              @click="collectionDialog = true"
-             text="My Collections"
+             :text="t('main.keys.myCollections')"
       />
 
       <v-btn class="text-none ml-2"
@@ -1243,13 +1244,17 @@ const renameDirLogScrollToBottom = () => {
              prepend-icon="mdi-text-box-search-outline"
              color="blue-lighten-1"
              @click="openSearchDialog"
-             text="Search"
-             title="Search from etcd server"
+             :text="t('main.keys.search')"
+             :title="t('main.keys.searchBtnTitle')"
       />
 
       <v-spacer></v-spacer>
 
-      <v-tooltip v-if="session.namespace" location="top" text="Namespace">
+      <v-tooltip
+          v-if="session.namespace"
+          location="top"
+          :text="t('main.home.connector.namespace')"
+      >
         <template v-slot:activator="{ props }">
           <v-chip v-bind="props"
                   label
@@ -1261,7 +1266,7 @@ const renameDirLogScrollToBottom = () => {
           </v-chip>
         </template>
       </v-tooltip>
-      <v-tooltip v-if="currentKv" location="top" text="Current key">
+      <v-tooltip v-if="currentKv" location="top" :text="t('main.keys.currentKey')">
         <template v-slot:activator="{ props }">
           <v-chip v-bind="props" label
                   color="light-blue-accent-4"
@@ -1291,16 +1296,22 @@ const renameDirLogScrollToBottom = () => {
                    color="cyan-darken-4"
                    class="text-none border-none user-select-none"
                    style="border-radius: 0;"
-                   text="Load More"
+                   :text="t('main.keys.loadMore')"
                    @click="loadNextPage"
                    prepend-icon="mdi-book-open-page-variant-outline"
             >
               <template #append>
-                <span class="count  user-select-none" title="The number of keys loaded">({{ kvCount }})</span>
+                <span
+                    class="count user-select-none"
+                    :title="t('main.keys.loadedLineTitle')"
+                >({{ kvCount }})</span>
               </template>
             </v-btn>
-            <p v-else class="count text-center text-medium-emphasis user-select-none" title="The number of keys loaded">
-              Loaded {{ kvCount }} keys</p>
+            <p
+                v-else
+                class="count text-center text-medium-emphasis user-select-none"
+                :title="t('main.keys.loadedLineTitle')"
+            >{{ t('main.keys.loadedLine', {count: kvCount}) }}</p>
 
           </v-sheet>
         </drag-item>
@@ -1324,8 +1335,8 @@ const renameDirLogScrollToBottom = () => {
                       class="ml-2 mt-2"
                       density="compact"
                       @click="removeCollectionKey(currentKv.key)"
-                      title="Remove from collections"
-                      text="Remove"
+                      :title="t('main.keys.removeCollectionTitle')"
+                      :text="t('common.remove')"
               >
                 <template #prepend>
                   <v-icon color="#ced10a" class="mr-2">mdi-star</v-icon>
@@ -1334,9 +1345,9 @@ const renameDirLogScrollToBottom = () => {
               <v-chip v-else
                       class="ml-2 mt-2"
                       density="compact"
-                      title="Add to collections"
+                      :title="t('main.keys.collectBtnTitle')"
                       @click="addCollectionKey(currentKv.key, currentKv.keyEncodedUtf8)"
-                      text="Collect"
+                      :text="t('main.keys.collect')"
               >
                 <template #prepend>
                   <v-icon color="#ced10a" class="mr-2">mdi-star-outline</v-icon>
@@ -1346,9 +1357,9 @@ const renameDirLogScrollToBottom = () => {
               <v-chip v-if="session.keyMonitorMap![currentKv.key]"
                       class="ml-2 mt-2"
                       density="compact"
-                      title="Edit monitor rule"
+                      :title="t('main.keys.editBtnTitle')"
                       @click="editKeyMonitor(currentKv.key)"
-                      text="Edit"
+                      :text="t('common.edit')"
               >
                 <template #prepend>
                   <v-icon color="#cc8f53" class="mr-2">mdi-robot</v-icon>
@@ -1357,9 +1368,9 @@ const renameDirLogScrollToBottom = () => {
               <v-chip v-else
                       class="ml-2 mt-2"
                       density="compact"
-                      title="Add to monitor list"
+                      :title="t('main.keys.addMonitorBtnTitle')"
                       @click="addKeyMonitor(currentKv.key, false, currentKv.keyEncodedUtf8)"
-                      text="Add"
+                      :text="t('common.add')"
               >
                 <template #prepend>
                   <v-icon color="#cc8f53" class="mr-2">mdi-robot-outline</v-icon>
@@ -1377,7 +1388,7 @@ const renameDirLogScrollToBottom = () => {
                          color="primary"
                          size="small"
                          @click="saveKV"
-                         text="Save"
+                         :text="t('common.save')"
                          class="mr-2 text-none"
                          :loading="loadingStore.save"
                          prepend-icon="mdi-content-save-outline"
@@ -1388,24 +1399,24 @@ const renameDirLogScrollToBottom = () => {
               <v-btn color="cyan-darken-1"
                      size="small"
                      @click="loadVersionDiff(currentKv!.key, currentKv)"
-                     text="Version Diff"
+                     :text="t('main.keys.versionDiff')"
                      class="mr-2 text-none"
                      :loading="loadingStore.diff"
                      prepend-icon="mdi-vector-difference"
               />
               <v-btn color="light-green-darken-1"
                      size="small"
-                     text="Copy and Save"
+                     :text="t('main.keys.copyAndSave')"
                      class="mr-2 text-none"
                      prepend-icon="mdi-content-copy"
-                     @click="showCopyAndSaveDialog('Copy and Save', currentKv.key, _decodeBytesToString(currentKv.value), false)"
+                     @click="showCopyAndSaveDialog(t('main.keys.copyAndSave'), currentKv.key, _decodeBytesToString(currentKv.value), false)"
               />
               <v-btn color="deep-orange-darken-1"
                      size="small"
                      @click="deleteKey(currentKv.key, currentKv)"
                      :loading="loadingStore.delete"
                      :disabled="!currentKv"
-                     text="Delete"
+                     :text="t('common.delete')"
                      class="mr-2 text-none"
                      prepend-icon="mdi-trash-can-outline"
               />
@@ -1420,18 +1431,18 @@ const renameDirLogScrollToBottom = () => {
                          :style="`display: ${editorAlert.show ? 'block' : 'none'};`"
                 >
                   <v-layout>
-                    <p>The kubernetes storage format is protobuf and is automatically formatted into a
-                      <strong>readonly</strong> json format.
-                    </p>
+                    <p v-html="t('main.keys.k8sFormatNotice')"></p>
                     <span class="editor-alert-link pl-2"
-                          @click="showFormattedValue = !showFormattedValue">Recover</span>
+                          @click="showFormattedValue = !showFormattedValue">{{t('common.recover')}}</span>
                     <v-spacer></v-spacer>
 
                     <v-icon @click="editorAlert.show = false" class="mr-2">mdi-chevron-double-up</v-icon>
                   </v-layout>
                 </v-alert>
-                <v-icon class="editor-alert-expend-link text-medium-emphasis" v-show="!editorAlert.show"
-                        @click="editorAlert.show = true">mdi-chevron-double-down
+                <v-icon class="editor-alert-expend-link text-medium-emphasis"
+                        v-show="!editorAlert.show"
+                        @click="editorAlert.show = true"
+                >mdi-chevron-double-down
                 </v-icon>
               </div>
               <editor ref="editorRef"
@@ -1444,26 +1455,27 @@ const renameDirLogScrollToBottom = () => {
               >
                 <template #footer>
                   <span class="editor-footer-item ml-0" v-if="currentKv.leaseInfo">
-                    <v-tooltip location="top" :text="`Granted TTL: ${currentKv.leaseInfo.grantedTtl} s`">
+                    <v-tooltip location="top" :text="`${t('main.keys.grantedTtl')}: ${currentKv.leaseInfo.grantedTtl} s`">
                       <template v-slot:activator="{ props }">
                         <span class="text-secondary user-select-none" v-bind="props">
-                          <CountDownTimer :value="currentKv.leaseInfo.ttl"></CountDownTimer>
+                          <CountDownTimer :value="currentKv.leaseInfo.ttl"/>
                         </span>
                       </template>
                     </v-tooltip>
                   </span>
                   <v-spacer></v-spacer>
-                  <span class="editor-footer-item"><strong>Version</strong>: {{ currentKv.version }}</span>
+                  <span class="editor-footer-item"><strong>{{t('common.version')}}}</strong>: {{ currentKv.version }}</span>
                   <span class="editor-footer-item cursor-pointer"
-                        @click="_copyToClipboard(currentKv.createRevision)"><strong>Create Revision</strong>: {{
+                        @click="_copyToClipboard(currentKv.createRevision)"><strong>{{t('main.keys.createRevision')}}</strong>: {{
                       currentKv.createRevision
                     }}</span>
                   <span class="editor-footer-item cursor-pointer"
-                        @click="_copyToClipboard(currentKv.modRevision)"><strong>Modify Revision</strong>: {{
-                      currentKv.modRevision
-                    }}</span>
-                  <span class="editor-footer-item cursor-pointer" @click="_copyToClipboard(currentKv.lease)"
-                        v-if="currentKv.lease != '0'"><strong>Lease</strong>: {{ currentKv.lease }}</span>
+                        @click="_copyToClipboard(currentKv.modRevision)">
+                    <strong>{{t('main.keys.modifyRevision')}}</strong>: {{currentKv.modRevision }}</span>
+                  <span class="editor-footer-item cursor-pointer"
+                        @click="_copyToClipboard(currentKv.lease)"
+                        v-if="currentKv.lease != '0'">
+                    <strong>{{t('common.lease')}}</strong>: {{ currentKv.lease }}</span>
                 </template>
               </editor>
             </div>
@@ -1471,8 +1483,8 @@ const renameDirLogScrollToBottom = () => {
 
           <div v-else class="no-key-preview fill-height">
             <v-empty-state icon="mdi-text-box-edit-outline"
-                           headline="Please select a key"
-                           title="Select a key to view its details or edit it"
+                           :headline="t('main.keys.emptyStateHeadline')"
+                           :title="t('main.keys.emptyStateTitle')"
                            class="mx-auto my-auto user-select-none">
             </v-empty-state>
           </div>
@@ -1502,7 +1514,7 @@ const renameDirLogScrollToBottom = () => {
               icon="mdi-check-circle-outline"
               density="compact"
           >
-            It has automatically used the formatted content.
+            {{t('main.keys.diffDialogAlert')}}
           </v-alert>
           <v-layout class="pt-5">
             <v-select
@@ -1514,14 +1526,14 @@ const renameDirLogScrollToBottom = () => {
                 :width="10"
                 hide-details
                 persistent-hint
-                label="Version A"
+                :label="t('main.keys.versionA')"
                 @update:model-value="loadDiff(versionDiffInfo.A)"
             />
             <v-btn class="text-none ml-2"
                    prepend-icon="mdi-gesture-swipe-up"
                    color="primary"
                    @click="putAnyway(versionDiffInfo.key, versionDiffInfo.A.content, versionDiffInfo.A.version)"
-                   text="Put This Version"
+                   :text="t('main.keys.putThisVersion')"
                    :density="null"
                    :disabled="versionDiffInfo.A.version == versionDiffInfo.modRevision"
             />
@@ -1530,7 +1542,7 @@ const renameDirLogScrollToBottom = () => {
                    prepend-icon="mdi-gesture-swipe-up"
                    color="primary"
                    @click="putAnyway(versionDiffInfo.key, versionDiffInfo.B.content, versionDiffInfo.B.version)"
-                   text="Put This Version"
+                   :text="t('main.keys.putThisVersion')"
                    :density="null"
                    :disabled="versionDiffInfo.B.version == versionDiffInfo.modRevision"
             />
@@ -1544,7 +1556,7 @@ const renameDirLogScrollToBottom = () => {
                 hide-details
                 persistent-hint
                 class="mr-3"
-                label="Version B"
+                :label="t('main.keys.versionB')"
                 @update:model-value="loadDiff(versionDiffInfo.B)"
             />
           </v-layout>
@@ -1552,9 +1564,9 @@ const renameDirLogScrollToBottom = () => {
           <code-diff
               style="max-height: 60vh;min-height: 40vh;"
               :old-string="versionDiffInfo.A.content"
-              :filename="`Revision: ${versionDiffInfo.A.version}`"
+              :filename="`${t('common.revision')}: ${versionDiffInfo.A.version}`"
               :new-string="versionDiffInfo.B.content"
-              :new-filename="`Revision: ${versionDiffInfo.B.version}`"
+              :new-filename="`${t('common.revision')}: ${versionDiffInfo.B.version}`"
               :theme="isDarkTheme ? 'dark' : 'light'"
               :language="versionDiffInfo.language"
               output-format="side-by-side"
@@ -1574,7 +1586,7 @@ const renameDirLogScrollToBottom = () => {
       <v-card :title="newKeyDialog.title">
         <v-card-text>
           <v-layout class="mb-5" v-show="newKeyDialog.copyAndSave">
-            <span class="inline-label input-label">From: </span>
+            <span class="inline-label input-label">{{ t('main.keys.fromLabel') }}: </span>
             <v-text-field
                 v-model="newKeyDialog.fromKey"
                 density="comfortable"
@@ -1586,66 +1598,70 @@ const renameDirLogScrollToBottom = () => {
           </v-layout>
           <v-layout class="mb-5" v-show="newKeyDialog.copyAndSave">
             <span class="inline-label checkbox-label"></span>
-            <v-checkbox label="Delete From key" v-model="newKeyDialog.deleteFromKey" hide-details></v-checkbox>
+            <v-checkbox
+                :label="t('main.keys.deleteFrom')"
+                v-model="newKeyDialog.deleteFromKey"
+                hide-details
+            />
           </v-layout>
           <v-layout class="mb-5 overflow-visible">
-            <span class="inline-label input-label" v-if="newKeyDialog.copyAndSave">To: </span>
-            <span class="inline-label input-label" v-else>Key: </span>
+            <span class="inline-label input-label" v-if="newKeyDialog.copyAndSave">{{ t('main.keys.toLabel') }}: </span>
+            <span class="inline-label input-label" v-else>{{ t('main.keys.key') }}: </span>
             <CompleteInput
                 v-model="newKeyDialog.key"
                 :search-func="searchNextDir"
                 density="comfortable"
                 prepend-inner-icon="mdi-file-document"
                 :prefix="session.namespace"
-                hint="The key under namespace (if it exists)"
+                :hint="t('main.keys.completeInputHint')"
                 persistent-hint
                 elevation="16"
-            ></CompleteInput>
+            />
           </v-layout>
           <v-layout class="mb-5" style="z-index: unset">
             <span class="inline-label radio-label"></span>
             <v-radio-group v-model="newKeyDialog.model" inline hide-details>
-              <v-radio label="Never Expire" value="none"></v-radio>
-              <v-radio label="With TTL" value="ttl"></v-radio>
-              <v-radio label="With Lease" value="lease"></v-radio>
+              <v-radio :label="t('main.keys.neverExpire')" value="none"/>
+              <v-radio :label="t('main.keys.withTtl')" value="ttl"/>
+              <v-radio :label="t('main.keys.withLease')" value="lease"/>
             </v-radio-group>
           </v-layout>
           <v-layout class="mb-5" style="z-index: unset" v-if="newKeyDialog.model == 'ttl'">
-            <span class="inline-label input-label">TTL(s): </span>
+            <span class="inline-label input-label">{{ t('common.ttl') }}(s): </span>
             <v-text-field
                 v-model="newKeyDialog.ttl"
                 type="number"
                 density="comfortable"
                 prepend-inner-icon="mdi-clock-time-eight"
-                hint="The key expiration time in seconds, optional. If left blank, the key will never expire."
+                :hint="t('main.keys.ttlHint')"
                 persistent-hint
             />
           </v-layout>
           <v-layout class="mb-5" style="z-index: unset" v-if="newKeyDialog.model == 'lease'">
-            <span class="inline-label input-label">Lease: </span>
+            <span class="inline-label input-label">{{t('common.lease')}}: </span>
             <v-text-field
                 v-model="newKeyDialog.lease"
                 type="number"
                 density="comfortable"
                 prepend-inner-icon="mdi-identifier"
-                hint="Bind the key to this lease, they share the same lifecycle. Please make sure the lease already exists, otherwise the operation will fail."
+                :hint="t('main.keys.leaseHint')"
                 persistent-hint
             />
           </v-layout>
           <div style="height: 40vh;width:100%">
-            <editor ref="newKeyEditorRef" :value="newKeyDialog.value" :config="newKeyEditorConfig"></editor>
+            <editor ref="newKeyEditorRef" :value="newKeyDialog.value" :config="newKeyEditorConfig"/>
           </div>
         </v-card-text>
         <v-card-actions>
           <v-btn
-              text="Cancel"
+              :text="t('common.cancel')"
               variant="text"
               class="text-none"
               @click="newKeyDialog.show = false"
           />
 
           <v-btn
-              text="Commit"
+              :text="t('common.commit')"
               variant="flat"
               class="text-none"
               color="primary"
@@ -1664,7 +1680,7 @@ const renameDirLogScrollToBottom = () => {
               class="collection-drawer-right"
               contained
     >
-      <v-card :rounded="false" title="My Collections">
+      <v-card :rounded="false" :title="t('main.keys.myCollections')">
         <template #prepend>
           <v-icon color="#ced10a">mdi-star</v-icon>
         </template>
@@ -1678,7 +1694,7 @@ const renameDirLogScrollToBottom = () => {
                 hide-details
                 single-line
                 clearable
-                placeholder="Enter key to add to collections"
+                :placeholder="t('main.keys.collectionInputPlaceholder')"
                 :search-func="searchNextNode"
                 @click:appendInner="addCollectionKey(addCollectionKeyForm, true); addCollectionKeyForm = '';"
             />
@@ -1711,7 +1727,7 @@ const renameDirLogScrollToBottom = () => {
                         autofocus
                         type="text"
                         @input="searchFromServer"
-                        placeholder="Enter a prefix to search from the server"
+                        :placeholder="t('main.keys.searchFromServerPlaceHolder')"
                         prepend-inner-icon="mdi-magnify"
                         hide-details
           >
@@ -1740,53 +1756,53 @@ const renameDirLogScrollToBottom = () => {
                 <span class="font-weight-bold">{{ kv.key }}</span>
               </template>
               <template #subtitle>
-                Version: <i>{{ kv.version }}</i>,
-                Create Revision: <i>{{ kv.createRevision }}</i>,
-                Modify Revision: <i>{{ kv.modRevision }}</i>
+                {{ t('common.version') }}: <i>{{ kv.version }}</i>,
+                {{ t('main.keys.createRevision') }}: <i>{{ kv.createRevision }}</i>,
+                {{ t('main.keys.modifyRevision') }}: <i>{{ kv.modRevision }}</i>
               </template>
             </v-list-item>
           </v-list>
         </v-card-text>
         <v-card-actions class="text-medium-emphasis">
           <v-spacer/>
-          <span v-if="searchDialog.searchResult">Searched {{
+          <span v-if="searchDialog.searchResult">{{ t('main.keys.searched') }} {{
               searchDialog.searchResult.results.length
             }} / {{ searchDialog.searchResult.count }}</span>
-          <span v-else>Search all keys from etcd server, and display up to 50 results.</span>
+          <span v-else>{{ t('main.keys.searchFromServerTip') }}</span>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
     <!--   更新冲突Merge弹窗-->
     <v-dialog v-model="putMergeDialog.show" max-width="1200px" min-width="800px" persistent scrollable>
-      <v-card title="Resolve Conflict">
+      <v-card :title="t('main.keys.resolveConflict')">
         <v-card-text>
           <v-alert type="warning"
-                   text="The system has detected an intermediate version. Please resolve whether to merge the content before submitting."
+                   :text="t('main.keys.resolveConflictAlert')"
                    class="my-2"
                    density="compact"
           />
           <v-row class="my-2">
             <v-col cols="6" class="text-center font-weight-bold text-medium-emphasis">
-              Your version
+              {{ t('main.keys.yourVersion') }}
             </v-col>
             <v-col cols="6" class="text-center font-weight-bold text-medium-emphasis">
-              Latest version ({{ putMergeDialog.existVersion }})
+              {{ t('main.keys.latestVersion', {version: putMergeDialog.existVersion}) }}
             </v-col>
           </v-row>
-          <div ref="putMergeEditorRef"></div>
+          <div ref="putMergeEditorRef"/>
         </v-card-text>
 
         <v-card-actions>
           <v-btn
-              text="Cancel"
+              :text="t('common.cancel')"
               variant="text"
               class="text-none"
               @click="cancelMergeDialog"
           />
 
           <v-btn
-              text="Resolved & Submit"
+              :text="t('main.keys.resolvedAndSubmit')"
               variant="flat"
               class="text-none"
               color="primary"
@@ -1803,10 +1819,10 @@ const renameDirLogScrollToBottom = () => {
         scrollable
         persistent
     >
-      <v-card title="Rename Path">
+      <v-card :title="t('main.keys.renamePath')">
         <v-card-text class="rename-form">
           <v-layout class="mb-5">
-            <span class="inline-label input-label">Path: </span>
+            <span class="inline-label input-label">{{t('main.keys.path')}}: </span>
             <v-text-field
                 v-model="renameDirDialog.newPrefix"
                 :prefix="session.namespace"
@@ -1819,33 +1835,33 @@ const renameDirLogScrollToBottom = () => {
             <span class="inline-label checkbox-label"></span>
             <v-checkbox
                 v-model="renameDirDialog.deleteOriginKeys"
-                label="Delete Origin Keys"
+                :label="t('main.keys.deleteOriginKeys')"
                 hide-details
-            ></v-checkbox>
+            />
           </v-layout>
           <v-layout class="mb-5">
-            <span class="inline-label radio-label" style="line-height: 40px;">Put Strategy: </span>
+            <span class="inline-label radio-label" style="line-height: 40px;">{{t('main.keys.putStrategy')}}: </span>
             <v-radio-group v-model="renameDirDialog.putStrategy"
                            inline
                            hide-details
                            style="flex-direction: row;">
-              <v-radio label="Cover" value="Cover"></v-radio>
-              <v-radio label="Rename" value="Rename"></v-radio>
+              <v-radio :label="t('main.keys.coverStrategy')" value="Cover"/>
+              <v-radio :label="t('main.keys.renameStrategy')" value="Rename"/>
             </v-radio-group>
           </v-layout>
 
           <div v-if="renameDirDialog.state != 'none'">
-            <v-divider v-if="renameDirDialog.logs.length > 0">Logs</v-divider>
+            <v-divider v-if="renameDirDialog.logs.length > 0">{{ t('main.keys.logs')}} </v-divider>
             <div style="max-height: 30vh;" class="overflow-auto" ref="renameDirLogListRef">
               <div v-for="(log, idx) in renameDirDialog.logs" :key="idx">
                 <div v-if="log.success">
-                  [<strong style="color: #4CAF50;">Success</strong>]
+                  [<strong style="color: #4CAF50;">{{t('common.success')}}</strong>]
                   <span style="color: #00BCD4;">{{log.action}}</span>
                   {{_decodeBytesToString(log.key)}}
                 </div>
                 <div v-else>
                   <p>
-                    [<strong style="color: #E57373;">Failed</strong>]
+                    [<strong style="color: #E57373;">{{t('common.failed')}}</strong>]
                     <span style="color: #00BCD4;">{{log.action}}</span>
                     {{_decodeBytesToString(log.key)}}
                   </p>
@@ -1857,7 +1873,7 @@ const renameDirLogScrollToBottom = () => {
         </v-card-text>
         <v-card-actions>
           <v-btn
-              :text="renameDirDialog.state == 'none' ? 'Cancel' : 'Close'"
+              :text="renameDirDialog.state == 'none' ? t('common.cancel') : t('common.close')"
               variant="text"
               class="text-none"
               :disabled="renameDirDialog.state == 'started'"
@@ -1865,7 +1881,7 @@ const renameDirLogScrollToBottom = () => {
           />
 
           <v-btn
-              text="Commit"
+              :text="t('common.commit')"
               variant="flat"
               class="text-none"
               color="primary"

@@ -14,6 +14,7 @@ import {VCard} from "vuetify/components";
 import {appWindow} from "@tauri-apps/api/window";
 import {KeyExtendInfo} from "~/common/transport/kv.ts";
 import {TreeNode} from "~/components/tree/types.ts";
+import {useLocale} from "vuetify";
 
 const IDMark_A = "_a"
 
@@ -42,6 +43,7 @@ export type ContextmenuExtend = {
 
 export type Contextmenu = ContextmenuItem | ContextmenuExtend
 
+const {t} = useLocale()
 const appSettings = _useSettings()
 const emits = defineEmits(['on-click', 'on-click-remove', 'click:contextmenu'])
 const props = defineProps({
@@ -603,7 +605,13 @@ defineExpose({
           </v-icon>
         </template>
       </v-tooltip>
-      <input type="text" :id="keyId" value="" class="search-input" placeholder="Type to search"/>
+      <input
+          type="text"
+          :id="keyId"
+          value=""
+          class="search-input"
+          :placeholder="t('common.typeToSearch')"
+      />
 
       <v-btn class="expand-icon"
              icon="mdi-arrow-expand-vertical"
