@@ -33,6 +33,9 @@ export default {
         appTip: "System",
         copied: "Copied",
         restart: "Restart",
+        refresh: "Refresh",
+        typeToSearch: "Type to search",
+        successTip: "Succeeded!",
     },
     feedback: {
         copyError:"Can not write to clipboard",
@@ -46,7 +49,7 @@ export default {
     component: {
         fileSelector: {
             sizeTip: "Selected file is too large!",
-            readFileError: "An error occurred while reading the file"
+            readFileError: "An error occurred while reading the file",
         }
     },
     main: {
@@ -105,6 +108,42 @@ export default {
                 connecting: "Connecting...",
                 nameEmptyTip: "Connection name can not be empty",
             }
+        },
+        cluster: {
+            metrics: "Metrics",
+            metricsBtnTitle: "Query metrics data from etcd server.",
+            compact: "Compact",
+            compactBtnTitle: "Compacts the event history in the etcd key-value store.",
+            defragment: "Defragment",
+            defragmentBtnTitle: "Defragment backend database to recover storage space.",
+            snapshot: "Snapshot",
+            snapshotBtnTitle: "Save snapshot from etcd server to local file",
+            clusterInfoTitle: "Cluster Information",
+            clusterId: "Cluster ID",
+            memberId: "Member ID",
+            revision: "Revision",
+            etcdVersion: "Etcd Version",
+            leader: "Leader",
+            dbSizeAllocated: "DB Size Allocated",
+            dbSizeUsed: "DB Size Used",
+            raftIndex: "Raft Index",
+            raftAppliedIndex: "Raft Applied Index",
+            raftTerm: "Raft Term",
+            errors: "Errors",
+            everythingOk: "Everything is ok!",
+            alarmNoSpace: "Alarm: space quota is exhausted!",
+            alarmCorrupt: "Alarm: kv store corruption detected!",
+            leaderTag: "leader",
+            currentTag: "current",
+            peerUri: "Peer Uri",
+            clientUri: "Client Uri",
+            compactNotice: "Compacts the event history in the etcd key-value store. The key-value store should be periodically compacted or the event history will continue to grow indefinitely.",
+            physical: "Wait for Physical",
+            physicalTitle: "Physical is set so the RPC will wait until the compaction is physically applied to the local database such that compacted entries are totally removed from the backend database.",
+            defragmentConfirmTip: "Confirm to perform defragmentation?",
+            needRevisionTip: "Need a valid revision",
+            compactConfirmTip: "Confirm compaction operation?",
+            snapshotConfirmTip: "Confirm snapshot creation? Download duration varies by data size.",
         }
     },
     setting: {

@@ -8,7 +8,9 @@ import {_byteTextFormat, _isEmpty} from "~/common/utils.ts";
 import {_alertError, _confirmSystem, _emitLocal, _tipSuccess, _tipWarn, EventName} from "~/common/events.ts";
 import {save} from "@tauri-apps/api/dialog";
 import {_getDownloadPath} from "~/common/windows.ts";
+import {useLocale} from "vuetify";
 
+const {t} = useLocale()
 const props = defineProps({
   session: {
     type: Object as PropType<SessionData>,
@@ -92,10 +94,10 @@ const loadCluster = () => {
 }
 
 const defragment = () => {
-  _confirmSystem('Confirm to perform defragmentation?').then(() => {
+  _confirmSystem(t('main.cluster.defragmentConfirmTip')).then(() => {
     loadingStore.defragment = true
     _defragment(props.session?.id).then(() => {
-      _tipSuccess("Succeeded!")
+      _tipSuccess(t('common.successTip'))
     }).catch((e: string | ErrorPayload) => {
       _handleError({
         e,
@@ -116,15 +118,15 @@ const showCompactDialog = () => {
 
 const compact = () => {
   if (_isEmpty(compactDialog.revision)) {
-    _tipWarn("Need a valid revision")
+    _tipWarn(t('main.cluster.needRevisionTip'))
     return
   }
 
   const revision = parseInt(compactDialog.revision)
-  _confirmSystem('Confirm compaction operation?').then(() => {
+  _confirmSystem(t('main.cluster.compactConfirmTip')).then(() => {
     loadingStore.compact = true
     _compact(props.session?.id, revision, compactDialog.physical).then(() => {
-      _tipSuccess("Succeeded!")
+      _tipSuccess(t('common.successTip'))
       compactDialog.show = false
     }).catch((e: string | ErrorPayload) => {
       _handleError({
@@ -139,7 +141,7 @@ const compact = () => {
 }
 
 const snapshot = () => {
-  _confirmSystem('Confirm snapshot creation? Download duration varies by data size.').then(async () => {
+  _confirmSystem(t('main.cluster.snapshotConfirmTip')).then(async () => {
     let downloadPath = await _getDownloadPath()
     save({
       defaultPath: downloadPath
@@ -202,38 +204,38 @@ const loadMetrics = ():Promise<Array<string[]>> => {
             icon="mdi-refresh"
             @click="loadCluster"
             :loading="loadingStore.loadCluster"
-            title="Refresh"
+            :title="t('common.refresh')"
       ></v-btn>
       <v-btn class="text-none ml-2"
              prepend-icon="mdi-database-search"
              @click="showMetricsDialog"
              color="success"
-             text="Metrics"
-             title="Query metrics data from etcd server."
+             :text="t('main.cluster.metrics')"
+             :title="t('main.cluster.metricsBtnTitle')"
              :loading="loadingStore.metrics"
       ></v-btn>
       <v-btn class="text-none ml-2"
              prepend-icon="mdi-database-cog"
              @click="showCompactDialog"
              color="red-accent-3"
-             text="Compact"
-             title="Compacts the event history in the etcd key-value store."
+             :text="t('main.cluster.compact')"
+             :title="t('main.cluster.compactBtnTitle')"
              :loading="loadingStore.compact"
       ></v-btn>
       <v-btn class="text-none ml-2"
              prepend-icon="mdi-database-sync"
              @click="defragment"
              color="yellow"
-             text="Defragment"
-             title="Defragment backend database to recover storage space."
+             :text="t('main.cluster.defragment')"
+             :title="t('main.cluster.defragmentBtnTitle')"
              :loading="loadingStore.defragment"
       ></v-btn>
       <v-btn class="text-none ml-2"
              prepend-icon="mdi-cloud-arrow-down"
              @click="snapshot"
              color="brown-darken-1"
-             text="Snapshot"
-             title="Save snapshot from etcd server to local file"
+             :text="t('main.cluster.snapshot')"
+             :title="t('main.cluster.snapshotBtnTitle')"
              :loading="loadingStore.snapshot"
       ></v-btn>
     </div>
@@ -246,24 +248,45 @@ const loadMetrics = ():Promise<Array<string[]>> => {
               <v-avatar color="surface-light" size="32">🎯</v-avatar>
             </template>
 
-            <template v-slot:title> Cluster Information</template>
+            <template v-slot:title>{{ t('main.cluster.clusterInfoTitle') }}</template>
           </v-list-item>
           <v-divider></v-divider>
           <v-card-text class=" pa-6">
             <v-row>
-              <v-col :xxl="INFO_COL.xxl" :xl="INFO_COL.xl" :lg="INFO_COL.lg" :md="INFO_COL.md" :sm="INFO_COL.sm"
-                     :xs="INFO_COL.xs" class="d-flex info-item">
-                <div class="info-label text-medium-emphasis">Cluster ID</div>
+              <v-col
+                  :xxl="INFO_COL.xxl"
+                  :xl="INFO_COL.xl"
+                  :lg="INFO_COL.lg"
+                  :md="INFO_COL.md"
+                  :sm="INFO_COL.sm"
+                  :xs="INFO_COL.xs"
+                  class="d-flex info-item"
+              >
+                <div class="info-label text-medium-emphasis">{{ t('main.cluster.clusterId') }}</div>
                 <div class="info-value text-high-emphasis">{{ cluster.id }}</div>
               </v-col>
-              <v-col :xxl="INFO_COL.xxl" :xl="INFO_COL.xl" :lg="INFO_COL.lg" :md="INFO_COL.md" :sm="INFO_COL.sm"
-                     :xs="INFO_COL.xs" class="d-flex info-item">
-                <div class="info-label text-medium-emphasis">Member ID</div>
+              <v-col
+                  :xxl="INFO_COL.xxl"
+                  :xl="INFO_COL.xl"
+                  :lg="INFO_COL.lg"
+                  :md="INFO_COL.md"
+                  :sm="INFO_COL.sm"
+                  :xs="INFO_COL.xs"
+                  class="d-flex info-item"
+              >
+                <div class="info-label text-medium-emphasis">{{ t('main.cluster.memberId') }}</div>
                 <div class="info-value text-high-emphasis">{{ cluster.memberId }}</div>
               </v-col>
-              <v-col :xxl="INFO_COL.xxl" :xl="INFO_COL.xl" :lg="INFO_COL.lg" :md="INFO_COL.md" :sm="INFO_COL.sm"
-                     :xs="INFO_COL.xs" class="d-flex info-item">
-                <div class="info-label text-medium-emphasis">Revision</div>
+              <v-col
+                  :xxl="INFO_COL.xxl"
+                  :xl="INFO_COL.xl"
+                  :lg="INFO_COL.lg"
+                  :md="INFO_COL.md"
+                  :sm="INFO_COL.sm"
+                  :xs="INFO_COL.xs"
+                  class="d-flex info-item"
+              >
+                <div class="info-label text-medium-emphasis">{{ t('main.cluster.revision') }}</div>
                 <div class="info-value text-high-emphasis">{{ cluster.revision }}</div>
               </v-col>
             </v-row>
@@ -271,24 +294,52 @@ const loadMetrics = ():Promise<Array<string[]>> => {
             <v-divider class="mt-5 mb-5"></v-divider>
 
             <v-row>
-              <v-col :xxl="INFO_COL.xxl" :xl="INFO_COL.xl" :lg="INFO_COL.lg" :md="INFO_COL.md" :sm="INFO_COL.sm"
-                     :xs="INFO_COL.xs" class="d-flex info-item">
-                <div class="info-label text-medium-emphasis">Etcd Version</div>
+              <v-col
+                  :xxl="INFO_COL.xxl"
+                  :xl="INFO_COL.xl"
+                  :lg="INFO_COL.lg"
+                  :md="INFO_COL.md"
+                  :sm="INFO_COL.sm"
+                  :xs="INFO_COL.xs"
+                  class="d-flex info-item"
+              >
+                <div class="info-label text-medium-emphasis">{{ t('main.cluster.etcdVersion') }}</div>
                 <div class="info-value text-high-emphasis">{{ cluster.status.version }}</div>
               </v-col>
-              <v-col :xxl="INFO_COL.xxl" :xl="INFO_COL.xl" :lg="INFO_COL.lg" :md="INFO_COL.md" :sm="INFO_COL.sm"
-                     :xs="INFO_COL.xs" class="d-flex info-item">
-                <div class="info-label text-medium-emphasis">Leader</div>
+              <v-col
+                  :xxl="INFO_COL.xxl"
+                  :xl="INFO_COL.xl"
+                  :lg="INFO_COL.lg"
+                  :md="INFO_COL.md"
+                  :sm="INFO_COL.sm"
+                  :xs="INFO_COL.xs"
+                  class="d-flex info-item"
+              >
+                <div class="info-label text-medium-emphasis">{{ t('main.cluster.leader') }}</div>
                 <div class="info-value text-high-emphasis">{{ cluster.status.leader }}</div>
               </v-col>
-              <v-col :xxl="INFO_COL.xxl" :xl="INFO_COL.xl" :lg="INFO_COL.lg" :md="INFO_COL.md" :sm="INFO_COL.sm"
-                     :xs="INFO_COL.xs" class="d-flex info-item">
-                <div class="info-label text-medium-emphasis">DB Size Allocated</div>
+              <v-col
+                  :xxl="INFO_COL.xxl"
+                  :xl="INFO_COL.xl"
+                  :lg="INFO_COL.lg"
+                  :md="INFO_COL.md"
+                  :sm="INFO_COL.sm"
+                  :xs="INFO_COL.xs"
+                  class="d-flex info-item"
+              >
+                <div class="info-label text-medium-emphasis">{{ t('main.cluster.dbSizeAllocated') }}</div>
                 <div class="info-value text-high-emphasis">{{ _byteTextFormat(cluster.status.dbSizeAllocated) }}</div>
               </v-col>
-              <v-col :xxl="INFO_COL.xxl" :xl="INFO_COL.xl" :lg="INFO_COL.lg" :md="INFO_COL.md" :sm="INFO_COL.sm"
-                     :xs="INFO_COL.xs" class="d-flex info-item">
-                <div class="info-label text-medium-emphasis">DB Size Used</div>
+              <v-col
+                  :xxl="INFO_COL.xxl"
+                  :xl="INFO_COL.xl"
+                  :lg="INFO_COL.lg"
+                  :md="INFO_COL.md"
+                  :sm="INFO_COL.sm"
+                  :xs="INFO_COL.xs"
+                  class="d-flex info-item"
+              >
+                <div class="info-label text-medium-emphasis">{{ t('main.cluster.dbSizeUsed') }}</div>
                 <div class="info-value text-high-emphasis">{{ _byteTextFormat(cluster.status.dbSizeUsed) }}</div>
               </v-col>
             </v-row>
@@ -296,28 +347,53 @@ const loadMetrics = ():Promise<Array<string[]>> => {
             <v-divider class="mt-5 mb-5"></v-divider>
 
             <v-row>
-              <v-col :xxl="INFO_COL.xxl" :xl="INFO_COL.xl" :lg="INFO_COL.lg" :md="INFO_COL.md" :sm="INFO_COL.sm"
-                     :xs="INFO_COL.xs" class="d-flex info-item">
-                <div class="info-label text-medium-emphasis">Raft Index</div>
+              <v-col
+                  :xxl="INFO_COL.xxl"
+                  :xl="INFO_COL.xl"
+                  :lg="INFO_COL.lg"
+                  :md="INFO_COL.md"
+                  :sm="INFO_COL.sm"
+                  :xs="INFO_COL.xs"
+                  class="d-flex info-item"
+              >
+                <div class="info-label text-medium-emphasis">{{ t('main.cluster.raftIndex') }}</div>
                 <div class="info-value text-high-emphasis">{{ cluster.status.raftIndex }}</div>
               </v-col>
-              <v-col :xxl="INFO_COL.xxl" :xl="INFO_COL.xl" :lg="INFO_COL.lg" :md="INFO_COL.md" :sm="INFO_COL.sm"
-                     :xs="INFO_COL.xs" class="d-flex info-item">
-                <div class="info-label text-medium-emphasis">Raft Applied Index</div>
+              <v-col
+                  :xxl="INFO_COL.xxl"
+                  :xl="INFO_COL.xl"
+                  :lg="INFO_COL.lg"
+                  :md="INFO_COL.md"
+                  :sm="INFO_COL.sm"
+                  :xs="INFO_COL.xs"
+                  class="d-flex info-item"
+              >
+                <div class="info-label text-medium-emphasis">{{ t('main.cluster.raftAppliedIndex') }}</div>
                 <div class="info-value text-high-emphasis">{{ cluster.status.raftAppliedIndex }}</div>
               </v-col>
-              <v-col :xxl="INFO_COL.xxl" :xl="INFO_COL.xl" :lg="INFO_COL.lg" :md="INFO_COL.md" :sm="INFO_COL.sm"
-                     :xs="INFO_COL.xs" class="d-flex info-item">
-                <div class="info-label text-medium-emphasis">Raft Term</div>
+              <v-col
+                  :xxl="INFO_COL.xxl"
+                  :xl="INFO_COL.xl"
+                  :lg="INFO_COL.lg"
+                  :md="INFO_COL.md"
+                  :sm="INFO_COL.sm"
+                  :xs="INFO_COL.xs"
+                  class="d-flex info-item"
+              >
+                <div class="info-label text-medium-emphasis">{{ t('main.cluster.raftTerm') }}</div>
                 <div class="info-value text-high-emphasis">{{ cluster.status.raftTerm }}</div>
               </v-col>
             </v-row>
 
-            <v-expansion-panels variant="accordion" class="mt-5" v-if="cluster.status.errors.length > 0">
+            <v-expansion-panels
+                variant="accordion"
+                class="mt-5"
+                v-if="cluster.status.errors.length > 0"
+            >
               <v-expansion-panel>
                 <template v-slot:title>
                   <v-icon color="red" class="mr-2">mdi-alert-circle-outline</v-icon>
-                  Errors
+                  {{ t('main.cluster.errors') }}
                 </template>
                 <template v-slot:text>
                   <v-list>
@@ -349,7 +425,7 @@ const loadMetrics = ():Promise<Array<string[]>> => {
                     hover
             >
               <template v-slot:append>
-                <v-tooltip text="Everything is ok!"
+                <v-tooltip :text="t('main.cluster.everythingOk')"
                            location="top"
                            v-if="member.alarmType == Alarm.None">
                   <template v-slot:activator="{ props }">
@@ -358,7 +434,7 @@ const loadMetrics = ():Promise<Array<string[]>> => {
                     </v-icon>
                   </template>
                 </v-tooltip>
-                <v-tooltip text="Alarm: space quota is exhausted!"
+                <v-tooltip :text="t('main.cluster.alarmNoSpace')"
                            location="top"
                            v-else-if="member.alarmType == Alarm.Nospace">
                   <template v-slot:activator="{ props }">
@@ -367,7 +443,7 @@ const loadMetrics = ():Promise<Array<string[]>> => {
                     </v-icon>
                   </template>
                 </v-tooltip>
-                <v-tooltip text="Alarm: kv store corruption detected!"
+                <v-tooltip :text="t('main.cluster.alarmCorrupt')"
                            location="top"
                            v-else-if="member.alarmType == Alarm.Corrupt">
                   <template v-slot:activator="{ props }">
@@ -381,16 +457,13 @@ const loadMetrics = ():Promise<Array<string[]>> => {
               <v-divider></v-divider>
               <v-card-text>
                 <div class="member-icon text-center">
-                  <svg t="1698415293514"
-                       viewBox="0 0 1024 1024"
-                       version="1.1"
-                       xmlns="http://www.w3.org/2000/svg"
-                       p-id="1652"
-                       width="100"
-                       height="100">
+                  <svg
+                      viewBox="0 0 1024 1024"
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="100"
+                      height="100">
                     <path
                         d="M1024 210.823529C1024 73.908706 760.169412 0 512 0S0 73.908706 0 210.823529c0 8.975059 1.445647 19.154824 4.818824 30.117647H0v572.235295C0 950.091294 263.830588 1024 512 1024s512-73.908706 512-210.823529V240.941176h-4.818824a103.002353 103.002353 0 0 0 4.818824-30.117647zM512 60.235294C770.590118 60.235294 963.764706 139.745882 963.764706 210.823529c0 23.973647-23.371294 50.296471-65.837177 74.029177C812.453647 332.8 668.190118 361.411765 512 361.411765s-300.453647-28.611765-385.927529-76.559059C83.606588 261.12 60.235294 234.797176 60.235294 210.823529 60.235294 139.745882 253.409882 60.235294 512 60.235294z m0 903.529412C253.409882 963.764706 60.235294 884.254118 60.235294 813.176471v-98.364236c10.541176 8.131765 22.106353 16.323765 36.382118 24.274824 94.087529 52.645647 249.374118 84.088471 415.382588 84.08847 20.781176 0 41.381647-0.481882 61.620706-1.445647 142.215529-6.686118 271.36-36.562824 353.701647-82.642823l0.060235-0.060235c14.215529-8.011294 25.901176-16.143059 36.382118-24.274824V813.176471c0 71.077647-193.174588 150.588235-451.764706 150.588235z m385.927529-277.263059c-85.534118 47.887059-229.737412 76.498824-385.927529 76.498824-19.516235 0-38.912-0.481882-57.946353-1.325177-133.360941-6.144-253.168941-33.249882-327.981176-75.113412C83.666824 662.708706 60.235294 636.385882 60.235294 612.412235V513.987765c10.541176 8.131765 22.166588 16.323765 36.442353 24.274823 94.027294 52.645647 249.313882 84.088471 415.322353 84.088471s321.295059-31.442824 415.322353-84.088471c14.275765-7.951059 25.901176-16.143059 36.442353-24.274823v98.42447c0 23.973647-23.431529 50.296471-65.837177 74.089412z m-0.060235-200.824471c-85.473882 47.887059-229.677176 76.498824-385.867294 76.498824s-300.393412-28.611765-385.867294-76.498824C83.666824 461.944471 60.235294 435.561412 60.235294 411.587765V313.163294c10.541176 8.192 22.106353 16.323765 36.382118 24.335059C190.704941 390.204235 345.931294 421.647059 512 421.647059s321.295059-31.442824 415.382588-84.148706c14.275765-8.011294 25.840941-16.143059 36.382118-24.335059v98.424471c0 23.973647-23.431529 50.356706-65.897412 74.089411z"
-                        p-id="1653"
                         fill="#1296db"/>
                   </svg>
                 </div>
@@ -402,7 +475,7 @@ const loadMetrics = ():Promise<Array<string[]>> => {
                           size="small"
                           density="comfortable"
                           class="ml-2"
-                  >leader
+                  >{{ t('main.cluster.leaderTag') }}
                   </v-chip>
                   <v-chip v-if="member.id == cluster.memberId"
                           color="primary"
@@ -410,7 +483,7 @@ const loadMetrics = ():Promise<Array<string[]>> => {
                           size="small"
                           density="comfortable"
                           class="ml-2"
-                  >current
+                  >{{ t('main.cluster.currentTag') }}
                   </v-chip>
                 </p>
 
@@ -419,7 +492,7 @@ const loadMetrics = ():Promise<Array<string[]>> => {
                   <tr align="right">
                     <th>
                       <v-icon class="mr-2">mdi-link</v-icon>
-                      <span>Peer Uri:</span>
+                      <span>{{ t('main.cluster.peerUri') }}:</span>
                     </th>
 
                     <td class="text-high-emphasis">
@@ -432,7 +505,7 @@ const loadMetrics = ():Promise<Array<string[]>> => {
                   <tr align="right">
                     <th>
                       <v-icon class="mr-2">mdi-link-variant</v-icon>
-                      <span>Client Uri:</span>
+                      <span>{{ t('main.cluster.clientUri') }}:</span>
                     </th>
 
                     <td class="text-high-emphasis">
@@ -458,34 +531,37 @@ const loadMetrics = ():Promise<Array<string[]>> => {
         width="600px"
         scrollable
     >
-      <v-card title="Compact">
+      <v-card :title="t('main.cluster.compact')">
         <v-card-text>
-          Compacts the event history in the etcd key-value store. The key-value store should be periodically compacted 
-          or the event history will continue to grow indefinitely.
+          {{ t('main.cluster.compactNotice') }}
           <v-layout class="mt-5">
             <v-text-field v-model="compactDialog.revision"
-                          label="Revision"
+                          :label="t('main.cluster.revision')"
                           type="number" 
                           density="comfortable"
-            ></v-text-field>
+            />
 
-            <v-checkbox label="Physical" v-model="compactDialog.physical"></v-checkbox>
+            <v-checkbox
+                :label="t('main.cluster.physical')"
+                v-model="compactDialog.physical"
+                :title="t('main.cluster.physicalTitle')"
+            />
           </v-layout>
         </v-card-text>
         <v-card-actions>
-          <v-btn text="Cancel"
+          <v-btn :text="t('common.cancel')"
                  variant="text"
                  class="text-none"
                  @click="compactDialog.show = false"
-          ></v-btn>
+          />
 
-          <v-btn text="Commit"
+          <v-btn :text="t('common.commit')"
                  variant="flat"
                  class="text-none"
                  color="primary"
                  @click="compact"
                  :loading="loadingStore.compact"
-          ></v-btn>
+          />
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -500,31 +576,32 @@ const loadMetrics = ():Promise<Array<string[]>> => {
       <v-card class="pb-8">
         <v-card-title>
           <v-layout>
-            Metrics
+            {{ t('main.cluster.metrics') }}
             <v-btn class="text-none ml-2"
                   prepend-icon="mdi-refresh"
                   size="small"
                   @click="loadMetrics"
                   color="success"
-                  text="Refresh"
-                  title="Query metrics data from etcd server."
+                  :text="t('common.refresh')"
+                  :title="t('main.cluster.metricsBtnTitle')"
                   :loading="loadingStore.metrics"
-            ></v-btn>
+            />
             <v-spacer></v-spacer>
             <div style="width: 500px;" class="mr-2">
-              <v-text-field v-model="metricsDialog.keyword" 
-                          placeholder="Type to search"
-                          density="compact"
-                          clearable
-                          hide-details
-              ></v-text-field>
+              <v-text-field
+                  v-model="metricsDialog.keyword"
+                  :placeholder="t('common.typeToSearch')"
+                  density="compact"
+                  clearable
+                  hide-details
+              />
             </div>
-            <v-spacer></v-spacer>
+            <v-spacer/>
             <v-btn
               icon="mdi-close"
               size="x-small"
               @click="metricsDialog.show = false"
-            ></v-btn>
+            />
           </v-layout>
         </v-card-title>
 
@@ -537,7 +614,7 @@ const loadMetrics = ():Promise<Array<string[]>> => {
                   <v-spacer></v-spacer>
                   <div>{{ item[1] }}</div>
                 </v-layout>
-                <v-divider class="mt-2"></v-divider>
+                <v-divider class="mt-2"/>
               </v-list-item>
             </template>
           </v-virtual-scroll>
