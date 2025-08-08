@@ -13,22 +13,24 @@ import {
 import {RolePermission, RolePermType} from "~/common/transport/user.ts";
 import {_confirmSystem, _tipWarn} from "~/common/events.ts";
 import {_isEmpty} from "~/common/utils.ts";
+import {useI18n} from "vue-i18n";
+
+const {t} = useI18n()
 
 const permissionSelections = [
   {
-    title: 'Read',
+    title: t('main.roles.read'),
     value: RolePermType.Read
   },
   {
-    title: 'Write',
+    title: t('main.roles.write'),
     value: RolePermType.Write
   },
   {
-    title: 'Read And Write',
+    title: t('main.roles.readAndWrite'),
     value: RolePermType.ReadAndWrite
   }
 ]
-
 const props = defineProps({
   session: {
     type: Object as PropType<SessionData>,
@@ -109,7 +111,7 @@ const getRoleInfo = (role: any) => {
 }
 
 const revokeRolePermission = (role: string, perm: RolePermission, permIdx: number) => {
-  _confirmSystem(`Confirm to revoke this permission from role: ${role}?`).then(() => {
+  _confirmSystem(`${t('main.roles.revokePermissionConfirm')}: ${role}?`).then(() => {
     loadingStore.revokeRolePerm = true
     _revokeRolePermissions(props.session?.id, role, perm).then(() => {
       if (currentRoleInfo.value) {
@@ -129,7 +131,7 @@ const revokeRolePermission = (role: string, perm: RolePermission, permIdx: numbe
 }
 
 const deleteRole = (role: string, roleIdx: number) => {
-  _confirmSystem(`Confirm to delete this role? <br/> <strong>${role}</strong>`).then(() => {
+  _confirmSystem(`${t('main.roles.deleteRoleConfirm')} <br/> <strong>${role}</strong>`).then(() => {
     loadingStore.deleteRole = true
     _deleteRole(props.session?.id, role).then(() => {
       if (currentRoleId.value == role) {
@@ -153,7 +155,7 @@ const deleteRole = (role: string, roleIdx: number) => {
 const newRole = () => {
   let role = newRoleDialog.role
   if(_isEmpty(role)) {
-    _tipWarn("Role name can not be empty")
+    _tipWarn(t('main.roles.requiredRoleNameTip'))
     return
   }
   loadingStore.newRole = true
@@ -186,7 +188,7 @@ const grantPerm = () => {
   let permission = grantPermDialog.perm
 
   if (!permission.allKeys && _isEmpty(permission.key)) {
-    _tipWarn('Key cannot be empty')
+    _tipWarn(t('main.roles.requiredKeyTip'))
     return
   }
 
@@ -218,14 +220,14 @@ const grantPerm = () => {
             icon="mdi-refresh"
             @click="loadAllRoles"
             :loading="loadingStore.loadAllRoles"
-            title="Refresh"
-      ></v-btn>
+            :title="t('common.refresh')"
+      />
       <v-btn class="text-none ml-2"
              prepend-icon="mdi-lock-plus"
              @click="openNewRoleDialog"
              color="green"
-             text="Add Role"
-      ></v-btn>
+             :text="t('main.roles.addRole')"
+      />
     </div>
 
     <div>
@@ -249,7 +251,7 @@ const grantPerm = () => {
                   color="primary"
                   size="32"
                   indeterminate
-              ></v-progress-circular>
+              />
             </div>
             <div v-else-if="currentRoleInfo">
               <v-layout class="justify-center align-content-center mx-auto my-auto mt-5 mb-5" style="min-width: 50vw;">
@@ -262,16 +264,16 @@ const grantPerm = () => {
                       <thead>
                       <tr>
                         <th class="text-left font-weight-bold">
-                          Key
+                          {{ t('common.key') }}
                         </th>
                         <th class="text-left font-weight-bold">
-                          Prefix
+                          {{ t('common.prefix') }}
                         </th>
                         <th class="text-left font-weight-bold">
-                          Permission
+                          {{ t('main.roles.permission') }}
                         </th>
                         <th class="text-left font-weight-bold">
-                          Operation
+                          {{ t('main.roles.operation') }}
                         </th>
                       </tr>
                       </thead>
@@ -287,23 +289,32 @@ const grantPerm = () => {
                         </td>
                         <td>
                           <span v-if="perm.allKeys" ></span>
-                          <span v-else-if="perm.prefix" class="text-blue">Yes</span>
-                          <span v-else class="text-grey">No</span>
+                          <span v-else-if="perm.prefix" class="text-blue">{{t('common.yes')}}</span>
+                          <span v-else class="text-grey">{{t('common.no')}}</span>
                         </td>
                         <td>
-                          <span v-if="perm.permType == RolePermType.Read" class="text-blue-grey-lighten-1 font-weight-bold">Read</span>
-                          <span v-else-if="perm.permType == RolePermType.Write" class="text-brown-lighten-1 font-weight-bold">Write</span>
-                          <span v-else-if="perm.permType == RolePermType.ReadAndWrite" class="text-deep-orange-lighten-2 font-weight-bold">Read And Write</span>
+                          <span
+                              v-if="perm.permType == RolePermType.Read"
+                              class="text-blue-grey-lighten-1 font-weight-bold"
+                          >{{ t('main.roles.read') }}</span>
+                          <span
+                              v-else-if="perm.permType == RolePermType.Write"
+                              class="text-brown-lighten-1 font-weight-bold"
+                          >{{ t('main.roles.write') }}</span>
+                          <span
+                              v-else-if="perm.permType == RolePermType.ReadAndWrite"
+                              class="text-deep-orange-lighten-2 font-weight-bold"
+                          >{{ t('main.roles.readAndWrite') }}</span>
                         </td>
                         <td>
-                          <v-btn text="Revoke"
+                          <v-btn :text="t('main.roles.revoke')"
                                  color="red"
                                  class="text-none"
                                  size="small"
                                  prepend-icon="mdi-account-details-outline"
                                  @click="revokeRolePermission(currentRoleId, perm, i)"
                                  :loading="loadingStore.revokeRolePerm"
-                          ></v-btn>
+                          />
                         </td>
                       </tr>
                       </tbody>
@@ -312,37 +323,37 @@ const grantPerm = () => {
                 </v-card>
                 <div class="flex-column align-center mt-auto mb-auto" style="min-width: 352px;">
                   <v-btn color="primary"
-                         text="Grant Permission"
+                         :text="t('main.roles.grantPermission')"
                          class="text-none ml-5"
                          prepend-icon="mdi-lock"
                          @click="openGrantPermDialog(currentRoleId)"
                          :loading="loadingStore.grantPerm"
-                  ></v-btn>
+                  />
                   <v-btn color="red"
-                         text="Delete Role"
+                         :text="t('main.roles.deleteRole')"
                          class="text-none ml-2"
                          prepend-icon="mdi-trash-can-outline"
                          @click="deleteRole(currentRoleId, idx)"
                          :loading="loadingStore.deleteRole"
-                  ></v-btn>
+                  />
                 </div>
               </v-layout>
             </div>
             <div v-else>
               <v-empty-state icon="mdi-alert-circle-outline"
-                             headline="Something error!"
-                             text="Failed to read lease information, please try again."
+                             :headline="t('main.roles.errorStateHeadline')"
+                             :text="t('main.roles.errorStateText')"
                              class="user-select-none"
-              ></v-empty-state>
+              />
             </div>
           </v-expansion-panel-text>
         </v-expansion-panel>
       </v-expansion-panels>
       <v-empty-state v-else
                      icon="mdi-package-variant"
-                     headline="No Roles"
+                     :headline="t('main.roles.emptyStateHeadline')"
                      class="user-select-none"
-      ></v-empty-state>
+      />
     </div>
 
     <!--  Add Role弹窗-->
@@ -352,30 +363,30 @@ const grantPerm = () => {
         width="400px"
         scrollable
     >
-      <v-card title="New Role">
+      <v-card :title="t('main.roles.addRole')">
         <v-card-text>
           <v-layout>
             <v-text-field v-model="newRoleDialog.role"
-                          label="Role Name"
+                          :label="t('main.roles.roleName')"
                           density="comfortable"
                           prepend-inner-icon="mdi-account"
-            ></v-text-field>
+            />
           </v-layout>
         </v-card-text>
         <v-card-actions>
-          <v-btn text="Cancel"
+          <v-btn :text="t('common.cancel')"
                  variant="text"
                  class="text-none"
                  @click="newRoleDialog.show = false"
-          ></v-btn>
+          />
 
-          <v-btn text="Commit"
+          <v-btn :text="t('common.commit')"
                  variant="flat"
                  class="text-none"
                  color="primary"
                  @click="newRole"
                  :loading="loadingStore.newRole"
-          ></v-btn>
+          />
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -387,67 +398,66 @@ const grantPerm = () => {
         width="700px"
         scrollable
     >
-      <v-card title="Grant Permission">
+      <v-card :title="t('main.roles.grantPermission')">
         <v-card-text>
           <v-layout class="mt-5">
-            <div class="inline-label input-label">Role:</div>
+            <div class="inline-label input-label">{{ t('main.roles.role') }}:</div>
             <v-text-field v-model="grantPermDialog.role"
                           density="comfortable"
                           prepend-inner-icon="mdi-account"
                           readonly
                           hide-details
                           width="400px"
-            ></v-text-field>
+            />
           </v-layout>
 
           <v-layout class="mt-5">
-            <div class="inline-label checkbox-label">Key Type:</div>
+            <div class="inline-label checkbox-label">{{ t('main.roles.keyType') }}:</div>
             <v-checkbox v-model="grantPermDialog.perm.allKeys"
-                        label="All Keys"
+                        :label="t('main.roles.allKeys')"
                         hide-details
-            ></v-checkbox>
+            />
             <v-checkbox v-model="grantPermDialog.perm.prefix"
-                        label="Prefix"
+                        :label="t('common.prefix')"
                         class="ml-5"
                         hide-details
-            ></v-checkbox>
+            />
           </v-layout>
 
           <v-layout class="mt-5" v-if="!grantPermDialog.perm.allKeys">
-            <div class="inline-label input-label">Key:</div>
+            <div class="inline-label input-label">{{ t('common.key') }}:</div>
             <v-text-field v-model="grantPermDialog.perm.key"
                           density="comfortable"
                           prepend-inner-icon="mdi-file-document"
-                          placeholder="Key path"
-                          hint="The key here is for the full path and is not related to the namespace of the current connection."
+                          :placeholder="t('main.roles.keyPlaceholder')"
+                          :hint="t('main.roles.keyHint')"
                           persistent-hint
                           width="500px"
                           clearable
-            ></v-text-field>
+            />
           </v-layout>
 
           <v-layout class="mt-5">
-            <div class="inline-label select-label">Permission:</div>
+            <div class="inline-label select-label">{{ t('main.roles.permission') }}:</div>
             <v-select :items="permissionSelections"
                       v-model="grantPermDialog.perm.permType"
-            >
-            </v-select>
+            />
           </v-layout>
         </v-card-text>
         <v-card-actions>
-          <v-btn text="Cancel"
+          <v-btn :text="t('common.cancel')"
                  variant="text"
                  class="text-none"
                  @click="grantPermDialog.show = false"
-          ></v-btn>
+          />
 
-          <v-btn text="Commit"
+          <v-btn :text="t('common.commit')"
                  variant="flat"
                  class="text-none"
                  color="primary"
                  @click="grantPerm"
                  :loading="loadingStore.grantPerm"
-          ></v-btn>
+          />
         </v-card-actions>
       </v-card>
     </v-dialog>

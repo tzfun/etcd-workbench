@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
 import {computed, onMounted, onUnmounted, PropType, reactive, ref, shallowRef, watch} from "vue";
-import {useLocale, useTheme} from "vuetify";
+import {useTheme} from "vuetify";
 import {EditorConfig, EditorHighlightLanguage, EditorSupportedHighlightLanguage} from "~/common/types.ts";
 import {EditorView} from "codemirror";
 import {
@@ -29,11 +29,12 @@ import {BuiltInParserName, LiteralUnion, Plugin} from "prettier";
 import {_isLinux, _isMac, _isWindows} from "~/common/windows.ts";
 import {Extension} from "@codemirror/state";
 import {getLanguage} from "~/components/editor/languages.ts";
+import {useI18n} from "vue-i18n";
 
 type ContentFormatType = 'text' | 'blob'
 type ConsoleType = 'info' | 'warn' | 'error' | 'none'
 
-const { t } = useLocale()
+const { t } = useI18n()
 const props = defineProps({
   config: {
     type: Object as PropType<EditorConfig>,

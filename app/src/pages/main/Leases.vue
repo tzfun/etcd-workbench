@@ -6,9 +6,9 @@ import {LeaseInfo} from "~/common/transport/kv.ts";
 import CountDownTimer from "~/components/CountDownTimer.vue";
 import {_confirmSystem, _copyToClipboard, _tipInfo, _tipWarn} from "~/common/events.ts";
 import {_isEmpty} from "~/common/utils.ts";
-import {useLocale} from "vuetify";
+import {useI18n} from "vue-i18n";
 
-const {t} = useLocale()
+const {t} = useI18n()
 const props = defineProps({
   session: {
     type: Object as PropType<SessionData>,

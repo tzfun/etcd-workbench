@@ -8,9 +8,9 @@ import {_byteTextFormat, _isEmpty} from "~/common/utils.ts";
 import {_alertError, _confirmSystem, _emitLocal, _tipSuccess, _tipWarn, EventName} from "~/common/events.ts";
 import {save} from "@tauri-apps/api/dialog";
 import {_getDownloadPath} from "~/common/windows.ts";
-import {useLocale} from "vuetify";
+import {useI18n} from "vue-i18n";
 
-const {t} = useLocale()
+const {t} = useI18n()
 const props = defineProps({
   session: {
     type: Object as PropType<SessionData>,

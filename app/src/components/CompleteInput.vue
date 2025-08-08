@@ -3,11 +3,11 @@
 import {onMounted, PropType, ref, watch} from "vue";
 import {_debounce} from "~/common/utils.ts";
 import {VListItem, VTextField} from "vuetify/components";
-import {useLocale} from "vuetify";
+import {useI18n} from "vue-i18n";
 
 type SearchFunc = (s: string) => Promise<string[]>;
 
-const {t} = useLocale()
+const {t} = useI18n()
 const props = defineProps({
   modelValue:{
     type: String,

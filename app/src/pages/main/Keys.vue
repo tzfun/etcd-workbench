@@ -5,7 +5,7 @@ import {EditorState, Extension} from "@codemirror/state";
 import {basicSetup, EditorView} from "codemirror";
 import {CodeDiff} from "v-code-diff";
 import {computed, nextTick, onMounted, onUnmounted, PropType, reactive, ref, watch} from "vue";
-import {useLocale, useTheme} from "vuetify";
+import {useTheme} from "vuetify";
 import {VTextField} from "vuetify/components";
 import {
   _alertError,
@@ -20,7 +20,8 @@ import {
   _tipSuccess,
   _tipWarn,
   _unListenLocal,
-  EventName, KVRenameDirEvent
+  EventName,
+  KVRenameDirEvent
 } from "~/common/events.ts";
 import {
   _deleteKV,
@@ -29,7 +30,8 @@ import {
   _getKV,
   _getKVByVersion,
   _getKVHistoryVersions,
-  _handleError, _kvRenameDir,
+  _handleError,
+  _kvRenameDir,
   _kvSearchNextDir,
   _putKV,
   _putKVWithLease,
@@ -61,8 +63,9 @@ import {Handler} from "mitt";
 import CompleteInput from "~/components/CompleteInput.vue";
 import {appWindow} from "@tauri-apps/api/window";
 import {_deepSearchTreeNodes, TreeNode} from "~/components/tree/types.ts";
+import {useI18n} from "vue-i18n";
 
-const {t} = useLocale()
+const {t} = useI18n()
 const theme = useTheme()
 const settings = _useSettings()
 

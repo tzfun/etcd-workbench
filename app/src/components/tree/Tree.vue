@@ -14,7 +14,7 @@ import {VCard} from "vuetify/components";
 import {appWindow} from "@tauri-apps/api/window";
 import {KeyExtendInfo} from "~/common/transport/kv.ts";
 import {TreeNode} from "~/components/tree/types.ts";
-import {useLocale} from "vuetify";
+import {useI18n} from "vue-i18n";
 
 const IDMark_A = "_a"
 
@@ -43,7 +43,7 @@ export type ContextmenuExtend = {
 
 export type Contextmenu = ContextmenuItem | ContextmenuExtend
 
-const {t} = useLocale()
+const {t} = useI18n()
 const appSettings = _useSettings()
 const emits = defineEmits(['on-click', 'on-click-remove', 'click:contextmenu'])
 const props = defineProps({

@@ -16,7 +16,7 @@ import {
 import {User} from "~/common/transport/user.ts";
 import {_confirmSystem, _emitLocal, _tipWarn, EventName} from "~/common/events.ts";
 import {_isEmpty, _shuffleArray} from "~/common/utils.ts";
-import {useLocale} from "vuetify";
+import {useI18n} from "vue-i18n";
 
 const colorList = [
   'red',
@@ -38,7 +38,7 @@ const colorList = [
   'blue-grey',
   'grey'
 ]
-const {t} = useLocale()
+const {t} = useI18n()
 const props = defineProps({
   session: {
     type: Object as PropType<SessionData>,

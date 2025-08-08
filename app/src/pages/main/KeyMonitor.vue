@@ -10,13 +10,14 @@ import {
   _tryParseEditorLanguage
 } from "~/common/utils.ts";
 import {CodeDiff} from "v-code-diff";
-import {useLocale, useTheme} from "vuetify";
+import {useTheme} from "vuetify";
 import {_handleError, _removeKeyMonitor, _setKeyMonitor} from "~/common/services.ts";
 import {EditorHighlightLanguage} from "~/common/types";
 import {KeyValue} from "~/common/transport/kv.ts";
+import {useI18n} from "vue-i18n";
 
 const theme = useTheme()
-const {t} = useLocale()
+const {t} = useI18n()
 
 const valueDiffDialog = reactive({
   show: false,
