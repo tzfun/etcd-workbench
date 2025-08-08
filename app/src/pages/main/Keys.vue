@@ -1978,11 +1978,3 @@ $--load-more-area-height: 32px;
   }
 }
 </style>
-
-<style lang="scss">
-.editor-header {
-  .v-btn {
-    line-height: inherit;
-  }
-}
-</style>

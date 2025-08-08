@@ -49,6 +49,14 @@ export default {
         success: "成功",
         omit: "省略",
         warning: "警告",
+        key: "键",
+        prefix: "前缀",
+        yes: "是",
+        no: "否",
+        paused: "已暂停",
+        running: "运行中",
+        start: "启动",
+        stop: "停止",
     },
     feedback: {
         copyError: "无法写入剪切板",
@@ -237,6 +245,22 @@ export default {
             putAnywayConfirm: "确认将版本 <strong style=\"color: #CDDC39;\">{version}</strong> 更新为最新？",
             pathNameNotChanged: "路径名未发生变化",
             renameFailed: "重命名失败：前缀路径下的键数量 ({count}) 超过设置的上限，请在设置中调整此上线。"
+        },
+        monitor: {
+            markAllRead: "标记全部已读",
+            clearHistory: "清除记录",
+            myMonitors: "我的监视器",
+            created: "创建",
+            removed: "删除",
+            valueChanged: "值变更",
+            fromMonitor: "来自监视器",
+            emptyStateHeadline: "暂无监视事件通知",
+            diffBefore: "变更前",
+            diffAfter: "变更后",
+            watchStatus: "监视状态",
+            search: "搜索监视器",
+            confirmClearHistory: "确认要清除所有监视事件记录？",
+            confirmRemoveMonitor: "确认要移除此监视器？",
         }
     },
     setting: {

@@ -207,3 +207,11 @@ button {
 .editor-item-label {
   font-size: 0.9em;
 }
+
+.v-btn--size-small {
+  line-height: inherit !important;
+
+  .v-icon {
+    --v-icon-size-multiplier: 1 !important;
+  }
+}

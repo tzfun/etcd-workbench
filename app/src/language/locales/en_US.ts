@@ -49,6 +49,14 @@ export default {
         success: "Success",
         omit: "Omit",
         warning: "Warning",
+        key: "Key",
+        prefix: "Prefix",
+        yes: "Yes",
+        no: "No",
+        paused: "Paused",
+        running: "Running",
+        start: "Start",
+        stop: "Stop",
     },
     feedback: {
         copyError:"Can not write to clipboard",
@@ -236,6 +244,22 @@ export default {
             putAnywayConfirm: "Are you sure you want to put the content of version <strong style=\"color: #CDDC39;\">{version}</strong> to the latest?",
             pathNameNotChanged: "The path name has not changed",
             renameFailed: "Rename failed: prefix key count ({count}) exceeds limit. Adjust in Settings."
+        },
+        monitor: {
+            markAllRead: "Mark All Read",
+            clearHistory: "Clear History",
+            myMonitors: "My Monitors",
+            created: "Created",
+            removed: "Removed",
+            valueChanged: "Value Changed",
+            fromMonitor: "From monitor",
+            emptyStateHeadline: "No Notification",
+            diffBefore: "Before",
+            diffAfter: "After",
+            watchStatus: "Watching Status",
+            search: "Type to search",
+            confirmClearHistory: "Are you sure you want to clear all history?",
+            confirmRemoveMonitor: "Are you sure you want to remove this monitor?",
         }
     },
     setting: {

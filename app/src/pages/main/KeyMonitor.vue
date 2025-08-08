@@ -10,12 +10,13 @@ import {
   _tryParseEditorLanguage
 } from "~/common/utils.ts";
 import {CodeDiff} from "v-code-diff";
-import {useTheme} from "vuetify";
+import {useLocale, useTheme} from "vuetify";
 import {_handleError, _removeKeyMonitor, _setKeyMonitor} from "~/common/services.ts";
 import {EditorHighlightLanguage} from "~/common/types";
 import {KeyValue} from "~/common/transport/kv.ts";
 
 const theme = useTheme()
+const {t} = useLocale()
 
 const valueDiffDialog = reactive({
   show: false,
@@ -26,7 +27,6 @@ const valueDiffDialog = reactive({
   beforeKv: <KeyValue | undefined> undefined,
   afterKv: <KeyValue | undefined> undefined,
 })
-
 const props = defineProps({
   session: {
     type: Object as PropType<SessionData>,
@@ -106,7 +106,7 @@ const read = (e: KeyWatchEvent) => {
 }
 
 const clearHistory = () => {
-  _confirmSystem("Are you sure you want to clear all history?").then(() => {
+  _confirmSystem(t('main.monitor.confirmClearHistory')).then(() => {
     let len = props.events?.length
     if (len > 0) {
       props.events?.splice(0, len)
@@ -117,19 +117,21 @@ const clearHistory = () => {
 }
 
 const removeMonitor = (key: string) => {
-  _removeKeyMonitor(props.session?.id, key).then(() => {
-    delete props.session!.keyMonitorMap![key]
-    _emitLocal(EventName.KEY_MONITOR_CONFIG_CHANGE, {
-      session: props.session?.id,
-      key: key,
-      type: 'remove'
+  _confirmSystem(t('main.monitor.confirmRemoveMonitor')).then(() => {
+    _removeKeyMonitor(props.session?.id, key).then(() => {
+      delete props.session!.keyMonitorMap![key]
+      _emitLocal(EventName.KEY_MONITOR_CONFIG_CHANGE, {
+        session: props.session?.id,
+        key: key,
+        type: 'remove'
+      })
+    }).catch((e) => {
+      _handleError({
+        e,
+        session: props.session
+      })
     })
-  }).catch((e) => {
-    _handleError({
-      e,
-      session: props.session
-    })
-  })
+  }).catch(() => {})
 }
 
 const editKeyMonitor = (key: string) => {
@@ -179,21 +181,21 @@ const addMonitor = () => {
              :disabled="events.length == 0"
              @click="markAllRead"
              color="primary"
-      >Mark All Read
-      </v-btn>
+             :text="t('main.monitor.markAllRead')"
+      />
       <v-btn class="text-none ml-2"
              prepend-icon="mdi-delete-circle-outline"
              :disabled="events.length == 0"
              @click="clearHistory"
              color="red"
-      >Clear History
-      </v-btn>
+             :text="t('main.monitor.clearHistory')"
+      />
       <v-btn class="text-none ml-2"
              prepend-icon="mdi-robot"
              @click="monitorListDialog = true"
              color="#cc8f53"
-      >My Monitors
-      </v-btn>
+             :text="t('main.monitor.myMonitors')"
+      />
 
       <v-spacer/>
 
@@ -230,21 +232,20 @@ const addMonitor = () => {
             </template>
 
             <template #append>
-              <span v-if="e.eventType == 'Create'" class="text-medium-emphasis">Created</span>
-              <span v-else-if="e.eventType == 'Remove'" class="text-medium-emphasis">Removed</span>
-              <span v-else-if="e.eventType == 'Modify'" class="text-medium-emphasis">Value Changed</span>
+              <span v-if="e.eventType == 'Create'" class="text-medium-emphasis">{{ t('main.monitor.created') }}</span>
+              <span v-else-if="e.eventType == 'Remove'" class="text-medium-emphasis">{{ t('main.monitor.removed') }}</span>
+              <span v-else-if="e.eventType == 'Modify'" class="text-medium-emphasis">{{ t('main.monitor.valueChanged') }}</span>
 
               <v-tooltip location="end center"
                          origin="start center"
                          no-click-animation
-                         :text="`From monitor: ${e.key}`">
+                         :text="`${t('main.monitor.fromMonitor')}: ${e.key}`">
                 <template v-slot:activator="{ props }">
                   <v-icon color="green"
                           v-bind="props"
                           class="ml-2"
                           size="small"
-                  >mdi-robot
-                  </v-icon>
+                  >mdi-robot</v-icon>
                 </template>
               </v-tooltip>
             </template>
@@ -254,9 +255,9 @@ const addMonitor = () => {
 
       <v-empty-state v-else
                      icon="mdi-package-variant"
-                     headline="No Notification"
+                     :headline="t('main.monitor.emptyStateHeadline')"
                      class="user-select-none"
-      ></v-empty-state>
+      />
     </div>
 
     <!--    Diff弹窗  -->
@@ -277,35 +278,36 @@ const addMonitor = () => {
         <v-card-text>
           <v-layout class="diff-kv-info">
             <div>{{ valueDiffDialog.beforeKv!.lease }}</div>
-            <v-spacer></v-spacer>
-            <span class="text-medium-emphasis">Lease</span>
-            <v-spacer></v-spacer>
+            <v-spacer/>
+            <span class="text-medium-emphasis">{{ t('common.lease') }}</span>
+            <v-spacer/>
             <div>{{ valueDiffDialog.afterKv!.lease }}</div>
           </v-layout>
           <v-layout class="diff-kv-info">
             <div>{{ valueDiffDialog.beforeKv!.version }}</div>
-            <v-spacer></v-spacer>
-            <span class="text-medium-emphasis">Version</span>
-            <v-spacer></v-spacer>
+            <v-spacer/>
+            <span class="text-medium-emphasis">{{ t('common.version') }}</span>
+            <v-spacer/>
             <div>{{ valueDiffDialog.afterKv!.version }}</div>
           </v-layout>
           <v-layout class="diff-kv-info">
             <div>{{ valueDiffDialog.beforeKv!.modRevision }}</div>
-            <v-spacer></v-spacer>
-            <span class="text-medium-emphasis">Modify Revision</span>
-            <v-spacer></v-spacer>
+            <v-spacer/>
+            <span class="text-medium-emphasis">{{ t('main.keys.modifyRevision') }}</span>
+            <v-spacer/>
             <div>{{ valueDiffDialog.afterKv!.modRevision }}</div>
           </v-layout>
 
           <code-diff
               style="max-height: 60vh;min-height: 40vh;"
               :old-string="valueDiffDialog.beforeValue"
-              filename="Before"
+              :filename="t('main.monitor.diffBefore')"
               :new-string="valueDiffDialog.afterValue"
-              new-filename="After"
+              :new-filename="t('main.monitor.diffAfter')"
               :theme="isDarkTheme ? 'dark' : 'light'"
               :language="valueDiffDialog.language"
-              output-format="side-by-side"/>
+              output-format="side-by-side"
+          />
         </v-card-text>
       </v-card>
     </v-dialog>
@@ -322,7 +324,7 @@ const addMonitor = () => {
 
       <v-card
           :rounded="false"
-          title="My Monitors"
+          :title="t('main.monitor.myMonitors')"
       >
         <template #prepend>
           <v-icon color="#cc8f53">mdi-robot</v-icon>
@@ -330,11 +332,11 @@ const addMonitor = () => {
         <template #append>
           <v-btn @click="addMonitor"
                  color="primary"
-                 text="Add"
+                 :text="t('common.add')"
                  density="comfortable"
                  class="text-none"
                  prepend-icon="mdi-plus"
-          ></v-btn>
+          />
         </template>
         <v-card-item style="height: calc(100% - 64px);">
           <div class="full-width full-height overflow-y-auto" style="height: 100%;">
@@ -342,25 +344,25 @@ const addMonitor = () => {
               <thead>
               <tr>
                 <th class="key-col text-left font-weight-bold">
-                  Key
+                  {{ t('common.key') }}
                 </th>
                 <th class="prefix-col text-left font-weight-bold">
-                  Prefix
+                  {{ t('common.prefix') }}
                 </th>
                 <th class="status-col text-left font-weight-bold">
-                  Watch Status
+                  {{ t('main.monitor.watchStatus') }}
                 </th>
                 <th class="op-col text-left">
                   <v-text-field
                       v-model="searchKeyword"
                       density="compact"
-                      label="Search"
+                      :label="t('main.monitor.search')"
                       prepend-inner-icon="mdi-magnify"
                       variant="solo-filled"
                       flat
                       hide-details
                       single-line
-                  ></v-text-field>
+                  />
                 </th>
               </tr>
               </thead>
@@ -375,18 +377,15 @@ const addMonitor = () => {
                       size="small"
                       color="success"
                       variant="outlined"
-                  >
-                    Yes
-                  </v-chip>
+                      :text="t('common.yes')"
+                  />
                   <v-chip
                       v-else
                       size="small"
                       color="secondary"
                       variant="outlined"
-                  >
-                    No
-                  </v-chip>
-
+                      :text="t('common.no')"
+                  />
                 </td>
                 <td class="status-col">
                   <v-chip
@@ -396,8 +395,8 @@ const addMonitor = () => {
                       variant="outlined"
                       style="width: 78px;"
                   >
-                    <v-icon icon="mdi-robot-dead-outline" start></v-icon>
-                    Paused
+                    <v-icon icon="mdi-robot-dead-outline" start/>
+                    {{ t('common.paused') }}
                   </v-chip>
                   <v-chip
                       v-else
@@ -406,32 +405,32 @@ const addMonitor = () => {
                       variant="outlined"
                       style="width: 78px;"
                   >
-                    <v-icon icon="mdi-robot-happy" start></v-icon>
-                    Running
+                    <v-icon icon="mdi-robot-happy" start/>
+                    {{ t('common.running') }}
                   </v-chip>
                 </td>
                 <td class="op-col">
-                  <v-btn text="Edit"
+                  <v-btn :text="t('common.edit')"
                          color="primary"
                          class="text-none"
                          size="small"
                          prepend-icon="mdi-pencil"
                          @click="editKeyMonitor(monitor.key)"
-                  ></v-btn>
-                  <v-btn :text="monitor.paused ? 'Start' : 'Stop'"
+                  />
+                  <v-btn :text="monitor.paused ? t('common.start') : t('common.stop')"
                          :color="monitor.paused ? 'yellow' : 'green'"
                          class="text-none ml-2"
                          size="small"
                          :prepend-icon="monitor.paused ? 'mdi-play-circle-outline' : 'mdi-stop-circle-outline'"
                          @click="pauseMonitor(monitor, !monitor.paused)"
-                  ></v-btn>
-                  <v-btn text="Remove"
+                  />
+                  <v-btn :text="t('common.delete')"
                          color="red"
                          class="text-none ml-2"
                          size="small"
-                         prepend-icon="mdi-delete"
+                         prepend-icon="mdi-trash-can-outline"
                          @click="removeMonitor(monitor.key)"
-                  ></v-btn>
+                  />
                 </td>
               </tr>
               </tbody>
