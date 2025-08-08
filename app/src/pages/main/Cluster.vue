@@ -627,7 +627,7 @@ const loadMetrics = ():Promise<Array<string[]>> => {
 <style scoped lang="scss">
 .info-item {
 
-  $--info-label-width: 130px;
+  $--info-label-width: 180px;
 
   .info-label {
     width: $--info-label-width;

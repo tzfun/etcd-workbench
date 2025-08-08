@@ -19,6 +19,7 @@ import WorkbenchLogo from "~/components/WorkbenchLogo.vue";
 import {_checkUpdate} from "~/common/updater.ts";
 import {AllAppLanguages, AppLanguage} from "~/language";
 import {useI18n} from "vue-i18n";
+import {trackEvent} from "~/common/analytics.ts";
 
 const theme = useTheme()
 const {t, locale } = useI18n()
@@ -160,6 +161,11 @@ onMounted(async () => {
       console.debug("'kvPathSplitter' must be a single char",setting.kvPathSplitter)
       return;
     }
+
+    trackEvent("set_lang", {
+      lang: setting.language
+    }).then(() => {
+    })
     _setLocalSettings(setting)
     _emitGlobal(EventName.SETTING_UPDATE, setting)
     setAppLanguage(setting.language)

@@ -449,7 +449,6 @@ defineExpose({
                 <div class="form-input">
                   <v-text-field
                       v-model="formData.namespace"
-                      :rules="formRules.namespace"
                       density="comfortable"
                       :placeholder="t('main.home.connector.form.namespacePlaceholder')"
                   ></v-text-field>

@@ -733,48 +733,52 @@ const editorSave = () => {
 
 const saveKV = () => {
   let kv = currentKv.value
-  if (editorRef.value && kv) {
-    const doSave = () => {
-      if (settings.value.kvConfirmDiffBeforeSave) {
-        saveDiffDialog.key = kv!.key
-        saveDiffDialog.keyInfo = kv as KeyExtendInfo
-        let value: number[] = editorRef.value!.readDataBytes()
-        saveDiffDialog.beforeContent = _decodeBytesToString(kv!.value)
-        saveDiffDialog.afterContent = _decodeBytesToString(value)
+  if (!editorRef.value || !kv) {
+    return
+  }
+  const doSave = () => {
+    if (settings.value.kvConfirmDiffBeforeSave) {
+      saveDiffDialog.key = kv!.key
+      saveDiffDialog.keyInfo = kv as KeyExtendInfo
+      let value: number[] = editorRef.value!.readDataBytes()
+      saveDiffDialog.beforeContent = _decodeBytesToString(kv!.value)
+      saveDiffDialog.afterContent = _decodeBytesToString(value)
 
-        let lang = _tryParseEditorLanguage(
-            saveDiffDialog.key,
-            saveDiffDialog.afterContent,
-            kv!.formattedValue,
-            props.session?.namespace
-        )
-        versionDiffInfo.language = _tryParseDiffLanguage(lang)
+      let lang = _tryParseEditorLanguage(
+          saveDiffDialog.key,
+          saveDiffDialog.afterContent,
+          kv!.formattedValue,
+          props.session?.namespace
+      )
+      versionDiffInfo.language = _tryParseDiffLanguage(lang)
 
-        saveDiffDialog.show = true
-      } else {
-        doSaveKV()
-      }
+      saveDiffDialog.show = true
+    } else {
+      doSaveKV()
     }
-    if (settings.value.kvCheckFormatBeforeSave) {
-      editorRef.value.tryFormatContent().then(() => {
+  }
+  if (settings.value.kvCheckFormatBeforeSave) {
+    editorRef.value.tryFormatContent().then(() => {
+      doSave()
+    }).catch(() => {
+      _confirm(t('common.warning'), t('main.keys.formatCheckConfirm')).then(() => {
         doSave()
       }).catch(() => {
-        _confirm(t('common.warning'), t('main.keys.formatCheckConfirm')).then(() => {
-          doSave()
-        }).catch(() => {
-        })
       })
-    } else {
-      doSave()
-    }
+    })
+  } else {
+    doSave()
   }
 }
 
 const doSaveKV = () => {
   let kv = currentKv.value
+  if (!editorRef.value || !kv) {
+    return
+  }
   let value: number[] = editorRef.value!.readDataBytes()
   loadingStore.save = true
-  _putKV(props.session?.id, kv!.key, value, kv!.version).then((result) => {
+  _putKV(props.session?.id, kv.key, value, kv.version).then((result) => {
     if (result.success) {
       currentKvChanged.value = false
       result.finalKv!.value = value
