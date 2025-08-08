@@ -264,7 +264,10 @@ export default {
             deleteKeyConfirm: "請確認永久刪除鍵：",
             putAnywayConfirm: "確認將版本 <strong style=\"color: #CDDC39;\">{version}</strong> 更新為最新？",
             pathNameNotChanged: "路徑名稱未發生變化",
-            renameFailed: "重新命名失敗：前綴路徑下的鍵數量 ({count}) 超過設定的上限，請在設定中調整此上限。"
+            renameFailed: "重新命名失敗：前綴路徑下的鍵數量 ({count}) 超過設定的上限，請在設定中調整此上限。",
+            confirmDiffTitle: "請確認此次修改變化",
+            confirmDiffBefore: "修改之前",
+            confirmDiffAfter: "修改之後",
         },
         monitor: {
             markAllRead: "標記全部已讀",
@@ -384,6 +387,8 @@ export default {
         searchDirInTreeDesc: "開啟後將會在搜尋樹節點時比對目錄名，關閉則只比對鍵。",
         checkFormatBeforeSave: "儲存前檢查格式",
         checkFormatBeforeSaveDesc: "在每次儲存鍵之前檢查格式是否正確",
+        confirmDiffBeforeSave: "保存前確認變化",
+        confirmDiffBeforeSaveDesc: "保存之前進行修改對比確認緊",
         editorTheme: "編輯器佈景主題",
         editorThemeDesc: "設定編輯器佈景主題顏色",
         editorLightTheme: "淺色佈景主題",

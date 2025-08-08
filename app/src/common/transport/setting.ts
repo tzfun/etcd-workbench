@@ -23,6 +23,8 @@ export interface SettingConfig {
     kvLimitPerPage: number | string,
     //  KV保存之前是否检查格式
     kvCheckFormatBeforeSave: boolean,
+    //  KV保存之前是否进行差异确认
+    kvConfirmDiffBeforeSave: boolean,
     kvTreeSearchWithFolder: boolean,
     //  KV搜索下一级目录时所需查询的Keys数量限制
     kvSearchNextDirLimit: number,
@@ -63,6 +65,7 @@ export const DEFAULT_SETTING_CONFIG: SettingConfig = {
     kvPaginationQuery: true,
     kvLimitPerPage: 2000,
     kvCheckFormatBeforeSave: true,
+    kvConfirmDiffBeforeSave: false,
     kvTreeSearchWithFolder: true,
     kvSearchNextDirLimit: 100,
     kvDirRenameKeysLimit: 100,

@@ -29,6 +29,9 @@ pub struct SettingConfig {
     /// KV保存之前是否检查格式
     #[serde(default = "default_kv_check_format_before_save")]
     pub kv_check_format_before_save: bool,
+    /// KV保存之前是否差异确认
+    #[serde(default = "default_kv_confirm_diff_before_save")]
+    pub kv_confirm_diff_before_save: bool,
     /// KV树状搜索是否包含文件夹
     #[serde(default = "default_kv_tree_search_with_folder")]
     pub kv_tree_search_with_folder: bool,
@@ -92,6 +95,10 @@ fn default_kv_check_format_before_save() -> bool {
     true
 }
 
+fn default_kv_confirm_diff_before_save() -> bool {
+    false
+}
+
 fn default_kv_tree_search_with_folder() -> bool {
     true
 }
@@ -139,6 +146,7 @@ impl Default for SettingConfig {
             kv_pagination_query: true,
             kv_limit_per_page: default_kv_limit_per_page(),
             kv_check_format_before_save: default_kv_check_format_before_save(),
+            kv_confirm_diff_before_save: default_kv_confirm_diff_before_save(),
             kv_tree_search_with_folder: default_kv_tree_search_with_folder(),
             kv_search_next_dir_limit: default_kv_search_next_dir_limit(),
             kv_dir_rename_keys_limit: default_kv_dir_rename_keys_limit(),

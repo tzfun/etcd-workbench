@@ -657,6 +657,25 @@ const checkUpdate = () => {
               </v-layout>
 
               <v-divider class="mt-5 mb-5"></v-divider>
+              <v-layout>
+                <div>
+                  <div class="form-label text-high-emphasis">{{ t('setting.confirmDiffBeforeSave') }}</div>
+                  <div class="v-messages">{{ t('setting.confirmDiffBeforeSaveDesc') }}</div>
+                </div>
+                <v-spacer></v-spacer>
+                <div>
+                  <v-switch
+                      v-model="settingForm.kvConfirmDiffBeforeSave"
+                      inset
+                      density="compact"
+                      color="primary"
+                      hide-details
+                      true-icon="mdi-check"
+                  />
+                </div>
+              </v-layout>
+
+              <v-divider class="mt-5 mb-5"></v-divider>
 
               <p class="mt-5 user-select-none">{{ t('setting.editorTheme') }}</p>
               <p class="v-messages">{{ t('setting.editorThemeDesc') }}</p>

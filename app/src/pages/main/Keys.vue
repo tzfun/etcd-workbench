@@ -180,6 +180,15 @@ const versionDiffInfo = reactive({
   useFormattedValue: false,
 })
 
+const saveDiffDialog = reactive({
+  show: false,
+  key: '',
+  keyInfo: <KeyExtendInfo | null>null,
+  language: 'plaintext',
+  beforeContent: '',
+  afterContent: '',
+})
+
 const searchDialog = reactive({
   show: false,
   inputValue: "",
@@ -725,39 +734,27 @@ const editorSave = () => {
 const saveKV = () => {
   let kv = currentKv.value
   if (editorRef.value && kv) {
-    let doSave = () => {
-      let value: number[] = editorRef.value!.readDataBytes()
-      loadingStore.save = true
-      _putKV(props.session?.id, kv!.key, value, kv!.version).then((result) => {
-        if (result.success) {
-          currentKvChanged.value = false
-          result.finalKv!.value = value
-          currentKv.value = result.finalKv
-        } else {
-          putMergeDialog.request.key = kv!.key
-          putMergeDialog.request.value = editorRef.value!.readDataString()
-          putMergeDialog.request.ttl = undefined
-          putMergeDialog.existValue = _decodeBytesToString(result.existValue!)
-          putMergeDialog.existVersion = result.existVersion!
-          putMergeDialog.successCallback = (finalKv: KeyValue, value: number[]) => {
-            currentKvChanged.value = false
-            finalKv.value = value
-            currentKv.value = finalKv
-          }
-          putMergeDialog.failedCallback = undefined
-          putMergeDialog.show = true
-          renderMergeViewEditor()
-        }
-      }).catch(e => {
-        _handleError({
-          e,
-          session: props.session
-        })
-      }).finally(() => {
-        loadingStore.save = false
-      })
-    }
+    const doSave = () => {
+      if (settings.value.kvConfirmDiffBeforeSave) {
+        saveDiffDialog.key = kv!.key
+        saveDiffDialog.keyInfo = kv as KeyExtendInfo
+        let value: number[] = editorRef.value!.readDataBytes()
+        saveDiffDialog.beforeContent = _decodeBytesToString(kv!.value)
+        saveDiffDialog.afterContent = _decodeBytesToString(value)
 
+        let lang = _tryParseEditorLanguage(
+            saveDiffDialog.key,
+            saveDiffDialog.afterContent,
+            kv!.formattedValue,
+            props.session?.namespace
+        )
+        versionDiffInfo.language = _tryParseDiffLanguage(lang)
+
+        saveDiffDialog.show = true
+      } else {
+        doSaveKV()
+      }
+    }
     if (settings.value.kvCheckFormatBeforeSave) {
       editorRef.value.tryFormatContent().then(() => {
         doSave()
@@ -771,6 +768,40 @@ const saveKV = () => {
       doSave()
     }
   }
+}
+
+const doSaveKV = () => {
+  let kv = currentKv.value
+  let value: number[] = editorRef.value!.readDataBytes()
+  loadingStore.save = true
+  _putKV(props.session?.id, kv!.key, value, kv!.version).then((result) => {
+    if (result.success) {
+      currentKvChanged.value = false
+      result.finalKv!.value = value
+      currentKv.value = result.finalKv
+    } else {
+      putMergeDialog.request.key = kv!.key
+      putMergeDialog.request.value = editorRef.value!.readDataString()
+      putMergeDialog.request.ttl = undefined
+      putMergeDialog.existValue = _decodeBytesToString(result.existValue!)
+      putMergeDialog.existVersion = result.existVersion!
+      putMergeDialog.successCallback = (finalKv: KeyValue, value: number[]) => {
+        currentKvChanged.value = false
+        finalKv.value = value
+        currentKv.value = finalKv
+      }
+      putMergeDialog.failedCallback = undefined
+      putMergeDialog.show = true
+      renderMergeViewEditor()
+    }
+  }).catch(e => {
+    _handleError({
+      e,
+      session: props.session
+    })
+  }).finally(() => {
+    loadingStore.save = false
+  })
 }
 
 const loadVersionDiff = (key: string, info?: KeyExtendInfo) => {
@@ -1576,6 +1607,55 @@ const renameDirLogScrollToBottom = () => {
           />
         </v-card-text>
       </v-card>
+    </v-dialog>
+
+    <!--  保存Diff确认弹窗  -->
+    <v-dialog
+        v-model="saveDiffDialog.show"
+        persistent
+        max-width="1200px"
+        scrollable
+        style="z-index:1200;"
+    >
+      <v-card :min-width="500" :title="t('main.keys.confirmDiffTitle')">
+        <v-card-text>
+          <code-diff
+              style="max-height: 60vh;min-height: 40vh;"
+              :old-string="saveDiffDialog.beforeContent"
+              :filename="t('main.keys.confirmDiffBefore')"
+              :new-string="saveDiffDialog.afterContent"
+              :new-filename="t('main.keys.confirmDiffAfter')"
+              :theme="isDarkTheme ? 'dark' : 'light'"
+              :language="saveDiffDialog.language"
+              output-format="side-by-side"
+          />
+        </v-card-text>
+
+        <v-card-actions>
+          <v-btn
+              :text="t('common.cancel')"
+              variant="text"
+              class="text-none"
+              @click="() => {
+                saveDiffDialog.show = false;
+                saveDiffDialog.beforeContent = '';
+                saveDiffDialog.afterContent = '';
+              }"
+          />
+
+          <v-btn
+              :text="t('common.commit')"
+              variant="flat"
+              class="text-none"
+              color="primary"
+              @click="() => {
+                saveDiffDialog.show = false;
+                doSaveKV();
+              }"
+          />
+        </v-card-actions>
+      </v-card>
+
     </v-dialog>
 
     <!--  Add Key弹窗-->

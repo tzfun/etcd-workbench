@@ -264,7 +264,10 @@ export default {
             deleteKeyConfirm: "以下のキーを完全に削除しますか？: ",
             putAnywayConfirm: "バージョン <strong style=\"color: #CDDC39;\">{version}</strong> を最新に更新しますか？",
             pathNameNotChanged: "パス名に変更なし",
-            renameFailed: "名前変更失敗：プレフィックスパス配下のキー数 ({count}) が上限を超過。設定で上限値を調整してください。"
+            renameFailed: "名前変更失敗：プレフィックスパス配下のキー数 ({count}) が上限を超過。設定で上限値を調整してください。",
+            confirmDiffTitle: "この変更を確認してください",
+            confirmDiffBefore: "変更前",
+            confirmDiffAfter: "変更後",
         },
         monitor: {
             markAllRead: "全て既読にする",
@@ -384,6 +387,8 @@ export default {
         searchDirInTreeDesc: "有効時：ツリーノード検索でディレクトリ名を一致。無効時：キーのみ一致。",
         checkFormatBeforeSave: "保存前に形式をチェック",
         checkFormatBeforeSaveDesc: "キー保存前に形式が正しいかチェック",
+        confirmDiffBeforeSave: "保存前に変更を確認する",
+        confirmDiffBeforeSaveDesc: "保存する前に変更を比較して確認する",
         editorTheme: "エディターテーマ",
         editorThemeDesc: "エディターのテーマカラー設定",
         editorLightTheme: "ライトテーマ",

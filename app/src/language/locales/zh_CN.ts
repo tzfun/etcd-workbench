@@ -264,7 +264,10 @@ export default {
             deleteKeyConfirm: "请确认永久删除键：",
             putAnywayConfirm: "确认将版本 <strong style=\"color: #CDDC39;\">{version}</strong> 更新为最新？",
             pathNameNotChanged: "路径名未发生变化",
-            renameFailed: "重命名失败：前缀路径下的键数量 ({count}) 超过设置的上限，请在设置中调整此上线。"
+            renameFailed: "重命名失败：前缀路径下的键数量 ({count}) 超过设置的上限，请在设置中调整此上线。",
+            confirmDiffTitle: "请确认此次修改变化",
+            confirmDiffBefore: "修改之前",
+            confirmDiffAfter: "修改之后",
         },
         monitor: {
             markAllRead: "标记全部已读",
@@ -384,6 +387,8 @@ export default {
         searchDirInTreeDesc: "开启后将会在搜索树节点时匹配目录名，关闭则只匹配键。",
         checkFormatBeforeSave: "保存前检查格式",
         checkFormatBeforeSaveDesc: "在每次保存键之前检查格式是否正确",
+        confirmDiffBeforeSave: "保存前确认变化",
+        confirmDiffBeforeSaveDesc: "在保存之前进行修改对比确认",
         editorTheme: "编辑器主题",
         editorThemeDesc: "设置编辑器主题颜色",
         editorLightTheme: "亮色主题",
