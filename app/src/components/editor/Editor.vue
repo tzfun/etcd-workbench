@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
 import {computed, onMounted, onUnmounted, PropType, reactive, ref, shallowRef, watch} from "vue";
-import {useTheme} from "vuetify";
+import {useLocale, useTheme} from "vuetify";
 import {EditorConfig, EditorHighlightLanguage, EditorSupportedHighlightLanguage} from "~/common/types.ts";
 import {EditorView} from "codemirror";
 import {
@@ -33,6 +33,7 @@ import {getLanguage} from "~/components/editor/languages.ts";
 type ContentFormatType = 'text' | 'blob'
 type ConsoleType = 'info' | 'warn' | 'error' | 'none'
 
+const { t } = useLocale()
 const props = defineProps({
   config: {
     type: Object as PropType<EditorConfig>,
@@ -360,7 +361,7 @@ defineExpose({
     <v-divider></v-divider>
     <div class="footer">
       <slot name="footer"></slot>
-      <span class="editor-footer-item"><strong>Size</strong>: {{ size }}</span>
+      <span class="editor-footer-item"><strong class="editor-item-label">{{ t('common.size') }}</strong>: {{ size }}</span>
       <span class="editor-footer-item">
         <span class="text-primary cursor-pointer user-select-none"
               @click="showLanguageSelection = !showLanguageSelection"

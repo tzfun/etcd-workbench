@@ -1253,7 +1253,7 @@ const renameDirLogScrollToBottom = () => {
       <v-tooltip
           v-if="session.namespace"
           location="top"
-          :text="t('main.home.connector.namespace')"
+          :text="t('main.home.connector.form.namespace')"
       >
         <template v-slot:activator="{ props }">
           <v-chip v-bind="props"
@@ -1370,7 +1370,7 @@ const renameDirLogScrollToBottom = () => {
                       density="compact"
                       :title="t('main.keys.addMonitorBtnTitle')"
                       @click="addKeyMonitor(currentKv.key, false, currentKv.keyEncodedUtf8)"
-                      :text="t('common.add')"
+                      :text="t('main.keys.monitor')"
               >
                 <template #prepend>
                   <v-icon color="#cc8f53" class="mr-2">mdi-robot-outline</v-icon>
@@ -1464,18 +1464,18 @@ const renameDirLogScrollToBottom = () => {
                     </v-tooltip>
                   </span>
                   <v-spacer></v-spacer>
-                  <span class="editor-footer-item"><strong>{{t('common.version')}}}</strong>: {{ currentKv.version }}</span>
+                  <span class="editor-footer-item"><strong class="editor-item-label">{{t('common.version')}}</strong>: {{ currentKv.version }}</span>
                   <span class="editor-footer-item cursor-pointer"
-                        @click="_copyToClipboard(currentKv.createRevision)"><strong>{{t('main.keys.createRevision')}}</strong>: {{
+                        @click="_copyToClipboard(currentKv.createRevision)"><strong class="editor-item-label">{{t('main.keys.createRevision')}}</strong>: {{
                       currentKv.createRevision
                     }}</span>
                   <span class="editor-footer-item cursor-pointer"
                         @click="_copyToClipboard(currentKv.modRevision)">
-                    <strong>{{t('main.keys.modifyRevision')}}</strong>: {{currentKv.modRevision }}</span>
+                    <strong class="editor-item-label">{{t('main.keys.modifyRevision')}}</strong>: {{currentKv.modRevision }}</span>
                   <span class="editor-footer-item cursor-pointer"
                         @click="_copyToClipboard(currentKv.lease)"
                         v-if="currentKv.lease != '0'">
-                    <strong>{{t('common.lease')}}</strong>: {{ currentKv.lease }}</span>
+                    <strong class="editor-item-label">{{t('common.lease')}}</strong>: {{ currentKv.lease }}</span>
                 </template>
               </editor>
             </div>
@@ -1975,6 +1975,14 @@ $--load-more-area-height: 32px;
     cursor: default;
     height: $--load-more-area-height;
     line-height: $--load-more-area-height;
+  }
+}
+</style>
+
+<style lang="scss">
+.editor-header {
+  .v-btn {
+    line-height: inherit;
   }
 }
 </style>

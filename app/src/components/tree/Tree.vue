@@ -615,7 +615,7 @@ defineExpose({
 
       <v-btn class="expand-icon"
              icon="mdi-arrow-expand-vertical"
-             title="Expand or collapse all"
+             :title="t('component.tree.expandOrCollapse')"
              size="x-small"
              variant="plain"
              @click="toggleExpand"

@@ -63,6 +63,12 @@ export default {
         fileSelector: {
             sizeTip: "Selected file is too large!",
             readFileError: "An error occurred while reading the file",
+        },
+        tree: {
+            expandOrCollapse: "Expand or collapse all",
+        },
+        completeInput: {
+            notice: "Complete the next level directory name according to the input. (Adjust accuracy in Settings)"
         }
     },
     main: {
@@ -169,6 +175,7 @@ export default {
             loadedLineTitle: "The number of keys loaded",
             removeCollectionTitle: "Remove from collections",
             collect: "Collect",
+            monitor: "monitor",
             collectBtnTitle: "Add to collections",
             editBtnTitle: "Edit monitor rule",
             addMonitorBtnTitle: "Add to monitor list",

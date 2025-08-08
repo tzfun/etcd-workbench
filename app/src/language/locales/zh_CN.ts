@@ -63,6 +63,12 @@ export default {
         fileSelector: {
             sizeTip: "选择的文件体积太大!",
             readFileError: "读取文件错误"
+        },
+        tree: {
+            expandOrCollapse: "展开 / 收起",
+        },
+        completeInput: {
+            notice: "根据输入内容提示下一级目录名称（可在设置中调整提示准确度）"
         }
     },
     main: {
@@ -170,6 +176,7 @@ export default {
             loadedLineTitle: "已加载键的数量",
             removeCollectionTitle: "从收藏列表移除",
             collect: "收藏",
+            monitor: "监视",
             collectBtnTitle: "添加到我的收藏列表",
             editBtnTitle: "编辑监视规则",
             addMonitorBtnTitle: "添加到监视列表",
@@ -185,14 +192,14 @@ export default {
             diffDialogAlert: "已自动使用格式化的内容",
             versionA: "版本A",
             versionB: "版本B",
-            putThisVersion: "设置此版本为最新",
+            putThisVersion: "设为最新",
             fromLabel: "源键",
             toLabel: "目标键",
             deleteFrom: "删除源键",
             key: "键",
             completeInputHint: "全局前缀（如果存在）下的键",
-            neverExpire: "永不失效",
-            withTtl: "授予TTL",
+            neverExpire: "永不过期",
+            withTtl: "过期时间(TTL)",
             withLease: "绑定租约",
             ttlHint: "键的过期时间，如果为空则表示永不过期，可选。",
             leaseHint: "将键绑定到此租约，它们共享相同的生命周期。请确保租约已经存在，否则作将失败。",

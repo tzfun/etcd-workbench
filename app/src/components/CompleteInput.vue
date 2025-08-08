@@ -3,9 +3,11 @@
 import {onMounted, PropType, ref, watch} from "vue";
 import {_debounce} from "~/common/utils.ts";
 import {VListItem, VTextField} from "vuetify/components";
+import {useLocale} from "vuetify";
 
 type SearchFunc = (s: string) => Promise<string[]>;
 
+const {t} = useLocale()
 const props = defineProps({
   modelValue:{
     type: String,
@@ -205,7 +207,7 @@ const scrollToHighlighted = () => {
       <v-divider/>
       <v-card-actions class="text-medium-emphasis">
         <v-spacer/>
-        <span>Complete the next level directory name according to the input.</span>
+        <i class="notice">{{ t('component.completeInput.notice') }}</i>
       </v-card-actions>
     </v-card>
   </div>
@@ -224,6 +226,10 @@ const scrollToHighlighted = () => {
 
     .suggestion-list {
       overflow-y: auto;
+    }
+
+    .notice {
+      font-size: 0.9em;
     }
   }
 }
