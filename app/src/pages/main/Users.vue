@@ -16,6 +16,7 @@ import {
 import {User} from "~/common/transport/user.ts";
 import {_confirmSystem, _emitLocal, _tipWarn, EventName} from "~/common/events.ts";
 import {_isEmpty, _shuffleArray} from "~/common/utils.ts";
+import {useLocale} from "vuetify";
 
 const colorList = [
   'red',
@@ -37,7 +38,7 @@ const colorList = [
   'blue-grey',
   'grey'
 ]
-
+const {t} = useLocale()
 const props = defineProps({
   session: {
     type: Object as PropType<SessionData>,
@@ -117,7 +118,7 @@ const loadAllUser = () => {
 }
 
 const authEnable = () => {
-  _confirmSystem('Are you sure you want to turn on the authentication function? You will need to reconnect after executing.').then(() => {
+  _confirmSystem(t('main.users.authEnableConfirm')).then(() => {
     loadingStore.authEnable = true
     _authEnable(props.session?.id).then(() => {
       _emitLocal(EventName.CLOSE_TAB, props.session!.id)
@@ -133,7 +134,7 @@ const authEnable = () => {
 }
 
 const authDisable = () => {
-  _confirmSystem('Are you sure you want to turn off authentication? You will need to reconnect after executing this command.').then(() => {
+  _confirmSystem(t('main.users.authDisableConfirm')).then(() => {
     loadingStore.authDisable = true
     _authDisable(props.session?.id).then(() => {
       _emitLocal(EventName.CLOSE_TAB, props.session!.id)
@@ -149,7 +150,7 @@ const authDisable = () => {
 }
 
 const revokeUserRole = (user: string, role: string, userIdx: number, roleIdx: number) => {
-  _confirmSystem(`Confirm to revoke role <strong>${role}</strong> of user <strong>${user}</strong>?`).then(() => {
+  _confirmSystem(t('main.users.revokeUserRoleConfirm', {role, user})).then(() => {
     _userRevokeRole(props.session?.id, user, role).then(() => {
       users.value[userIdx].roles.splice(roleIdx, 1)
     }).catch(e => {
@@ -165,14 +166,14 @@ const revokeUserRole = (user: string, role: string, userIdx: number, roleIdx: nu
 const openChangePasswordDialog = (user: string) => {
   editUserDialog.password = ''
   editUserDialog.user = user
-  editUserDialog.title = 'Change Password'
+  editUserDialog.title = t('main.users.changePassword')
   editUserDialog.newUser = false
   editUserDialog.show = true
 }
 
 const changePassword = () => {
   if (_isEmpty(editUserDialog.password)) {
-    _tipWarn("New password can not be empty")
+    _tipWarn(t('main.users.requiredPasswordTip'))
     return
   }
   loadingStore.editUser = true
@@ -194,14 +195,14 @@ const changePassword = () => {
 const openNewUserDialog = () => {
   editUserDialog.password = ''
   editUserDialog.user = ''
-  editUserDialog.title = 'New User'
+  editUserDialog.title = t('main.users.addUser')
   editUserDialog.newUser = true
   editUserDialog.show = true
 }
 
 const newUser = () => {
   if (_isEmpty(editUserDialog.password)) {
-    _tipWarn("New password can not be empty")
+    _tipWarn(t('main.users.requiredPasswordTip'))
     return
   }
   loadingStore.editUser = true
@@ -231,7 +232,7 @@ const confirmEditUser = () => {
 }
 
 const deleteUser = (user: string, userIdx: number) => {
-  _confirmSystem(`Are you sure you want to delete this user?<br/><strong>${user}</strong>`).then(() => {
+  _confirmSystem(t('main.users.deleteUserConfirm', {user})).then(() => {
     _deleteUser(props.session?.id, user).then(() => {
       users.value.splice(userIdx, 1)
     })
@@ -261,7 +262,7 @@ const openGrantRoleDialog = (user: string, userIdx: number) => {
 
 const grantRole = () => {
   if (_isEmpty(grantRoleDialog.role)) {
-    _tipWarn("Please select a role")
+    _tipWarn(t('main.users.roleHint'))
     return
   }
   loadingStore.grantRole = true
@@ -306,28 +307,28 @@ const roleSelectionProps = (item: string) => {
             icon="mdi-refresh"
             @click="loadAllUser"
             :loading="loadingStore.loadAllUser"
-            title="Refresh"
-      ></v-btn>
+            :title="t('common.refresh')"
+      />
       <v-btn class="text-none ml-2"
              prepend-icon="mdi-account-plus-outline"
              @click="openNewUserDialog"
              color="green"
-             text="Add User"
-      ></v-btn>
+             :text="t('main.users.addUser')"
+      />
       <v-btn class="text-none ml-2"
              prepend-icon="mdi-lock"
              @click="authEnable"
              color="yellow"
-             text="Auth Enable"
+             :text="t('main.users.authEnable')"
              :loading="loadingStore.authEnable"
-      ></v-btn>
+      />
       <v-btn class="text-none ml-2"
              prepend-icon="mdi-lock-open-variant"
              @click="authDisable"
              color="red"
-             text="Auth Disable"
+             :text="t('main.users.authDisable')"
              :loading="loadingStore.authDisable"
-      ></v-btn>
+      />
     </div>
     <div>
       <v-card class="mt-5 mb-5 overflow-x-auto"
@@ -338,22 +339,22 @@ const roleSelectionProps = (item: string) => {
             <thead>
             <tr>
               <th class="text-left user-col font-weight-bold">
-                User
+                {{ t('main.users.user') }}
               </th>
               <th class="text-left role-col font-weight-bold">
-                Roles
+                {{ t('main.users.roles') }}
               </th>
               <th class="text-left op-col">
                 <v-text-field
                     v-model="search"
                     density="compact"
-                    label="Search"
+                    :label="t('main.users.search')"
                     prepend-inner-icon="mdi-magnify"
                     variant="solo-filled"
                     flat
                     hide-details
                     single-line
-                ></v-text-field>
+                />
               </th>
             </tr>
             </thead>
@@ -378,34 +379,34 @@ const roleSelectionProps = (item: string) => {
                     <v-icon class="role-tag-close-icon"
                             @click="revokeUserRole(user.user, role, idx, i)"
                             color="secondary"
-                    >mdi-close-circle
-                    </v-icon>
+                            icon="mdi-close-circle"
+                    />
                   </template>
                 </v-chip>
               </td>
               <td class="op-col">
-                <v-btn text="Grant Role"
+                <v-btn :text="t('main.users.grantRole')"
                        color="green"
                        class="text-none"
                        size="small"
                        prepend-icon="mdi-account-details-outline"
                        @click="openGrantRoleDialog(user.user,idx)"
-                ></v-btn>
-                <v-btn text="Change Password"
+                />
+                <v-btn :text="t('main.users.changePassword')"
                        color="yellow"
                        class="text-none ml-2"
                        size="small"
                        prepend-icon="mdi-lock-reset"
                        @click="openChangePasswordDialog(user.user)"
-                ></v-btn>
-                <v-btn text="Delete"
+                />
+                <v-btn :text="t('common.delete')"
                        v-if="user.user != session.user"
                        prepend-icon="mdi-file-document-minus-outline"
                        color="red"
                        class="text-none ml-2"
                        size="small"
                        @click="deleteUser(user.user, idx)"
-                ></v-btn>
+                />
               </td>
             </tr>
             </tbody>
@@ -425,42 +426,42 @@ const roleSelectionProps = (item: string) => {
       <v-card :title="editUserDialog.title">
         <v-card-text>
           <v-layout class="mb-5">
-            <span class="inline-label input-label">User: </span>
+            <span class="inline-label input-label">{{ t('main.users.user') }}: </span>
             <v-text-field v-model="editUserDialog.user"
                           density="comfortable"
                           prepend-inner-icon="mdi-account"
                           hide-details
-                          placeholder="Please input user account"
+                          :placeholder="t('main.users.userPlaceholder')"
                           :readonly="!editUserDialog.newUser"
                           width="400px"
-            ></v-text-field>
+            />
           </v-layout>
           <v-layout class="mb-5">
-            <span class="inline-label input-label">New Password: </span>
+            <span class="inline-label input-label">{{t('main.users.newPassword') }}: </span>
             <v-text-field v-model="editUserDialog.password"
                           type="password"
                           density="comfortable"
                           prepend-inner-icon="mdi-lock-reset"
-                          placeholder="Please input user password"
+                          :placeholder="t('main.users.newPasswordPlaceholder')"
                           hide-details
                           width="400px"
-            ></v-text-field>
+            />
           </v-layout>
         </v-card-text>
         <v-card-actions>
-          <v-btn text="Cancel"
+          <v-btn :text="t('common.cancel')"
                  variant="text"
                  class="text-none"
                  @click="editUserDialog.show = false"
-          ></v-btn>
+          />
 
-          <v-btn text="Commit"
+          <v-btn :text="t('common.commit')"
                  variant="flat"
                  class="text-none"
                  color="primary"
                  @click="confirmEditUser"
                  :loading="loadingStore.editUser"
-          ></v-btn>
+          />
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -474,32 +475,31 @@ const roleSelectionProps = (item: string) => {
         min-width="200px"
         scrollable
     >
-      <v-card title="Grant Role">
+      <v-card :title="t('main.users.grantRole')">
         <v-card-text>
           <v-select :items="roles"
                     :item-props="roleSelectionProps"
                     v-model="grantRoleDialog.role"
-                    placeholder="Role"
-                    hint="Please select a role"
+                    :placeholder="t('main.users.rolePlaceholder')"
+                    :hint="t('main.users.roleHint')"
                     persistent-hint
                     density="comfortable"
-          >
-          </v-select>
+          />
         </v-card-text>
         <v-card-actions>
-          <v-btn text="Cancel"
+          <v-btn :text="t('common.cancel')"
                  variant="text"
                  class="text-none"
                  @click="grantRoleDialog.show = false"
-          ></v-btn>
+          />
 
-          <v-btn text="Commit"
+          <v-btn :text="t('common.commit')"
                  variant="flat"
                  class="text-none"
                  color="primary"
                  @click="grantRole"
                  :loading="loadingStore.grantRole"
-          ></v-btn>
+          />
         </v-card-actions>
       </v-card>
     </v-dialog>
