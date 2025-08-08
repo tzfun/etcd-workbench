@@ -6,7 +6,9 @@ import {LeaseInfo} from "~/common/transport/kv.ts";
 import CountDownTimer from "~/components/CountDownTimer.vue";
 import {_confirmSystem, _copyToClipboard, _tipInfo, _tipWarn} from "~/common/events.ts";
 import {_isEmpty} from "~/common/utils.ts";
+import {useLocale} from "vuetify";
 
+const {t} = useLocale()
 const props = defineProps({
   session: {
     type: Object as PropType<SessionData>,
@@ -46,13 +48,13 @@ const getLeaseInfo = (leaseId: any) => {
   if (leaseId) {
     loadingStore.getInfo = true
     _getLease(props.session?.id, leaseId).then(info => {
-      if(currentLeaseId.value == leaseId) {
+      if (currentLeaseId.value == leaseId) {
         currentLeaseInfo.value = info
       }
 
-      if(!info) {
+      if (!info) {
         removeLease(leaseId)
-        _tipInfo("The lease has expired")
+        _tipInfo(t('main.leases.leaseExpiredTip'))
       }
     }).catch(e => {
       _handleError({
@@ -78,7 +80,7 @@ const removeLease = (lease: string) => {
 }
 
 const revokeLease = (lease: string) => {
-  _confirmSystem(`The key bound to this lease will also be deleted. Are you sure you want to delete it?<br/><br/><strong>${lease}</strong>`).then(() => {
+  _confirmSystem(`${t('main.leases.revokeLeaseConfirm')}<br/><br/><strong>${lease}</strong>`).then(() => {
     loadingStore.revoke = true
     _revokeLeases(props.session?.id, lease).then(() => {
       removeLease(lease)
@@ -103,12 +105,12 @@ const openGrantNewDialog = () => {
 
 const grantLease = () => {
   if (_isEmpty(grantNewDialog.ttl)) {
-    _tipWarn("Please fill in valid `TTL` parameters")
+    _tipWarn(t('main.leases.requiredTtlTip'))
     return
   }
   let ttl = parseInt(grantNewDialog.ttl)
-  if(ttl <= 0) {
-    _tipWarn("`TTL` cannot be 0 or negative")
+  if (ttl < 0) {
+    _tipWarn(t('main.leases.invalidTtlTip'))
     return
   }
   loadingStore.grant = true
@@ -131,22 +133,21 @@ const grantLease = () => {
 <template>
   <div class="fill-height pa-5 overflow-y-auto">
     <div>
-      <v-btn 
-            v-bind="props"
-            variant="tonal"
-            size="small"
-            icon="mdi-refresh"
-            @click="loadAllLeases"
-            title="Refresh"
-      ></v-btn>
+      <v-btn
+          v-bind="props"
+          variant="tonal"
+          size="small"
+          icon="mdi-refresh"
+          @click="loadAllLeases"
+          :title="t('common.refresh')"
+      />
       <v-btn class="text-none ml-2"
              prepend-icon="mdi-invoice-plus-outline"
              @click="openGrantNewDialog"
              color="green"
-      >Grant New
-      </v-btn>
+             :text="t('main.leases.grantNew')"
+      />
     </div>
-
     <div>
       <v-expansion-panels class="mt-5"
                           v-model="expendPanel"
@@ -159,13 +160,13 @@ const grantLease = () => {
                            :value="lease"
         >
           <v-expansion-panel-text v-if="currentLeaseId == lease">
-            <v-divider></v-divider>
+            <v-divider/>
             <div v-if="loadingStore.getInfo" class="pa-6 align-center justify-center d-flex">
               <v-progress-circular
                   color="primary"
                   size="32"
                   indeterminate
-              ></v-progress-circular>
+              />
             </div>
             <v-container v-else-if="currentLeaseInfo">
               <v-layout class="justify-center align-content-center mx-auto my-auto mt-5 mb-5" style="min-width: 50vw;">
@@ -178,24 +179,22 @@ const grantLease = () => {
                       <tbody>
 
                       <tr align="right">
-                        <th>
+                        <th class="table-label">
                           <v-icon class="mr-2" color="teal-darken-1">mdi-lightbulb</v-icon>
-                          <span>Lease ID:</span>
+                          <span>{{ t('main.leases.leaseId') }}:</span>
                         </th>
 
                         <td class="text-high-emphasis">
                           <span @click="_copyToClipboard(currentLeaseInfo.id)"
                                 class="cursor-pointer text-primary"
-                                title="Copy"
+                                :title="t('common.copy')"
                           >{{ currentLeaseInfo.id }}</span>
                         </td>
                       </tr>
                       <tr align="right">
-
-
-                        <th>
+                        <th class="table-label">
                           <v-icon class="mr-2" color="teal-darken-1">mdi-calendar-clock</v-icon>
-                          <span>Granted TTL:</span>
+                          <span>{{ t('main.leases.grantedTtl') }}:</span>
                         </th>
 
                         <td class="text-high-emphasis">
@@ -204,20 +203,23 @@ const grantLease = () => {
                       </tr>
 
                       <tr align="right">
-                        <th>
+                        <th class="table-label">
                           <v-icon class="mr-2" color="teal-darken-1">mdi-link</v-icon>
-                          <span>TTL:</span>
+                          <span>{{ t('common.ttl') }}:</span>
                         </th>
 
                         <td class="text-high-emphasis">
-                          <CountDownTimer :value="currentLeaseInfo.ttl" :key="currentLeaseInfo.ttl"></CountDownTimer>
+                          <CountDownTimer
+                              :value="currentLeaseInfo.ttl"
+                              :key="currentLeaseInfo.ttl"
+                          />
                         </td>
                       </tr>
 
                       <tr align="right">
-                        <th>
+                        <th class="table-label">
                           <v-icon class="mr-2" color="teal-darken-1">mdi-file-document-multiple</v-icon>
-                          Keys:
+                          {{ t('common.keys') }}:
                         </th>
 
                         <td class="text-high-emphasis">
@@ -239,32 +241,32 @@ const grantLease = () => {
                          size="small"
                          @click="getLeaseInfo(currentLeaseInfo.id)"
                          :loading="loadingStore.revoke"
-                  ></v-btn>
+                  />
                   <v-btn color="red"
-                         text="Delete"
+                         :text="t('common.delete')"
                          class="text-none ml-5"
                          prepend-icon="mdi-trash-can-outline"
                          @click="revokeLease(currentLeaseInfo.id)"
                          :loading="loadingStore.revoke"
-                  ></v-btn>
+                  />
                 </div>
               </v-layout>
             </v-container>
             <div v-else>
               <v-empty-state icon="mdi-alert-circle-outline"
-                             headline="Something error!"
-                             text="Failed to read lease information, please try again."
+                             :headline="t('main.leases.errorStateHeadline')"
+                             :text="t('main.leases.errorStateText')"
                              class="user-select-none"
-              ></v-empty-state>
+              />
             </div>
           </v-expansion-panel-text>
         </v-expansion-panel>
       </v-expansion-panels>
       <v-empty-state v-else
                      icon="mdi-package-variant"
-                     headline="No Leases"
+                     :headline="t('main.leases.emptyStateHeadline')"
                      class="user-select-none"
-      ></v-empty-state>
+      />
     </div>
 
     <!--  Grant弹窗-->
@@ -275,46 +277,46 @@ const grantLease = () => {
         min-width="200px"
         scrollable
     >
-      <v-card title="New Lease">
+      <v-card :title="t('main.leases.grantNew')">
         <v-card-text>
           <v-layout class="mb-5">
-            <span class="inline-label input-label">TTL(s): </span>
+            <span class="inline-label input-label">{{ t('common.ttl') }}(s): </span>
             <v-text-field v-model="grantNewDialog.ttl"
                           type="number"
                           density="comfortable"
                           prepend-inner-icon="mdi-clock-time-eight"
-                          hint="The key expiration time in seconds."
+                          :hint="t('main.leases.ttlHint')"
                           persistent-hint
                           width="400px"
-            ></v-text-field>
+            />
           </v-layout>
           <v-layout class="mb-5">
-            <span class="inline-label input-label">Custom ID: </span>
+            <span class="inline-label input-label">{{ t('main.leases.customId') }}: </span>
             <v-text-field v-model="grantNewDialog.lease"
                           type="number"
                           density="comfortable"
                           prepend-inner-icon="mdi-identifier"
-                          hint="ID is the requested ID for the lease. If ID is set to 0 or empty, the lessor chooses an ID."
-                          placeholder="Optional"
+                          :hint="t('main.leases.customIdHint')"
+                          :placeholder="t('main.leases.customIdPlaceholder')"
                           persistent-hint
                           width="400px"
-            ></v-text-field>
+            />
           </v-layout>
         </v-card-text>
         <v-card-actions>
-          <v-btn text="Cancel"
+          <v-btn :text="t('common.cancel')"
                  variant="text"
                  class="text-none"
                  @click="grantNewDialog.show = false"
-          ></v-btn>
+          />
 
-          <v-btn text="Commit"
+          <v-btn :text="t('common.commit')"
                  variant="flat"
                  class="text-none"
                  color="primary"
                  @click="grantLease"
                  :loading="loadingStore.grant"
-          ></v-btn>
+          />
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -324,5 +326,9 @@ const grantLease = () => {
 <style scoped lang="scss">
 .inline-label {
   width: 120px;
+}
+.table-label {
+  display: flex;
+  align-items: center;
 }
 </style>

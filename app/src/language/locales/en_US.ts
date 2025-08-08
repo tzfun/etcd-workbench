@@ -57,6 +57,8 @@ export default {
         running: "Running",
         start: "Start",
         stop: "Stop",
+        copy: "Copy",
+        keys: "Keys",
     },
     feedback: {
         copyError:"Can not write to clipboard",
@@ -260,6 +262,22 @@ export default {
             search: "Type to search",
             confirmClearHistory: "Are you sure you want to clear all history?",
             confirmRemoveMonitor: "Are you sure you want to remove this monitor?",
+        },
+        leases: {
+            grantNew: "Grant New Lease",
+            leaseId: "Lease ID",
+            grantedTtl: "Granted TTL",
+            errorStateHeadline: "Something error!",
+            errorStateText: "Failed to read lease information, please try again.",
+            emptyStateHeadline: "No Leases",
+            ttlHint: "The key expiration time in seconds.",
+            customId: "Custom ID",
+            customIdHint: "ID is the requested ID for the lease. If ID is set to 0 or empty, the lessor chooses an ID.",
+            customIdPlaceholder: "Optional",
+            leaseExpiredTip: "The lease has expired",
+            revokeLeaseConfirm: "The key bound to this lease will also be deleted. Are you sure you want to delete it?",
+            requiredTtlTip: "Please fill in valid `TTL` parameters",
+            invalidTtlTip: "`TTL` cannot be negative",
         }
     },
     setting: {
