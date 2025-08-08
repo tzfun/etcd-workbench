@@ -2,8 +2,9 @@ import {createI18n} from "vue-i18n";
 import zhCN from './locales/zh_CN.ts';
 import zhHK from './locales/zh_HK.ts';
 import enUS from './locales/en_US.ts';
+import jaJP from "./locales/ja_JP.ts";
 
-export type AppLanguage = 'en_US' | 'zh_CN' | 'zh_HK';
+export type AppLanguage = 'en_US' | 'zh_CN' | 'zh_HK' | 'ja_JP';
 export const AllAppLanguages = [
     {
         title: 'English',
@@ -14,6 +15,9 @@ export const AllAppLanguages = [
     }, {
         title: '繁體中文',
         value: 'zh_HK',
+    }, {
+        title: '日本語',
+        value: 'ja_JP',
     }
 ]
 
@@ -26,6 +30,7 @@ const i18n = createI18n({
         'en_US': enUS,
         'zh_CN': zhCN,
         'zh_HK': zhHK,
+        'ja_JP': jaJP,
     },
     warnHtmlInMessage: 'off'
 })

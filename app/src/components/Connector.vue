@@ -541,7 +541,7 @@ defineExpose({
                 </div>
 
                 <div class="d-flex mt-5">
-                  <div class="form-label">
+                  <div class="form-label form-checkbox-label">
                     {{ t('main.home.connector.form.identity') }}
                   </div>
                   <div class="form-input">
@@ -626,7 +626,7 @@ defineExpose({
                 </div>
 
                 <div class="d-flex mt-5">
-                  <div class="form-label">
+                  <div class="form-label form-radio-label">
                     {{ t('main.home.connector.form.identity') }}
                   </div>
                   <div class="form-input">
@@ -757,6 +757,14 @@ defineExpose({
     width: $--form-label-width;
     line-height: 52px;
     user-select: none;
+  }
+
+  .form-checkbox-label {
+    line-height: 56px;
+  }
+
+  .form-radio-label {
+    line-height: 45px;
   }
 
   .form-label:after {

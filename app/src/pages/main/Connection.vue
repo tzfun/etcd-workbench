@@ -21,6 +21,7 @@ import {_isEmpty} from "~/common/utils.ts";
 import {appWindow} from "@tauri-apps/api/window";
 import {Handler} from "mitt";
 import CompleteInput from "~/components/CompleteInput.vue";
+import {useI18n} from "vue-i18n";
 
 const props = defineProps({
   session: {
@@ -28,7 +29,7 @@ const props = defineProps({
     required: true
   }
 })
-
+const {t} = useI18n();
 const eventUnListens = reactive<Function[]>([])
 
 let activeListItem = ref<string>('cluster')
@@ -131,7 +132,7 @@ const clickList = (page: string) => {
 const keyMonitorConfirm = () => {
   let config = keyMonitorDialog.monitor
   if (_isEmpty(config.key)) {
-    _tipWarn("Key cannot be empty")
+    _tipWarn(t('main.roles.requiredKeyTip'))
     return
   }
 
@@ -214,36 +215,37 @@ const searchNext = (value: string | null, includeFile: boolean): Promise<string[
         <v-tooltip location="end center"
                    origin="start center"
                    no-click-animation
-                   text="Cluster">
+                   :text="t('main.home.connection.tabCluster')"
+        >
           <template v-slot:activator="{ props }">
-            <v-list-item title="Cluster"
+            <v-list-item title="t('main.home.connection.tabCluster')"
                          v-bind="props"
                          value="cluster"
                          prepend-icon="mdi-apps"
                          @click="clickList('cluster')"
-            ></v-list-item>
+            />
           </template>
         </v-tooltip>
 
         <v-tooltip location="end center"
                    origin="start center"
                    no-click-animation
-                   text="Keys">
+                   :text="t('main.home.connection.tabKeys')">
           <template v-slot:activator="{ props }">
-            <v-list-item title="Keys"
+            <v-list-item :title="t('main.home.connection.tabKeys')"
                          v-bind="props"
                          value="keys"
                          prepend-icon="mdi-database"
                          @click="clickList('keys')"
-            ></v-list-item>
+            />
           </template>
         </v-tooltip>
         <v-tooltip location="end center"
                    origin="start center"
                    no-click-animation
-                   text="Key Monitor">
+                   :text="t('main.home.connection.tabMonitor')">
           <template v-slot:activator="{ props }">
-            <v-list-item title="Key Monitor"
+            <v-list-item :title="t('main.home.connection.tabMonitor')"
                          v-bind="props"
                          value="keyMonitor"
                          prepend-icon="mdi-robot"
@@ -267,9 +269,9 @@ const searchNext = (value: string | null, includeFile: boolean): Promise<string[
         <v-tooltip location="end center"
                    origin="start center"
                    no-click-animation
-                   text="Leases">
+                   :text="t('main.home.connection.tabLeases')">
           <template v-slot:activator="{ props }">
-            <v-list-item title="Leases"
+            <v-list-item :title="t('main.home.connection.tabLeases')"
                          v-bind="props"
                          value="leases"
                          prepend-icon="mdi-clock-time-nine"
@@ -280,55 +282,55 @@ const searchNext = (value: string | null, includeFile: boolean): Promise<string[
         <v-tooltip location="end center"
                    origin="start center"
                    no-click-animation
-                   text="Users">
+                   :text="t('main.home.connection.tabUsers')">
           <template v-slot:activator="{ props }">
-            <v-list-item title="Users"
+            <v-list-item :title="t('main.home.connection.tabUsers')"
                          v-bind="props"
                          value="users"
                          prepend-icon="mdi-account-supervisor"
                          @click="clickList('users')"
                          :disabled="!session.root"
-            ></v-list-item>
+            />
           </template>
         </v-tooltip>
         <v-tooltip location="end center"
                    origin="start center"
                    no-click-animation
-                   text="Roles">
+                   :text="t('main.home.connection.tabRoles')">
           <template v-slot:activator="{ props }">
-            <v-list-item title="Roles"
+            <v-list-item :title="t('main.home.connection.tabRoles')"
                          v-bind="props"
                          value="roles"
                          prepend-icon="mdi-lock"
                          @click="clickList('roles')"
                          :disabled="!session.root"
-            ></v-list-item>
+            />
           </template>
         </v-tooltip>
       </v-list>
     </v-navigation-drawer>
     <v-main class="fill-height">
       <div v-show="activeListItem == 'cluster'" class="fill-height">
-        <Cluster :session="session" v-if="visited['cluster']"></Cluster>
+        <Cluster :session="session" v-if="visited['cluster']"/>
       </div>
       <div v-show="activeListItem == 'keys'" class="fill-height">
-        <Keys :session="session" v-if="visited['keys']"></Keys>
+        <Keys :session="session" v-if="visited['keys']"/>
       </div>
       <div v-show="activeListItem == 'keyMonitor'" class="fill-height">
         <KeyMonitor :session="session"
                     v-if="visited['keyMonitor']"
                     :events="keyMonitorEventLog.logs"
                     @on-read="onReadKeyMonitorLog"
-        ></KeyMonitor>
+        />
       </div>
       <div v-show="activeListItem == 'leases'" class="fill-height">
-        <Leases :session="session" v-if="visited['leases']"></Leases>
+        <Leases :session="session" v-if="visited['leases']"/>
       </div>
       <div v-show="activeListItem == 'users'" class="fill-height">
-        <Users :session="session" v-if="visited['users']"></Users>
+        <Users :session="session" v-if="visited['users']"/>
       </div>
       <div v-show="activeListItem == 'roles'" class="fill-height">
-        <Roles :session="session" v-if="visited['roles']"></Roles>
+        <Roles :session="session" v-if="visited['roles']"/>
       </div>
     </v-main>
 
@@ -340,7 +342,7 @@ const searchNext = (value: string | null, includeFile: boolean): Promise<string[
         max-width="900px"
         scrollable
     >
-      <v-card title="Key Monitor"
+      <v-card :title="t('common.monitor')"
               prepend-icon="mdi-robot"
       >
         <template #prepend>
@@ -350,12 +352,9 @@ const searchNext = (value: string | null, includeFile: boolean): Promise<string[
           <v-icon class="cursor-pointer" @click="keyMonitorDialog.show = false">mdi-close</v-icon>
         </template>
         <v-card-item class="overflow-visible">
-          <v-alert
-              density="compact"
-              text="The monitor is bound to the connection, and it will stop running when the connection session is closed."
-          ></v-alert>
+
           <v-layout class="mb-5 mt-5 overflow-visible">
-            <span class="inline-label input-label">Key: </span>
+            <span class="inline-label input-label">{{ t('common.key') }}: </span>
             <CompleteInput
                 :search-func="searchNextNode"
                 v-model="keyMonitorDialog.monitor.key"
@@ -366,55 +365,60 @@ const searchNext = (value: string | null, includeFile: boolean): Promise<string[
                 persistent-hint
                 :readonly="keyMonitorDialog.edit"
                 elevation="16"
-                suggestion-max-height="150"
-            ></CompleteInput>
+                suggestion-max-height="140"
+            />
           </v-layout>
 
           <v-layout class="mb-5" style="z-index: unset">
             <span class="inline-label radio-label" style="line-height: 40px;">Type: </span>
             <v-radio-group v-model="keyMonitorDialog.monitor.isPrefix" inline hide-details>
-              <v-radio label="Key Only" :value="false"></v-radio>
-              <v-radio label="With Prefix" :value="true"></v-radio>
+              <v-radio :label="t('main.home.connection.keyOnly')" :value="false"/>
+              <v-radio :label="t('main.home.connection.withPrefix')" :value="true"/>
             </v-radio-group>
           </v-layout>
 
           <v-layout class="mb-5" style="z-index: unset">
-            <span class="inline-label checkbox-label" style="line-height: 56px;">Target: </span>
+            <span class="inline-label checkbox-label" style="line-height: 56px;">{{ t('main.home.connection.target') }}: </span>
 
             <v-checkbox
                 v-model="keyMonitorDialog.monitor.monitorValueChange"
-                label="Value Change"
+                :label="t('main.home.connection.eventValueChange')"
                 hide-details
-            ></v-checkbox>
+            />
             <v-checkbox
                 v-model="keyMonitorDialog.monitor.monitorCreate"
-                label="Create"
+                :label="t('main.home.connection.eventCreate')"
                 class="ml-2"
                 hide-details
-            ></v-checkbox>
+            />
             <v-checkbox
                 v-model="keyMonitorDialog.monitor.monitorRemove"
-                label="Remove"
+                :label="t('main.home.connection.eventRemove')"
                 class="ml-2"
                 hide-details
-            ></v-checkbox>
+            />
           </v-layout>
+          <v-alert
+              density="compact"
+              class="text-medium-emphasis"
+              :text="t('main.home.connection.keyMonitorAlert')"
+          />
         </v-card-item>
         <v-card-actions>
-          <v-btn text="Remove Monitor"
+          <v-btn :text="t('main.home.connection.removeMonitor')"
                  v-if="keyMonitorDialog.edit"
                  variant="flat"
                  class="text-none"
                  color="red"
                  @click="keyMonitorRemove"
-          ></v-btn>
-          <v-btn :text="keyMonitorDialog.edit ? 'Confirm' : 'Add Monitor'"
+          />
+          <v-btn :text="keyMonitorDialog.edit ? t('common.confirm') : t('main.home.connection.addMonitor')"
                  variant="flat"
                  class="text-none"
                  color="primary"
                  :disabled="!keyMonitorDialogCanConfirm"
                  @click="keyMonitorConfirm"
-          ></v-btn>
+          />
         </v-card-actions>
       </v-card>
     </v-dialog>

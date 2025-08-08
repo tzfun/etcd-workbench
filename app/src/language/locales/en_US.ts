@@ -59,6 +59,7 @@ export default {
         stop: "Stop",
         copy: "Copy",
         keys: "Keys",
+        monitor: "Monitor",
     },
     feedback: {
         copyError:"Can not write to clipboard",
@@ -136,6 +137,23 @@ export default {
                 testSuccess: "The connection test was successful!",
                 connecting: "Connecting...",
                 nameEmptyTip: "Connection name can not be empty",
+            },
+            connection: {
+                tabCluster: "Cluster",
+                tabKeys: "Keys",
+                tabMonitor: "Key Monitor",
+                tabLeases: "Leases",
+                tabUsers: "Users",
+                tabRoles: "Roles",
+                keyMonitorAlert: "The monitor is bound to the connection, and it will stop running when the connection session is closed.",
+                keyOnly: "Key Only",
+                withPrefix: "With Prefix",
+                target: "Target",
+                eventCreate: "Create",
+                eventRemove: "Remove",
+                eventValueChange: "Value Change",
+                removeMonitor: "Remove Monitor",
+                addMonitor: "Add Monitor",
             }
         },
         cluster: {
@@ -297,7 +315,7 @@ export default {
             authDisableConfirm: "Are you sure you want to turn off authentication? You will need to reconnect after executing this command.",
             revokeUserRoleConfirm: "Confirm to revoke role <strong>{role}</strong> of user <strong>{user}</strong>?",
             requiredPasswordTip: "Password can not be empty",
-            deleteUserConfirm: "Are you sure you want to delete this user?<br/><strong>${user}</strong>",
+            deleteUserConfirm: "Are you sure you want to delete this user?<br/><strong>{user}</strong>",
         },
         roles: {
             addRole: "Add Role",
