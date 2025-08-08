@@ -21,19 +21,21 @@ A powerful ui client for ETCD v3. Provides App and Web packages. Supports SSL an
 2. Available in both desktop app and web versions. The desktop app can be downloaded and installed locally, while the web version can be deployed directly or via docker on a server.
 3. Extremely lightweight: the App package is only **5M**, and the Web package is only **15M**.
 4. Supports theme switching.
-5. Supports multi-connection management.
-6. Supports SSL and SSH connections.
-7. Supports cluster information viewing, version compaction, data backup, and more.
-8. Supports Key-Value editing, multi-language syntax highlighting, and batch import/export.
-9. Supports decoding Kubernetes Protobuf format content.
-10. Supports comparing multiple versions of Key content.
-11. Supports key merge to resolve update conflicts.
-12. Supports bookmarking Keys for quick access.
-13. Supports key change monitoring and notifications.
-14. Supports Key search functionality.
-15. Supports lease management: create, delete, Key binding relationships, and countdown display.
-16. Supports user management: toggle authentication, create/delete users, grant/revoke roles, etc.
-17. Supports role management: create/delete roles, grant/revoke permissions, etc.
+5. Supports multiple languages.
+6. Supports multi-connection management.
+7. Supports SSL and SSH connections.
+8. Supports cluster information viewing, version compaction, data backup, and more.
+9. Supports Key-Value editing, multi-language syntax highlighting, and batch import/export.
+10. Supports decoding Kubernetes Protobuf format content.
+11. Supports comparing multiple versions of Key content.
+12. Supports key merge to resolve update conflicts.
+13. Supports automatic completion of key paths.
+14. Supports bookmarking Keys for quick access.
+15. Supports key change monitoring and notifications.
+16. Supports Key search functionality.
+17. Supports lease management: create, delete, Key binding relationships, and countdown display.
+18. Supports user management: toggle authentication, create/delete users, grant/revoke roles, etc.
+19. Supports role management: create/delete roles, grant/revoke permissions, etc.
 
 - **App**: Includes all features, offers a better experience than the Web version, allows easy data migration, and will receive continuous updates. Recommended for use.
 - **Web**: Includes most features, with some exceptions (e.g., data backup). Users can access it directly via a browser without downloading, and it supports multi-user login.
