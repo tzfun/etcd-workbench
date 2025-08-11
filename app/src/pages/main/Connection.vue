@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {computed, onMounted, onUnmounted, PropType, reactive, ref} from "vue";
+import {computed, onMounted, onUnmounted, PropType, reactive, ref, watch} from "vue";
 import {KeyMonitorConfig, SessionData} from "~/common/transport/connection.ts";
 import Cluster from "~/pages/main/Cluster.vue";
 import Keys from "~/pages/main/Keys.vue";
@@ -27,8 +27,10 @@ const props = defineProps({
   session: {
     type: Object as PropType<SessionData>,
     required: true
-  }
+  },
+  hasDirtyContent: Boolean
 })
+const emits = defineEmits(['update:hasDirtyContent'])
 const {t} = useI18n();
 const eventUnListens = reactive<Function[]>([])
 
@@ -36,6 +38,8 @@ let activeListItem = ref<string>('cluster')
 const visited = ref<Record<string, boolean>>({
   'cluster': true
 })
+const hasDirtyContent = ref<boolean>(false)
+
 const keyMonitorDialog = reactive({
   show: false,
   edit: false,
@@ -66,7 +70,12 @@ const keyMonitorDialogCanConfirm = computed<boolean>(() => {
   }
   return true
 })
-
+watch(
+    () => hasDirtyContent.value,
+    (v) => {
+      emits('update:hasDirtyContent', v)
+    }
+)
 onMounted(async () => {
   let editKeyMonitorEventHandler: Handler<any> = (e) => {
     if (e.session == props.session?.id) {
@@ -314,7 +323,11 @@ const searchNext = (value: string | null, includeFile: boolean): Promise<string[
         <Cluster :session="session" v-if="visited['cluster']"/>
       </div>
       <div v-show="activeListItem == 'keys'" class="fill-height">
-        <Keys :session="session" v-if="visited['keys']"/>
+        <Keys
+            :session="session"
+            v-if="visited['keys']"
+            v-model:has-dirty-content="hasDirtyContent"
+        />
       </div>
       <div v-show="activeListItem == 'keyMonitor'" class="fill-height">
         <KeyMonitor :session="session"

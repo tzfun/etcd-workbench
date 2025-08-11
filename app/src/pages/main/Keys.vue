@@ -89,8 +89,10 @@ const props = defineProps({
   session: {
     type: Object as PropType<SessionData>,
     required: true
-  }
+  },
+  hasDirtyContent: Boolean
 })
+const emits = defineEmits(['update:hasDirtyContent'])
 
 const enforceLoadAllKey = ref<boolean>(false)
 const kvTree = ref<InstanceType<typeof Tree>>()
@@ -238,6 +240,13 @@ watch(
     },
     {
       deep: true,
+    }
+)
+
+watch(
+    () => !!currentKv.value && currentKvChanged.value,
+    (hasDirty) => {
+      emits('update:hasDirtyContent', hasDirty)
     }
 )
 
@@ -593,46 +602,64 @@ const deleteKeyBatch = (nodes: TreeNode[]) => {
 
 const showKV = (key: string, keyInfo?: KeyExtendInfo): Promise<void> => {
   return new Promise((resolve, reject) => {
-    loadingStore.getKey = true
-    _getKV(props.session?.id, key, keyInfo && !keyInfo.keyEncodedUtf8 ? keyInfo.keyBytes : undefined).then((kv) => {
-      resolve()
 
-      editorConfig.language = _tryParseEditorLanguage(kv.key, kv.value, kv.formattedValue, props.session?.namespace)
-      editorConfig.disabled = kv.formattedValue != undefined;
-      editorAlert.enable = kv.formattedValue != undefined;
-      editorAlert.type = kv.formattedValue == undefined ? '' : kv.formattedValue.source
+    function doShowKV() {
+      loadingStore.getKey = true
+      _getKV(props.session?.id, key, keyInfo && !keyInfo.keyEncodedUtf8 ? keyInfo.keyBytes : undefined).then((kv) => {
+        resolve()
 
-      currentKv.value = kv
-      currentKvChanged.value = false
-      showFormattedValue.value = true
+        editorConfig.language = _tryParseEditorLanguage(kv.key, kv.value, kv.formattedValue, props.session?.namespace)
+        editorConfig.disabled = kv.formattedValue != undefined;
+        editorAlert.enable = kv.formattedValue != undefined;
+        editorAlert.type = kv.formattedValue == undefined ? '' : kv.formattedValue.source
 
-      if (kv.leaseInfo && AUTO_REMOVE_EXPIRED_KEY) {
-        let timer = setTimeout(() => {
-          keyLeaseListeners.delete(timer)
-          onKeyTimeOver(kv.key)
-        }, kv.leaseInfo.ttl * 1000)
-        keyLeaseListeners.add(timer)
-      }
-    }).catch(e => {
-      if (e.errType && e.errType == 'ResourceNotExist') {
-        removeKeysFromTree([key])
-      }
-      _handleError({
-        e,
-        session: props.session
+        currentKv.value = kv
+        currentKvChanged.value = false
+        showFormattedValue.value = true
+
+        if (kv.leaseInfo && AUTO_REMOVE_EXPIRED_KEY) {
+          let timer = setTimeout(() => {
+            keyLeaseListeners.delete(timer)
+            onKeyTimeOver(kv.key)
+          }, kv.leaseInfo.ttl * 1000)
+          keyLeaseListeners.add(timer)
+        }
+      }).catch(e => {
+        if (e.errType && e.errType == 'ResourceNotExist') {
+          removeKeysFromTree([key])
+        }
+        _handleError({
+          e,
+          session: props.session
+        })
+        currentKv.value = undefined
+        reject(e)
+      }).finally(() => {
+        loadingStore.getKey = false
       })
-      currentKv.value = undefined
-      reject(e)
-    }).finally(() => {
-      loadingStore.getKey = false
-    })
+    }
+
+    if(currentKv.value && currentKvChanged.value) {
+      _confirmSystem("当前修改未保存，是否抛弃修改？").then(() => {
+        doShowKV()
+      }).catch(() => {
+        reject()
+      })
+    } else {
+      doShowKV()
+    }
   })
 }
 
-const showKVUnwrapped = (key: string, keyInfo?: KeyExtendInfo) => {
+const onClickTreeNode = (key: string, keyInfo?: KeyExtendInfo) => {
   showKV(key, keyInfo).then(() => {
   }).catch(e => {
-    console.error(e)
+    if (kvTree.value && currentKv.value) {
+      kvTree.value.selectItem(currentKv.value.key)
+    }
+    if(e) {
+      console.error(e)
+    }
   })
 }
 
@@ -1324,7 +1351,7 @@ const renameDirLogScrollToBottom = () => {
                 :session="session"
                 enable-contextmenu
                 class="kvTree"
-                @on-click="showKVUnwrapped"
+                @on-click="onClickTreeNode"
                 @click:contextmenu="onClickContextmenu"
           />
           <v-sheet class="loadMoreArea d-flex align-center justify-center">

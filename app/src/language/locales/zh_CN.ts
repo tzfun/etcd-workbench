@@ -86,6 +86,14 @@ export default {
         home: {
             newConnection: "新建连接",
             favoritesList: "我的连接",
+            removeFavoritesConfirm: "确定要从列表中删除此配置？",
+            closeTabConfirm: "确定要关闭当前连接？",
+            closeDirtyTabConfirm: "当前连接有已修改未保存的键，你确定要放弃更改并关闭连接？",
+            exitConfirm: "确定退出应用？",
+            exitConfirmTitle: "退出确认",
+            exitWithDirtyTabConfirm: "检测到有已修改未保存的键，确认抛弃修改并退出应用？",
+            exiting: "退出应用中...",
+            sessionConnLostTip: "会话连接丢失，原因：{reason}",
             connector: {
                 serverConnection: "连接 ETCD 数据库",
                 form:{

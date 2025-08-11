@@ -86,6 +86,14 @@ export default {
         home: {
             newConnection: "New Connection",
             favoritesList: "Favorites List",
+            removeFavoritesConfirm: "Are you sure you want to remove this configuration from your favorites list?",
+            closeTabConfirm: "Are you sure to close the current connection?",
+            closeDirtyTabConfirm: "The current connection has a key being edited. Are you sure you want to discard the changes and close the connection?",
+            exitConfirm: "Are you sure you want to exit the application?",
+            exitConfirmTitle: "Confirm exit",
+            exitWithDirtyTabConfirm: "A changed but unsaved key has been detected. Do you want to discard your changes and exit the application?",
+            exiting: "Exiting application....",
+            sessionConnLostTip: "Session connection lost due to: {reason}",
             connector: {
                 serverConnection: "Server Connection",
                 form: {

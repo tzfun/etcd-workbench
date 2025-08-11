@@ -86,6 +86,14 @@ export default {
         home: {
             newConnection: "新規接続",
             favoritesList: "マイ接続",
+            removeFavoritesConfirm: "この設定をお気に入りリストから削除してもよろしいですか？",
+            closeTabConfirm: "現在の接続を閉じてもよろしいですか？",
+            closeDirtyTabConfirm: "現在の接続には変更され、保存されていないキー値がありますが、変更を破棄して接続を閉じてもよろしいですか？",
+            exitConfirm: "アプリケーションを終了してもよろしいですか?",
+            exitConfirmTitle: "退出確認",
+            exitWithDirtyTabConfirm: "変更されたが保存されていないキー値が検出されました。変更を破棄してアプリケーションを終了してもよろしいですか？",
+            exiting: "アプリを退出中...",
+            sessionConnLostTip: "会話接続が失われました、原因：{reason}",
             connector: {
                 serverConnection: "ETCD データベース接続",
                 form:{

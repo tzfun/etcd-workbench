@@ -86,6 +86,14 @@ export default {
         home: {
             newConnection: "新增連接",
             favoritesList: "我的連接",
+            removeFavoritesConfirm: "確定要從收藏夾清單中刪除此配置？",
+            closeTabConfirm: "確定要關閉目前連線？",
+            closeDirtyTabConfirm: "當前連接有已修改未保存嘅鍵，你確定要放棄更改並關閉連接？",
+            exitConfirm: "確定退出應用程式？",
+            exitConfirmTitle: "退出確認",
+            exitWithDirtyTabConfirm: "偵測到有已修改未保存嘅鍵，確認拋棄修改並退出應用？",
+            exiting: "退出應用程序中...",
+            sessionConnLostTip: "會話連線遺失，原因：{reason}",
             connector: {
                 serverConnection: "連接 ETCD 資料庫",
                 form: {

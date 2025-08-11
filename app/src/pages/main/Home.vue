@@ -2,7 +2,7 @@
 
 import Connector from "~/components/Connector.vue";
 import {_getConnectionList, _handleError, _removeConnection} from "~/common/services.ts";
-import {_confirm, EventName} from "~/common/events.ts";
+import {_confirmSystem, EventName} from "~/common/events.ts";
 import {nextTick, onActivated, onMounted, onUnmounted, reactive, ref} from "vue";
 import {ConnectionInfo, DEFAULT_CONNECTION, ErrorPayload} from "~/common/transport/connection.ts";
 import {listen} from "@tauri-apps/api/event";
@@ -55,7 +55,7 @@ const selectConnection = ({id}: any) => {
 }
 
 const removeConnectionConfig = (name: string) => {
-  _confirm('System', 'Are you sure you want to remove this configuration from your favorites list?').then(() => {
+  _confirmSystem(t('main.home.removeFavoritesConfirm')).then(() => {
     _removeConnection(name).then(() => {
       let idx = -1
       for (let i = 0; i < connectionList.value.length; i++) {
@@ -115,7 +115,7 @@ const removeConnectionConfig = (name: string) => {
       </v-list>
     </v-navigation-drawer>
     <v-main class="fill-height">
-      <Connector ref="connectorRef" v-model="currentConnection" @on-save="loadConnectionList"></Connector>
+      <Connector ref="connectorRef" v-model="currentConnection" @on-save="loadConnectionList"/>
     </v-main>
   </v-layout>
 </template>

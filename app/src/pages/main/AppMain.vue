@@ -5,8 +5,10 @@ import Connection from "~/pages/main/Connection.vue";
 import {
   _alert,
   _confirm,
+  _confirmSystem,
   _listenLocal,
-  _loading, _unListenLocal,
+  _loading,
+  _unListenLocal,
   EventName,
   SessionDisconnectedEvent
 } from "~/common/events.ts";
@@ -21,12 +23,15 @@ import {listen} from "@tauri-apps/api/event";
 import {MAIN_WINDOW_MIN_HEIGHT, MAIN_WINDOW_MIN_WIDTH, SettingConfig} from "~/common/transport/setting.ts";
 import {loadModule, trackEvent} from "~/common/analytics.ts";
 import {Handler} from "mitt";
+import {useI18n} from "vue-i18n";
 
 type TabItem = {
   name: string,
-  session: SessionData
+  session: SessionData,
+  hasDirtyContent: boolean,
 }
 
+const {t} = useI18n()
 const HOME_TAB = "___home"
 const activeTab = ref<string>(HOME_TAB)
 const tabList = reactive<TabItem[]>([])
@@ -102,9 +107,18 @@ onMounted(async () => {
     if (exitConfirmState.value) {
       return
     }
+
+    const dirtyTab = findDirtyTab()
+    let message = dirtyTab
+        ? t('main.home.exitWithDirtyTabConfirm')
+        : t('main.home.exitConfirm')
+    if (dirtyTab) {
+      activeTab.value = dirtyTab.name
+    }
+
     exitConfirmState.value = true
-    _confirm("Confirm Exit", "Are you sure you want to exit?", 20000).then(() => {
-      _loading(true, 'Exiting...')
+    _confirm(t('main.home.exitConfirmTitle'), message, 20000).then(() => {
+      _loading(true, t('main.home.exiting'))
       trackEvent('exit').finally(() => {
         _exitApp().finally(() => {
           _loading(false)
@@ -139,13 +153,13 @@ onMounted(async () => {
       message = JSON.stringify(event.payload.case)
     }
 
-    _alert(`Session connection lost, reason: ${message}`, 'Warn').then(() => {
+    _alert(t('main.home.sessionConnLostTip', {reason: message}), t('common.warning')).then(() => {
       connectorEventBuffer.delete(sessionId)
       closeTabDirectly(sessionId)
     })
   }))
 
-  const newConnectionEventHandler:Handler<any> = (e: any) => {
+  const newConnectionEventHandler: Handler<any> = (e: any) => {
     let name = e.name as string
     let session = e.session as SessionData
 
@@ -161,9 +175,10 @@ onMounted(async () => {
         break
       }
     }
-    let tabItem = {
+    let tabItem: TabItem = {
       name,
-      session
+      session,
+      hasDirtyContent: false
     }
     tabList.push(tabItem)
 
@@ -183,12 +198,20 @@ onMounted(async () => {
     if (ctrlKey && key == 'w') {
 
       if (_useSettings().value.closeTabUseCtrlW) {
-        closeTabDirectly()
+        const currentSession = findSession()
+        if (currentSession >= 0 && tabList[currentSession].hasDirtyContent) {
+          _confirmSystem(t('main.home.closeDirtyTabConfirm')).then(() => {
+            closeTabDirectly()
+          }).catch(() => {
+          })
+        } else {
+          closeTabDirectly()
+        }
       }
 
     }
   }, {capture: true})
-  const closeTabEventHandler:Handler<any> = e => {
+  const closeTabEventHandler: Handler<any> = e => {
     closeTabDirectly(e as number)
     activeTab.value = HOME_TAB
   }
@@ -204,14 +227,30 @@ onUnmounted(() => {
   }
 })
 
-const closeTab = (id: number) => {
-  _confirm('System', 'Are you sure to close the current connection?').then(() => {
-    closeTabDirectly(id)
-  }).catch(() => {
-  })
+const findDirtyTab = (id?: number): TabItem | void => {
+  for (const tab of tabList) {
+    if ((!id || tab.session.id == id) && tab.hasDirtyContent) {
+      return tab
+    }
+  }
 }
 
-const findSession = (sessionId?: number):number => {
+const closeTab = (id: number) => {
+  const dirtyTab = findDirtyTab(id)
+  if (dirtyTab) {
+    _confirmSystem(t('main.home.closeDirtyTabConfirm')).then(() => {
+      closeTabDirectly(id)
+    }).catch(() => {
+    })
+  } else {
+    _confirmSystem(t('main.home.closeTabConfirm')).then(() => {
+      closeTabDirectly(id)
+    }).catch(() => {
+    })
+  }
+}
+
+const findSession = (sessionId?: number): number => {
   let idx = -1;
   let currentTab = activeTab.value
   if (sessionId == undefined && currentTab == HOME_TAB) {
@@ -286,20 +325,26 @@ const closeTabDirectly = (sessionId?: number) => {
              @click="activeTab = tab.name"
              prepend-icon="mdi-lan-connect"
       >
+        <strong v-show="tab.hasDirtyContent">*</strong>
         {{ tab.name }}
         <template v-slot:append>
-          <v-icon class="tab-icon-close" @click="closeTab(tab.session.id)">mdi-close</v-icon>
+          <v-icon
+              class="tab-icon-close"
+              @click="closeTab(tab.session.id)"
+              icon="mdi-close"
+          />
         </template>
       </v-tab>
     </v-tabs>
-    <v-divider></v-divider>
+    <v-divider/>
     <div style="height: calc(100% - 30px);">
-      <Home v-show="activeTab == HOME_TAB"></Home>
+      <Home v-show="activeTab == HOME_TAB"/>
       <Connection :session="tab.session"
                   v-for="tab in tabList"
                   :key="tab.name"
                   v-show="activeTab == tab.name"
-      ></Connection>
+                  v-model:has-dirty-content="tab.hasDirtyContent"
+      />
     </div>
   </div>
 </template>
