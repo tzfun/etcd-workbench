@@ -81,9 +81,11 @@ export default {
         fileSelector: {
             sizeTip: "Selected file is too large!",
             readFileError: "An error occurred while reading the file",
+            viewContent: "View file contents",
         },
         tree: {
             expandOrCollapse: "Expand or collapse all",
+            searchTip: "To enable/disable directory search, go to settings.",
         },
         completeInput: {
             notice: "Complete the next level directory name according to the input. (Adjust accuracy in Settings)"
@@ -94,6 +96,10 @@ export default {
             openDir: "Open the file directory",
             emptyStateTitle: "No Records",
             stopSnapshotConfirm: "Are you sure you want to stop data backup?",
+        },
+        editor: {
+            formatError: "Formatting Error",
+            format: "Format",
         }
     },
     main: {

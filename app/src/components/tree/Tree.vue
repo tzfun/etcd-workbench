@@ -171,27 +171,27 @@ const onRightClick = (e: MouseEvent, treeId: string, treeNode: TreeNode) => {
       }
 
       pushItem({
-        title: 'Rename',
+        title: t('main.keys.rename'),
         keyword: 'rename',
         icon: 'mdi-rename',
       })
 
       if (treeNode.isParent) {
         pushItem({
-          title: 'Add Key',
+          title: t('main.keys.addKey'),
           keyword: 'addKey',
           icon: 'mdi-file-document-plus-outline',
           iconColor: 'green'
         })
       } else {
         pushItem({
-          title: 'Copy and Save',
+          title: t('main.keys.copyAndSave'),
           keyword: 'copyAndSave',
           icon: 'mdi-content-copy',
           iconColor: 'light-green-darken-1'
         })
         pushItem({
-          title: 'Version Diff',
+          title: t('main.keys.versionDiff'),
           keyword: 'versionDiff',
           icon: 'mdi-vector-difference',
           iconColor: 'cyan-darken-1'
@@ -205,14 +205,14 @@ const onRightClick = (e: MouseEvent, treeId: string, treeNode: TreeNode) => {
       //  位于monitor列表中
       if (props.session!.keyMonitorMap![treeNode.id]) {
         pushItem({
-          title: 'Edit monitor',
+          title: t('main.keys.editBtnTitle'),
           keyword: 'editMonitor',
           icon: 'mdi-robot',
           iconColor: '#cc8f53',
         })
       } else {
         pushItem({
-          title: 'Add to monitors',
+          title: t('main.keys.addMonitorBtnTitle'),
           keyword: 'addToMonitor',
           icon: 'mdi-robot-outline',
           iconColor: '#cc8f53',
@@ -224,14 +224,14 @@ const onRightClick = (e: MouseEvent, treeId: string, treeNode: TreeNode) => {
         //  位于收藏列表中
         if (props.session!.keyCollectionSet!.has(treeNode.id)) {
           pushItem({
-            title: 'Remove from collections',
+            title: t('main.keys.removeCollectionTitle'),
             keyword: 'removeFromCollection',
             icon: 'mdi-star',
             iconColor: '#ced10a',
           })
         } else {
           pushItem({
-            title: 'Add to collections',
+            title: t('main.keys.collectBtnTitle'),
             keyword: 'addToCollection',
             icon: 'mdi-star-outline',
             iconColor: '#ced10a',
@@ -243,7 +243,7 @@ const onRightClick = (e: MouseEvent, treeId: string, treeNode: TreeNode) => {
         type: 'divider'
       })
       pushItem({
-        title: 'Delete',
+        title: t('common.delete'),
         keyword: 'delete',
         icon: 'mdi-trash-can-outline',
         baseColor: 'red'
@@ -597,7 +597,7 @@ defineExpose({
     <div v-if="enableSearch" class="position-relative">
       <v-tooltip location="top"
                  no-click-animation
-                 text="To enable/disable directory search, go to settings.">
+                 :text="t('component.tree.searchTip')">
         <template v-slot:activator="{ props }">
           <v-icon class="search-icon"
                   v-bind="props"

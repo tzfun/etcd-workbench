@@ -80,10 +80,12 @@ export default {
     component:{
         fileSelector: {
             sizeTip: "选择的文件体积太大!",
-            readFileError: "读取文件错误"
+            readFileError: "读取文件错误",
+            viewContent: "查看文件内容",
         },
         tree: {
             expandOrCollapse: "展开 / 收起",
+            searchTip: "如需启用/禁用目录搜索，请前往设置修改",
         },
         completeInput: {
             notice: "根据输入内容提示下一级目录名称（可在设置中调整提示准确度）"
@@ -94,6 +96,10 @@ export default {
             openDir: "打开文件目录",
             emptyStateTitle: "暂无记录",
             stopSnapshotConfirm: "确认停止快照数据备份？",
+        },
+        editor: {
+            formatError: "格式化错误",
+            format: "格式化",
         }
     },
     main: {

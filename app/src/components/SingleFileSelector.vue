@@ -115,7 +115,7 @@ const showFileContent = () => {
                class="text-none"
                density="comfortable"
                size="small"
-               title="View Content"
+               :title="t('component.fileSelector.viewContent')"
                color="green"
                variant="text"
                @click="showFileContent"

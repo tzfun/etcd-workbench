@@ -80,10 +80,12 @@ export default {
     component:{
         fileSelector: {
             sizeTip: "選択したファイルが大きすぎます！",
-            readFileError: "ファイルの読み込みエラー"
+            readFileError: "ファイルの読み込みエラー",
+            viewContent: "ファイルの内容を表示",
         },
         tree: {
             expandOrCollapse: "展開 / 折りたたみ",
+            searchTip: "ディレクトリ検索を有効/無効にするには、[設定] に移動します",
         },
         completeInput: {
             notice: "入力内容に基づき次のディレクトリ名を提案します（設定で精度を変更可能）"
@@ -94,6 +96,10 @@ export default {
             openDir: "ファイルディレクトリを開きます",
             emptyStateTitle: "まだ記録はありません",
             stopSnapshotConfirm: "スナップショット データのバックアップを停止してもよろしいですか?",
+        },
+        editor: {
+            formatError: "フォーマットエラー",
+            format: "形式化",
         }
     },
     main: {

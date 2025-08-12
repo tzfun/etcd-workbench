@@ -287,7 +287,7 @@ const tryFormatContent = (): Promise<string | undefined> => {
       consolePanelData.show = false
       resolve(newContent)
     }).catch(e => {
-      openConsolePanel('error', e.toString(), "Format Error:")
+      openConsolePanel('error', e.toString(), t('component.editor.formatError'))
       reject(e)
     })
   })
@@ -346,9 +346,9 @@ defineExpose({
       >
         <v-icon class="console-panel-close"
                 @click="consolePanelData.show = false"
-                title="Close"
-        >mdi-close
-        </v-icon>
+                :title="t('common.close')"
+                icon="mdi-close"
+        />
         <v-sheet class="fill-height overflow-auto pa-2">
           <span v-if="consolePanelData.title">
             <span style="color: red;" v-if="consolePanelData.type == 'error'">{{ consolePanelData.title }}</span>
@@ -359,9 +359,9 @@ defineExpose({
         </v-sheet>
       </div>
     </div>
-    <v-divider></v-divider>
+    <v-divider/>
     <div class="footer">
-      <slot name="footer"></slot>
+      <slot name="footer"/>
       <span class="editor-footer-item"><strong class="editor-item-label">{{ t('common.size') }}</strong>: {{ size }}</span>
       <span class="editor-footer-item">
         <span class="text-primary cursor-pointer user-select-none"
@@ -392,13 +392,13 @@ defineExpose({
           <v-divider></v-divider>
           <v-list density="compact"
           >
-            <v-list-item title="Format"
+            <v-list-item :title="t('component.editor.format')"
                          color="primary"
                          @click="formatContent"
                          class="text-center"
             >
               <template #title>
-                Format
+                {{ t('component.editor.format') }}
                 <span class="text-medium-emphasis" v-if="_isWindows() || _isLinux()">
                   (
                   <span class="font-weight-bold" style="font-size: 0.9em">Ctrl</span> +
@@ -465,7 +465,7 @@ $--editor-padding: 0 1rem;
 
   .editor-language-selection {
     position: absolute;
-    width: 200px;
+    width: 210px;
     min-height: 200px;
     z-index: 100;
     bottom: $--editor-footer-height;
