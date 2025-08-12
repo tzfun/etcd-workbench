@@ -461,7 +461,8 @@ $--editor-padding: 0 1rem;
   justify-content: right;
   align-items: center;
   font-size: 90%;
-  overflow: auto;
+  overflow-y: hidden;
+  overflow-x: auto;
 
   .editor-language-selection {
     position: absolute;

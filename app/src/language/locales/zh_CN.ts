@@ -292,7 +292,7 @@ export default {
             deleteKeyConfirm: "请确认永久删除键：",
             putAnywayConfirm: "确认将版本 <strong style=\"color: #CDDC39;\">{version}</strong> 更新为最新？",
             pathNameNotChanged: "路径名未发生变化",
-            renameFailed: "重命名失败：前缀路径下的键数量 ({count}) 超过设置的上限，请在设置中调整此上线。",
+            renameFailed: "重命名失败：前缀路径下的键数量 ({count}) 超过设置的上限，请在设置中调整此上限。",
             confirmDiffTitle: "请确认此次修改变化",
             confirmDiffBefore: "修改之前",
             confirmDiffAfter: "修改之后",
