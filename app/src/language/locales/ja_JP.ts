@@ -3,6 +3,10 @@ import {ja} from "vuetify/locale";
 export default {
     $vuetify: ja,
     slogan: "ETCD の管理をもっと簡単に",
+    window: {
+        main: "Etcd Workbench",
+        settings: "設定",
+    },
     common: {
         confirmTitle: "確認してください",
         confirm: "確認",
@@ -60,6 +64,8 @@ export default {
         copy: "コピー",
         keys: "キー",
         monitor: "モニター",
+        downloaded: "ダウンロード済み",
+        installedUpdates: "インストールされた更新プログラム"
     },
     feedback: {
         copyError: "クリップボードへの書き込み失敗",
@@ -69,6 +75,7 @@ export default {
         updateErrorTip: "更新中にエラーが発生しました",
         updateRestartConfirm: "更新が完了しました。今すぐソフトウェアを再起動しますか？",
         updateUnableTip: "更新できません",
+        openBrowserFailedTip: "ブラウザを開けませんでした，理由：{reason}",
     },
     component:{
         fileSelector: {
@@ -80,6 +87,13 @@ export default {
         },
         completeInput: {
             notice: "入力内容に基づき次のディレクトリ名を提案します（設定で精度を変更可能）"
+        },
+        snapshotList: {
+            tasks: "スナップショットタスク",
+            recent: "最近のスナップショット",
+            openDir: "ファイルディレクトリを開きます",
+            emptyStateTitle: "まだ記録はありません",
+            stopSnapshotConfirm: "スナップショット データのバックアップを停止してもよろしいですか?",
         }
     },
     main: {
@@ -276,6 +290,7 @@ export default {
             confirmDiffTitle: "この変更を確認してください",
             confirmDiffBefore: "変更前",
             confirmDiffAfter: "変更後",
+            coverDirtyConfirm: "現在の変更は保存されていません，破棄しますか？",
         },
         monitor: {
             markAllRead: "全て既読にする",

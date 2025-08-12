@@ -3,6 +3,7 @@ import {_alertError} from "~/common/events.ts";
 import {EditorHighlightLanguage} from "~/common/types.ts";
 import {_useGlobalStore} from "~/common/store.ts";
 import {FormattedValue} from "~/common/transport/kv.ts";
+import i18n from "~/language";
 
 const TEXT_DECODER = new TextDecoder();
 const TEXT_ENCODER = new TextEncoder();
@@ -51,7 +52,7 @@ export function _goBrowserPage(address: string) {
         })
         .catch(e => {
             console.error(e)
-            _alertError("Open browser failed: {e}")
+            _alertError(i18n.global.t('feedback.openBrowserFailedTip', {reason: e}))
         })
 }
 

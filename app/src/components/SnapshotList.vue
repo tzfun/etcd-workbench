@@ -14,9 +14,11 @@ import {_byteTextFormat, _nonEmpty, _pointInRect} from "~/common/utils.ts";
 import {appWindow} from "@tauri-apps/api/window";
 import {VSheet} from "vuetify/components";
 import {Handler} from "mitt";
+import {useI18n} from "vue-i18n";
 
 const snapshotList = ref<SnapshotInfo[]>([])
 const showList = ref<boolean>(false)
+const {t} = useI18n();
 
 const eventUnListens = reactive<Function[]>([])
 const listBoxRef = ref()
@@ -99,7 +101,7 @@ onUnmounted(() => {
 })
 
 const stopTask = (info: SnapshotInfo) => {
-  _confirmSystem('Are you sure you want to stop data backup?').then(() => {
+  _confirmSystem(t('component.snapshotList.stopSnapshotConfirm')).then(() => {
     _maintenanceStopSnapshotTask(info.id).then(() => {
       info.state.finished = true
       info.state.errorMsg = "Stopped"
@@ -152,17 +154,17 @@ const openFolder = (info: SnapshotInfo) => {
            variant="text"
            :rounded="false"
            density="comfortable"
-           title="Snapshot tasks"
+           :title="t('component.snapshotList.tasks')"
            :ripple="false"
            @click="showList = !showList"
     ></v-btn>
     <v-sheet class="list-box" v-show="showList" ref="listBoxRef">
-      <v-card title="Recent Snapshot"
+      <v-card :title="t('component.snapshotList.recent')"
               border
               flat
               class="user-select-none"
       >
-        <v-divider></v-divider>
+        <v-divider/>
         <v-card-text>
           <div v-if="snapshotList.length > 0">
             <div v-for="(info,idx) in snapshotList"
@@ -173,38 +175,36 @@ const openFolder = (info: SnapshotInfo) => {
                 <div class="list-item-prepend-icon">
                   <v-icon v-if="info.state.errorMsg != undefined"
                           color="red"
-                  >mdi-lightbulb-alert-outline
-                  </v-icon>
+                          icon="mdi-lightbulb-alert-outline"
+                  />
                   <v-icon v-else-if="info.state.remain == 0"
                           color="green"
-                  >mdi-check-circle-outline
-                  </v-icon>
+                          icon="mdi-check-circle-outline"
+                  />
                   <v-icon v-else
                           color="secondary"
-                  >mdi-download
-                  </v-icon>
+                          icon="mdi-download"
+                  />
                 </div>
 
-                <div class="list-item-title"
-
-                >
+                <div class="list-item-title">
                   <p @click="openFolder(info)"
                      :class="info.state.finished ? 'list-item-title-success' : ''"
-                     title="Open the file directory"
+                     :title="t('component.snapshotList.openDir')"
                   >{{ info.name }}</p>
                   <p class="v-messages">{{ _byteTextFormat(info.state.received) }}</p>
                 </div>
                 <div class="list-item-append-icon">
                   <v-icon v-if="info.state.finished"
                           @click="removeTask(info, idx)"
-                          title="Delete"
-                  >mdi-close
-                  </v-icon>
+                          :title="t('common.delete')"
+                          icon="mdi-close"
+                  />
                   <v-icon v-else
                           @click="stopTask(info)"
-                          title="Stop"
-                  >mdi-stop
-                  </v-icon>
+                          :title="t('common.stop')"
+                          icon="mdi-stop"
+                  />
                 </div>
               </div>
               <v-sheet
@@ -215,7 +215,7 @@ const openFolder = (info: SnapshotInfo) => {
                 <v-progress-linear
                     :model-value="getProgress(info.state)"
                     color="secondary"
-                ></v-progress-linear>
+                />
 
                 <strong class="ml-2">{{ Math.ceil(getProgress(info.state)) }}%</strong>
               </v-sheet>
@@ -226,14 +226,14 @@ const openFolder = (info: SnapshotInfo) => {
                 <p class="text-red">{{ info.state.errorMsg }}</p>
               </v-sheet>
 
-              <v-divider class="mt-2 mb-2"></v-divider>
+              <v-divider class="mt-2 mb-2"/>
             </div>
           </div>
           <v-empty-state v-else
                          icon="mdi-package-variant"
                          :size="40"
-                         title="No Records"
-          ></v-empty-state>
+                         :title="t('component.snapshotList.emptyStateTitle')"
+          />
         </v-card-text>
       </v-card>
 

@@ -2,13 +2,14 @@
 
 import {appWindow} from "@tauri-apps/api/window";
 import {computed, onMounted, PropType, reactive, ref} from "vue";
-import {_confirmSystem, _emitGlobal, EventName} from "~/common/events.ts";
+import {_confirm, _emitGlobal, EventName} from "~/common/events.ts";
 import {_openSettingWindow, isMaximizeState} from "~/common/windows.ts";
 import SnapshotList from "~/components/SnapshotList.vue";
 import {UpdateInfo} from "~/common/types.ts";
-import {_byteTextFormat} from "../../common/utils.ts";
+import {_byteTextFormat} from "~/common/utils.ts";
 import {relaunch} from "@tauri-apps/api/process";
 import {_checkUpdate} from "~/common/updater.ts";
+import {useI18n} from "vue-i18n";
 
 const props = defineProps({
   height: Number,
@@ -22,6 +23,7 @@ const props = defineProps({
   }
 })
 
+const {t} = useI18n();
 //  只有主窗口才允许全屏
 const enableMaximize: boolean = props.windowLabel == 'main';
 
@@ -47,10 +49,10 @@ const downloadingProgress = computed(() => {
 onMounted(async () => {
   switch (props.windowLabel) {
     case 'main':
-      title.value = 'Etcd Workbench'
+      title.value = t('window.main')
       break
     case 'setting':
-      title.value = 'Settings'
+      title.value = t('window.settings')
       break
   }
 })
@@ -78,20 +80,26 @@ const snapshotListShowChanged = (show: boolean) => {
 }
 
 const confirmRestart = () => {
-  _confirmSystem('Update installed. Restart now to apply changes?').then(() => {
+  _confirm(t('common.restart'),t('feedback.updateRestartConfirm')).then(() => {
     relaunch()
   }).catch(() => {})
 }
 </script>
 
 <template>
-  <v-system-bar window :height="height" @dblclick.self="toggleMaximize()" data-tauri-drag-region class="pr-0">
+  <v-system-bar
+      window
+      :height="height"
+      @dblclick.self="toggleMaximize()"
+      data-tauri-drag-region
+      class="pr-0"
+  >
     <v-icon class="me-2">
-      <v-img src="/logo.png" cover :width="30" :height="30"></v-img>
+      <v-img src="/logo.png" cover :width="30" :height="30"/>
     </v-icon>
     <span class="user-select-none">{{ title }}</span>
 
-    <v-spacer></v-spacer>
+    <v-spacer/>
 
     <div v-if="windowLabel == 'main'">
       <v-chip
@@ -129,9 +137,8 @@ const confirmRestart = () => {
           density="comfortable"
           color="blue-lighten-3"
           prepend-icon="mdi-download"
-      >
-        Downloaded
-      </v-chip>
+          :text="t('common.downloaded')"
+      />
       <v-chip
           v-else-if="updateInfo.state == 'installed'"
           class="mx-2"
@@ -141,9 +148,8 @@ const confirmRestart = () => {
           color="light-green-darken-1"
           prepend-icon="mdi-check-bold"
           @click="confirmRestart"
-      >
-        Installed Updates
-      </v-chip>
+          :text="t('common.installedUpdates')"
+      />
 
       <SnapshotList v-show="showSnapshotList"
                     @length-changed="snapshotListLenChanged"
@@ -156,21 +162,47 @@ const confirmRestart = () => {
              variant="text"
              :rounded="false"
              density="comfortable"
-             title="Settings"
+             :title="t('window.settings')"
              :ripple="false"
              @click="_openSettingWindow()"
       />
     </div>
-    <v-divider vertical class="mr-2 ml-2" length="80%" style="margin-top: 3px;"
-               v-if="windowLabel == 'main'"></v-divider>
+    <v-divider vertical
+               class="mr-2 ml-2"
+               length="80%"
+               style="margin-top: 3px;"
+               v-if="windowLabel == 'main'"
+    />
 
-    <v-btn class="system-native-btn" icon="mdi-minus" size="small" variant="text" :rounded="false" density="comfortable"
-           @click="appWindow.minimize()"></v-btn>
-    <v-btn class="system-native-btn ms-2" style="transform: rotate(90deg);" size="small"
-           :icon="isMaximizeState ? 'mdi-vector-arrange-below' : 'mdi-checkbox-blank-outline'" variant="text"
-           :rounded="false" density="comfortable" :disabled="!enableMaximize" @click="toggleMaximize"></v-btn>
-    <v-btn class="system-native-btn system-native-btn-close ms-2" size="small" icon="mdi-close" variant="text"
-           :rounded="false" density="comfortable" @click="closeApp"></v-btn>
+    <v-btn
+        class="system-native-btn"
+        icon="mdi-minus"
+        size="small"
+        variant="text"
+        :rounded="false"
+        density="comfortable"
+        @click="appWindow.minimize()"
+    />
+    <v-btn
+        class="system-native-btn ms-2"
+        style="transform: rotate(90deg);"
+        size="small"
+        :icon="isMaximizeState ? 'mdi-vector-arrange-below' : 'mdi-checkbox-blank-outline'"
+        variant="text"
+        :rounded="false"
+        density="comfortable"
+        :disabled="!enableMaximize"
+        @click="toggleMaximize"
+    />
+    <v-btn
+        class="system-native-btn system-native-btn-close ms-2"
+        size="small"
+        icon="mdi-close"
+        variant="text"
+        :rounded="false"
+        density="comfortable"
+        @click="closeApp"
+    />
   </v-system-bar>
 </template>
 

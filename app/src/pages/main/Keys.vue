@@ -640,7 +640,7 @@ const showKV = (key: string, keyInfo?: KeyExtendInfo): Promise<void> => {
     }
 
     if(currentKv.value && currentKvChanged.value) {
-      _confirmSystem("当前修改未保存，是否抛弃修改？").then(() => {
+      _confirmSystem(t('main.keys.coverDirtyConfirm')).then(() => {
         doShowKV()
       }).catch(() => {
         reject()

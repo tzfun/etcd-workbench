@@ -3,6 +3,10 @@ import { zhHant } from "vuetify/locale";
 export default {
     $vuetify: zhHant,
     slogan: "讓管理 ETCD 變得更簡單",
+    window: {
+        main: "Etcd Workbench",
+        settings: "設置",
+    },
     common: {
         confirmTitle: "請確認",
         confirm: "確認",
@@ -60,6 +64,8 @@ export default {
         copy: "複製",
         keys: "鍵",
         monitor: "監視器",
+        downloaded: "已下載",
+        installedUpdates: "已安裝更新"
     },
     feedback: {
         copyError: "無法寫入剪貼簿",
@@ -69,6 +75,7 @@ export default {
         updateErrorTip: "更新時發生錯誤",
         updateRestartConfirm: "更新完成，是否立即重新啟動軟體？",
         updateUnableTip: "無法更新",
+        openBrowserFailedTip: "打開瀏覽器失敗，原因：{reason}",
     },
     component: {
         fileSelector: {
@@ -80,6 +87,13 @@ export default {
         },
         completeInput: {
             notice: "根據輸入內容提示下一級目錄名稱（可在設定中調整提示準確度）"
+        },
+        snapshotList: {
+            tasks: "快照任務",
+            recent: "近期快照",
+            openDir: "打開文件目錄",
+            emptyStateTitle: "暫無紀錄",
+            stopSnapshotConfirm: "確認停止快照資料備份？",
         }
     },
     main: {
@@ -276,6 +290,7 @@ export default {
             confirmDiffTitle: "請確認此次修改變化",
             confirmDiffBefore: "修改之前",
             confirmDiffAfter: "修改之後",
+            coverDirtyConfirm: "目前修改未儲存，是否拋棄修改？",
         },
         monitor: {
             markAllRead: "標記全部已讀",

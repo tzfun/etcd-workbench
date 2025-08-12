@@ -9,9 +9,10 @@ import {_checkUpdate} from "~/common/updater.ts";
 import {_byteTextFormat} from "~/common/utils.ts";
 import {_confirm} from "~/common/events.ts";
 import {relaunch} from "@tauri-apps/api/process";
+import {useI18n} from "vue-i18n";
 
 const maximize = ref(false)
-
+const {t} = useI18n()
 const props = defineProps({
   height: Number,
   windowLabel: {
@@ -45,10 +46,10 @@ const downloadingProgress = computed(() => {
 onMounted(async () => {
   switch (props.windowLabel) {
     case 'main':
-      title.value = 'Etcd Workbench'
+      title.value = t('window.main')
       break
     case 'setting':
-      title.value = 'Settings'
+      title.value = t('window.settings')
       break
   }
   maximize.value = await appWindow.isMaximized() || await appWindow.isFullscreen()
@@ -76,7 +77,7 @@ const snapshotListShowChanged = (show: boolean) => {
 }
 
 const confirmRestart = () => {
-  _confirm('Restart','Update installed. Restart now to apply changes?').then(() => {
+  _confirm(t('common.restart'), t('feedback.updateRestartConfirm')).then(() => {
     relaunch()
   }).catch(() => {})
 }

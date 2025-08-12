@@ -3,6 +3,10 @@ import {zhHans} from "vuetify/locale";
 export default {
     $vuetify: zhHans,
     slogan: "让管理 ETCD 变得更简单",
+    window: {
+        main: "Etcd Workbench",
+        settings: "设置",
+    },
     common: {
         confirmTitle: "请确认",
         confirm: "确认",
@@ -60,6 +64,8 @@ export default {
         copy: "复制",
         keys: "键",
         monitor: "监视器",
+        downloaded: "已下载",
+        installedUpdates: "已安装更新"
     },
     feedback: {
         copyError: "无法写入剪切板",
@@ -69,6 +75,7 @@ export default {
         updateErrorTip: "更新时发生错误",
         updateRestartConfirm: "更新完成，是否立即重启软件？",
         updateUnableTip: "无法更新",
+        openBrowserFailedTip: "打开浏览器失败，原因：{reason}",
     },
     component:{
         fileSelector: {
@@ -80,6 +87,13 @@ export default {
         },
         completeInput: {
             notice: "根据输入内容提示下一级目录名称（可在设置中调整提示准确度）"
+        },
+        snapshotList: {
+            tasks: "快照任务",
+            recent: "近期快照",
+            openDir: "打开文件目录",
+            emptyStateTitle: "暂无记录",
+            stopSnapshotConfirm: "确认停止快照数据备份？",
         }
     },
     main: {
@@ -276,6 +290,7 @@ export default {
             confirmDiffTitle: "请确认此次修改变化",
             confirmDiffBefore: "修改之前",
             confirmDiffAfter: "修改之后",
+            coverDirtyConfirm: "当前修改未保存，是否抛弃修改？",
         },
         monitor: {
             markAllRead: "标记全部已读",
