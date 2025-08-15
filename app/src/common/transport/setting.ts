@@ -65,7 +65,7 @@ export const DEFAULT_SETTING_CONFIG: SettingConfig = {
     kvPaginationQuery: true,
     kvLimitPerPage: 2000,
     kvCheckFormatBeforeSave: true,
-    kvConfirmDiffBeforeSave: false,
+    kvConfirmDiffBeforeSave: true,
     kvTreeSearchWithFolder: true,
     kvSearchNextDirLimit: 100,
     kvDirRenameKeysLimit: 100,

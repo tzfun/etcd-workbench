@@ -96,7 +96,7 @@ fn default_kv_check_format_before_save() -> bool {
 }
 
 fn default_kv_confirm_diff_before_save() -> bool {
-    false
+    true
 }
 
 fn default_kv_tree_search_with_folder() -> bool {

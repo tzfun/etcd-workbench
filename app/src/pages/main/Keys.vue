@@ -777,7 +777,7 @@ const saveKV = () => {
           kv!.formattedValue,
           props.session?.namespace
       )
-      versionDiffInfo.language = _tryParseDiffLanguage(lang)
+      saveDiffDialog.language = _tryParseDiffLanguage(lang)
 
       saveDiffDialog.show = true
     } else {
