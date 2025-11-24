@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use crate::transport::kv::RenameAction;
+
 use super::{connection::KeyMonitorConfig, kv::SerializableKeyValue};
 
 #[derive(Clone, Deserialize, Serialize)]
@@ -62,4 +64,21 @@ pub struct KeyMonitorModifiedByServerEvent {
 pub struct UpdateDownloadingProgressEvent {
     pub chunk_length: usize,
     pub content_length: Option<u64>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all="camelCase")]
+pub struct KVRenameDirEvent {
+    pub key: Vec<u8>,
+    pub action: RenameAction,
+    pub success: bool,
+    pub failed_msg: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all="camelCase")]
+pub struct KVBatchImportAndExportEvent {
+    pub success: bool,
+    pub key: Option<Vec<u8>>,
+    pub failed_msg: Option<String>,
 }

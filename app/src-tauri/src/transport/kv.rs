@@ -141,15 +141,6 @@ pub enum RenameAction {
     Delete,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all="camelCase")]
-pub struct KVRenameDirEvent {
-    pub key: Vec<u8>,
-    pub action: RenameAction,
-    pub success: bool,
-    pub failed_msg: Option<String>,
-}
-
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub enum PutStrategy {
     Cover,

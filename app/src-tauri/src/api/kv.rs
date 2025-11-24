@@ -1,18 +1,34 @@
 use crate::api::settings::get_settings;
 use crate::error::LogicError;
 use crate::etcd;
+use crate::transport::event::{KVBatchImportAndExportEvent, KVRenameDirEvent};
 use crate::transport::kv::{
-    KVPutResult, KVRenameDirEvent, PutStrategy, RenameAction, SearchResult, SerializableKeyValue
+    KVPutResult, PutStrategy, RenameAction, SearchResult, SerializableKeyValue,
 };
+use crate::utils::{hex_to_vec, vec_to_hex};
 use etcd_client::{GetOptions, PutOptions};
 use log::warn;
+use std::io;
+use std::path::Path;
 use std::str::FromStr;
 use tauri::{AppHandle, Manager};
+use tokio::fs::{self, File};
+use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 
 const RENAME_DIR_EVENT: &str = "renameDirEvent";
 const RENAME_DIR_START_EVENT: &str = "renameDirStartEvent";
 const RENAME_DIR_END_EVENT: &str = "renameDirEndEvent";
 const RENAME_DIR_ERR_EVENT: &str = "renameDirErrEvent";
+
+const BATCH_EXPORT_EVENT: &str = "batchExportEvent";
+const BATCH_EXPORT_START_EVENT: &str = "batchExportStartEvent";
+const BATCH_EXPORT_END_EVENT: &str = "batchExportEndEvent";
+const BATCH_EXPORT_ERR_EVENT: &str = "batchExportErrEvent";
+
+const BATCH_IMPORT_EVENT: &str = "batchImportEvent";
+const BATCH_IMPORT_START_EVENT: &str = "batchImportStartEvent";
+const BATCH_IMPORT_END_EVENT: &str = "batchImportEndEvent";
+const BATCH_IMPORT_ERR_EVENT: &str = "batchImportErrEvent";
 
 #[tauri::command]
 pub async fn kv_get_all_keys(session: i32) -> Result<Vec<SerializableKeyValue>, LogicError> {
@@ -247,7 +263,13 @@ async fn rename_dir(
 
         //  如果使用重命名策略，则需要检查新key是否已存在
         if put_strategy == PutStrategy::Rename {
-            if let Ok(exist_resp) = client.kv_get_request(full_new_key.clone(), Some(GetOptions::new().with_keys_only())).await {
+            if let Ok(exist_resp) = client
+                .kv_get_request(
+                    full_new_key.clone(),
+                    Some(GetOptions::new().with_keys_only()),
+                )
+                .await
+            {
                 if exist_resp.count() == 1 {
                     full_new_key = PutStrategy::rename(exist_resp.kvs()[0].key());
                 }
@@ -287,7 +309,7 @@ async fn rename_dir(
             let full_origin_key = kv.key().to_vec();
             let mut origin_key = full_origin_key.clone();
             origin_key.drain(0..namespace_len); // 删除namespace前缀
-            
+
             // 删除原有的key
             if let Err(e) = client.kv_delete_request(full_origin_key, None).await {
                 let event = KVRenameDirEvent {
@@ -311,6 +333,222 @@ async fn rename_dir(
     }
 
     let _ = app_handle.emit_to("main", RENAME_DIR_END_EVENT, ());
-    
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn kv_batch_export(
+    app_handle: AppHandle,
+    session: i32,
+    keys: Vec<Vec<u8>>,
+    target_path: String,
+) -> Result<(), LogicError> {
+    let path = Path::new(&target_path);
+    if let Some(parent) = path.parent() {
+        if !parent.exists() {
+            fs::create_dir_all(parent).await?;
+        }
+    }
+    if keys.is_empty() {
+        return Err(LogicError::ArgumentError);
+    }
+
+    let c = etcd::get_connector(&session)?;
+    drop(c);
+
+    tauri::async_runtime::spawn(async move {
+        if let Err(e) = batch_export(&app_handle, session, keys, target_path).await {
+            log::error!("batch export error: {:?}", e);
+            let _ = app_handle.emit_to("main", BATCH_EXPORT_ERR_EVENT, ());
+        }
+    });
+
+    Ok(())
+}
+
+async fn batch_export(
+    app_handle: &AppHandle,
+    session: i32,
+    keys: Vec<Vec<u8>>,
+    target_path: String,
+) -> Result<(), LogicError> {
+    let _ = app_handle.emit_to("main", BATCH_EXPORT_START_EVENT, ());
+
+    let mut file = fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .write(true)
+        .truncate(true)
+        .open(target_path)
+        .await?;
+
+    let mut connector = etcd::get_connector(&session)?;
+    for k in keys {
+        let key = connector.fill_prefix_namespace(k);
+        let response = connector.inner().kv_get_request(key.clone(), None).await?;
+        let event = if response.count() == 1 {
+            let value = &response.kvs()[0];
+            file.write(vec_to_hex(value.key()).as_bytes()).await?;
+            file.write(b"\n").await?;
+
+            file.write(vec_to_hex(value.value()).as_bytes()).await?;
+            file.write(b"\n").await?;
+
+            KVBatchImportAndExportEvent {
+                success: true,
+                key: Some(key),
+                failed_msg: None,
+            }
+        } else {
+            KVBatchImportAndExportEvent {
+                success: false,
+                key: Some(key),
+                failed_msg: Some(format!("The number of entries read from the remote key is incorrect: expected 1, received {}.", response.count())),
+            }
+        };
+        let _ = app_handle.emit_to("main", BATCH_EXPORT_EVENT, event);
+    }
+    let _ = app_handle.emit_to("main", BATCH_EXPORT_END_EVENT, ());
+
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn kv_batch_import(
+    app_handle: AppHandle,
+    session: i32,
+    target_path: String,
+    prefix: Option<String>,
+    put_strategy: PutStrategy,
+) -> Result<(), LogicError> {
+    if put_strategy == PutStrategy::AskMerge {
+        return Err(LogicError::ArgumentError);
+    }
+
+    let path = Path::new(&target_path);
+    if !path.exists() {
+        return Err(LogicError::IoError(io::Error::new(
+            io::ErrorKind::NotFound,
+            "The file does not exist.",
+        )));
+    }
+
+    let c = etcd::get_connector(&session)?;
+    drop(c);
+
+    tauri::async_runtime::spawn(async move {
+        if let Err(e) = batch_import(&app_handle, session, target_path, prefix, put_strategy).await
+        {
+            log::error!("batch import error: {:?}", e);
+            let _ = app_handle.emit_to("main", BATCH_IMPORT_ERR_EVENT, ());
+        }
+    });
+
+    Ok(())
+}
+
+async fn batch_import(
+    app_handle: &AppHandle,
+    session: i32,
+    target_path: String,
+    prefix: Option<String>,
+    put_strategy: PutStrategy,
+) -> Result<(), LogicError> {
+    let _ = app_handle.emit_to("main", BATCH_IMPORT_START_EVENT, ());
+    let file = File::open(target_path).await?;
+    let reader = BufReader::new(file);
+
+    let mut connector = etcd::get_connector(&session)?;
+
+    let mut lines = reader.lines();
+    loop {
+        let key = lines.next_line().await?;
+        if key.is_none() {
+            break;
+        }
+        let value = lines.next_line().await?;
+        if value.is_none() {
+            break;
+        }
+
+        let key = hex_to_vec(key.unwrap());
+        let value = hex_to_vec(value.unwrap());
+
+        if let Err(e) = key {
+            let event = KVBatchImportAndExportEvent {
+                success: false,
+                key: None,
+                failed_msg: Some(e),
+            };
+            let _ = app_handle.emit_to("main", BATCH_IMPORT_EVENT, event);
+            break;
+        }
+        let mut key = key.unwrap();
+
+        if let Err(e) = value {
+            let event = KVBatchImportAndExportEvent {
+                success: false,
+                key: Some(key),
+                failed_msg: Some(e),
+            };
+            let _ = app_handle.emit_to("main", BATCH_IMPORT_EVENT, event);
+            break;
+        }
+        let value = value.unwrap();
+        if let Some(prefix) = &prefix {
+            key.splice(0..0, prefix.as_bytes().to_vec());
+        }
+
+        let mut key = connector.fill_prefix_namespace(key);
+
+        match put_strategy {
+            PutStrategy::Cover => {}
+            PutStrategy::Rename => {
+                match connector
+                    .inner()
+                    .kv_get_request(key.clone(), Some(GetOptions::new().with_keys_only()))
+                    .await
+                {
+                    Ok(res) => {
+                        if res.count() > 0 {
+                            key = PutStrategy::rename(&key);
+                        }
+                    }
+                    Err(e) => {
+                        let event = KVBatchImportAndExportEvent {
+                            success: false,
+                            key: Some(key),
+                            failed_msg: Some(format!("Failed to rename key: {}", e)),
+                        };
+
+                        let _ = app_handle.emit_to("main", BATCH_IMPORT_EVENT, event);
+                        continue;
+                    }
+                }
+            }
+            _ => {
+                continue;
+            }
+        }
+
+        let event = if let Err(e) = connector.kv_put(key.clone(), value, None).await {
+            KVBatchImportAndExportEvent {
+                success: false,
+                key: Some(key),
+                failed_msg: Some(e.to_string()),
+            }
+        } else {
+            KVBatchImportAndExportEvent {
+                success: true,
+                key: Some(key),
+                failed_msg: None,
+            }
+        };
+        let _ = app_handle.emit_to("main", BATCH_IMPORT_EVENT, event);
+    }
+
+    let _ = app_handle.emit_to("main", BATCH_IMPORT_END_EVENT, ());
+
     Ok(())
 }
