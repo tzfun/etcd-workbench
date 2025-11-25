@@ -35,8 +35,19 @@ export default createVuetify({
 export type ButtonSize = 'x-small' | 'small' | 'large' | 'x-large' | undefined
 export type Density = 'default' | 'comfortable' | 'compact'
 
-export const PAGE_REFRESH_BUTTON_SIZE: ButtonSize = 'x-small'
-export const PAGE_BUTTON_SIZE: ButtonSize = 'small'
+export const CONNECTION_LIST_DENSITY: Density = 'compact'
 
-export const DIALOG_BUTTON_SIZE: ButtonSize = 'small'
-export const DIALOG_BUTTON_DENSITY: Density = 'default'
+//  每个页面刷新按钮大小
+export const PAGE_REFRESH_BUTTON_SIZE: ButtonSize = 'small'
+//  每个页面主按钮大小
+export const PAGE_BUTTON_SIZE: ButtonSize = undefined
+
+//  KV编辑器按钮大小
+export const KEY_EDITOR_BUTTON_SIZE: ButtonSize = 'small'
+//  KV编辑器按钮边距
+export const KEY_EDITOR_BUTTON_DENSITY: Density = 'comfortable'
+
+//  对话框按钮大小
+export const DIALOG_BUTTON_SIZE: ButtonSize = undefined
+//  对话框按钮边距
+export const DIALOG_BUTTON_DENSITY: Density = 'comfortable'

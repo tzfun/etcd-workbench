@@ -149,8 +149,8 @@ pub enum PutStrategy {
 }
 
 impl PutStrategy {
-    pub fn rename(key: &[u8]) -> Vec<u8> {
-        let key_str=  String::from_utf8_lossy(key).to_string();
+    pub fn rename<V: AsRef<[u8]>>(key: V) -> Vec<u8> {
+        let key_str=  String::from_utf8_lossy(key.as_ref()).to_string();
         let (name, ext) = if let Some(dot_pos) = key_str.rfind('.') {
             (&key_str[..dot_pos], &key_str[dot_pos..])
         } else {

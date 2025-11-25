@@ -348,6 +348,16 @@ impl EtcdConnector {
         Ok(final_kv)
     }
 
+    /// 判断key是否存在
+    pub async fn kv_exist<K: AsRef<[u8]>>(&mut self, key: K) -> Result<bool, Error> {
+        let final_key = self.fill_prefix_namespace(key.as_ref().to_vec());
+        let response = self
+            .client
+            .kv_get_request(final_key.clone(), Some(GetOptions::new().with_count_only()))
+            .await?;
+        Ok(response.count() > 0)
+    }
+
     /// 将Key绑定到lease中
     pub async fn kv_put_with_lease(
         &mut self,
@@ -444,22 +454,29 @@ impl EtcdConnector {
     }
 
     /// 搜索下一级目录
-    pub async fn kv_search_next_dir(&mut self, prefix: impl Into<Vec<u8>>, include_file: bool) -> Result<Vec<String>, LogicError> {
+    pub async fn kv_search_next_dir(
+        &mut self,
+        prefix: impl Into<Vec<u8>>,
+        include_file: bool,
+    ) -> Result<Vec<String>, LogicError> {
         let prefix = prefix.into();
         let final_key = self.fill_prefix_namespace(prefix);
         let prefix_len = final_key.len();
 
         let settings = get_settings().await?;
 
-        let mut res = self.client.kv_get_request(
-            final_key, 
-            Some(
-                GetOptions::new()
-                .with_limit(settings.kv_search_next_dir_limit as i64)
-                .with_keys_only()
-                .with_prefix()
+        let mut res = self
+            .client
+            .kv_get_request(
+                final_key,
+                Some(
+                    GetOptions::new()
+                        .with_limit(settings.kv_search_next_dir_limit as i64)
+                        .with_keys_only()
+                        .with_prefix(),
+                ),
             )
-        ).await?;
+            .await?;
 
         let mut dir_set = HashSet::new();
         let splitter = settings.kv_path_splitter;
@@ -480,7 +497,7 @@ impl EtcdConnector {
                         continue;
                     }
                 }
-                
+
                 let mut dir = String::new();
                 let chars = k.chars();
 

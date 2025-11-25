@@ -498,37 +498,31 @@ async fn batch_import(
             key.splice(0..0, prefix.as_bytes().to_vec());
         }
 
-        let mut full_key = connector.fill_prefix_namespace(key.clone());
-
         match put_strategy {
             PutStrategy::Cover => {}
-            PutStrategy::Rename => {
-                match connector
-                    .inner()
-                    .kv_get_request(full_key.clone(), Some(GetOptions::new().with_keys_only()))
-                    .await
-                {
-                    Ok(res) => {
-                        if res.count() > 0 {
-                            full_key = PutStrategy::rename(&full_key);
-                        }
-                    }
-                    Err(e) => {
-                        let event = KVBatchImportAndExportEvent {
-                            success: false,
-                            key: Some(key),
-                            failed_msg: Some(format!("Failed to rename key: {}", e)),
-                        };
-
-                        let _ = app_handle.emit_to("main", BATCH_IMPORT_EVENT, event);
-                        continue;
+            PutStrategy::Rename => match connector.kv_exist(&key).await {
+                Ok(res) => {
+                    if res {
+                        key = PutStrategy::rename(&key);
                     }
                 }
-            }
+                Err(e) => {
+                    let event = KVBatchImportAndExportEvent {
+                        success: false,
+                        key: Some(key),
+                        failed_msg: Some(format!("Failed to rename key: {}", e)),
+                    };
+
+                    let _ = app_handle.emit_to("main", BATCH_IMPORT_EVENT, event);
+                    continue;
+                }
+            },
             _ => {
                 continue;
             }
         }
+
+        let full_key = connector.fill_prefix_namespace(key.clone());
 
         let event = if let Err(e) = connector
             .inner()

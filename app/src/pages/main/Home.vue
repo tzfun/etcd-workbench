@@ -7,8 +7,9 @@ import {nextTick, onActivated, onMounted, onUnmounted, reactive, ref} from "vue"
 import {ConnectionInfo, DEFAULT_CONNECTION, ErrorPayload} from "~/common/transport/connection.ts";
 import {listen} from "@tauri-apps/api/event";
 import {useI18n} from "vue-i18n";
+import {CONNECTION_LIST_DENSITY} from "~/common/vuetify.ts";
 
-const { t } = useI18n()
+const {t} = useI18n()
 const connectorRef = ref<InstanceType<typeof Connector>>()
 
 const connectionList = ref<ConnectionInfo[]>([])
@@ -37,7 +38,7 @@ const loadConnectionList = () => {
     list.sort((a, b) => a.name.localeCompare(b.name))
     connectionList.value = list
   }).catch((e: ErrorPayload | string) => {
-    _handleError({ e })
+    _handleError({e})
   })
 }
 
@@ -72,7 +73,7 @@ const removeConnectionConfig = (name: string) => {
         }
       }
     }).catch((e: ErrorPayload | string) => {
-      _handleError({ e })
+      _handleError({e})
     })
   }).catch(() => {
 
@@ -84,15 +85,19 @@ const removeConnectionConfig = (name: string) => {
   <v-layout class="fill-height overflow-y-auto">
     <v-navigation-drawer permanent
                          class="connection-menu user-select-none">
-      <v-list lines="two"
+      <v-list lines="one"
               activatable
               activated="new"
               color="primary"
+              :density="CONNECTION_LIST_DENSITY"
               @click:activate="selectConnection"
               mandatory
               nav
       >
-        <v-list-item value="new">
+        <v-list-item
+            value="new"
+            :density="CONNECTION_LIST_DENSITY"
+        >
           {{ t("main.home.newConnection") }}
           <template v-slot:prepend>
             <v-icon>mdi-transit-connection-variant</v-icon>
@@ -103,6 +108,7 @@ const removeConnectionConfig = (name: string) => {
                      :key="item.name"
                      :value="item"
                      class="config-close-item"
+                     :density="CONNECTION_LIST_DENSITY"
         >
           {{ item.name }}
           <template v-slot:prepend>
@@ -126,6 +132,7 @@ const removeConnectionConfig = (name: string) => {
   font-size: 0;
   transition: all 0.15s ease;
 }
+
 .config-close-item:hover {
   .config-close-icon {
     font-size: 1.5rem;
@@ -141,6 +148,10 @@ const removeConnectionConfig = (name: string) => {
 
   .v-list-item__append {
     display: block;
+  }
+
+  .v-list-item__content {
+    font-size: 0.9em;
   }
 }
 </style>

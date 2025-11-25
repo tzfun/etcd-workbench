@@ -221,7 +221,7 @@ export default {
             snapshotConfirmTip: "Confirm snapshot creation? Download duration varies by data size.",
         },
         keys: {
-            addKey: "Add Key",
+            addKey: "Put Key",
             deleteKeys: "Batch Delete",
             myCollections: "My Collections",
             search: "Search",

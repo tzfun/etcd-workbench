@@ -67,7 +67,7 @@ import {useI18n} from "vue-i18n";
 import {open, OpenDialogOptions, save, SaveDialogOptions} from "@tauri-apps/api/dialog";
 import {
   DIALOG_BUTTON_DENSITY,
-  DIALOG_BUTTON_SIZE,
+  DIALOG_BUTTON_SIZE, KEY_EDITOR_BUTTON_DENSITY, KEY_EDITOR_BUTTON_SIZE,
   PAGE_BUTTON_SIZE,
   PAGE_REFRESH_BUTTON_SIZE
 } from "~/common/vuetify.ts";
@@ -754,6 +754,7 @@ const batchImport = () => {
   batchImportDialog.state = 'none'
   batchImportDialog.prefix = ''
   batchImportDialog.putStrategy = 'Cover'
+  batchImportDialog.targetFile = null
   batchImportDialog.success = 0
   batchImportDialog.failed = 0
   batchImportDialog.logs = []
@@ -1623,9 +1624,9 @@ const batchImportLogScrollToBottom = () => {
           </v-overlay>
 
           <div v-if="currentKv" class="fill-height">
-            <v-layout class="editor-header">
+            <v-layout class="editor-header align-items-center">
               <v-chip v-if="session.keyCollectionSet!.has(currentKv.key)"
-                      class="ml-2 mt-2"
+                      class="ml-2"
                       density="compact"
                       @click="removeCollectionKey(currentKv.key)"
                       :title="t('main.keys.removeCollectionTitle')"
@@ -1636,7 +1637,7 @@ const batchImportLogScrollToBottom = () => {
                 </template>
               </v-chip>
               <v-chip v-else
-                      class="ml-2 mt-2"
+                      class="ml-2"
                       density="compact"
                       :title="t('main.keys.collectBtnTitle')"
                       @click="addCollectionKey(currentKv.key, currentKv.keyEncodedUtf8)"
@@ -1648,7 +1649,7 @@ const batchImportLogScrollToBottom = () => {
               </v-chip>
 
               <v-chip v-if="session.keyMonitorMap![currentKv.key]"
-                      class="ml-2 mt-2"
+                      class="ml-2"
                       density="compact"
                       :title="t('main.keys.editBtnTitle')"
                       @click="editKeyMonitor(currentKv.key)"
@@ -1659,7 +1660,7 @@ const batchImportLogScrollToBottom = () => {
                 </template>
               </v-chip>
               <v-chip v-else
-                      class="ml-2 mt-2"
+                      class="ml-2"
                       density="compact"
                       :title="t('main.keys.addMonitorBtnTitle')"
                       @click="addKeyMonitor(currentKv.key, false, currentKv.keyEncodedUtf8)"
@@ -1679,7 +1680,8 @@ const batchImportLogScrollToBottom = () => {
                   <v-btn v-bind="props"
                          :disabled="!currentKvChanged"
                          color="primary"
-                         size="small"
+                         :size="KEY_EDITOR_BUTTON_SIZE"
+                         :density="KEY_EDITOR_BUTTON_DENSITY"
                          @click="saveKV"
                          :text="t('common.save')"
                          class="mr-2 text-none"
@@ -1690,7 +1692,8 @@ const batchImportLogScrollToBottom = () => {
               </v-tooltip>
 
               <v-btn color="cyan-darken-1"
-                     size="small"
+                     :size="KEY_EDITOR_BUTTON_SIZE"
+                     :density="KEY_EDITOR_BUTTON_DENSITY"
                      @click="loadVersionDiff(currentKv!.key, currentKv)"
                      :text="t('main.keys.versionDiff')"
                      class="mr-2 text-none"
@@ -1698,14 +1701,16 @@ const batchImportLogScrollToBottom = () => {
                      prepend-icon="mdi-vector-difference"
               />
               <v-btn color="light-green-darken-1"
-                     size="small"
+                     :size="KEY_EDITOR_BUTTON_SIZE"
+                     :density="KEY_EDITOR_BUTTON_DENSITY"
                      :text="t('main.keys.copyAndSave')"
                      class="mr-2 text-none"
                      prepend-icon="mdi-content-copy"
                      @click="showCopyAndSaveDialog(t('main.keys.copyAndSave'), currentKv.key, _decodeBytesToString(currentKv.value), false)"
               />
               <v-btn color="deep-orange-darken-1"
-                     size="small"
+                     :size="KEY_EDITOR_BUTTON_SIZE"
+                     :density="KEY_EDITOR_BUTTON_DENSITY"
                      @click="deleteKey(currentKv.key, currentKv)"
                      :loading="loadingStore.delete"
                      :disabled="!currentKv"
