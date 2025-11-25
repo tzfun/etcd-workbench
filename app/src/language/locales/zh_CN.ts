@@ -65,7 +65,8 @@ export default {
         keys: "键",
         monitor: "监视器",
         downloaded: "已下载",
-        installedUpdates: "已安装更新"
+        installedUpdates: "已安装更新",
+        imported: "已导入",
     },
     feedback: {
         copyError: "无法写入剪切板",
@@ -77,7 +78,7 @@ export default {
         updateUnableTip: "无法更新",
         openBrowserFailedTip: "打开浏览器失败，原因：{reason}",
     },
-    component:{
+    component: {
         fileSelector: {
             sizeTip: "选择的文件体积太大!",
             readFileError: "读取文件错误",
@@ -116,7 +117,7 @@ export default {
             sessionConnLostTip: "会话连接丢失，原因：{reason}",
             connector: {
                 serverConnection: "连接 ETCD 数据库",
-                form:{
+                form: {
                     name: "连接名",
                     namePlaceholder: "为当前连接命名",
                     host: "主机",
@@ -222,7 +223,7 @@ export default {
         },
         keys: {
             addKey: "新增键",
-            deleteKeys: "删除选中的键",
+            deleteKeys: "批量删除",
             myCollections: "我的收藏",
             search: "从数据库搜索",
             searchBtnTitle: "从 etcd 数据库搜索键",
@@ -267,7 +268,7 @@ export default {
             resolveConflictAlert: "系统检测到中间版本，请在提交前确定是否合并内容。",
             yourVersion: "你的版本",
             latestVersion: "最新版本 ({version})",
-            resolvedAndSubmit:"已解决并提交",
+            resolvedAndSubmit: "已解决并提交",
             renamePath: "重命名路径",
             path: "路径",
             deleteOriginKeys: "删除重命名之前的键",
@@ -276,7 +277,7 @@ export default {
             renameStrategy: "重命名",
             logs: "记录",
             emptyKeyTip: "键不能为空",
-            invalidTtlTip:"请输入有效的 TTL 值",
+            invalidTtlTip: "请输入有效的 TTL 值",
             invalidLeaseTip: "请输入有效的租约ID",
             keyNotChangedTip: "键未发生变化",
             deleteEmptyKeyTip: "请至少在目录树中选择一个键",
@@ -297,6 +298,11 @@ export default {
             confirmDiffBefore: "修改之前",
             confirmDiffAfter: "修改之后",
             coverDirtyConfirm: "当前修改未保存，是否抛弃修改？",
+            exportEmptyKeysTip: "请至少在目录树中选择一个键",
+            batchExport: "批量导出",
+            batchImport: "批量导入",
+            batchImportFilePlaceholder: "请选择批量导入的文件",
+            batchExportAndImportAlert: "任务中有失败项！失败条目数：{num}",
         },
         monitor: {
             markAllRead: "标记全部已读",

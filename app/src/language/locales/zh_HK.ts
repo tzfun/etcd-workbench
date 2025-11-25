@@ -65,7 +65,8 @@ export default {
         keys: "鍵",
         monitor: "監視器",
         downloaded: "已下載",
-        installedUpdates: "已安裝更新"
+        installedUpdates: "已安裝更新",
+        imported: "已導入",
     },
     feedback: {
         copyError: "無法寫入剪貼簿",
@@ -222,7 +223,7 @@ export default {
         },
         keys: {
             addKey: "新增鍵",
-            deleteKeys: "刪除選中的鍵",
+            deleteKeys: "批量刪除",
             myCollections: "我的收藏",
             search: "從資料庫搜尋",
             searchBtnTitle: "從 etcd 資料庫搜尋鍵",
@@ -297,6 +298,11 @@ export default {
             confirmDiffBefore: "修改之前",
             confirmDiffAfter: "修改之後",
             coverDirtyConfirm: "目前修改未儲存，是否拋棄修改？",
+            exportEmptyKeysTip: "請至少在目錄樹中選擇一個鍵",
+            batchExport: "批量導出",
+            batchImport: "批量導入",
+            batchImportFilePlaceholder: "請選擇批量導入嘅文件",
+            batchExportAndImportAlert: "任務中有失敗項！失敗條目數：{num}",
         },
         monitor: {
             markAllRead: "標記全部已讀",

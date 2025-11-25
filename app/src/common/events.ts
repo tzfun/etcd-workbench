@@ -38,6 +38,14 @@ export enum EventName {
     RENAME_DIR_START_EVENT = 'renameDirStartEvent',
     RENAME_DIR_END_EVENT = 'renameDirEndEvent',
     RENAME_DIR_ERR_EVENT = 'renameDirErrEvent',
+    BATCH_EXPORT_EVENT = 'batchExportEvent',
+    BATCH_EXPORT_START_EVENT = 'batchExportStartEvent',
+    BATCH_EXPORT_END_EVENT = 'batchExportEndEvent',
+    BATCH_EXPORT_ERR_EVENT = 'batchExportErrEvent',
+    BATCH_IMPORT_EVENT = 'batchImportEvent',
+    BATCH_IMPORT_START_EVENT = 'batchImportStartEvent',
+    BATCH_IMPORT_END_EVENT = 'batchImportEndEvent',
+    BATCH_IMPORT_ERR_EVENT = 'batchImportErrEvent',
 }
 
 export type KeyWatchEventType = "Remove" | "Create" | "Modify"
@@ -76,6 +84,12 @@ export interface KVRenameDirEvent {
     action: RenameAction
     success: boolean
     failedMsg: string
+}
+
+export interface KVBatchExportAndImportEvent {
+    success: boolean
+    key?: number[]
+    failedMsg?: string
 }
 
 export function _useLocalEvents(): Emitter<Record<EventType, any>> {
@@ -195,7 +209,8 @@ export function _dialogContent(content: string) {
         title: i18n.global.t('common.content'),
         content: content,
         maxWidth: 1200,
-        closeBtn: true
+        closeBtn: true,
+        preview: true,
     }
 
     _emitLocal(EventName.DIALOG, dialog)

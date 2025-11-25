@@ -40,7 +40,8 @@ export type DialogItem = {
     persistent?: boolean
     scrollable?: boolean,
     closeBtn?: boolean,
-    zIndex?: number
+    zIndex?: number,
+    preview?: boolean,
 }
 
 export type TipsItem = {

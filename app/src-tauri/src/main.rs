@@ -8,6 +8,7 @@ use api::{
 };
 use log::{debug, info, LevelFilter};
 use tauri::{Manager, PhysicalSize, RunEvent, Size};
+use std::io::Write;
 
 // use crate::api::windows::tray_menu_handle;
 use crate::utils::file_util;
@@ -35,6 +36,21 @@ async fn main() {
             "tao::platform_impl::platform::event_loop::runner",
             LevelFilter::Error,
         )
+        .format(|buf, record| {
+            let style = buf.default_level_style(record.level());
+            let ts = buf.timestamp();
+            writeln!(
+                buf,
+                "{} {}{}{} [{}:{}] {}",
+                ts,
+                style.render(),
+                record.level(),
+                style.render_reset(),
+                record.file().unwrap_or("unknown"),
+                record.line().unwrap_or(0),
+                record.args()
+            )
+        })
         .init();
     info!("env logger initialized");
 

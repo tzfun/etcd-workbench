@@ -366,3 +366,20 @@ export function _kvRenameDir(
         putStrategy
     })
 }
+
+export function _kvBatchExport(session: number, keys: number[][], targetPath: string): Promise<void> {
+    return invoke('kv_batch_export', {
+        session,
+        keys,
+        targetPath,
+    })
+}
+
+export function _kvBatchImport(session: number, targetPath: string, putStrategy: PutStrategy, prefix?: string): Promise<void> {
+    return invoke('kv_batch_import', {
+        session,
+        targetPath,
+        putStrategy,
+        prefix
+    })
+}

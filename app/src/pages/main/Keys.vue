@@ -20,7 +20,7 @@ import {
   _tipSuccess,
   _tipWarn,
   _unListenLocal,
-  EventName,
+  EventName, KVBatchExportAndImportEvent,
   KVRenameDirEvent
 } from "~/common/events.ts";
 import {
@@ -30,7 +30,7 @@ import {
   _getKV,
   _getKVByVersion,
   _getKVHistoryVersions,
-  _handleError,
+  _handleError, _kvBatchExport, _kvBatchImport,
   _kvRenameDir,
   _kvSearchNextDir,
   _putKV,
@@ -42,8 +42,8 @@ import {_saveGlobalStore, _useGlobalStore, _useSettings} from "~/common/store.ts
 import {ErrorPayload, KeyMonitorConfig, SessionData} from "~/common/transport/connection.ts";
 import {KeyExtendInfo, PutStrategy, SearchResult} from "~/common/transport/kv";
 import {KeyValue} from "~/common/transport/kv.ts";
-import {EditorConfig, EditorHighlightLanguage} from "~/common/types.ts";
-import {_debounce, arraysEqual} from "~/common/utils";
+import {EditorConfig, EditorHighlightLanguage, FileForm} from "~/common/types.ts";
+import {_debounce, _emptyOrNull, _nonEmpty, arraysEqual} from "~/common/utils";
 import {
   _decodeBytesToString,
   _encodeStringToBytes,
@@ -51,7 +51,7 @@ import {
   _tryParseDiffLanguage,
   _tryParseEditorLanguage
 } from "~/common/utils.ts";
-import {_isMac} from "~/common/windows.ts";
+import {_getDownloadPath, _isMac} from "~/common/windows.ts";
 import CountDownTimer from "~/components/CountDownTimer.vue";
 import DragBox from "~/components/drag-area/DragBox.vue";
 import DragItem from "~/components/drag-area/DragItem.vue";
@@ -64,6 +64,7 @@ import CompleteInput from "~/components/CompleteInput.vue";
 import {appWindow} from "@tauri-apps/api/window";
 import {_deepSearchTreeNodes, TreeNode} from "~/components/tree/types.ts";
 import {useI18n} from "vue-i18n";
+import {open, OpenDialogOptions, save, SaveDialogOptions} from "@tauri-apps/api/dialog";
 
 const {t} = useI18n()
 const theme = useTheme()
@@ -119,6 +120,8 @@ const putMergeEditorRef = ref<InstanceType<typeof HTMLElement>>()
 const putMergeEditor = ref<MergeView>()
 const eventUnListens = reactive<Function[]>([])
 const renameDirLogListRef = ref<InstanceType<typeof HTMLDivElement>>()
+const batchExportLogListRef = ref<InstanceType<typeof HTMLDivElement>>()
+const batchImportLogListRef = ref<InstanceType<typeof HTMLDivElement>>()
 
 const defaultEditorConfig: EditorConfig = {
   disabled: false,
@@ -146,7 +149,9 @@ const loadingStore = reactive({
   confirmNewKey: false,
   loadMore: false,
   getKey: false,
-  renameDir: false
+  renameDir: false,
+  batchExport: false,
+  batchImport: false,
 })
 
 const newKeyDialog = reactive({
@@ -216,9 +221,29 @@ const renameDirDialog = reactive({
   originPrefix: "",
   newPrefix: "",
   deleteOriginKeys: true,
-  putStrategy: <PutStrategy> 'Cover',
-  state: <'none' | 'started' | 'ended' | 'failed'> 'none',
+  putStrategy: <PutStrategy>'Cover',
+  state: <'none' | 'started' | 'ended' | 'failed'>'none',
   logs: <KVRenameDirEvent[]>[]
+})
+
+const batchExportDialog = reactive({
+  show: false,
+  state: <'none' | 'started' | 'ended' | 'failed'>'none',
+  tasks: 0,
+  targetFile: <string | null>null,
+  success: 0,
+  logs: <KVBatchExportAndImportEvent[]>[]
+})
+
+const batchImportDialog = reactive({
+  show: false,
+  state: <'none' | 'started' | 'ended' | 'failed'>'none',
+  prefix: '',
+  putStrategy: <PutStrategy>'Cover',
+  targetFile: <string | null>null,
+  success: 0,
+  failed: 0,
+  logs: <KVBatchExportAndImportEvent[]>[]
 })
 
 watch(
@@ -304,6 +329,8 @@ onMounted(async () => {
     parent: putMergeEditorRef.value!
   })
 
+  /*------------------- 监听重命名事件 -----------------*/
+
   eventUnListens.push(await appWindow.listen<KVRenameDirEvent>(EventName.RENAME_DIR_EVENT, e => {
     const event = e.payload
     renameDirDialog.logs.push(event)
@@ -333,6 +360,67 @@ onMounted(async () => {
     loadingStore.renameDir = false
     renameDirLogScrollToBottom()
   }))
+
+  /*------------------- 监听批量导出KV事件 -----------------*/
+
+  eventUnListens.push(await appWindow.listen(EventName.BATCH_EXPORT_START_EVENT, () => {
+    batchExportDialog.state = 'started'
+  }))
+
+  eventUnListens.push(await appWindow.listen<KVBatchExportAndImportEvent>(EventName.BATCH_EXPORT_EVENT, (e) => {
+    if (e.payload.success) {
+      batchExportDialog.success++
+    }
+    batchExportDialog.logs.push(e.payload)
+    batchExportLogScrollToBottom()
+  }))
+
+  eventUnListens.push(await appWindow.listen(EventName.BATCH_EXPORT_END_EVENT, () => {
+    batchExportDialog.state = 'ended'
+    batchExportLogScrollToBottom()
+    loadingStore.batchExport = false
+  }))
+
+  eventUnListens.push(await appWindow.listen<string>(EventName.BATCH_EXPORT_ERR_EVENT, (e) => {
+    batchExportDialog.state = 'failed'
+    batchExportLogScrollToBottom()
+    loadingStore.batchExport = false
+    _alertError(e.payload)
+  }))
+
+  /*------------------- 监听批量导入KV事件 -----------------*/
+
+  eventUnListens.push(await appWindow.listen(EventName.BATCH_IMPORT_START_EVENT, () => {
+    batchImportDialog.state = 'started'
+  }))
+
+  eventUnListens.push(await appWindow.listen<KVBatchExportAndImportEvent>(EventName.BATCH_IMPORT_EVENT, (e) => {
+    if (e.payload.success) {
+      batchImportDialog.success++
+      if (kvTree.value) {
+        const key = _decodeBytesToString(e.payload.key)
+        kvTree.value.addItemToTree(key, true)
+      }
+    } else {
+      batchImportDialog.failed++
+    }
+    batchImportDialog.logs.push(e.payload)
+    batchImportLogScrollToBottom()
+  }))
+
+  eventUnListens.push(await appWindow.listen(EventName.BATCH_IMPORT_END_EVENT, () => {
+    batchImportDialog.state = 'ended'
+    batchImportLogScrollToBottom()
+    loadingStore.batchImport = false
+  }))
+
+  eventUnListens.push(await appWindow.listen<string>(EventName.BATCH_IMPORT_ERR_EVENT, (e) => {
+    batchImportDialog.state = 'failed'
+    batchImportLogScrollToBottom()
+    loadingStore.batchImport = false
+    _alertError(e.payload)
+  }))
+
 })
 
 onUnmounted(() => {
@@ -600,6 +688,103 @@ const deleteKeyBatch = (nodes: TreeNode[]) => {
   })
 }
 
+const batchExport = async (nodes: TreeNode[]) => {
+  if (nodes.length == 0) {
+    _tipInfo(t('main.keys.exportEmptyKeysTip'))
+    return
+  }
+
+  let downloadPath = await _getDownloadPath()
+  save(<SaveDialogOptions>{
+    title: t('main.keys.batchExport'),
+    defaultPath: downloadPath,
+    filters: [
+      {
+        name: 'Etcd Workbench KV',
+        extensions: ['ewkv']
+      }
+    ]
+  }).then(filepath => {
+    batchExportDialog.targetFile = filepath
+    if (filepath) {
+      loadingStore.batchExport = true
+      const keys: number[][] = []
+      for (const node of nodes) {
+        if (node.isParent) {
+          continue
+        }
+        if (node.keyInfo) {
+          keys.push(node.keyInfo.keyBytes)
+        } else {
+          keys.push(_encodeStringToBytes(node.id))
+        }
+      }
+
+      if (keys.length == 0) {
+        _tipInfo(t('main.keys.exportEmptyKeysTip'))
+        return
+      }
+
+      batchExportDialog.state = 'none'
+      batchExportDialog.logs = []
+      batchExportDialog.success = 0
+      batchExportDialog.tasks = keys.length
+      batchExportDialog.show = true
+
+      _kvBatchExport(props.session?.id, keys, filepath).catch(e => {
+        loadingStore.batchExport = false
+        _handleError({
+          e,
+          session: props.session
+        })
+      })
+    }
+  }).catch(e => {
+    _alertError(e)
+  })
+}
+
+const batchImport = () => {
+  batchImportDialog.state = 'none'
+  batchImportDialog.prefix = ''
+  batchImportDialog.putStrategy = 'Cover'
+  batchImportDialog.success = 0
+  batchImportDialog.failed = 0
+  batchImportDialog.logs = []
+  batchImportDialog.show = true
+}
+
+const selectBatchImportFile = () => {
+  open(<OpenDialogOptions>{
+    multiple: false,
+    filters: [{
+      name: 'Etcd Workbench KV',
+      extensions: ['ewkv']
+    }]
+  }).then(filepath => {
+    batchImportDialog.targetFile = filepath as string
+  }).catch(e => {
+    console.error(e)
+    _alertError(e)
+  })
+}
+
+const confirmBatchImport = () => {
+  loadingStore.batchImport = true
+  _kvBatchImport(
+      props.session?.id,
+      batchImportDialog.targetFile as string,
+      batchImportDialog.putStrategy,
+      _emptyOrNull(batchImportDialog.prefix)
+  ).catch(e => {
+    loadingStore.batchImport = false
+    _handleError({
+      e,
+      session: props.session
+    })
+  })
+}
+
 const showKV = (key: string, keyInfo?: KeyExtendInfo): Promise<void> => {
   return new Promise((resolve, reject) => {
 
@@ -639,7 +824,7 @@ const showKV = (key: string, keyInfo?: KeyExtendInfo): Promise<void> => {
       })
     }
 
-    if(currentKv.value && currentKvChanged.value) {
+    if (currentKv.value && currentKvChanged.value) {
       _confirmSystem(t('main.keys.coverDirtyConfirm')).then(() => {
         doShowKV()
       }).catch(() => {
@@ -657,7 +842,7 @@ const onClickTreeNode = (key: string, keyInfo?: KeyExtendInfo) => {
     if (kvTree.value && currentKv.value) {
       kvTree.value.selectItem(currentKv.value.key)
     }
-    if(e) {
+    if (e) {
       console.error(e)
     }
   })
@@ -1150,7 +1335,7 @@ const searchNext = (value: string | null, includeFile: boolean): Promise<string[
 }
 
 const putAnyway = (key: string, value: string, version: number) => {
-  _confirmSystem(t('main.keys.putAnywayConfirm',{ version })).then(() => {
+  _confirmSystem(t('main.keys.putAnywayConfirm', {version})).then(() => {
     _loading(true)
     _putKV(props.session?.id, key, _encodeStringToBytes(value), -1).then((result) => {
       if (result.success) {
@@ -1192,11 +1377,10 @@ const onClickContextmenu = (keyword: ContextmenuKeyword, node: TreeNode) => {
         renameDirDialog.state = 'none'
         renameDirDialog.logs = []
         renameDirDialog.show = true
-      }
-      else if (keyword == 'addKey') {
+      } else if (keyword == 'addKey') {
         showNewKeyDialog(key)
       } else if (keyword == 'delete') {
-        const nodes:TreeNode[] = [node]
+        const nodes: TreeNode[] = [node]
         _deepSearchTreeNodes(node, nodes)
         deleteKeyBatch(nodes)
       }
@@ -1236,7 +1420,7 @@ const onClickContextmenu = (keyword: ContextmenuKeyword, node: TreeNode) => {
 }
 
 const renameDir = () => {
-  if(renameDirDialog.originPrefix === renameDirDialog.newPrefix) {
+  if (renameDirDialog.originPrefix === renameDirDialog.newPrefix) {
     _tipWarn(t('main.keys.pathNameNotChanged'))
     return
   }
@@ -1251,7 +1435,7 @@ const renameDir = () => {
   }).catch(e => {
     if (e.errType && e.errType == 'LimitedError') {
       const count = (e as ErrorPayload).data!.count
-      _alertError(t('main.keys.renameFailed', { count }))
+      _alertError(t('main.keys.renameFailed', {count}))
     } else {
       _handleError({
         e,
@@ -1266,6 +1450,22 @@ const renameDirLogScrollToBottom = () => {
   nextTick(() => {
     if (renameDirLogListRef.value) {
       renameDirLogListRef.value.scrollTop = renameDirLogListRef.value.scrollHeight
+    }
+  })
+}
+
+const batchExportLogScrollToBottom = () => {
+  nextTick(() => {
+    if (batchExportLogListRef.value) {
+      batchExportLogListRef.value.scrollTop = batchExportLogListRef.value.scrollHeight
+    }
+  })
+}
+
+const batchImportLogScrollToBottom = () => {
+  nextTick(() => {
+    if (batchImportLogListRef.value) {
+      batchImportLogListRef.value.scrollTop = batchImportLogListRef.value.scrollHeight
     }
   })
 }
@@ -1295,6 +1495,22 @@ const renameDirLogScrollToBottom = () => {
              @click="deleteKeyBatch(kvTree!.getSelectedItems())"
              :loading="loadingStore.deleteBatch"
              :text="t('main.keys.deleteKeys')"
+      />
+      <v-btn variant="elevated"
+             class="text-none ml-2"
+             prepend-icon="mdi-file-export-outline"
+             color="green-darken-3"
+             @click="batchExport(kvTree!.getSelectedItems())"
+             :loading="loadingStore.batchExport"
+             :text="t('main.keys.batchExport')"
+      />
+      <v-btn variant="elevated"
+             class="text-none ml-2"
+             prepend-icon="mdi-file-import-outline"
+             color="light-green-darken-1"
+             @click="batchImport"
+             :loading="loadingStore.batchImport"
+             :text="t('main.keys.batchImport')"
       />
 
       <v-btn class="text-none ml-2"
@@ -1498,7 +1714,7 @@ const renameDirLogScrollToBottom = () => {
                   <v-layout>
                     <p v-html="t('main.keys.k8sFormatNotice')"></p>
                     <span class="editor-alert-link pl-2"
-                          @click="showFormattedValue = !showFormattedValue">{{t('common.recover')}}</span>
+                          @click="showFormattedValue = !showFormattedValue">{{ t('common.recover') }}</span>
                     <v-spacer></v-spacer>
 
                     <v-icon @click="editorAlert.show = false" class="mr-2">mdi-chevron-double-up</v-icon>
@@ -1520,7 +1736,8 @@ const renameDirLogScrollToBottom = () => {
               >
                 <template #footer>
                   <span class="editor-footer-item ml-0" v-if="currentKv.leaseInfo">
-                    <v-tooltip location="top" :text="`${t('main.keys.grantedTtl')}: ${currentKv.leaseInfo.grantedTtl} s`">
+                    <v-tooltip location="top"
+                               :text="`${t('main.keys.grantedTtl')}: ${currentKv.leaseInfo.grantedTtl} s`">
                       <template v-slot:activator="{ props }">
                         <span class="text-secondary user-select-none" v-bind="props">
                           <CountDownTimer :value="currentKv.leaseInfo.ttl"/>
@@ -1529,18 +1746,23 @@ const renameDirLogScrollToBottom = () => {
                     </v-tooltip>
                   </span>
                   <v-spacer></v-spacer>
-                  <span class="editor-footer-item"><strong class="editor-item-label">{{t('common.version')}}</strong>: {{ currentKv.version }}</span>
+                  <span class="editor-footer-item"><strong class="editor-item-label">{{ t('common.version') }}</strong>: {{
+                      currentKv.version
+                    }}</span>
                   <span class="editor-footer-item cursor-pointer"
-                        @click="_copyToClipboard(currentKv.createRevision)"><strong class="editor-item-label">{{t('main.keys.createRevision')}}</strong>: {{
+                        @click="_copyToClipboard(currentKv.createRevision)"><strong
+                      class="editor-item-label">{{ t('main.keys.createRevision') }}</strong>: {{
                       currentKv.createRevision
                     }}</span>
                   <span class="editor-footer-item cursor-pointer"
                         @click="_copyToClipboard(currentKv.modRevision)">
-                    <strong class="editor-item-label">{{t('main.keys.modifyRevision')}}</strong>: {{currentKv.modRevision }}</span>
+                    <strong class="editor-item-label">{{ t('main.keys.modifyRevision') }}</strong>: {{
+                      currentKv.modRevision
+                    }}</span>
                   <span class="editor-footer-item cursor-pointer"
                         @click="_copyToClipboard(currentKv.lease)"
                         v-if="currentKv.lease != '0'">
-                    <strong class="editor-item-label">{{t('common.lease')}}</strong>: {{ currentKv.lease }}</span>
+                    <strong class="editor-item-label">{{ t('common.lease') }}</strong>: {{ currentKv.lease }}</span>
                 </template>
               </editor>
             </div>
@@ -1579,7 +1801,7 @@ const renameDirLogScrollToBottom = () => {
               icon="mdi-check-circle-outline"
               density="compact"
           >
-            {{t('main.keys.diffDialogAlert')}}
+            {{ t('main.keys.diffDialogAlert') }}
           </v-alert>
           <v-layout class="pt-5">
             <v-select
@@ -1752,7 +1974,7 @@ const renameDirLogScrollToBottom = () => {
             />
           </v-layout>
           <v-layout class="mb-5" style="z-index: unset" v-if="newKeyDialog.model == 'lease'">
-            <span class="inline-label input-label">{{t('common.lease')}}: </span>
+            <span class="inline-label input-label">{{ t('common.lease') }}: </span>
             <v-text-field
                 v-model="newKeyDialog.lease"
                 type="number"
@@ -1932,11 +2154,12 @@ const renameDirLogScrollToBottom = () => {
         max-width="800px"
         scrollable
         persistent
+        :on-after-leave="() => {renameDirDialog.logs = [];}"
     >
       <v-card :title="t('main.keys.renamePath')">
         <v-card-text class="rename-form">
           <v-layout class="mb-5">
-            <span class="inline-label input-label">{{t('main.keys.path')}}: </span>
+            <span class="inline-label input-label">{{ t('main.keys.path') }}: </span>
             <v-text-field
                 v-model="renameDirDialog.newPrefix"
                 :prefix="session.namespace"
@@ -1954,7 +2177,7 @@ const renameDirLogScrollToBottom = () => {
             />
           </v-layout>
           <v-layout class="mb-5">
-            <span class="inline-label radio-label" style="line-height: 40px;">{{t('main.keys.putStrategy')}}: </span>
+            <span class="inline-label radio-label" style="line-height: 40px;">{{ t('main.keys.putStrategy') }}: </span>
             <v-radio-group v-model="renameDirDialog.putStrategy"
                            inline
                            hide-details
@@ -1965,21 +2188,21 @@ const renameDirLogScrollToBottom = () => {
           </v-layout>
 
           <div v-if="renameDirDialog.state != 'none'">
-            <v-divider v-if="renameDirDialog.logs.length > 0">{{ t('main.keys.logs')}} </v-divider>
+            <v-divider v-if="renameDirDialog.logs.length > 0">{{ t('main.keys.logs') }}</v-divider>
             <div style="max-height: 30vh;" class="overflow-auto" ref="renameDirLogListRef">
               <div v-for="(log, idx) in renameDirDialog.logs" :key="idx">
                 <div v-if="log.success">
-                  [<strong style="color: #4CAF50;">{{t('common.success')}}</strong>]
-                  <span style="color: #00BCD4;">{{log.action}}</span>
-                  {{_decodeBytesToString(log.key)}}
+                  [<strong style="color: #4CAF50;">{{ t('common.success') }}</strong>]
+                  <span style="color: #00BCD4;">{{ log.action }}</span>
+                  {{ _decodeBytesToString(log.key) }}
                 </div>
                 <div v-else>
                   <p>
-                    [<strong style="color: #E57373;">{{t('common.failed')}}</strong>]
-                    <span style="color: #00BCD4;">{{log.action}}</span>
-                    {{_decodeBytesToString(log.key)}}
+                    [<strong style="color: #E57373;">{{ t('common.failed') }}</strong>]
+                    <span style="color: #00BCD4;">{{ log.action }}</span>
+                    {{ _decodeBytesToString(log.key) }}
                   </p>
-                  <p style="color: #E57373;">{{log.failedMsg}}</p>
+                  <p style="color: #E57373;">{{ log.failedMsg }}</p>
                 </div>
               </div>
             </div>
@@ -1991,7 +2214,7 @@ const renameDirLogScrollToBottom = () => {
               variant="text"
               class="text-none"
               :disabled="renameDirDialog.state == 'started'"
-              @click="() => {renameDirDialog.show = false;renameDirDialog.logs=[];}"
+              @click="renameDirDialog.show = false"
           />
 
           <v-btn
@@ -2003,6 +2226,173 @@ const renameDirLogScrollToBottom = () => {
               v-if="renameDirDialog.state == 'none' || renameDirDialog.state == 'started'"
               :disabled="renameDirDialog.state == 'started'"
               :loading="loadingStore.renameDir"
+          />
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!--   批量导出-->
+    <v-dialog
+        v-model="batchExportDialog.show"
+        max-width="800px"
+        scrollable
+        persistent
+        :on-after-leave="() => {batchExportDialog.logs = [];}"
+    >
+      <v-card :title="t('main.keys.batchExport')">
+        <v-card-text>
+          <div v-if="batchExportDialog.state != 'none'">
+            <v-divider v-if="batchExportDialog.logs.length > 0">{{ t('main.keys.logs') }}</v-divider>
+            <div style="max-height: 30vh;" class="overflow-auto" ref="batchExportLogListRef">
+              <div v-for="(log, idx) in batchExportDialog.logs" :key="idx">
+                <div v-if="log.success">
+                  [<strong style="color: #4CAF50;">{{ t('common.success') }}</strong>]
+                  <span v-if="log.key">{{ _decodeBytesToString(log.key) }}</span>
+                </div>
+                <div v-else>
+                  <p>
+                    [<strong style="color: #E57373;">{{ t('common.failed') }}</strong>]
+                    <span v-if="log.key">{{ _decodeBytesToString(log.key) }}</span>
+                  </p>
+                  <p style="color: #E57373;">{{ log.failedMsg }}</p>
+                </div>
+              </div>
+            </div>
+
+            <v-layout>
+              <v-spacer></v-spacer>
+              <div class="text-medium-emphasis my-2">
+                {{ batchExportDialog.targetFile }} (<strong>{{ batchExportDialog.success }}/{{batchExportDialog.tasks}}</strong>)
+              </div>
+            </v-layout>
+            <v-alert
+                v-if="batchExportDialog.logs.length - batchExportDialog.success > 0"
+                type="warning"
+                density="compact"
+                :text="t('main.keys.batchExportAndImportAlert', {num: batchExportDialog.logs.length - batchExportDialog.success})"
+            />
+          </div>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn
+              :text="batchExportDialog.state == 'none' ? t('common.cancel') : t('common.close')"
+              variant="text"
+              class="text-none"
+              :disabled="batchExportDialog.state == 'started'"
+              @click="batchExportDialog.show = false"
+          />
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!--   批量导入-->
+    <v-dialog
+        v-model="batchImportDialog.show"
+        max-width="800px"
+        scrollable
+        persistent
+        :open-on-focus="false"
+        :retain-focus="false"
+        :on-after-leave="() => {batchImportDialog.logs = [];}"
+    >
+      <v-card :title="t('main.keys.batchImport')">
+        <v-card-text class="batch-import-form">
+          <v-layout class="mb-5 overflow-visible">
+            <span class="inline-label input-label">{{ t('common.prefix') }}: </span>
+            <div class="input-item">
+              <CompleteInput
+                  v-model="batchImportDialog.prefix"
+                  :search-func="searchNextDir"
+                  density="comfortable"
+                  prepend-inner-icon="mdi-file-document"
+                  :prefix="session.namespace"
+                  persistent-hint
+                  hide-details
+                  elevation="16"
+                  suggestion-max-height="100"
+              />
+            </div>
+          </v-layout>
+
+          <v-layout class="mb-5" style="z-index: unset">
+            <span class="inline-label input-label">{{ t('common.file') }}* : </span>
+            <div class="input-item align-content-center">
+              <span v-if="_nonEmpty(batchImportDialog.targetFile)" class="mr-2">{{ batchImportDialog.targetFile }}</span>
+              <v-btn
+                  class="mx-0 px-1"
+                  color="green-darken-3"
+                  density="compact"
+                  @click="selectBatchImportFile"
+                  text="选择"
+              ></v-btn>
+            </div>
+
+          </v-layout>
+
+          <v-layout class="mb-5" style="z-index: unset">
+            <span class="inline-label input-label" style="line-height: 40px;">{{ t('main.keys.putStrategy') }}* : </span>
+            <div class="input-item">
+              <v-radio-group v-model="batchImportDialog.putStrategy"
+                             inline
+                             hide-details
+                             style="flex-direction: row;">
+                <v-radio :label="t('main.keys.coverStrategy')" value="Cover"/>
+                <v-radio :label="t('main.keys.renameStrategy')" value="Rename"/>
+              </v-radio-group>
+            </div>
+          </v-layout>
+
+          <div v-if="batchImportDialog.state != 'none'">
+            <v-divider v-if="batchImportDialog.logs.length > 0">{{ t('main.keys.logs') }}</v-divider>
+            <div style="max-height: 30vh;" class="overflow-auto" ref="batchImportLogListRef">
+              <div v-for="(log, idx) in batchImportDialog.logs" :key="idx">
+                <div v-if="log.success">
+                  [<strong style="color: #4CAF50;">{{ t('common.success') }}</strong>]
+                  <span v-if="log.key">{{ _decodeBytesToString(log.key) }}</span>
+                </div>
+                <div v-else>
+                  <p>
+                    [<strong style="color: #E57373;">{{ t('common.failed') }}</strong>]
+                    <span v-if="log.key">{{ _decodeBytesToString(log.key) }}</span>
+                  </p>
+                  <p style="color: #E57373;">{{ log.failedMsg }}</p>
+                </div>
+              </div>
+            </div>
+
+            <v-layout>
+              <v-spacer/>
+              <div class="text-medium-emphasis my-2">
+                {{ t('common.imported') }}: <strong>{{ batchImportDialog.success }}</strong>
+              </div>
+            </v-layout>
+
+            <v-alert
+                v-if="batchImportDialog.failed > 0"
+                type="warning"
+                density="compact"
+                :text="t('main.keys.batchExportAndImportAlert', {num: batchImportDialog.failed})"
+            />
+          </div>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn
+              :text="batchImportDialog.state == 'none' ? t('common.cancel') : t('common.close')"
+              variant="text"
+              class="text-none"
+              :disabled="batchImportDialog.state == 'started'"
+              @click="batchImportDialog.show = false"
+          />
+
+          <v-btn
+              :text="t('common.commit')"
+              variant="flat"
+              class="text-none"
+              color="primary"
+              @click="confirmBatchImport"
+              v-if="batchImportDialog.state == 'none' || batchImportDialog.state == 'started'"
+              :disabled="batchImportDialog.state == 'started' || !batchImportDialog.targetFile"
+              :loading="loadingStore.batchImport"
           />
         </v-card-actions>
       </v-card>
@@ -2089,6 +2479,18 @@ $--load-more-area-height: 32px;
     cursor: default;
     height: $--load-more-area-height;
     line-height: $--load-more-area-height;
+  }
+}
+
+.batch-import-form {
+  $--input-label-width: 120px;
+
+  .inline-label {
+    width: $--input-label-width;
+  }
+
+  .input-item {
+    width: calc(100% - $--input-label-width);
   }
 }
 </style>

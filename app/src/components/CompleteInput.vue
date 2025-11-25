@@ -29,6 +29,10 @@ const props = defineProps({
   clearable: Boolean,
   singleLine: Boolean,
   readonly: Boolean,
+  autofocus: {
+    type: Boolean,
+    default: () => false
+  },
   placeholder: String,
   elevation: [Number, String],
   suggestionMaxHeight: {
@@ -171,6 +175,7 @@ const scrollToHighlighted = () => {
         :single-line="props.singleLine"
         :placeholder="props.placeholder"
         :readonly="props.readonly"
+        :autofocus="props.autofocus"
         @input="handleInput"
         @focusin="search(inputValue)"
         @focusout="onFocusout"
@@ -192,10 +197,12 @@ const scrollToHighlighted = () => {
     >
       <v-list
           class="suggestion-list"
+          density="compact"
           :max-height="props.suggestionMaxHeight"
       >
         <v-list-item
             ref="suggestionItemRef"
+            density="compact"
             v-for="(item, index) in suggestions"
             :key="index"
             @click="selectItem(item)"
@@ -205,7 +212,7 @@ const scrollToHighlighted = () => {
         </v-list-item>
       </v-list>
       <v-divider/>
-      <v-card-actions class="text-medium-emphasis">
+      <v-card-actions class="text-medium-emphasis" style="min-height: unset">
         <v-spacer/>
         <i class="notice">{{ t('component.completeInput.notice') }}</i>
       </v-card-actions>
@@ -229,7 +236,7 @@ const scrollToHighlighted = () => {
     }
 
     .notice {
-      font-size: 0.9em;
+      font-size: 0.8em;
     }
   }
 }

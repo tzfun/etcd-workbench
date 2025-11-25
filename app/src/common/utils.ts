@@ -154,6 +154,10 @@ export function _nonEmpty(str: string | null | undefined) {
     return !_isEmpty(str);
 }
 
+export function _emptyOrNull(str: string): string | undefined  {
+    return _isEmpty(str) ? undefined : str
+}
+
 export function _strArrToNumArr(strArr: string[]): number[] {
     let numArr = []
     for (let s of strArr) {

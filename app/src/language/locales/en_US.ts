@@ -65,7 +65,8 @@ export default {
         keys: "Keys",
         monitor: "Monitor",
         downloaded: "Downloaded",
-        installedUpdates: "Installed Updates"
+        installedUpdates: "Installed Updates",
+        imported: "Imported",
     },
     feedback: {
         copyError:"Can not write to clipboard",
@@ -221,7 +222,7 @@ export default {
         },
         keys: {
             addKey: "Add Key",
-            deleteKeys: "Delete Keys",
+            deleteKeys: "Batch Delete",
             myCollections: "My Collections",
             search: "Search",
             searchBtnTitle: "Search from etcd server",
@@ -296,6 +297,11 @@ export default {
             confirmDiffBefore: "Before modification",
             confirmDiffAfter: "After modification",
             coverDirtyConfirm: "The current changes have not been saved. Do you want to discard them?",
+            exportEmptyKeysTip: "Please select at least one key",
+            batchExport: "Batch Export",
+            batchImport: "Batch Import",
+            batchImportFilePlaceholder: "Please select the files to import in batches.",
+            batchExportAndImportAlert: "The task has failed! Number of failed entries: {num}",
         },
         monitor: {
             markAllRead: "Mark All Read",

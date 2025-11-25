@@ -360,7 +360,7 @@ pub async fn kv_batch_export(
     tauri::async_runtime::spawn(async move {
         if let Err(e) = batch_export(&app_handle, session, keys, target_path).await {
             log::error!("batch export error: {:?}", e);
-            let _ = app_handle.emit_to("main", BATCH_EXPORT_ERR_EVENT, ());
+            let _ = app_handle.emit_to("main", BATCH_EXPORT_ERR_EVENT, format!("{:?}", e));
         }
     });
 
@@ -377,19 +377,17 @@ async fn batch_export(
 
     let mut file = fs::OpenOptions::new()
         .create(true)
-        .append(true)
         .write(true)
-        .truncate(true)
         .open(target_path)
         .await?;
 
     let mut connector = etcd::get_connector(&session)?;
     for k in keys {
-        let key = connector.fill_prefix_namespace(k);
-        let response = connector.inner().kv_get_request(key.clone(), None).await?;
+        let key = connector.fill_prefix_namespace(k.clone());
+        let response = connector.inner().kv_get_request(key, None).await?;
         let event = if response.count() == 1 {
             let value = &response.kvs()[0];
-            file.write(vec_to_hex(value.key()).as_bytes()).await?;
+            file.write(vec_to_hex(&k).as_bytes()).await?;
             file.write(b"\n").await?;
 
             file.write(vec_to_hex(value.value()).as_bytes()).await?;
@@ -397,13 +395,13 @@ async fn batch_export(
 
             KVBatchImportAndExportEvent {
                 success: true,
-                key: Some(key),
+                key: Some(k),
                 failed_msg: None,
             }
         } else {
             KVBatchImportAndExportEvent {
                 success: false,
-                key: Some(key),
+                key: Some(k),
                 failed_msg: Some(format!("The number of entries read from the remote key is incorrect: expected 1, received {}.", response.count())),
             }
         };
@@ -441,7 +439,7 @@ pub async fn kv_batch_import(
         if let Err(e) = batch_import(&app_handle, session, target_path, prefix, put_strategy).await
         {
             log::error!("batch import error: {:?}", e);
-            let _ = app_handle.emit_to("main", BATCH_IMPORT_ERR_EVENT, ());
+            let _ = app_handle.emit_to("main", BATCH_IMPORT_ERR_EVENT, format!("{:?}", e));
         }
     });
 
@@ -500,19 +498,19 @@ async fn batch_import(
             key.splice(0..0, prefix.as_bytes().to_vec());
         }
 
-        let mut key = connector.fill_prefix_namespace(key);
+        let mut full_key = connector.fill_prefix_namespace(key.clone());
 
         match put_strategy {
             PutStrategy::Cover => {}
             PutStrategy::Rename => {
                 match connector
                     .inner()
-                    .kv_get_request(key.clone(), Some(GetOptions::new().with_keys_only()))
+                    .kv_get_request(full_key.clone(), Some(GetOptions::new().with_keys_only()))
                     .await
                 {
                     Ok(res) => {
                         if res.count() > 0 {
-                            key = PutStrategy::rename(&key);
+                            full_key = PutStrategy::rename(&full_key);
                         }
                     }
                     Err(e) => {
@@ -532,7 +530,11 @@ async fn batch_import(
             }
         }
 
-        let event = if let Err(e) = connector.kv_put(key.clone(), value, None).await {
+        let event = if let Err(e) = connector
+            .inner()
+            .kv_put_request(full_key, value, None)
+            .await
+        {
             KVBatchImportAndExportEvent {
                 success: false,
                 key: Some(key),

@@ -269,7 +269,6 @@ const importConnectionConfig = () => {
       }).finally(() => {
         loadingStore.importConnection = false
       })
-
     }
   }).catch(e => {
     console.error(e)
@@ -517,6 +516,7 @@ const checkUpdate = () => {
                     class="text-none"
                     :text="t('setting.exportConf')"
                     color="green-darken-3"
+                    prepend-icon="mdi-file-export-outline"
                     @click="exportConnectionConfig"
                     :loading="loadingStore.exportConnection"
                 />
@@ -525,6 +525,7 @@ const checkUpdate = () => {
                     class="text-none ml-2"
                     :text="t('setting.importConf')"
                     color="light-green-darken-1"
+                    prepend-icon="mdi-file-import-outline"
                     @click="importConnectionConfig"
                     :loading="loadingStore.importConnection"
                 />

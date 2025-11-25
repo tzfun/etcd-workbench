@@ -418,7 +418,8 @@ const disableWebviewNativeEvents = () => {
           :title="item.title"
       >
         <template v-slot:text>
-          <div v-html="item.content"></div>
+          <pre v-if="preview"></pre>
+          <div v-else v-html="item.content"></div>
         </template>
 
         <template v-slot:prepend>
@@ -433,7 +434,7 @@ const disableWebviewNativeEvents = () => {
               :key="k"
               :class="(btn.class ? btn.class : '') + ' text-none'"
               :text="btn.text"
-              :variant="btn.variant ? btn.variant : 'text'"
+              :variant="btn.variant || 'text'"
               :color="btn.color"
               @click="btn.callback(item, $event)"
           ></v-btn>

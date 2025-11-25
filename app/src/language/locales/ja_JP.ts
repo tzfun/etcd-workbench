@@ -65,7 +65,8 @@ export default {
         keys: "キー",
         monitor: "モニター",
         downloaded: "ダウンロード済み",
-        installedUpdates: "インストールされた更新プログラム"
+        installedUpdates: "インストールされた更新プログラム",
+        imported: "インポート",
     },
     feedback: {
         copyError: "クリップボードへの書き込み失敗",
@@ -222,7 +223,7 @@ export default {
         },
         keys: {
             addKey: "キー追加",
-            deleteKeys: "選択したキーを削除",
+            deleteKeys: "バッチ削除",
             myCollections: "マイコレクション",
             search: "データベースから検索",
             searchBtnTitle: "etcdデータベースでキーを検索",
@@ -297,6 +298,11 @@ export default {
             confirmDiffBefore: "変更前",
             confirmDiffAfter: "変更後",
             coverDirtyConfirm: "現在の変更は保存されていません，破棄しますか？",
+            exportEmptyKeysTip: "ディレクトリ ツリーから少なくとも 1 つのキーを選択してください。",
+            batchExport: "バッチエクスポート",
+            batchImport: "バッチインポート",
+            batchImportFilePlaceholder: "バッチでインポートしたいファイルを選びます",
+            batchExportAndImportAlert: "タスクは失敗しました。失敗したエントリの数: {num}",
         },
         monitor: {
             markAllRead: "全て既読にする",

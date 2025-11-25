@@ -6,7 +6,7 @@ import {_compact, _defragment, _getCluster, _handleError, _maintenanceCreateSnap
 import {Alarm, Cluster} from "~/common/transport/maintenance.ts";
 import {_byteTextFormat, _isEmpty} from "~/common/utils.ts";
 import {_alertError, _confirmSystem, _emitLocal, _tipSuccess, _tipWarn, EventName} from "~/common/events.ts";
-import {save} from "@tauri-apps/api/dialog";
+import {save, SaveDialogOptions} from "@tauri-apps/api/dialog";
 import {_getDownloadPath} from "~/common/windows.ts";
 import {useI18n} from "vue-i18n";
 
@@ -143,8 +143,15 @@ const compact = () => {
 const snapshot = () => {
   _confirmSystem(t('main.cluster.snapshotConfirmTip')).then(async () => {
     let downloadPath = await _getDownloadPath()
-    save({
-      defaultPath: downloadPath
+    save(<SaveDialogOptions>{
+      title: t('main.cluster.snapshot'),
+      defaultPath: downloadPath,
+      filters: [
+        {
+          name: 'Etcd Snapshot',
+          extensions: ['esnapshot'],
+        }
+      ]
     }).then(filepath => {
       if (filepath) {
         loadingStore.snapshot = true

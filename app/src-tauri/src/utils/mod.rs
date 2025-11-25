@@ -8,8 +8,8 @@ pub fn md5(content: impl AsRef<[u8]>) -> String {
     format!("{:x}", digest)
 }
 
-pub fn vec_to_hex<V: Into<Vec<u8>>>(v: V) -> String {
-    v.into().iter().map(|b| format!("{:02X}", b)).collect()
+pub fn vec_to_hex<V: AsRef<[u8]>>(v: V) -> String {
+    v.as_ref().iter().map(|b| format!("{:02X}", b)).collect()
 }
 
 pub fn hex_to_vec<S: AsRef<str>>(hex_string: S) -> Result<Vec<u8>, String> {
