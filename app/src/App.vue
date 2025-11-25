@@ -30,6 +30,7 @@ import {_byteTextFormat} from "~/common/utils.ts";
 import {relaunch} from "@tauri-apps/api/process";
 import {AppLanguage} from "~/language";
 import {useI18n} from "vue-i18n";
+import {DIALOG_BUTTON_DENSITY, DIALOG_BUTTON_SIZE} from "~/common/vuetify.ts";
 
 const DEFAULT_LOADING_TEXT: string = "Loading..."
 const loading = ref<boolean>(false)
@@ -436,6 +437,8 @@ const disableWebviewNativeEvents = () => {
               :text="btn.text"
               :variant="btn.variant || 'text'"
               :color="btn.color"
+              :size="DIALOG_BUTTON_SIZE"
+              :density="DIALOG_BUTTON_DENSITY"
               @click="btn.callback(item, $event)"
           ></v-btn>
         </template>

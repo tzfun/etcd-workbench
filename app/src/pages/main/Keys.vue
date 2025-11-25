@@ -65,6 +65,12 @@ import {appWindow} from "@tauri-apps/api/window";
 import {_deepSearchTreeNodes, TreeNode} from "~/components/tree/types.ts";
 import {useI18n} from "vue-i18n";
 import {open, OpenDialogOptions, save, SaveDialogOptions} from "@tauri-apps/api/dialog";
+import {
+  DIALOG_BUTTON_DENSITY,
+  DIALOG_BUTTON_SIZE,
+  PAGE_BUTTON_SIZE,
+  PAGE_REFRESH_BUTTON_SIZE
+} from "~/common/vuetify.ts";
 
 const {t} = useI18n()
 const theme = useTheme()
@@ -1473,10 +1479,10 @@ const batchImportLogScrollToBottom = () => {
 
 <template>
   <div class="fill-height overflow-y-auto">
-    <v-layout class="action-area pa-5">
+    <v-layout class="action-area key-action-area">
       <v-btn v-bind="props"
              variant="tonal"
-             size="small"
+             :size="PAGE_REFRESH_BUTTON_SIZE"
              icon="mdi-refresh"
              @click="refreshAllKeys"
              :loading="loadingStore.loadMore"
@@ -1486,12 +1492,14 @@ const batchImportLogScrollToBottom = () => {
       <v-btn class="text-none ml-2"
              prepend-icon="mdi-file-document-plus-outline"
              color="green"
+             :size="PAGE_BUTTON_SIZE"
              @click="showNewKeyDialog()"
              :text="t('main.keys.addKey')"
       />
       <v-btn class="text-none ml-2"
              prepend-icon="mdi-file-document-minus-outline"
              color="red"
+             :size="PAGE_BUTTON_SIZE"
              @click="deleteKeyBatch(kvTree!.getSelectedItems())"
              :loading="loadingStore.deleteBatch"
              :text="t('main.keys.deleteKeys')"
@@ -1500,6 +1508,7 @@ const batchImportLogScrollToBottom = () => {
              class="text-none ml-2"
              prepend-icon="mdi-file-export-outline"
              color="green-darken-3"
+             :size="PAGE_BUTTON_SIZE"
              @click="batchExport(kvTree!.getSelectedItems())"
              :loading="loadingStore.batchExport"
              :text="t('main.keys.batchExport')"
@@ -1508,6 +1517,7 @@ const batchImportLogScrollToBottom = () => {
              class="text-none ml-2"
              prepend-icon="mdi-file-import-outline"
              color="light-green-darken-1"
+             :size="PAGE_BUTTON_SIZE"
              @click="batchImport"
              :loading="loadingStore.batchImport"
              :text="t('main.keys.batchImport')"
@@ -1516,6 +1526,7 @@ const batchImportLogScrollToBottom = () => {
       <v-btn class="text-none ml-2"
              prepend-icon="mdi-star"
              color="yellow"
+             :size="PAGE_BUTTON_SIZE"
              @click="collectionDialog = true"
              :text="t('main.keys.myCollections')"
       />
@@ -1524,6 +1535,7 @@ const batchImportLogScrollToBottom = () => {
              v-bind="props"
              prepend-icon="mdi-text-box-search-outline"
              color="blue-lighten-1"
+             :size="PAGE_BUTTON_SIZE"
              @click="openSearchDialog"
              :text="t('main.keys.search')"
              :title="t('main.keys.searchBtnTitle')"
@@ -1795,7 +1807,6 @@ const batchImportLogScrollToBottom = () => {
           <v-icon class="cursor-pointer" @click="versionDiffInfo.show = false">mdi-close</v-icon>
         </template>
         <v-card-text>
-
           <v-alert
               v-if="versionDiffInfo.useFormattedValue"
               icon="mdi-check-circle-outline"
@@ -1889,6 +1900,8 @@ const batchImportLogScrollToBottom = () => {
               :text="t('common.cancel')"
               variant="text"
               class="text-none"
+              :size="DIALOG_BUTTON_SIZE"
+              :density="DIALOG_BUTTON_DENSITY"
               @click="() => {
                 saveDiffDialog.show = false;
                 saveDiffDialog.beforeContent = '';
@@ -1901,6 +1914,8 @@ const batchImportLogScrollToBottom = () => {
               variant="flat"
               class="text-none"
               color="primary"
+              :size="DIALOG_BUTTON_SIZE"
+              :density="DIALOG_BUTTON_DENSITY"
               @click="() => {
                 saveDiffDialog.show = false;
                 doSaveKV();
@@ -1993,6 +2008,8 @@ const batchImportLogScrollToBottom = () => {
               :text="t('common.cancel')"
               variant="text"
               class="text-none"
+              :size="DIALOG_BUTTON_SIZE"
+              :density="DIALOG_BUTTON_DENSITY"
               @click="newKeyDialog.show = false"
           />
 
@@ -2001,6 +2018,8 @@ const batchImportLogScrollToBottom = () => {
               variant="flat"
               class="text-none"
               color="primary"
+              :size="DIALOG_BUTTON_SIZE"
+              :density="DIALOG_BUTTON_DENSITY"
               @click="putKey"
               :loading="loadingStore.confirmNewKey"
           />
@@ -2134,6 +2153,8 @@ const batchImportLogScrollToBottom = () => {
               :text="t('common.cancel')"
               variant="text"
               class="text-none"
+              :size="DIALOG_BUTTON_SIZE"
+              :density="DIALOG_BUTTON_DENSITY"
               @click="cancelMergeDialog"
           />
 
@@ -2142,6 +2163,8 @@ const batchImportLogScrollToBottom = () => {
               variant="flat"
               class="text-none"
               color="primary"
+              :size="DIALOG_BUTTON_SIZE"
+              :density="DIALOG_BUTTON_DENSITY"
               @click="confirmMergeDialog"
           />
         </v-card-actions>
@@ -2213,6 +2236,8 @@ const batchImportLogScrollToBottom = () => {
               :text="renameDirDialog.state == 'none' ? t('common.cancel') : t('common.close')"
               variant="text"
               class="text-none"
+              :size="DIALOG_BUTTON_SIZE"
+              :density="DIALOG_BUTTON_DENSITY"
               :disabled="renameDirDialog.state == 'started'"
               @click="renameDirDialog.show = false"
           />
@@ -2222,6 +2247,8 @@ const batchImportLogScrollToBottom = () => {
               variant="flat"
               class="text-none"
               color="primary"
+              :size="DIALOG_BUTTON_SIZE"
+              :density="DIALOG_BUTTON_DENSITY"
               @click="renameDir"
               v-if="renameDirDialog.state == 'none' || renameDirDialog.state == 'started'"
               :disabled="renameDirDialog.state == 'started'"
@@ -2278,6 +2305,8 @@ const batchImportLogScrollToBottom = () => {
               :text="batchExportDialog.state == 'none' ? t('common.cancel') : t('common.close')"
               variant="text"
               class="text-none"
+              :size="DIALOG_BUTTON_SIZE"
+              :density="DIALOG_BUTTON_DENSITY"
               :disabled="batchExportDialog.state == 'started'"
               @click="batchExportDialog.show = false"
           />
@@ -2380,6 +2409,8 @@ const batchImportLogScrollToBottom = () => {
               :text="batchImportDialog.state == 'none' ? t('common.cancel') : t('common.close')"
               variant="text"
               class="text-none"
+              :size="DIALOG_BUTTON_SIZE"
+              :density="DIALOG_BUTTON_DENSITY"
               :disabled="batchImportDialog.state == 'started'"
               @click="batchImportDialog.show = false"
           />
@@ -2389,6 +2420,8 @@ const batchImportLogScrollToBottom = () => {
               variant="flat"
               class="text-none"
               color="primary"
+              :size="DIALOG_BUTTON_SIZE"
+              :density="DIALOG_BUTTON_DENSITY"
               @click="confirmBatchImport"
               v-if="batchImportDialog.state == 'none' || batchImportDialog.state == 'started'"
               :disabled="batchImportDialog.state == 'started' || !batchImportDialog.targetFile"
@@ -2401,13 +2434,12 @@ const batchImportLogScrollToBottom = () => {
 </template>
 
 <style scoped lang="scss">
-$--action-area-height: 60px;
-$--action-area-margin-bottom: 10px;
+$--action-area-height: 50px;
+$--action-area-margin-bottom: 5px;
 $--load-more-area-height: 32px;
 
 .action-area {
   height: $--action-area-height;
-  padding: 10px;
   margin-bottom: $--action-area-margin-bottom;
 }
 

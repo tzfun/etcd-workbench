@@ -22,6 +22,7 @@ import {appWindow} from "@tauri-apps/api/window";
 import {Handler} from "mitt";
 import CompleteInput from "~/components/CompleteInput.vue";
 import {useI18n} from "vue-i18n";
+import {DIALOG_BUTTON_DENSITY, DIALOG_BUTTON_SIZE} from "~/common/vuetify.ts";
 
 const props = defineProps({
   session: {
@@ -423,12 +424,16 @@ const searchNext = (value: string | null, includeFile: boolean): Promise<string[
                  variant="flat"
                  class="text-none"
                  color="red"
+                 :size="DIALOG_BUTTON_SIZE"
+                 :density="DIALOG_BUTTON_DENSITY"
                  @click="keyMonitorRemove"
           />
           <v-btn :text="keyMonitorDialog.edit ? t('common.confirm') : t('main.home.connection.addMonitor')"
                  variant="flat"
                  class="text-none"
                  color="primary"
+                 :size="DIALOG_BUTTON_SIZE"
+                 :density="DIALOG_BUTTON_DENSITY"
                  :disabled="!keyMonitorDialogCanConfirm"
                  @click="keyMonitorConfirm"
           />

@@ -9,6 +9,12 @@ import {_alertError, _confirmSystem, _emitLocal, _tipSuccess, _tipWarn, EventNam
 import {save, SaveDialogOptions} from "@tauri-apps/api/dialog";
 import {_getDownloadPath} from "~/common/windows.ts";
 import {useI18n} from "vue-i18n";
+import {
+  DIALOG_BUTTON_DENSITY,
+  DIALOG_BUTTON_SIZE,
+  PAGE_BUTTON_SIZE,
+  PAGE_REFRESH_BUTTON_SIZE
+} from "~/common/vuetify.ts";
 
 const {t} = useI18n()
 const props = defineProps({
@@ -203,11 +209,11 @@ const loadMetrics = ():Promise<Array<string[]>> => {
 </script>
 
 <template>
-  <div class="fill-height pa-5 overflow-y-auto">
+  <div class="fill-height sub-page overflow-y-auto">
     <div>
       <v-btn 
             variant="tonal"
-            size="small"
+            :size="PAGE_REFRESH_BUTTON_SIZE"
             icon="mdi-refresh"
             @click="loadCluster"
             :loading="loadingStore.loadCluster"
@@ -217,6 +223,7 @@ const loadMetrics = ():Promise<Array<string[]>> => {
              prepend-icon="mdi-database-search"
              @click="showMetricsDialog"
              color="success"
+             :size="PAGE_BUTTON_SIZE"
              :text="t('main.cluster.metrics')"
              :title="t('main.cluster.metricsBtnTitle')"
              :loading="loadingStore.metrics"
@@ -225,6 +232,7 @@ const loadMetrics = ():Promise<Array<string[]>> => {
              prepend-icon="mdi-database-cog"
              @click="showCompactDialog"
              color="red-accent-3"
+             :size="PAGE_BUTTON_SIZE"
              :text="t('main.cluster.compact')"
              :title="t('main.cluster.compactBtnTitle')"
              :loading="loadingStore.compact"
@@ -233,6 +241,7 @@ const loadMetrics = ():Promise<Array<string[]>> => {
              prepend-icon="mdi-database-sync"
              @click="defragment"
              color="yellow"
+             :size="PAGE_BUTTON_SIZE"
              :text="t('main.cluster.defragment')"
              :title="t('main.cluster.defragmentBtnTitle')"
              :loading="loadingStore.defragment"
@@ -241,6 +250,7 @@ const loadMetrics = ():Promise<Array<string[]>> => {
              prepend-icon="mdi-cloud-arrow-down"
              @click="snapshot"
              color="brown-darken-1"
+             :size="PAGE_BUTTON_SIZE"
              :text="t('main.cluster.snapshot')"
              :title="t('main.cluster.snapshotBtnTitle')"
              :loading="loadingStore.snapshot"
@@ -559,6 +569,8 @@ const loadMetrics = ():Promise<Array<string[]>> => {
           <v-btn :text="t('common.cancel')"
                  variant="text"
                  class="text-none"
+                 :size="DIALOG_BUTTON_SIZE"
+                 :density="DIALOG_BUTTON_DENSITY"
                  @click="compactDialog.show = false"
           />
 
@@ -566,6 +578,8 @@ const loadMetrics = ():Promise<Array<string[]>> => {
                  variant="flat"
                  class="text-none"
                  color="primary"
+                 :size="DIALOG_BUTTON_SIZE"
+                 :density="DIALOG_BUTTON_DENSITY"
                  @click="compact"
                  :loading="loadingStore.compact"
           />

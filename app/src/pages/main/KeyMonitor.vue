@@ -15,6 +15,7 @@ import {_handleError, _removeKeyMonitor, _setKeyMonitor} from "~/common/services
 import {EditorHighlightLanguage} from "~/common/types";
 import {KeyValue} from "~/common/transport/kv.ts";
 import {useI18n} from "vue-i18n";
+import {PAGE_BUTTON_SIZE} from "~/common/vuetify.ts";
 
 const theme = useTheme()
 const {t} = useI18n()
@@ -175,13 +176,14 @@ const addMonitor = () => {
 </script>
 
 <template>
-  <div class="fill-height pa-5 overflow-y-auto">
+  <div class="fill-height sub-page overflow-y-auto">
     <v-layout>
       <v-btn class="text-none"
              prepend-icon="mdi-checkbox-marked-circle-auto-outline"
              :disabled="events.length == 0"
              @click="markAllRead"
              color="primary"
+             :size="PAGE_BUTTON_SIZE"
              :text="t('main.monitor.markAllRead')"
       />
       <v-btn class="text-none ml-2"
@@ -189,12 +191,14 @@ const addMonitor = () => {
              :disabled="events.length == 0"
              @click="clearHistory"
              color="red"
+             :size="PAGE_BUTTON_SIZE"
              :text="t('main.monitor.clearHistory')"
       />
       <v-btn class="text-none ml-2"
              prepend-icon="mdi-robot"
              @click="monitorListDialog = true"
              color="#cc8f53"
+             :size="PAGE_BUTTON_SIZE"
              :text="t('main.monitor.myMonitors')"
       />
 

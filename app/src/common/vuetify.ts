@@ -31,3 +31,12 @@ export default createVuetify({
     },
     defaults: {}
 })
+
+export type ButtonSize = 'x-small' | 'small' | 'large' | 'x-large' | undefined
+export type Density = 'default' | 'comfortable' | 'compact'
+
+export const PAGE_REFRESH_BUTTON_SIZE: ButtonSize = 'x-small'
+export const PAGE_BUTTON_SIZE: ButtonSize = 'small'
+
+export const DIALOG_BUTTON_SIZE: ButtonSize = 'small'
+export const DIALOG_BUTTON_DENSITY: Density = 'default'

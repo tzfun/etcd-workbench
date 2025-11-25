@@ -4,6 +4,7 @@ import {onMounted, PropType, ref, watch} from "vue";
 import {_debounce} from "~/common/utils.ts";
 import {VListItem, VTextField} from "vuetify/components";
 import {useI18n} from "vue-i18n";
+import {Density} from "~/common/vuetify.ts";
 
 type SearchFunc = (s: string) => Promise<string[]>;
 
@@ -17,7 +18,7 @@ const props = defineProps({
     type: Function as PropType<SearchFunc>,
     required: true
   },
-  density: String as PropType<'default' | 'comfortable' | 'compact'>,
+  density: String as PropType<Density>,
   appendIcon: String,
   appendInnerIcon: String,
   prependInnerIcon: String,

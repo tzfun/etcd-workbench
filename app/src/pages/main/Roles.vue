@@ -14,6 +14,12 @@ import {RolePermission, RolePermType} from "~/common/transport/user.ts";
 import {_confirmSystem, _tipWarn} from "~/common/events.ts";
 import {_isEmpty} from "~/common/utils.ts";
 import {useI18n} from "vue-i18n";
+import {
+  DIALOG_BUTTON_DENSITY,
+  DIALOG_BUTTON_SIZE,
+  PAGE_BUTTON_SIZE,
+  PAGE_REFRESH_BUTTON_SIZE
+} from "~/common/vuetify.ts";
 
 const {t} = useI18n()
 
@@ -211,12 +217,12 @@ const grantPerm = () => {
 </script>
 
 <template>
-  <div class="fill-height pa-5 overflow-y-auto">
+  <div class="fill-height sub-page overflow-y-auto">
     <div>
       <v-btn 
             v-bind="props"
             variant="tonal"
-            size="small"
+            :size="PAGE_REFRESH_BUTTON_SIZE"
             icon="mdi-refresh"
             @click="loadAllRoles"
             :loading="loadingStore.loadAllRoles"
@@ -226,6 +232,7 @@ const grantPerm = () => {
              prepend-icon="mdi-lock-plus"
              @click="openNewRoleDialog"
              color="green"
+             :size="PAGE_BUTTON_SIZE"
              :text="t('main.roles.addRole')"
       />
     </div>
@@ -377,6 +384,8 @@ const grantPerm = () => {
           <v-btn :text="t('common.cancel')"
                  variant="text"
                  class="text-none"
+                 :size="DIALOG_BUTTON_SIZE"
+                 :density="DIALOG_BUTTON_DENSITY"
                  @click="newRoleDialog.show = false"
           />
 
@@ -384,6 +393,8 @@ const grantPerm = () => {
                  variant="flat"
                  class="text-none"
                  color="primary"
+                 :size="DIALOG_BUTTON_SIZE"
+                 :density="DIALOG_BUTTON_DENSITY"
                  @click="newRole"
                  :loading="loadingStore.newRole"
           />
@@ -448,6 +459,8 @@ const grantPerm = () => {
           <v-btn :text="t('common.cancel')"
                  variant="text"
                  class="text-none"
+                 :size="DIALOG_BUTTON_SIZE"
+                 :density="DIALOG_BUTTON_DENSITY"
                  @click="grantPermDialog.show = false"
           />
 
@@ -455,6 +468,8 @@ const grantPerm = () => {
                  variant="flat"
                  class="text-none"
                  color="primary"
+                 :size="DIALOG_BUTTON_SIZE"
+                 :density="DIALOG_BUTTON_DENSITY"
                  @click="grantPerm"
                  :loading="loadingStore.grantPerm"
           />

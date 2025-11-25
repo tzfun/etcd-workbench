@@ -17,6 +17,12 @@ import {User} from "~/common/transport/user.ts";
 import {_confirmSystem, _emitLocal, _tipWarn, EventName} from "~/common/events.ts";
 import {_isEmpty, _shuffleArray} from "~/common/utils.ts";
 import {useI18n} from "vue-i18n";
+import {
+  DIALOG_BUTTON_DENSITY,
+  DIALOG_BUTTON_SIZE,
+  PAGE_BUTTON_SIZE,
+  PAGE_REFRESH_BUTTON_SIZE
+} from "~/common/vuetify.ts";
 
 const colorList = [
   'red',
@@ -298,12 +304,12 @@ const roleSelectionProps = (item: string) => {
 </script>
 
 <template>
-  <div class="fill-height pa-5 overflow-y-auto">
+  <div class="fill-height sub-page overflow-y-auto">
     <div>
       <v-btn 
             v-bind="props"
             variant="tonal"
-            size="small"
+            :size="PAGE_REFRESH_BUTTON_SIZE"
             icon="mdi-refresh"
             @click="loadAllUser"
             :loading="loadingStore.loadAllUser"
@@ -313,12 +319,14 @@ const roleSelectionProps = (item: string) => {
              prepend-icon="mdi-account-plus-outline"
              @click="openNewUserDialog"
              color="green"
+             :size="PAGE_BUTTON_SIZE"
              :text="t('main.users.addUser')"
       />
       <v-btn class="text-none ml-2"
              prepend-icon="mdi-lock"
              @click="authEnable"
              color="yellow"
+             :size="PAGE_BUTTON_SIZE"
              :text="t('main.users.authEnable')"
              :loading="loadingStore.authEnable"
       />
@@ -326,6 +334,7 @@ const roleSelectionProps = (item: string) => {
              prepend-icon="mdi-lock-open-variant"
              @click="authDisable"
              color="red"
+             :size="PAGE_BUTTON_SIZE"
              :text="t('main.users.authDisable')"
              :loading="loadingStore.authDisable"
       />
@@ -452,6 +461,8 @@ const roleSelectionProps = (item: string) => {
           <v-btn :text="t('common.cancel')"
                  variant="text"
                  class="text-none"
+                 :size="DIALOG_BUTTON_SIZE"
+                 :density="DIALOG_BUTTON_DENSITY"
                  @click="editUserDialog.show = false"
           />
 
@@ -459,6 +470,8 @@ const roleSelectionProps = (item: string) => {
                  variant="flat"
                  class="text-none"
                  color="primary"
+                 :size="DIALOG_BUTTON_SIZE"
+                 :density="DIALOG_BUTTON_DENSITY"
                  @click="confirmEditUser"
                  :loading="loadingStore.editUser"
           />
@@ -490,6 +503,8 @@ const roleSelectionProps = (item: string) => {
           <v-btn :text="t('common.cancel')"
                  variant="text"
                  class="text-none"
+                 :size="DIALOG_BUTTON_SIZE"
+                 :density="DIALOG_BUTTON_DENSITY"
                  @click="grantRoleDialog.show = false"
           />
 
@@ -497,6 +512,8 @@ const roleSelectionProps = (item: string) => {
                  variant="flat"
                  class="text-none"
                  color="primary"
+                 :size="DIALOG_BUTTON_SIZE"
+                 :density="DIALOG_BUTTON_DENSITY"
                  @click="grantRole"
                  :loading="loadingStore.grantRole"
           />
