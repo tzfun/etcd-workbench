@@ -418,7 +418,7 @@ const disableWebviewNativeEvents = () => {
           :title="item.title"
       >
         <template v-slot:text>
-          <pre v-if="preview"></pre>
+          <pre v-if="item.preview">{{ item.content }}</pre>
           <div v-else v-html="item.content"></div>
         </template>
 
