@@ -42,7 +42,7 @@ import {_saveGlobalStore, _useGlobalStore, _useSettings} from "~/common/store.ts
 import {ErrorPayload, KeyMonitorConfig, SessionData} from "~/common/transport/connection.ts";
 import {KeyExtendInfo, PutStrategy, SearchResult} from "~/common/transport/kv";
 import {KeyValue} from "~/common/transport/kv.ts";
-import {EditorConfig, EditorHighlightLanguage, FileForm} from "~/common/types.ts";
+import {EditorConfig, EditorHighlightLanguage} from "~/common/types.ts";
 import {_debounce, _emptyOrNull, _nonEmpty, arraysEqual} from "~/common/utils";
 import {
   _decodeBytesToString,
@@ -403,7 +403,7 @@ onMounted(async () => {
   eventUnListens.push(await appWindow.listen<KVBatchExportAndImportEvent>(EventName.BATCH_IMPORT_EVENT, (e) => {
     if (e.payload.success) {
       batchImportDialog.success++
-      if (kvTree.value) {
+      if (kvTree.value && e.payload.key) {
         const key = _decodeBytesToString(e.payload.key)
         kvTree.value.addItemToTree(key, true)
       }

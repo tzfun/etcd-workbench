@@ -1,6 +1,6 @@
 [package]
 name = "etcd-workbench"
-version = "1.2.0"
+version = "1.2.1"
 description = "Etcd Workbench"
 authors = ["beifengtz"]
 edition = "2021"
