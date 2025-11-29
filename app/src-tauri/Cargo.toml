@@ -9,29 +9,29 @@ edition = "2021"
 
 [build-dependencies]
 tauri-build = { version = "1.5.6", features = [] }
-prost-build = "0.13"
-regex = "1.11.1"
+prost-build = "0.14.1"
+regex = "1.11.3"
 
 # [target.'cfg(target_os = "macos")'.dependencies]
 
 [dependencies]
 tauri = { version = "1.8.3", features = [ "os-all", "shell-open", "window-all", "dialog-open", "dialog-save", "dialog-ask", "updater", "clipboard-write-text", "process-relaunch", "macos-private-api", "notification"] }
 #fix-path-env = { git = "https://github.com/tauri-apps/fix-path-env-rs" }
-serde = { version = "1.0.219", features = ["derive"] }
-serde_json = "1.0.141"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.145"
 window-shadows = "0.2.2"
 
 tokio = { version = "1.46.1", features = ["full"] }
-log = "0.4.27"
+log = "0.4.28"
 env_logger = "0.11.8"
 dashmap = "6.1.0"
 etcd-client = { version = "0.16.1", features = [] }
 lazy_static = "1.5.0"
-russh = { version = "0.52.1" }
+russh = { version = "0.54.6" }
 uuid = "1.17.0"
 md5 = "0.8.0"
 base64 = "0.22.1"
-async-trait = { version = "0.1.88" }
+async-trait = { version = "0.1.89" }
 prost = "0.14"
 aes = "0.8.4"
 reqwest = {version = "0.11.27", features= ["rustls-tls"] }
@@ -51,3 +51,4 @@ lto = true # Enables link to optimizations
 opt-level = "s" # Optimize for binary size, 'z' or 's'
 strip = true # Remove debug symbols
 panic = "abort"
+debug = true

@@ -10,10 +10,11 @@ use crate::ssh::ssh_client::SshClientHandler;
 use crate::transport::connection::ConnectionSsh;
 use crate::transport::event::DisconnectCase;
 use log::{debug, error, info, warn};
-use russh::client::{AuthResult, Handle};
+use russh::client::{AuthResult, Handle, Msg};
 use russh::keys::key::PrivateKeyWithHashAlg;
 use russh::keys::{decode_secret_key, HashAlg};
-use russh::{client, kex, Preferred};
+use russh::{client, kex, Channel, ChannelMsg, Preferred};
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::{oneshot, watch};
 use tokio::time::timeout;
@@ -34,7 +35,7 @@ impl SshTunnel {
         let config = client::Config {
             inactivity_timeout: None,
             keepalive_interval: Some(Duration::from_secs(10)),
-            keepalive_max: 0,
+            keepalive_max: 3,
             preferred: Preferred {
                 kex: Cow::Borrowed(&[
                     kex::CURVE25519,
@@ -152,15 +153,15 @@ impl SshTunnel {
                 partial_success,
             } => {
                 debug!(
-                            "Ssh authentication failed, methods:{:?}, partial_success: {}",
-                            remaining_methods, partial_success
-                        );
+                    "Ssh authentication failed, methods:{:?}, partial_success: {}",
+                    remaining_methods, partial_success
+                );
                 Err(LogicError::IoError(Error::new(
                     ErrorKind::ConnectionAborted,
                     "SSH connection rejected: authentication failure",
                 )))
             }
-            _ => Ok(())
+            _ => Ok(()),
         }
     }
 
@@ -194,8 +195,8 @@ impl SshTunnel {
                 loop {
                     let accept_result = listener.accept().await;
                     match accept_result {
-                        Ok((mut stream, addr)) => {
-                            let mut rcv_abort3 = rcv_abort2.clone();
+                        Ok((stream, addr)) => {
+                            let rcv_abort3 = rcv_abort2.clone();
                             let ssh_session = Arc::clone(&ssh_session);
                             let ssh_simple_info3 = Arc::clone(&ssh_simple_info2);
 
@@ -212,34 +213,15 @@ impl SshTunnel {
                                 .await;
 
                             match direct_channel_result {
-                                Ok(mut channel) => {
+                                Ok(channel) => {
                                     tokio::spawn(async move {
-                                        let mut channel_writer = channel.make_writer();
-                                        let mut channel_reader = channel.make_reader();
-
-                                        let (mut socket_reader, mut socket_writer) = stream.split();
-
-                                        let proxy_task = async {
-                                            loop {
-                                                select! {
-                                                    _ = io::copy(&mut socket_reader, &mut channel_writer) => {},
-                                                    _ = io::copy(&mut channel_reader, &mut socket_writer) => {}
-                                                }
-                                            }
-                                        };
-
-                                        select! {
-                                            _ = proxy_task => {
-                                                debug!("{} ssh proxy stream task finished", ssh_simple_info3)
-                                            }
-                                            _abort = rcv_abort3.changed() => {
-                                                debug!("{} ssh proxy stream task received abort event", ssh_simple_info3);
-                                            }
-                                        }
-                                        debug!(
-                                            "{} ssh proxy stream future finished",
-                                            ssh_simple_info3
-                                        );
+                                        let _ = Self::start_ssh_tunnel(
+                                            channel,
+                                            stream,
+                                            rcv_abort3,
+                                            ssh_simple_info3,
+                                        )
+                                        .await;
                                     });
                                 }
                                 Err(e) => {
@@ -258,7 +240,7 @@ impl SshTunnel {
                         }
                     }
                 }
-                debug!("{} ssh proxy accept loop finished", ssh_simple_info2);
+                debug!("ssh proxy accept loop finished | {}", ssh_simple_info2);
             };
 
             select! {
@@ -266,13 +248,103 @@ impl SshTunnel {
                     debug!("{} ssh proxy accept task finished", ssh_simple_info1)
                 }
                 _abort = rcv_abort1.changed() => {
-                    debug!("{} ssh proxy accept task received abort event", ssh_simple_info1);
+                    debug!("ssh proxy accept task received abort event | {}", ssh_simple_info1);
                 }
             }
-            debug!("{} ssh accept future finished", ssh_simple_info1);
+            debug!("ssh accept future finished | {}", ssh_simple_info1);
         });
 
         let _ = receiver.await?;
+        Ok(())
+    }
+
+    pub async fn start_ssh_tunnel(
+        channel: Channel<Msg>, // russh channel
+        mut stream: TcpStream,     // TCP 客户端
+        mut rcv_abort: watch::Receiver<()>,
+        ssh_simple_info: Arc<String>,
+    ) -> Result<(), LogicError> {
+        let (mut socket_reader, mut socket_writer) = stream.split();
+
+        let (mut channel_reader, channel_writer) = channel.split();
+
+        // 缓冲区
+        let mut buf_socket_to_ssh = vec![0u8; 8192];
+
+        // --- TCP → SSH ---
+        let to_ssh = async {
+            loop {
+                match socket_reader.read(&mut buf_socket_to_ssh).await {
+                    Ok(0) => {
+                        // TCP 已断开
+                        log::info!(
+                            "tcp disconnected, sending SSH channel EOF | {}",
+                            ssh_simple_info
+                        );
+
+                        let _ = channel_writer.eof().await;
+                        let _ = channel_writer.close().await;
+                        break;
+                    }
+                    Ok(n) => {
+                        if n > 0 {
+                            if let Err(e) = channel_writer.data(&buf_socket_to_ssh[..n]).await {
+                                log::error!(
+                                    "ssh channel write error: {:?} | {}",
+                                    e,
+                                    ssh_simple_info
+                                );
+                                break;
+                            }
+                        }
+                    }
+                    Err(ref e) if e.kind() == std::io::ErrorKind::WouldBlock => {
+                        continue;
+                    }
+                    Err(e) => {
+                        log::error!("socket -> ssh read error: {:?} | {}", e, ssh_simple_info);
+                        break;
+                    }
+                }
+            }
+        };
+
+        // --- SSH → TCP ---
+        let to_tcp = async {
+            loop {
+                match channel_reader.wait().await {
+                    Some(ChannelMsg::Eof) | Some(ChannelMsg::Close) | None => {
+                        // SSH channel EOF
+                        log::info!("ssh channel EOF, closing TCP side | {}", ssh_simple_info);
+                        let _ = socket_writer.shutdown().await;
+                        break;
+                    }
+                    Some(ChannelMsg::Data { data }) => {
+                        if let Err(e) = socket_writer.write_all(&data).await {
+                            log::error!("tcp write error: {:?} | {}", e, ssh_simple_info);
+                            break;
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        };
+
+        // 并发执行两端
+        tokio::select! {
+            _ = to_ssh => {
+                debug!("TCP → SSH stream proxy stopped | {}", ssh_simple_info)
+            },
+            _ = to_tcp => {
+                debug!("SSH → TCP stream proxy stopped | {}", ssh_simple_info)
+            },
+            _ = rcv_abort.changed() => {
+                debug!("ssh proxy stream task received abort event | {}", ssh_simple_info)
+            }
+        }
+
+        log::info!("ssh tunnel finished. | {}", ssh_simple_info);
+
         Ok(())
     }
 }
