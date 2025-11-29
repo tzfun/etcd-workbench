@@ -5,6 +5,10 @@ import platform
 import os
 import shutil
 import re
+import json
+from datetime import datetime, timezone, timedelta
+import time
+from pathlib import Path
 
 APP_NAME = "Etcd Workbench"
 BUNDLE_NAME = "etcd-workbench"
@@ -57,11 +61,11 @@ def update_updater_json(app_version, target_alias, exe_filename, sig_filepath):
     with open(sig_filepath, 'r', encoding='utf-8') as file:
         sig = file.read()
 
-    github_updater_file = os.path.join(os.getcwd(), 'docs', 'etcd-workbench-update.json')
+    github_updater_file = os.path.join(os.getcwd(), '../docs/etcd-workbench-update.json')
     github_download_url = f"https://github.com/tzfun/etcd-workbench/releases/download/App-{app_version}/{exe_filename}"
     update_updater_file(app_version, target_alias, sig, github_updater_file, github_download_url)
 
-    gitee_updater_file = os.path.join(os.getcwd(), 'docs', 'etcd-workbench-update-gitee.json')
+    gitee_updater_file = os.path.join(os.getcwd(), '../docs/etcd-workbench-update-gitee.json')
     gitee_download_url = f"https://gitee.com/tzfun/etcd-workbench/releases/download/App-{app_version}/{exe_filename}"
     update_updater_file(app_version, target_alias, sig, gitee_updater_file, gitee_download_url)
 
@@ -203,7 +207,7 @@ create-dmg \\
     print(f'create dmg: {dmg_file}')
 
     if sig_filename is not None and exe_filename is not None:
-        update_updater_json(app_version, build_platform, exe_filename, os.path.join(to_dir, sig_filename))
+        update_updater_json(app_version, build_platform.replace('macos', 'darwin'), exe_filename, os.path.join(to_dir, sig_filename))
 
 
 def copy_bundle_files(from_file, to_dir, filename):
