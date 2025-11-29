@@ -3,7 +3,6 @@
 /// of a group.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ApiGroup {
     /// name is the name of the group.
@@ -40,7 +39,6 @@ pub struct ApiGroup {
 /// /apis.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ApiGroupList {
     /// groups is a list of APIGroup.
@@ -52,8 +50,7 @@ pub struct ApiGroupList {
 /// APIResource specifies the name of a resource and whether it is namespaced.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ApiResource {
     /// name is the plural name of the resource.
     #[prost(string, optional, tag = "1")]
@@ -115,7 +112,6 @@ pub struct ApiResource {
 /// is namespaced.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ApiResourceList {
     /// groupVersion is the group and version this APIResourceList is for.
@@ -135,7 +131,6 @@ pub struct ApiResourceList {
 /// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ApiVersions {
     /// versions are the api versions that are available.
@@ -163,8 +158,7 @@ pub struct ApiVersions {
 /// that speaks specifically to how the options fields relate to apply.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ApplyOptions {
     /// When present, indicates that modifications should not be
     /// persisted. An invalid or unrecognized dryRun directive will
@@ -207,8 +201,7 @@ pub struct ApplyOptions {
 /// 	}
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Condition {
     /// type of condition in CamelCase or in foo.example.com/CamelCase.
     /// ---
@@ -271,8 +264,7 @@ pub struct Condition {
 /// CreateOptions may be provided when creating an API object.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct CreateOptions {
     /// When present, indicates that modifications should not be
     /// persisted. An invalid or unrecognized dryRun directive will
@@ -316,8 +308,7 @@ pub struct CreateOptions {
 /// DeleteOptions may be provided when deleting an API object.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct DeleteOptions {
     /// The duration in seconds before the object should be deleted. Value must be non-negative integer.
     /// The value zero indicates delete immediately. If this value is nil, the default grace period for the
@@ -388,8 +379,7 @@ pub struct DeleteOptions {
 /// can be used as map keys in json.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Duration {
     #[prost(int64, optional, tag = "1")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
@@ -399,8 +389,7 @@ pub struct Duration {
 /// relates the key and values.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct FieldSelectorRequirement {
     /// key is the field selector key that the requirement applies to.
     #[prost(string, optional, tag = "1")]
@@ -435,8 +424,7 @@ pub struct FieldSelectorRequirement {
 /// +protobuf.options.(gogoproto.goproto_stringer)=false
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct FieldsV1 {
     /// Raw is the underlying serialization of this object.
     #[prost(bytes = "vec", optional, tag = "1")]
@@ -446,8 +434,7 @@ pub struct FieldsV1 {
 /// GetOptions is the standard query options to the standard REST get call.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct GetOptions {
     /// resourceVersion sets a constraint on what resource versions a request may be served from.
     /// See <https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions> for
@@ -465,8 +452,7 @@ pub struct GetOptions {
 /// +protobuf.options.(gogoproto.goproto_stringer)=false
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct GroupKind {
     #[prost(string, optional, tag = "1")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
@@ -481,8 +467,7 @@ pub struct GroupKind {
 /// +protobuf.options.(gogoproto.goproto_stringer)=false
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct GroupResource {
     #[prost(string, optional, tag = "1")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
@@ -496,8 +481,7 @@ pub struct GroupResource {
 /// +protobuf.options.(gogoproto.goproto_stringer)=false
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct GroupVersion {
     #[prost(string, optional, tag = "1")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
@@ -510,8 +494,7 @@ pub struct GroupVersion {
 /// It is made a struct to keep extensibility.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct GroupVersionForDiscovery {
     /// groupVersion specifies the API group and version in the form "group/version"
     #[prost(string, optional, tag = "1")]
@@ -529,8 +512,7 @@ pub struct GroupVersionForDiscovery {
 /// +protobuf.options.(gogoproto.goproto_stringer)=false
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct GroupVersionKind {
     #[prost(string, optional, tag = "1")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
@@ -548,8 +530,7 @@ pub struct GroupVersionKind {
 /// +protobuf.options.(gogoproto.goproto_stringer)=false
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct GroupVersionResource {
     #[prost(string, optional, tag = "1")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
@@ -567,7 +548,6 @@ pub struct GroupVersionResource {
 /// +structType=atomic
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct LabelSelector {
     /// matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
@@ -590,8 +570,7 @@ pub struct LabelSelector {
 /// relates the key and values.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct LabelSelectorRequirement {
     /// key is the label key that the selector applies to.
     #[prost(string, optional, tag = "1")]
@@ -615,7 +594,6 @@ pub struct LabelSelectorRequirement {
 /// List holds a list of objects, which may not be known by the server.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct List {
     /// Standard list metadata.
@@ -633,8 +611,7 @@ pub struct List {
 /// various status objects. A resource may have only one of {ObjectMeta, ListMeta}.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ListMeta {
     /// Deprecated: selfLink is a legacy read-only field that is no longer populated by the system.
     /// +optional
@@ -678,8 +655,7 @@ pub struct ListMeta {
 /// ListOptions is the query options to a standard REST list call.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ListOptions {
     /// A selector to restrict the list of returned objects by their labels.
     /// Defaults to everything.
@@ -803,8 +779,7 @@ pub struct ListOptions {
 /// that the fieldset applies to.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ManagedFieldsEntry {
     /// Manager is an identifier of the workflow managing these fields.
     #[prost(string, optional, tag = "1")]
@@ -859,8 +834,7 @@ pub struct ManagedFieldsEntry {
 /// +protobuf.options.(gogoproto.goproto_stringer)=false
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct MicroTime {
     /// Represents seconds of UTC time since Unix epoch
     /// 1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to
@@ -880,7 +854,6 @@ pub struct MicroTime {
 /// users must create.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ObjectMeta {
     /// Name must be unique within a namespace. Is required when creating resources, although
@@ -1070,8 +1043,7 @@ pub struct ObjectMeta {
 /// +structType=atomic
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct OwnerReference {
     /// API version of the referent.
     #[prost(string, optional, tag = "5")]
@@ -1115,7 +1087,6 @@ pub struct OwnerReference {
 /// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PartialObjectMetadata {
     /// Standard object's metadata.
@@ -1129,7 +1100,6 @@ pub struct PartialObjectMetadata {
 /// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PartialObjectMetadataList {
     /// Standard list metadata.
@@ -1146,15 +1116,13 @@ pub struct PartialObjectMetadataList {
 /// Patch is provided to give a concrete name and type to the Kubernetes PATCH request body.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Patch {}
 /// PatchOptions may be provided when patching an API object.
 /// PatchOptions is meant to be a superset of UpdateOptions.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct PatchOptions {
     /// When present, indicates that modifications should not be
     /// persisted. An invalid or unrecognized dryRun directive will
@@ -1208,8 +1176,7 @@ pub struct PatchOptions {
 /// Preconditions must be fulfilled before an operation (update, delete, etc.) is carried out.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Preconditions {
     /// Specifies the target UID.
     /// +optional
@@ -1226,8 +1193,7 @@ pub struct Preconditions {
 /// For example: "/healthz", "/apis".
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct RootPaths {
     /// paths are the paths available at root.
     /// +listType=atomic
@@ -1238,8 +1204,7 @@ pub struct RootPaths {
 /// ServerAddressByClientCIDR helps the client to determine the server address that they should use, depending on the clientCIDR that they match.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ServerAddressByClientCidr {
     /// The CIDR with which clients can match their IP to figure out the server address that they should use.
     #[prost(string, optional, tag = "1")]
@@ -1254,7 +1219,6 @@ pub struct ServerAddressByClientCidr {
 /// Status is a return value for calls that don't return other objects.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Status {
     /// Standard list metadata.
@@ -1302,8 +1266,7 @@ pub struct Status {
 /// cases when multiple errors are encountered.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct StatusCause {
     /// A machine-readable description of the cause of the error. If this value is
     /// empty there is no information available.
@@ -1339,7 +1302,6 @@ pub struct StatusCause {
 /// defined.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct StatusDetails {
     /// The name attribute of the resource associated with the status StatusReason
@@ -1386,8 +1348,7 @@ pub struct StatusDetails {
 /// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct TableOptions {
     /// includeObject decides whether to include each object along with its columnar information.
     /// Specifying "None" will return no object, specifying "Object" will return the full object contents, and
@@ -1406,8 +1367,7 @@ pub struct TableOptions {
 /// +protobuf.options.(gogoproto.goproto_stringer)=false
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Time {
     /// Represents seconds of UTC time since Unix epoch
     /// 1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to
@@ -1428,8 +1388,7 @@ pub struct Time {
 /// that matches Time. Do not use in Go structs.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Timestamp {
     /// Represents seconds of UTC time since Unix epoch
     /// 1970-01-01T00:00:00Z. Must be from 0001-01-01T00:00:00Z to
@@ -1452,8 +1411,7 @@ pub struct Timestamp {
 /// +k8s:deepcopy-gen=false
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct TypeMeta {
     /// Kind is a string value representing the REST resource this object represents.
     /// Servers may infer this from the endpoint the client submits requests to.
@@ -1477,8 +1435,7 @@ pub struct TypeMeta {
 /// All fields in UpdateOptions should also be present in PatchOptions.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct UpdateOptions {
     /// When present, indicates that modifications should not be
     /// persisted. An invalid or unrecognized dryRun directive will
@@ -1527,8 +1484,7 @@ pub struct UpdateOptions {
 /// items, if empty, will result in an empty slice
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Verbs {
     #[prost(string, repeated, tag = "1")]
     #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
@@ -1541,8 +1497,7 @@ pub struct Verbs {
 /// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct WatchEvent {
     #[prost(string, optional, tag = "1")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]

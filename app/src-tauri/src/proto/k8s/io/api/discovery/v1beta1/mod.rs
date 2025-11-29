@@ -2,7 +2,6 @@
 /// Endpoint represents a single logical "backend" implementing a service.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Endpoint {
     /// addresses of this endpoint. The contents of this field are interpreted
@@ -70,8 +69,7 @@ pub struct Endpoint {
 /// EndpointConditions represents the current condition of an endpoint.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct EndpointConditions {
     /// ready indicates that this endpoint is prepared to receive traffic,
     /// according to whatever system is managing the endpoint. A nil value
@@ -101,7 +99,6 @@ pub struct EndpointConditions {
 /// EndpointHints provides hints describing how an endpoint should be consumed.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct EndpointHints {
     /// forZones indicates the zone(s) this endpoint should be consumed by to
@@ -114,8 +111,7 @@ pub struct EndpointHints {
 /// EndpointPort represents a Port used by an EndpointSlice
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct EndpointPort {
     /// name represents the name of this port. All ports in an EndpointSlice must have a unique name.
     /// If the EndpointSlice is derived from a Kubernetes service, this corresponds to the Service.ports\[\].name.
@@ -155,7 +151,6 @@ pub struct EndpointPort {
 /// labels, which must be joined to produce the full set of endpoints.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct EndpointSlice {
     /// Standard object's metadata.
@@ -195,7 +190,6 @@ pub struct EndpointSlice {
 /// EndpointSliceList represents a list of endpoint slices
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct EndpointSliceList {
     /// Standard list metadata.
@@ -213,8 +207,7 @@ pub struct EndpointSliceList {
 /// ForZone provides information about which zones should consume this endpoint.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ForZone {
     /// name represents the name of the zone.
     #[prost(string, optional, tag = "1")]

@@ -2,7 +2,6 @@
 /// CronJob represents the configuration of a single cron job.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CronJob {
     /// Standard object's metadata.
@@ -29,7 +28,6 @@ pub struct CronJob {
 /// CronJobList is a collection of cron jobs.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CronJobList {
     /// Standard list metadata.
@@ -48,7 +46,6 @@ pub struct CronJobList {
 /// CronJobSpec describes how the job execution will look like and when it will actually run.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CronJobSpec {
     /// The schedule in Cron format, see <https://en.wikipedia.org/wiki/Cron.>
@@ -110,7 +107,6 @@ pub struct CronJobSpec {
 /// CronJobStatus represents the current state of a cron job.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CronJobStatus {
     /// A list of pointers to currently running jobs.
@@ -137,7 +133,6 @@ pub struct CronJobStatus {
 /// Job represents the configuration of a single job.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Job {
     /// Standard object's metadata.
@@ -164,8 +159,7 @@ pub struct Job {
 /// JobCondition describes current state of a job.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct JobCondition {
     /// Type of job condition, Complete or Failed.
     #[prost(string, optional, tag = "1")]
@@ -203,7 +197,6 @@ pub struct JobCondition {
 /// JobList is a collection of jobs.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct JobList {
     /// Standard list metadata.
@@ -222,7 +215,6 @@ pub struct JobList {
 /// JobSpec describes how the job execution will look like.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct JobSpec {
     /// Specifies the maximum desired number of pods the job should
@@ -422,7 +414,6 @@ pub struct JobSpec {
 /// JobStatus represents the current state of a Job.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct JobStatus {
     /// The latest available observations of an object's current state. When a Job
@@ -555,7 +546,6 @@ pub struct JobStatus {
 /// JobTemplateSpec describes the data a Job should have when created from a template
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct JobTemplateSpec {
     /// Standard object's metadata of the jobs created from this template.
@@ -576,7 +566,6 @@ pub struct JobTemplateSpec {
 /// PodFailurePolicy describes how failed pods influence the backoffLimit.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PodFailurePolicy {
     /// A list of pod failure policy rules. The rules are evaluated in order.
@@ -597,8 +586,7 @@ pub struct PodFailurePolicy {
 /// (exit code 0) are excluded from the requirement check.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct PodFailurePolicyOnExitCodesRequirement {
     /// Restricts the check for exit codes to the container with the
     /// specified name. When null, the rule applies to all containers.
@@ -637,8 +625,7 @@ pub struct PodFailurePolicyOnExitCodesRequirement {
 /// an actual pod condition type.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct PodFailurePolicyOnPodConditionsPattern {
     /// Specifies the required Pod condition type. To match a pod condition
     /// it is required that specified type equals the pod condition type.
@@ -656,7 +643,6 @@ pub struct PodFailurePolicyOnPodConditionsPattern {
 /// One of onExitCodes and onPodConditions, but not both, can be used in each rule.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PodFailurePolicyRule {
     /// Specifies the action taken on a pod failure when the requirements are satisfied.
@@ -696,7 +682,6 @@ pub struct PodFailurePolicyRule {
 /// SuccessPolicy describes when a Job can be declared as succeeded based on the success of some indexes.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct SuccessPolicy {
     /// rules represents the list of alternative rules for the declaring the Jobs
@@ -714,8 +699,7 @@ pub struct SuccessPolicy {
 /// Each rule must have at least one of the "succeededIndexes" or "succeededCount" specified.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct SuccessPolicyRule {
     /// succeededIndexes specifies the set of indexes
     /// which need to be contained in the actual set of the succeeded indexes for the Job.
@@ -753,8 +737,7 @@ pub struct SuccessPolicyRule {
 /// been accounted in Job status counters.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct UncountedTerminatedPods {
     /// succeeded holds UIDs of succeeded Pods.
     /// +listType=set

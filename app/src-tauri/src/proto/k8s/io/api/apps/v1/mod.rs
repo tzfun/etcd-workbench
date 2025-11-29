@@ -10,7 +10,6 @@
 /// depend on its stability. It is primarily for internal use by controllers.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ControllerRevision {
     /// Standard object's metadata.
@@ -35,7 +34,6 @@ pub struct ControllerRevision {
 /// ControllerRevisionList is a resource containing a list of ControllerRevision objects.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ControllerRevisionList {
     /// More info: <https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata>
@@ -53,7 +51,6 @@ pub struct ControllerRevisionList {
 /// DaemonSet represents the configuration of a daemon set.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DaemonSet {
     /// Standard object's metadata.
@@ -83,8 +80,7 @@ pub struct DaemonSet {
 /// DaemonSetCondition describes the state of a DaemonSet at a certain point.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct DaemonSetCondition {
     /// Type of DaemonSet condition.
     #[prost(string, optional, tag = "1")]
@@ -115,7 +111,6 @@ pub struct DaemonSetCondition {
 /// DaemonSetList is a collection of daemon sets.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DaemonSetList {
     /// Standard list metadata.
@@ -134,7 +129,6 @@ pub struct DaemonSetList {
 /// DaemonSetSpec is the specification of a daemon set.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DaemonSetSpec {
     /// A label query over pods that are managed by the daemon set.
@@ -179,7 +173,6 @@ pub struct DaemonSetSpec {
 /// DaemonSetStatus represents the current status of a daemon set.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DaemonSetStatus {
     /// The number of nodes that are running at least 1
@@ -249,8 +242,7 @@ pub struct DaemonSetStatus {
 /// DaemonSetUpdateStrategy is a struct used to control the update strategy for a DaemonSet.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct DaemonSetUpdateStrategy {
     /// Type of daemon set update. Can be "RollingUpdate" or "OnDelete". Default is RollingUpdate.
     /// +optional
@@ -270,7 +262,6 @@ pub struct DaemonSetUpdateStrategy {
 /// Deployment enables declarative updates for Pods and ReplicaSets.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Deployment {
     /// Standard object's metadata.
@@ -295,8 +286,7 @@ pub struct Deployment {
 /// DeploymentCondition describes the state of a deployment at a certain point.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct DeploymentCondition {
     /// Type of deployment condition.
     #[prost(string, optional, tag = "1")]
@@ -330,7 +320,6 @@ pub struct DeploymentCondition {
 /// DeploymentList is a list of Deployments.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeploymentList {
     /// Standard list metadata.
@@ -348,7 +337,6 @@ pub struct DeploymentList {
 /// DeploymentSpec is the specification of the desired behavior of the Deployment.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeploymentSpec {
     /// Number of desired pods. This is a pointer to distinguish between explicit
@@ -407,7 +395,6 @@ pub struct DeploymentSpec {
 /// DeploymentStatus is the most recently observed status of the Deployment.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeploymentStatus {
     /// The generation observed by the deployment controller.
@@ -461,8 +448,7 @@ pub struct DeploymentStatus {
 /// DeploymentStrategy describes how to replace existing pods with new ones.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct DeploymentStrategy {
     /// Type of deployment. Can be "Recreate" or "RollingUpdate". Default is RollingUpdate.
     /// +optional
@@ -482,7 +468,6 @@ pub struct DeploymentStrategy {
 /// ReplicaSet ensures that a specified number of pod replicas are running at any given time.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ReplicaSet {
     /// If the Labels of a ReplicaSet are empty, they are defaulted to
@@ -514,8 +499,7 @@ pub struct ReplicaSet {
 /// ReplicaSetCondition describes the state of a replica set at a certain point.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ReplicaSetCondition {
     /// Type of replica set condition.
     #[prost(string, optional, tag = "1")]
@@ -546,7 +530,6 @@ pub struct ReplicaSetCondition {
 /// ReplicaSetList is a collection of ReplicaSets.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ReplicaSetList {
     /// Standard list metadata.
@@ -566,7 +549,6 @@ pub struct ReplicaSetList {
 /// ReplicaSetSpec is the specification of a ReplicaSet.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ReplicaSetSpec {
     /// Replicas is the number of desired replicas.
@@ -604,7 +586,6 @@ pub struct ReplicaSetSpec {
 /// ReplicaSetStatus represents the current status of a ReplicaSet.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ReplicaSetStatus {
     /// Replicas is the most recently observed number of replicas.
@@ -645,8 +626,7 @@ pub struct ReplicaSetStatus {
 /// Spec to control the desired behavior of daemon set rolling update.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct RollingUpdateDaemonSet {
     /// The maximum number of DaemonSet pods that can be unavailable during the
     /// update. Value can be an absolute number (ex: 5) or a percentage of total
@@ -696,8 +676,7 @@ pub struct RollingUpdateDaemonSet {
 /// Spec to control the desired behavior of rolling update.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct RollingUpdateDeployment {
     /// The maximum number of pods that can be unavailable during the update.
     /// Value can be an absolute number (ex: 5) or a percentage of desired pods (ex: 10%).
@@ -736,8 +715,7 @@ pub struct RollingUpdateDeployment {
 /// RollingUpdateStatefulSetStrategy is used to communicate parameter for RollingUpdateStatefulSetStrategyType.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct RollingUpdateStatefulSetStrategy {
     /// Partition indicates the ordinal at which the StatefulSet should be partitioned
     /// for updates. During a rolling update, all pods from ordinal Replicas-1 to
@@ -770,7 +748,6 @@ pub struct RollingUpdateStatefulSetStrategy {
 /// map to the same storage identity.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct StatefulSet {
     /// Standard object's metadata.
@@ -796,8 +773,7 @@ pub struct StatefulSet {
 /// StatefulSetCondition describes the state of a statefulset at a certain point.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct StatefulSetCondition {
     /// Type of statefulset condition.
     #[prost(string, optional, tag = "1")]
@@ -828,7 +804,6 @@ pub struct StatefulSetCondition {
 /// StatefulSetList is a collection of StatefulSets.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct StatefulSetList {
     /// Standard list's metadata.
@@ -848,8 +823,7 @@ pub struct StatefulSetList {
 /// in this StatefulSet.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct StatefulSetOrdinals {
     /// start is the number representing the first replica's index. It may be used
     /// to number replicas from an alternate index (eg: 1-indexed) over the default
@@ -868,8 +842,7 @@ pub struct StatefulSetOrdinals {
 /// created from the StatefulSet VolumeClaimTemplates.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct StatefulSetPersistentVolumeClaimRetentionPolicy {
     /// WhenDeleted specifies what happens to PVCs created from StatefulSet
     /// VolumeClaimTemplates when the StatefulSet is deleted. The default policy
@@ -890,7 +863,6 @@ pub struct StatefulSetPersistentVolumeClaimRetentionPolicy {
 /// A StatefulSetSpec is the specification of a StatefulSet.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct StatefulSetSpec {
     /// replicas is the desired number of replicas of the given Template.
@@ -997,7 +969,6 @@ pub struct StatefulSetSpec {
 /// StatefulSetStatus represents the current state of a StatefulSet.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct StatefulSetStatus {
     /// observedGeneration is the most recent generation observed for this StatefulSet. It corresponds to the
@@ -1061,8 +1032,7 @@ pub struct StatefulSetStatus {
 /// necessary to perform the update for the indicated strategy.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct StatefulSetUpdateStrategy {
     /// Type indicates the type of the StatefulSetUpdateStrategy.
     /// Default is RollingUpdate.

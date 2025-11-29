@@ -51,8 +51,7 @@
 /// +k8s:openapi-gen=true
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct RawExtension {
     /// Raw is the underlying serialization of this object.
     ///
@@ -79,8 +78,7 @@ pub struct RawExtension {
 /// +k8s:openapi-gen=true
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct TypeMeta {
     /// +optional
     #[prost(string, optional, tag = "1")]
@@ -103,8 +101,7 @@ pub struct TypeMeta {
 /// +k8s:openapi-gen=true
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Unknown {
     #[prost(message, optional, tag = "1")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]

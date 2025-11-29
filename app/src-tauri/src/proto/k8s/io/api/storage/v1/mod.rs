@@ -6,7 +6,6 @@
 /// CSIDriver objects are non-namespaced.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CsiDriver {
     /// Standard object metadata.
@@ -30,7 +29,6 @@ pub struct CsiDriver {
 /// CSIDriverList is a collection of CSIDriver objects.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CsiDriverList {
     /// Standard list metadata
@@ -49,7 +47,6 @@ pub struct CsiDriverList {
 /// CSIDriverSpec is the specification of a CSIDriver.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CsiDriverSpec {
     /// attachRequired indicates this CSI volume driver requires an attach
@@ -222,7 +219,6 @@ pub struct CsiDriverSpec {
 /// CSINode has an OwnerReference that points to the corresponding node object.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CsiNode {
     /// Standard object's metadata.
@@ -240,8 +236,7 @@ pub struct CsiNode {
 /// CSINodeDriver holds information about the specification of one CSI driver installed on a node
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct CsiNodeDriver {
     /// name represents the name of the CSI driver that this object refers to.
     /// This MUST be the same name returned by the CSI GetPluginName() call for
@@ -286,7 +281,6 @@ pub struct CsiNodeDriver {
 /// CSINodeList is a collection of CSINode objects.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CsiNodeList {
     /// Standard list metadata
@@ -305,7 +299,6 @@ pub struct CsiNodeList {
 /// CSINodeSpec holds information about the specification of all CSI drivers installed on a node
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CsiNodeSpec {
     /// drivers is a list of information of all CSI Drivers existing on a node.
@@ -344,7 +337,6 @@ pub struct CsiNodeSpec {
 /// node.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CsiStorageCapacity {
     /// Standard object's metadata.
@@ -419,7 +411,6 @@ pub struct CsiStorageCapacity {
 /// CSIStorageCapacityList is a collection of CSIStorageCapacity objects.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CsiStorageCapacityList {
     /// Standard list metadata
@@ -442,7 +433,6 @@ pub struct CsiStorageCapacityList {
 /// according to etcd is in ObjectMeta.Name.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct StorageClass {
     /// Standard object's metadata.
@@ -506,7 +496,6 @@ pub struct StorageClass {
 /// StorageClassList is a collection of storage classes.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct StorageClassList {
     /// Standard list metadata
@@ -525,8 +514,7 @@ pub struct StorageClassList {
 /// TokenRequest contains parameters of a service account token.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct TokenRequest {
     /// audience is the intended audience of the token in "TokenRequestSpec".
     /// It will default to the audiences of kube apiserver.
@@ -547,7 +535,6 @@ pub struct TokenRequest {
 /// VolumeAttachment objects are non-namespaced.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct VolumeAttachment {
     /// Standard object metadata.
@@ -574,7 +561,6 @@ pub struct VolumeAttachment {
 /// VolumeAttachmentList is a collection of VolumeAttachment objects.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct VolumeAttachmentList {
     /// Standard list metadata
@@ -596,7 +582,6 @@ pub struct VolumeAttachmentList {
 /// Exactly one member can be set.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct VolumeAttachmentSource {
     /// persistentVolumeName represents the name of the persistent volume to attach.
@@ -620,7 +605,6 @@ pub struct VolumeAttachmentSource {
 /// VolumeAttachmentSpec is the specification of a VolumeAttachment request.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct VolumeAttachmentSpec {
     /// attacher indicates the name of the volume driver that MUST handle this
@@ -640,7 +624,6 @@ pub struct VolumeAttachmentSpec {
 /// VolumeAttachmentStatus is the status of a VolumeAttachment request.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct VolumeAttachmentStatus {
     /// attached indicates the volume is successfully attached.
@@ -678,8 +661,7 @@ pub struct VolumeAttachmentStatus {
 /// VolumeError captures an error encountered during a volume operation.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct VolumeError {
     /// time represents the time the error was encountered.
     /// +optional
@@ -699,8 +681,7 @@ pub struct VolumeError {
 /// VolumeNodeResources is a set of resource limits for scheduling of volumes.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct VolumeNodeResources {
     /// count indicates the maximum number of unique volumes managed by the CSI driver that can be used on a node.
     /// A volume that is both attached and mounted on a node is considered to be used once, not twice.

@@ -2,7 +2,6 @@
 /// AggregationRule describes how to locate ClusterRoles to aggregate into the ClusterRole
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct AggregationRule {
     /// ClusterRoleSelectors holds a list of selectors which will be used to find ClusterRoles and create the rules.
@@ -18,7 +17,6 @@ pub struct AggregationRule {
 /// ClusterRole is a cluster level, logical grouping of PolicyRules that can be referenced as a unit by a RoleBinding or ClusterRoleBinding.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ClusterRole {
     /// Standard object's metadata.
@@ -46,7 +44,6 @@ pub struct ClusterRole {
 /// and adds who information via Subject.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ClusterRoleBinding {
     /// Standard object's metadata.
@@ -72,7 +69,6 @@ pub struct ClusterRoleBinding {
 /// ClusterRoleBindingList is a collection of ClusterRoleBindings
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ClusterRoleBindingList {
     /// Standard object's metadata.
@@ -90,7 +86,6 @@ pub struct ClusterRoleBindingList {
 /// ClusterRoleList is a collection of ClusterRoles
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ClusterRoleList {
     /// Standard object's metadata.
@@ -109,8 +104,7 @@ pub struct ClusterRoleList {
 /// about who the rule applies to or which namespace the rule applies to.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct PolicyRule {
     /// Verbs is a list of Verbs that apply to ALL the ResourceKinds contained in this rule. '*' represents all verbs.
     /// +listType=atomic
@@ -148,7 +142,6 @@ pub struct PolicyRule {
 /// Role is a namespaced, logical grouping of PolicyRules that can be referenced as a unit by a RoleBinding.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Role {
     /// Standard object's metadata.
@@ -170,7 +163,6 @@ pub struct Role {
 /// namespace only have effect in that namespace.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RoleBinding {
     /// Standard object's metadata.
@@ -196,7 +188,6 @@ pub struct RoleBinding {
 /// RoleBindingList is a collection of RoleBindings
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RoleBindingList {
     /// Standard object's metadata.
@@ -214,7 +205,6 @@ pub struct RoleBindingList {
 /// RoleList is a collection of Roles
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RoleList {
     /// Standard object's metadata.
@@ -233,8 +223,7 @@ pub struct RoleList {
 /// +structType=atomic
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct RoleRef {
     /// APIGroup is the group for the resource being referenced
     #[prost(string, optional, tag = "1")]
@@ -254,8 +243,7 @@ pub struct RoleRef {
 /// +structType=atomic
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Subject {
     /// Kind of object being referenced. Values defined by this API group are "User", "Group", and "ServiceAccount".
     /// If the Authorizer does not recognized the kind value, the Authorizer should report an error.

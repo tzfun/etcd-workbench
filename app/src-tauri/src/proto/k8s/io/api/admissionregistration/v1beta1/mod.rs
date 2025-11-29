@@ -2,8 +2,7 @@
 /// AuditAnnotation describes how to produce an audit annotation for an API request.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct AuditAnnotation {
     /// key specifies the audit annotation key. The audit annotation keys of
     /// a ValidatingAdmissionPolicy must be unique. The key must be a qualified
@@ -45,8 +44,7 @@ pub struct AuditAnnotation {
 /// ExpressionWarning is a warning information that targets a specific expression.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ExpressionWarning {
     /// The path to the field that refers the expression.
     /// For example, the reference to the expression of the first item of
@@ -64,8 +62,7 @@ pub struct ExpressionWarning {
 /// MatchCondition represents a condition which must be fulfilled for a request to be sent to a webhook.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct MatchCondition {
     /// Name is an identifier for this match condition, used for strategic merging of MatchConditions,
     /// as well as providing an identifier for logging purposes. A good name should be descriptive of
@@ -102,7 +99,6 @@ pub struct MatchCondition {
 /// +structType=atomic
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MatchResources {
     /// NamespaceSelector decides whether to run the admission control policy on an object based
@@ -207,7 +203,6 @@ pub struct MatchResources {
 /// MutatingWebhook describes an admission webhook and the resources and operations it applies to.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutatingWebhook {
     /// The name of the admission webhook.
@@ -401,7 +396,6 @@ pub struct MutatingWebhook {
 /// Deprecated in v1.16, planned for removal in v1.19. Use admissionregistration.k8s.io/v1 MutatingWebhookConfiguration instead.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutatingWebhookConfiguration {
     /// Standard object metadata; More info: <https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata.>
@@ -424,7 +418,6 @@ pub struct MutatingWebhookConfiguration {
 /// MutatingWebhookConfigurationList is a list of MutatingWebhookConfiguration.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutatingWebhookConfigurationList {
     /// Standard list metadata.
@@ -444,8 +437,7 @@ pub struct MutatingWebhookConfigurationList {
 /// +structType=atomic
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct NamedRuleWithOperations {
     /// ResourceNames is an optional white list of names that the rule applies to.  An empty set means that everything is allowed.
     /// +listType=atomic
@@ -462,8 +454,7 @@ pub struct NamedRuleWithOperations {
 /// +structType=atomic
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ParamKind {
     /// APIVersion is the API group version the resources belong to.
     /// In format of "group/version".
@@ -482,7 +473,6 @@ pub struct ParamKind {
 /// +structType=atomic
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ParamRef {
     /// name is the name of the resource being referenced.
@@ -549,8 +539,7 @@ pub struct ParamRef {
 /// ServiceReference holds a reference to Service.legacy.k8s.io
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ServiceReference {
     /// `namespace` is the namespace of the service.
     /// Required
@@ -580,7 +569,6 @@ pub struct ServiceReference {
 /// ValidatingAdmissionPolicy
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TypeChecking {
     /// The type checking warnings for each expression.
@@ -598,7 +586,6 @@ pub struct TypeChecking {
 /// ValidatingAdmissionPolicy describes the definition of an admission validation policy that accepts or rejects an object without changing it.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ValidatingAdmissionPolicy {
     /// Standard object metadata; More info: <https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata.>
@@ -634,7 +621,6 @@ pub struct ValidatingAdmissionPolicy {
 /// given (policy, binding, param) combination is within its own CEL budget.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ValidatingAdmissionPolicyBinding {
     /// Standard object metadata; More info: <https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata.>
@@ -652,7 +638,6 @@ pub struct ValidatingAdmissionPolicyBinding {
 /// ValidatingAdmissionPolicyBindingList is a list of ValidatingAdmissionPolicyBinding.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ValidatingAdmissionPolicyBindingList {
     /// Standard list metadata.
@@ -671,7 +656,6 @@ pub struct ValidatingAdmissionPolicyBindingList {
 /// ValidatingAdmissionPolicyBindingSpec is the specification of the ValidatingAdmissionPolicyBinding.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ValidatingAdmissionPolicyBindingSpec {
     /// PolicyName references a ValidatingAdmissionPolicy name which the ValidatingAdmissionPolicyBinding binds to.
@@ -746,7 +730,6 @@ pub struct ValidatingAdmissionPolicyBindingSpec {
 /// ValidatingAdmissionPolicyList is a list of ValidatingAdmissionPolicy.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ValidatingAdmissionPolicyList {
     /// Standard list metadata.
@@ -765,7 +748,6 @@ pub struct ValidatingAdmissionPolicyList {
 /// ValidatingAdmissionPolicySpec is the specification of the desired behavior of the AdmissionPolicy.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ValidatingAdmissionPolicySpec {
     /// ParamKind specifies the kind of resources used to parameterize this policy.
@@ -860,7 +842,6 @@ pub struct ValidatingAdmissionPolicySpec {
 /// ValidatingAdmissionPolicyStatus represents the status of an admission validation policy.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ValidatingAdmissionPolicyStatus {
     /// The generation observed by the controller.
@@ -887,7 +868,6 @@ pub struct ValidatingAdmissionPolicyStatus {
 /// ValidatingWebhook describes an admission webhook and the resources and operations it applies to.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ValidatingWebhook {
     /// The name of the admission webhook.
@@ -1063,7 +1043,6 @@ pub struct ValidatingWebhook {
 /// Deprecated in v1.16, planned for removal in v1.19. Use admissionregistration.k8s.io/v1 ValidatingWebhookConfiguration instead.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ValidatingWebhookConfiguration {
     /// Standard object metadata; More info: <https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata.>
@@ -1086,7 +1065,6 @@ pub struct ValidatingWebhookConfiguration {
 /// ValidatingWebhookConfigurationList is a list of ValidatingWebhookConfiguration.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ValidatingWebhookConfigurationList {
     /// Standard list metadata.
@@ -1105,8 +1083,7 @@ pub struct ValidatingWebhookConfigurationList {
 /// Validation specifies the CEL expression which is used to apply the validation.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Validation {
     /// Expression represents the expression which will be evaluated by CEL.
     /// ref: <https://github.com/google/cel-spec>
@@ -1192,8 +1169,7 @@ pub struct Validation {
 /// +structType=atomic
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Variable {
     /// Name is the name of the variable. The name must be a valid CEL identifier and unique among all variables.
     /// The variable can be accessed in other expressions through `variables`
@@ -1211,8 +1187,7 @@ pub struct Variable {
 /// connection with the webhook
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct WebhookClientConfig {
     /// `url` gives the location of the webhook, in standard URL form
     /// (`scheme://host:port/path`). Exactly one of `url` or `service`

@@ -3,8 +3,7 @@
 /// path are forwarded to the backend.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct HttpIngressPath {
     /// path is matched against the path of an incoming request. Currently it can
     /// contain characters disallowed from the conventional "path" part of a URL
@@ -44,7 +43,6 @@ pub struct HttpIngressPath {
 /// or '#'.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct HttpIngressRuleValue {
     /// paths is a collection of paths that map requests to backends.
@@ -58,8 +56,7 @@ pub struct HttpIngressRuleValue {
 /// that should not be included within this rule.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct IpBlock {
     /// cidr is a string representing the IPBlock
     /// Valid examples are "192.168.1.0/24" or "2001:db8::/64"
@@ -81,7 +78,6 @@ pub struct IpBlock {
 /// based virtual hosting etc.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Ingress {
     /// Standard object's metadata.
@@ -108,8 +104,7 @@ pub struct Ingress {
 /// IngressBackend describes all endpoints for a given service and port.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct IngressBackend {
     /// service references a service as a backend.
     /// This is a mutually exclusive setting with "Resource".
@@ -135,7 +130,6 @@ pub struct IngressBackend {
 /// resources without a class specified will be assigned this default class.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct IngressClass {
     /// Standard object's metadata.
@@ -156,7 +150,6 @@ pub struct IngressClass {
 /// IngressClassList is a collection of IngressClasses.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct IngressClassList {
     /// Standard list metadata.
@@ -175,8 +168,7 @@ pub struct IngressClassList {
 /// to specify a cluster or namespace-scoped resource.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct IngressClassParametersReference {
     /// apiGroup is the group for the resource being referenced. If APIGroup is
     /// not specified, the specified Kind must be in the core API group. For any
@@ -210,8 +202,7 @@ pub struct IngressClassParametersReference {
 /// IngressClassSpec provides information about the class of an Ingress.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct IngressClassSpec {
     /// controller refers to the name of the controller that should handle this
     /// class. This allows for different "flavors" that are controlled by the
@@ -233,7 +224,6 @@ pub struct IngressClassSpec {
 /// IngressList is a collection of Ingress.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct IngressList {
     /// Standard object's metadata.
@@ -252,7 +242,6 @@ pub struct IngressList {
 /// IngressLoadBalancerIngress represents the status of a load-balancer ingress point.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct IngressLoadBalancerIngress {
     /// ip is set for load-balancer ingress points that are IP based.
@@ -275,7 +264,6 @@ pub struct IngressLoadBalancerIngress {
 /// IngressLoadBalancerStatus represents the status of a load-balancer.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct IngressLoadBalancerStatus {
     /// ingress is a list containing ingress points for the load-balancer.
@@ -288,8 +276,7 @@ pub struct IngressLoadBalancerStatus {
 /// IngressPortStatus represents the error condition of a service port
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct IngressPortStatus {
     /// port is the port number of the ingress port.
     #[prost(int32, optional, tag = "1")]
@@ -321,7 +308,6 @@ pub struct IngressPortStatus {
 /// match, then routed to the backend associated with the matching IngressRuleValue.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct IngressRule {
     /// host is the fully qualified domain name of a network host, as defined by RFC 3986.
@@ -366,7 +352,6 @@ pub struct IngressRule {
 /// one of the following must be set.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct IngressRuleValue {
     /// +optional
@@ -377,8 +362,7 @@ pub struct IngressRuleValue {
 /// IngressServiceBackend references a Kubernetes Service as a Backend.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct IngressServiceBackend {
     /// name is the referenced service. The service must exist in
     /// the same namespace as the Ingress object.
@@ -394,7 +378,6 @@ pub struct IngressServiceBackend {
 /// IngressSpec describes the Ingress the user wishes to exist.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct IngressSpec {
     /// ingressClassName is the name of an IngressClass cluster resource. Ingress
@@ -440,7 +423,6 @@ pub struct IngressSpec {
 /// IngressStatus describe the current state of the Ingress.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct IngressStatus {
     /// loadBalancer contains the current status of the load-balancer.
@@ -452,8 +434,7 @@ pub struct IngressStatus {
 /// IngressTLS describes the transport layer security associated with an ingress.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct IngressTls {
     /// hosts is a list of hosts included in the TLS certificate. The values in
     /// this list must match the name/s used in the tlsSecret. Defaults to the
@@ -477,7 +458,6 @@ pub struct IngressTls {
 /// NetworkPolicy describes what network traffic is allowed for a set of Pods
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NetworkPolicy {
     /// Standard object's metadata.
@@ -499,7 +479,6 @@ pub struct NetworkPolicy {
 /// This type is beta-level in 1.8
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NetworkPolicyEgressRule {
     /// ports is a list of destination ports for outgoing traffic.
@@ -527,7 +506,6 @@ pub struct NetworkPolicyEgressRule {
 /// matched by a NetworkPolicySpec's podSelector. The traffic must match both ports and from.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NetworkPolicyIngressRule {
     /// ports is a list of ports which should be made accessible on the pods selected for
@@ -554,7 +532,6 @@ pub struct NetworkPolicyIngressRule {
 /// NetworkPolicyList is a list of NetworkPolicy objects.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NetworkPolicyList {
     /// Standard list metadata.
@@ -574,7 +551,6 @@ pub struct NetworkPolicyList {
 /// fields are allowed
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NetworkPolicyPeer {
     /// podSelector is a label selector which selects pods. This field follows standard label
@@ -611,8 +587,7 @@ pub struct NetworkPolicyPeer {
 /// NetworkPolicyPort describes a port to allow traffic on
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct NetworkPolicyPort {
     /// protocol represents the protocol (TCP, UDP, or SCTP) which traffic must match.
     /// If not specified, this field defaults to TCP.
@@ -642,7 +617,6 @@ pub struct NetworkPolicyPort {
 /// NetworkPolicySpec provides the specification of a NetworkPolicy
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct NetworkPolicySpec {
     /// podSelector selects the pods to which this NetworkPolicy object applies.
@@ -700,8 +674,7 @@ pub struct NetworkPolicySpec {
 /// +structType=atomic
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ServiceBackendPort {
     /// name is the name of the port on the Service.
     /// This is a mutually exclusive setting with "Number".

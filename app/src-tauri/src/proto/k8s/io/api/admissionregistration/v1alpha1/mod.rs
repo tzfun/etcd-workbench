@@ -2,8 +2,7 @@
 /// ApplyConfiguration defines the desired configuration values of an object.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ApplyConfiguration {
     /// expression will be evaluated by CEL to create an apply configuration.
     /// ref: <https://github.com/google/cel-spec>
@@ -52,8 +51,7 @@ pub struct ApplyConfiguration {
 /// AuditAnnotation describes how to produce an audit annotation for an API request.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct AuditAnnotation {
     /// key specifies the audit annotation key. The audit annotation keys of
     /// a ValidatingAdmissionPolicy must be unique. The key must be a qualified
@@ -95,8 +93,7 @@ pub struct AuditAnnotation {
 /// ExpressionWarning is a warning information that targets a specific expression.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ExpressionWarning {
     /// The path to the field that refers the expression.
     /// For example, the reference to the expression of the first item of
@@ -114,8 +111,7 @@ pub struct ExpressionWarning {
 /// JSONPatch defines a JSON Patch.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct JsonPatch {
     /// expression will be evaluated by CEL to create a [JSON patch](<https://jsonpatch.com/>).
     /// ref: <https://github.com/google/cel-spec>
@@ -187,8 +183,7 @@ pub struct JsonPatch {
 }
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct MatchCondition {
     /// Name is an identifier for this match condition, used for strategic merging of MatchConditions,
     /// as well as providing an identifier for logging purposes. A good name should be descriptive of
@@ -225,7 +220,6 @@ pub struct MatchCondition {
 /// +structType=atomic
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MatchResources {
     /// NamespaceSelector decides whether to run the admission control policy on an object based
@@ -330,7 +324,6 @@ pub struct MatchResources {
 /// MutatingAdmissionPolicy describes the definition of an admission mutation policy that mutates the object coming into admission chain.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutatingAdmissionPolicy {
     /// Standard object metadata; More info: <https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata.>
@@ -358,7 +351,6 @@ pub struct MutatingAdmissionPolicy {
 /// given (policy, binding, param) combination is within its own CEL budget.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutatingAdmissionPolicyBinding {
     /// Standard object metadata; More info: <https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata.>
@@ -376,7 +368,6 @@ pub struct MutatingAdmissionPolicyBinding {
 /// MutatingAdmissionPolicyBindingList is a list of MutatingAdmissionPolicyBinding.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutatingAdmissionPolicyBindingList {
     /// Standard list metadata.
@@ -395,7 +386,6 @@ pub struct MutatingAdmissionPolicyBindingList {
 /// MutatingAdmissionPolicyBindingSpec is the specification of the MutatingAdmissionPolicyBinding.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutatingAdmissionPolicyBindingSpec {
     /// policyName references a MutatingAdmissionPolicy name which the MutatingAdmissionPolicyBinding binds to.
@@ -429,7 +419,6 @@ pub struct MutatingAdmissionPolicyBindingSpec {
 /// MutatingAdmissionPolicyList is a list of MutatingAdmissionPolicy.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutatingAdmissionPolicyList {
     /// Standard list metadata.
@@ -448,7 +437,6 @@ pub struct MutatingAdmissionPolicyList {
 /// MutatingAdmissionPolicySpec is the specification of the desired behavior of the admission policy.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MutatingAdmissionPolicySpec {
     /// paramKind specifies the kind of resources used to parameterize this policy.
@@ -547,8 +535,7 @@ pub struct MutatingAdmissionPolicySpec {
 /// Mutation specifies the CEL expression which is used to apply the Mutation.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Mutation {
     /// patchType indicates the patch strategy used.
     /// Allowed values are "ApplyConfiguration" and "JSONPatch".
@@ -575,8 +562,7 @@ pub struct Mutation {
 /// +structType=atomic
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct NamedRuleWithOperations {
     /// ResourceNames is an optional white list of names that the rule applies to.  An empty set means that everything is allowed.
     /// +listType=atomic
@@ -593,8 +579,7 @@ pub struct NamedRuleWithOperations {
 /// +structType=atomic
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ParamKind {
     /// APIVersion is the API group version the resources belong to.
     /// In format of "group/version".
@@ -613,7 +598,6 @@ pub struct ParamKind {
 /// +structType=atomic
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ParamRef {
     /// `name` is the name of the resource being referenced.
@@ -679,7 +663,6 @@ pub struct ParamRef {
 /// ValidatingAdmissionPolicy
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TypeChecking {
     /// The type checking warnings for each expression.
@@ -692,7 +675,6 @@ pub struct TypeChecking {
 /// ValidatingAdmissionPolicy describes the definition of an admission validation policy that accepts or rejects an object without changing it.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ValidatingAdmissionPolicy {
     /// Standard object metadata; More info: <https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata.>
@@ -728,7 +710,6 @@ pub struct ValidatingAdmissionPolicy {
 /// given (policy, binding, param) combination is within its own CEL budget.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ValidatingAdmissionPolicyBinding {
     /// Standard object metadata; More info: <https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata.>
@@ -746,7 +727,6 @@ pub struct ValidatingAdmissionPolicyBinding {
 /// ValidatingAdmissionPolicyBindingList is a list of ValidatingAdmissionPolicyBinding.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ValidatingAdmissionPolicyBindingList {
     /// Standard list metadata.
@@ -765,7 +745,6 @@ pub struct ValidatingAdmissionPolicyBindingList {
 /// ValidatingAdmissionPolicyBindingSpec is the specification of the ValidatingAdmissionPolicyBinding.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ValidatingAdmissionPolicyBindingSpec {
     /// PolicyName references a ValidatingAdmissionPolicy name which the ValidatingAdmissionPolicyBinding binds to.
@@ -838,7 +817,6 @@ pub struct ValidatingAdmissionPolicyBindingSpec {
 /// ValidatingAdmissionPolicyList is a list of ValidatingAdmissionPolicy.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ValidatingAdmissionPolicyList {
     /// Standard list metadata.
@@ -857,7 +835,6 @@ pub struct ValidatingAdmissionPolicyList {
 /// ValidatingAdmissionPolicySpec is the specification of the desired behavior of the AdmissionPolicy.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ValidatingAdmissionPolicySpec {
     /// ParamKind specifies the kind of resources used to parameterize this policy.
@@ -952,7 +929,6 @@ pub struct ValidatingAdmissionPolicySpec {
 /// ValidatingAdmissionPolicyStatus represents the status of a ValidatingAdmissionPolicy.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ValidatingAdmissionPolicyStatus {
     /// The generation observed by the controller.
@@ -979,8 +955,7 @@ pub struct ValidatingAdmissionPolicyStatus {
 /// Validation specifies the CEL expression which is used to apply the validation.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Validation {
     /// Expression represents the expression which will be evaluated by CEL.
     /// ref: <https://github.com/google/cel-spec>
@@ -1065,8 +1040,7 @@ pub struct Validation {
 /// Variable is the definition of a variable that is used for composition.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Variable {
     /// Name is the name of the variable. The name must be a valid CEL identifier and unique among all variables.
     /// The variable can be accessed in other expressions through `variables`

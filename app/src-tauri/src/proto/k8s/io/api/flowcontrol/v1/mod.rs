@@ -5,8 +5,7 @@
 /// here can be modified by authorized users, unlike the rest of the `spec`.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ExemptPriorityLevelConfiguration {
     /// `nominalConcurrencyShares` (NCS) contributes to the computation of the
     /// NominalConcurrencyLimit (NominalCL) of this level.
@@ -42,8 +41,7 @@ pub struct ExemptPriorityLevelConfiguration {
 /// FlowDistinguisherMethod specifies the method of a flow distinguisher.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct FlowDistinguisherMethod {
     /// `type` is the type of flow distinguisher method
     /// The supported types are "ByUser" and "ByNamespace".
@@ -56,7 +54,6 @@ pub struct FlowDistinguisherMethod {
 /// similar attributes and is identified by a pair of strings: the name of the FlowSchema and a "flow distinguisher".
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct FlowSchema {
     /// `metadata` is the standard object's metadata.
@@ -83,8 +80,7 @@ pub struct FlowSchema {
 /// FlowSchemaCondition describes conditions for a FlowSchema.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct FlowSchemaCondition {
     /// `type` is the type of the condition.
     /// Required.
@@ -115,7 +111,6 @@ pub struct FlowSchemaCondition {
 /// FlowSchemaList is a list of FlowSchema objects.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct FlowSchemaList {
     /// `metadata` is the standard list metadata.
@@ -134,7 +129,6 @@ pub struct FlowSchemaList {
 /// FlowSchemaSpec describes how the FlowSchema's specification looks like.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct FlowSchemaSpec {
     /// `priorityLevelConfiguration` should reference a PriorityLevelConfiguration in the cluster. If the reference cannot
@@ -171,7 +165,6 @@ pub struct FlowSchemaSpec {
 /// FlowSchemaStatus represents the current state of a FlowSchema.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct FlowSchemaStatus {
     /// `conditions` is a list of the current states of FlowSchema.
@@ -187,8 +180,7 @@ pub struct FlowSchemaStatus {
 /// GroupSubject holds detailed information for group-kind subject.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct GroupSubject {
     /// name is the user group that matches, or "*" to match all user groups.
     /// See <https://github.com/kubernetes/apiserver/blob/master/pkg/authentication/user/user.go> for some
@@ -202,8 +194,7 @@ pub struct GroupSubject {
 /// +union
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct LimitResponse {
     /// `type` is "Queue" or "Reject".
     /// "Queue" means that requests that can not be executed upon arrival
@@ -229,8 +220,7 @@ pub struct LimitResponse {
 ///    - What should be done with requests that exceed the limit?
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct LimitedPriorityLevelConfiguration {
     /// `nominalConcurrencyShares` (NCS) contributes to the computation of the
     /// NominalConcurrencyLimit (NominalCL) of this level.
@@ -297,8 +287,7 @@ pub struct LimitedPriorityLevelConfiguration {
 /// of verbs matches the request and (b) at least one member of nonResourceURLs matches the request.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct NonResourcePolicyRule {
     /// `verbs` is a list of matching verbs and may not be empty.
     /// "*" matches all verbs. If it is present, it must be the only entry.
@@ -327,7 +316,6 @@ pub struct NonResourcePolicyRule {
 /// of resourceRules or nonResourceRules matches the request.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PolicyRulesWithSubjects {
     /// subjects is the list of normal user, serviceaccount, or group that this rule cares about.
@@ -357,7 +345,6 @@ pub struct PolicyRulesWithSubjects {
 /// PriorityLevelConfiguration represents the configuration of a priority level.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PriorityLevelConfiguration {
     /// `metadata` is the standard object's metadata.
@@ -384,8 +371,7 @@ pub struct PriorityLevelConfiguration {
 /// PriorityLevelConfigurationCondition defines the condition of priority level.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct PriorityLevelConfigurationCondition {
     /// `type` is the type of the condition.
     /// Required.
@@ -416,7 +402,6 @@ pub struct PriorityLevelConfigurationCondition {
 /// PriorityLevelConfigurationList is a list of PriorityLevelConfiguration objects.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PriorityLevelConfigurationList {
     /// `metadata` is the standard object's metadata.
@@ -435,8 +420,7 @@ pub struct PriorityLevelConfigurationList {
 /// PriorityLevelConfigurationReference contains information that points to the "request-priority" being used.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct PriorityLevelConfigurationReference {
     /// `name` is the name of the priority level configuration being referenced
     /// Required.
@@ -448,8 +432,7 @@ pub struct PriorityLevelConfigurationReference {
 /// +union
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct PriorityLevelConfigurationSpec {
     /// `type` indicates whether this priority level is subject to
     /// limitation on request execution.  A value of `"Exempt"` means
@@ -483,7 +466,6 @@ pub struct PriorityLevelConfigurationSpec {
 /// PriorityLevelConfigurationStatus represents the current state of a "request-priority".
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PriorityLevelConfigurationStatus {
     /// `conditions` is the current state of "request-priority".
@@ -499,8 +481,7 @@ pub struct PriorityLevelConfigurationStatus {
 /// QueuingConfiguration holds the configuration parameters for queuing
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct QueuingConfiguration {
     /// `queues` is the number of queues for this priority level. The
     /// queues exist independently at each apiserver. The value must be
@@ -547,8 +528,7 @@ pub struct QueuingConfiguration {
 /// of namespaces matches the request's namespace.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ResourcePolicyRule {
     /// `verbs` is a list of matching verbs and may not be empty.
     /// "*" matches all verbs and, if present, must be the only entry.
@@ -599,8 +579,7 @@ pub struct ResourcePolicyRule {
 /// ServiceAccountSubject holds detailed information for service-account-kind subject.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ServiceAccountSubject {
     /// `namespace` is the namespace of matching ServiceAccount objects.
     /// Required.
@@ -618,8 +597,7 @@ pub struct ServiceAccountSubject {
 /// +union
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Subject {
     /// `kind` indicates which one of the other fields is non-empty.
     /// Required
@@ -646,8 +624,7 @@ pub struct Subject {
 /// UserSubject holds detailed information for user-kind subject.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct UserSubject {
     /// `name` is the username that matches, or "*" to match all usernames.
     /// Required.

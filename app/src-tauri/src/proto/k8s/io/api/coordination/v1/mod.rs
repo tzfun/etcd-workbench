@@ -2,7 +2,6 @@
 /// Lease defines a lease concept.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Lease {
     /// More info: <https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata>
@@ -22,7 +21,6 @@ pub struct Lease {
 /// LeaseList is a list of Lease objects.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct LeaseList {
     /// Standard list metadata.
@@ -41,8 +39,7 @@ pub struct LeaseList {
 /// LeaseSpec is a specification of a Lease.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct LeaseSpec {
     /// holderIdentity contains the identity of the holder of a current lease.
     /// If Coordinated Leader Election is used, the holder identity must be

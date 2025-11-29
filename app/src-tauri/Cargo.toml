@@ -51,4 +51,4 @@ lto = true # Enables link to optimizations
 opt-level = "s" # Optimize for binary size, 'z' or 's'
 strip = true # Remove debug symbols
 panic = "abort"
-debug = true
+debug = false

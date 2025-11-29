@@ -3,7 +3,6 @@
 /// integer value. The value can be any valid integer.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PriorityClass {
     /// Standard object's metadata.
@@ -45,7 +44,6 @@ pub struct PriorityClass {
 /// PriorityClassList is a collection of priority classes.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct PriorityClassList {
     /// Standard list metadata

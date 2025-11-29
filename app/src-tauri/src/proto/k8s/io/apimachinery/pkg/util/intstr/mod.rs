@@ -10,8 +10,7 @@
 /// +k8s:openapi-gen=true
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(clippy::derive_partial_eq_without_eq)]
-#[derive(Clone, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct IntOrString {
     #[prost(int64, optional, tag = "1")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
