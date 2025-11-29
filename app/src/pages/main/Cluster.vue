@@ -209,7 +209,7 @@ const loadMetrics = ():Promise<Array<string[]>> => {
 </script>
 
 <template>
-  <div class="fill-height sub-page overflow-y-auto">
+  <div class="fill-height sub-page overflow-y-auto overflow-x-hidden">
     <div>
       <v-btn 
             variant="tonal"

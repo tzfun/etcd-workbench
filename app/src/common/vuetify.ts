@@ -45,7 +45,7 @@ export const PAGE_BUTTON_SIZE: ButtonSize = undefined
 //  KV编辑器按钮大小
 export const KEY_EDITOR_BUTTON_SIZE: ButtonSize = 'small'
 //  KV编辑器按钮边距
-export const KEY_EDITOR_BUTTON_DENSITY: Density = 'comfortable'
+export const KEY_EDITOR_BUTTON_DENSITY: Density = 'default'
 
 //  对话框按钮大小
 export const DIALOG_BUTTON_SIZE: ButtonSize = undefined
