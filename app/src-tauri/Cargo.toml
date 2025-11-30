@@ -27,7 +27,7 @@ env_logger = "0.11.8"
 dashmap = "6.1.0"
 etcd-client = { version = "0.16.1", features = [] }
 lazy_static = "1.5.0"
-russh = { version = "0.54.6" }
+russh = { version = "0.54.6",default-features = false, features = ["ring", "rsa", "flate2"] }
 uuid = "1.17.0"
 md5 = "0.8.0"
 base64 = "0.22.1"
