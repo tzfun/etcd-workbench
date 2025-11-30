@@ -1,19 +1,19 @@
 {
-  "version": "1.2.1",
-  "notes": "Added batch export/import functions.",
-  "pub_date": "2025-11-25T11:07:00Z",
-  "platforms": {
-    "darwin-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K0dtV2wvY1RhOFVydzB5Wk5GcFc3SElhMjR6QmdzR25ibzlxaHhQMzIyUVI3Nnd4aEVpVUZrRmNFNmt6UTZ5elBDL1dQcWtnL0wxRjlvZWVMY0U0K3dRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzY0MDY3MTAxCWZpbGU6RXRjZCBXb3JrYmVuY2guYXBwLnRhci5negpZQlRxdXd3ME5mNVA4N3pNdERjRkl0MFdOcGhvb3RJN2dyWXVyQXhDYjlUY3RRVGplbThhVG5RSXQvTXV4ODlkSWVoLzdRSFdqdmtIaHRXWnFJOU5EZz09Cg==",
-      "url": "https://github.com/tzfun/etcd-workbench/releases/download/App-1.2.1/etcd-workbench-1.2.1-macos-x86_64.app.tar.gz"
-    },
-    "darwin-aarch64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K0RHbE9UVktVNnFNTjJQN295VVN6c3BuY0pxTUsxZk1tN2tRZy9JVEZuaDd2NDAyOXpIczNLREg5dDZwMFZDSGw4VGZDU2dWWmkzMllERUhKZXVKK0FnPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzY0MDY4MzQxCWZpbGU6RXRjZCBXb3JrYmVuY2guYXBwLnRhci5negpOdHBBeVlGWTVBdi9GRzFVazE0RjM3UytJd2lhU1JjS01WTU5wbGpWUDgrOFVUSmJFMWo2aHVCZDhVaCt3VFhtZTQzb29ERFJsbnpORS9xZDJSdXFCdz09Cg==",
-      "url": "https://github.com/tzfun/etcd-workbench/releases/download/App-1.2.1/etcd-workbench-1.2.1-macos-aarch64.app.tar.gz"
-    },
-    "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K0hjMXU2d1BicVBMN2lxeERUcE1TOHVxMWFSVG05KzNnTU9OdHdmSEdwK1FXeGEveE5ZMU81QlQrdU9COGhFVnlWNXFacUp0MlpQaWdKcHFKWFp5bHdjPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzY0MDY2ODIzCWZpbGU6RXRjZCBXb3JrYmVuY2hfMS4yLjFfeDY0LXNldHVwLm5zaXMuemlwCjhoQWNobjZxdU1nSXYvaXB3VlV0Q3dENDE4d2E1Nm5NMGVFc3VQYkNsTDVJcE50NlBwQnYxRXIzTi9NUEUzTkJHVzlaRmVqY2JGaURBUkozcGJqN0FRPT0K",
-      "url": "https://github.com/tzfun/etcd-workbench/releases/download/App-1.2.1/etcd-workbench-1.2.1-windows-x86_64.nsis.zip"
+    "version": "1.2.2",
+    "notes": "Fixed an issue where CPU usage increased after the ssh tunnel was disconnected.",
+    "pub_date": "2025-11-30T13:18:00+08:00",
+    "platforms": {
+        "darwin-x86_64": {
+            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K0xBVUlTUk5aK3BpVlJTc0RrR0pIZGFEcHYxaThKczVnYVI2RHFWTVl0akJMVzZFcjNFSE9nWFpiTGNTT25aQ2N2OUk4V2Q5S1BTZGZYeDk5MWErb3dzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzY0NDc5NDExCWZpbGU6RXRjZCBXb3JrYmVuY2guYXBwLnRhci5negpwWjlJb0Q0OHJZVTNOMmtxL3BJeXFRQzZqSGxPbjNsZmZyMzZnQlVQK0pOMDNtei9UL0k2TzA1dmNSWW95T0RuQi8yMElLcktrWEhQM3pRZE9PUENCQT09Cg==",
+            "url": "https://github.com/tzfun/etcd-workbench/releases/download/App-1.2.2/etcd-workbench-1.2.2-macos-x86_64.dmg"
+        },
+        "darwin-aarch64": {
+            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K1BieS9iWmpqZ2liUnZGSUdsNFQxRW01aW5Vcm9RL1cyUmRmaHM3VnZJUktZbzNlcGVDUDlPOW9FSDJXcVkxUklhL1RPRlhDMzcxbEVUbGUwM0JVdFFnPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzY0NDc5ODU4CWZpbGU6RXRjZCBXb3JrYmVuY2guYXBwLnRhci5negpPSVlyYjB3YVBwRWpYVFR6ZFoyT1YreXZRSE8vYzNCbHY5YytLYlU1ZzFqdFp1NUpMNTY3bkVBVWJ0Rnl4NC8vTTZLd3luSlQzYXQ2QW1lZG5HY3lEdz09Cg==",
+            "url": "https://github.com/tzfun/etcd-workbench/releases/download/App-1.2.2/etcd-workbench-1.2.2-macos-aarch64.dmg"
+        },
+        "windows-x86_64": {
+            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K0pGM0E2RGtRMWk4K1plT2JMTy9DNWh1Mzg4dkowVC9OdXU2dm1VM1h4NU9Hd0c4Z1hvQWd1UGV5NDNCWk9MZWpSeFhrc0ZweUR2ejZNK09qSVVPTndrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzY0NDc4OTYxCWZpbGU6RXRjZCBXb3JrYmVuY2hfMS4yLjJfeDY0LXNldHVwLm5zaXMuemlwCjRMeUVmc2xRa1hoclhabU1IeEFKQXQ3d2l6SmFEeGIxTDdEc3M1ZGNMM1JBekt3cTB6MXdROStFSEordGdTS05HWXZMSzFzdnVuZ3F5QkQ4bkpCZkJRPT0K",
+            "url": "https://github.com/tzfun/etcd-workbench/releases/download/App-1.2.2/etcd-workbench-1.2.2-windows-x86_64.nsis.zip"
+        }
     }
-  }
 }
