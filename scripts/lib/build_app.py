@@ -123,12 +123,12 @@ def build_app_windows(target, build_platform):
                 app_version = re.findall(r".*(\d+\.\d+\.\d+).*", file)[0]
                 print(f'parsed app version {app_version}')
             filename = f"{BUNDLE_NAME}-{app_version}-{build_platform}.exe"
-            exe_filename = filename
         elif file.endswith('.nsis.zip'):
             if app_version is None:
                 app_version = re.findall(r".*(\d+\.\d+\.\d+).*", file)[0]
                 print(f'parsed app version {app_version}')
             filename = f"{BUNDLE_NAME}-{app_version}-{build_platform}.nsis.zip"
+            exe_filename = filename
         elif file.endswith('.nsis.zip.sig'):
             if app_version is None:
                 app_version = re.findall(r".*(\d+\.\d+\.\d+).*", file)[0]
@@ -174,8 +174,8 @@ def build_app_macos(target, build_platform):
             break
 
     app_file = None
+    exe_filename = None
     for file in os.listdir(macos_path):
-        
         file_path = os.path.join(macos_path, file)
 
         if file.endswith('.app'):
@@ -186,6 +186,7 @@ def build_app_macos(target, build_platform):
 
         if file.endswith('.app.tar.gz'):
             filename = f"{BUNDLE_NAME}-{app_version}-{build_platform}.app.tar.gz"
+            exe_filename = filename
         elif file.endswith('.app.tar.gz.sig'):
             filename = f"{BUNDLE_NAME}-{app_version}-{build_platform}.app.tar.gz.sig"
             sig_filename = filename
@@ -193,8 +194,7 @@ def build_app_macos(target, build_platform):
         if filename is not None:
             copy_bundle_files(file_path, to_dir, filename)
     
-    exe_filename = f"{BUNDLE_NAME}-{app_version}-{build_platform}.dmg"
-    dmg_file = os.path.join(to_dir, exe_filename)
+    dmg_file = os.path.join(to_dir, f"{BUNDLE_NAME}-{app_version}-{build_platform}.dmg")
 
     if os.path.exists(dmg_file):
         os.unlink(dmg_file)
