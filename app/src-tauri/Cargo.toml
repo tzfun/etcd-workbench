@@ -1,6 +1,6 @@
 [package]
 name = "etcd-workbench"
-version = "1.2.3"
+version = "1.2.1"
 description = "Etcd Workbench"
 authors = ["beifengtz"]
 edition = "2021"
@@ -52,4 +52,3 @@ lto = true # Enables link to optimizations
 opt-level = "s" # Optimize for binary size, 'z' or 's'
 strip = true # Remove debug symbols
 panic = "abort"
-debug = false

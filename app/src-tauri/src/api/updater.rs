@@ -56,6 +56,8 @@ pub async fn check_update_with_source(
         }
     };
 
+    update_builder.endpoints("")
+
     let update = update_builder.check().await?;
     let available = update.is_update_available();
     if available {
