@@ -32,6 +32,7 @@ impl WrappedEtcdClient {
     pub async fn authenticate(&mut self) -> Result<(), etcd_client::Error> {
         let auth = self.auth.clone();
         if let Some(user) = auth {
+            self.inner.remove_client_auth();
             self.inner
                 .set_client_auth(user.username, user.password)
                 .await
@@ -51,8 +52,8 @@ impl WrappedEtcdClient {
     ) -> Result<GetResponse, etcd_client::Error> {
         let result = self.inner.get(key.clone(), option.clone()).await;
 
-        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
-            if s.code() as i32 == 16 {
+        if let Err(e) = &result {
+            if is_auth_error(e) {
                 let self_auth = self.auth.clone();
                 if let Some(auth) = self_auth {
                     self.authenticate().await?;
@@ -74,8 +75,8 @@ impl WrappedEtcdClient {
             .put(key.clone(), value.clone(), option.clone())
             .await;
 
-        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
-            if s.code() as i32 == 16 {
+        if let Err(e) = &result {
+            if is_auth_error(e) {
                 let self_auth = self.auth.clone();
                 if let Some(auth) = self_auth {
                     self.authenticate().await?;
@@ -93,8 +94,8 @@ impl WrappedEtcdClient {
     ) -> Result<DeleteResponse, etcd_client::Error> {
         let result = self.inner.delete(key.clone(), option.clone()).await;
 
-        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
-            if s.code() as i32 == 16 {
+        if let Err(e) = &result {
+            if is_auth_error(e) {
                 let self_auth = self.auth.clone();
                 if let Some(auth) = self_auth {
                     self.authenticate().await?;
@@ -108,8 +109,8 @@ impl WrappedEtcdClient {
     pub async fn leases(&mut self) -> Result<LeaseLeasesResponse, etcd_client::Error> {
         let result = self.inner.leases().await;
 
-        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
-            if s.code() as i32 == 16 {
+        if let Err(e) = &result {
+            if is_auth_error(e) {
                 let self_auth = self.auth.clone();
                 if let Some(auth) = self_auth {
                     self.authenticate().await?;
@@ -127,8 +128,8 @@ impl WrappedEtcdClient {
     ) -> Result<LeaseGrantResponse, etcd_client::Error> {
         let result = self.inner.lease_grant(ttl.clone(), option.clone()).await;
 
-        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
-            if s.code() as i32 == 16 {
+        if let Err(e) = &result {
+            if is_auth_error(e) {
                 let self_auth = self.auth.clone();
                 if let Some(auth) = self_auth {
                     self.authenticate().await?;
@@ -145,8 +146,8 @@ impl WrappedEtcdClient {
     ) -> Result<LeaseRevokeResponse, etcd_client::Error> {
         let result = self.inner.lease_revoke(id).await;
 
-        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
-            if s.code() as i32 == 16 {
+        if let Err(e) = &result {
+            if is_auth_error(e) {
                 let self_auth = self.auth.clone();
                 if let Some(auth) = self_auth {
                     self.authenticate().await?;
@@ -164,8 +165,8 @@ impl WrappedEtcdClient {
     ) -> Result<LeaseTimeToLiveResponse, etcd_client::Error> {
         let result = self.inner.lease_time_to_live(id, option.clone()).await;
 
-        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
-            if s.code() as i32 == 16 {
+        if let Err(e) = &result {
+            if is_auth_error(e) {
                 let self_auth = self.auth.clone();
                 if let Some(auth) = self_auth {
                     self.authenticate().await?;
@@ -179,8 +180,8 @@ impl WrappedEtcdClient {
     pub async fn user_list(&mut self) -> Result<UserListResponse, etcd_client::Error> {
         let result = self.inner.user_list().await;
 
-        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
-            if s.code() as i32 == 16 {
+        if let Err(e) = &result {
+            if is_auth_error(e) {
                 let self_auth = self.auth.clone();
                 if let Some(auth) = self_auth {
                     self.authenticate().await?;
@@ -202,8 +203,8 @@ impl WrappedEtcdClient {
             .user_add(name.clone(), password.clone(), options.clone())
             .await;
 
-        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
-            if s.code() as i32 == 16 {
+        if let Err(e) = &result {
+            if is_auth_error(e) {
                 let self_auth = self.auth.clone();
                 if let Some(auth) = self_auth {
                     self.authenticate().await?;
@@ -220,8 +221,8 @@ impl WrappedEtcdClient {
     ) -> Result<UserDeleteResponse, etcd_client::Error> {
         let result = self.inner.user_delete(user.clone()).await;
 
-        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
-            if s.code() as i32 == 16 {
+        if let Err(e) = &result {
+            if is_auth_error(e) {
                 let self_auth = self.auth.clone();
                 if let Some(auth) = self_auth {
                     self.authenticate().await?;
@@ -242,8 +243,8 @@ impl WrappedEtcdClient {
             .user_change_password(user.clone(), password.clone())
             .await;
 
-        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
-            if s.code() as i32 == 16 {
+        if let Err(e) = &result {
+            if is_auth_error(e) {
                 let self_auth = self.auth.clone();
                 if let Some(auth) = self_auth {
                     self.authenticate().await?;
@@ -261,8 +262,8 @@ impl WrappedEtcdClient {
     ) -> Result<UserGrantRoleResponse, etcd_client::Error> {
         let result = self.inner.user_grant_role(user.clone(), role.clone()).await;
 
-        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
-            if s.code() as i32 == 16 {
+        if let Err(e) = &result {
+            if is_auth_error(e) {
                 let self_auth = self.auth.clone();
                 if let Some(auth) = self_auth {
                     self.authenticate().await?;
@@ -283,8 +284,8 @@ impl WrappedEtcdClient {
             .user_revoke_role(user.clone(), role.clone())
             .await;
 
-        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
-            if s.code() as i32 == 16 {
+        if let Err(e) = &result {
+            if is_auth_error(e) {
                 let self_auth = self.auth.clone();
                 if let Some(auth) = self_auth {
                     self.authenticate().await?;
@@ -298,8 +299,8 @@ impl WrappedEtcdClient {
     pub async fn user_get(&mut self, user: &String) -> Result<UserGetResponse, etcd_client::Error> {
         let result = self.inner.user_get(user.clone()).await;
 
-        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
-            if s.code() as i32 == 16 {
+        if let Err(e) = &result {
+            if is_auth_error(e) {
                 let self_auth = self.auth.clone();
                 if let Some(auth) = self_auth {
                     self.authenticate().await?;
@@ -313,8 +314,8 @@ impl WrappedEtcdClient {
     pub async fn auth_enable(&mut self) -> Result<AuthEnableResponse, etcd_client::Error> {
         let result = self.inner.auth_enable().await;
 
-        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
-            if s.code() as i32 == 16 {
+        if let Err(e) = &result {
+            if is_auth_error(e) {
                 let self_auth = self.auth.clone();
                 if let Some(auth) = self_auth {
                     self.authenticate().await?;
@@ -328,8 +329,8 @@ impl WrappedEtcdClient {
     pub async fn auth_disable(&mut self) -> Result<AuthDisableResponse, etcd_client::Error> {
         let result = self.inner.auth_disable().await;
 
-        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
-            if s.code() as i32 == 16 {
+        if let Err(e) = &result {
+            if is_auth_error(e) {
                 let self_auth = self.auth.clone();
                 if let Some(auth) = self_auth {
                     self.authenticate().await?;
@@ -343,8 +344,8 @@ impl WrappedEtcdClient {
     pub async fn role_list(&mut self) -> Result<RoleListResponse, etcd_client::Error> {
         let result = self.inner.role_list().await;
 
-        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
-            if s.code() as i32 == 16 {
+        if let Err(e) = &result {
+            if is_auth_error(e) {
                 let self_auth = self.auth.clone();
                 if let Some(auth) = self_auth {
                     self.authenticate().await?;
@@ -358,8 +359,8 @@ impl WrappedEtcdClient {
     pub async fn role_get(&mut self, role: String) -> Result<RoleGetResponse, etcd_client::Error> {
         let result = self.inner.role_get(role.clone()).await;
 
-        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
-            if s.code() as i32 == 16 {
+        if let Err(e) = &result {
+            if is_auth_error(e) {
                 let self_auth = self.auth.clone();
                 if let Some(auth) = self_auth {
                     self.authenticate().await?;
@@ -373,8 +374,8 @@ impl WrappedEtcdClient {
     pub async fn role_add(&mut self, role: String) -> Result<RoleAddResponse, etcd_client::Error> {
         let result = self.inner.role_add(role.clone()).await;
 
-        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
-            if s.code() as i32 == 16 {
+        if let Err(e) = &result {
+            if is_auth_error(e) {
                 let self_auth = self.auth.clone();
                 if let Some(auth) = self_auth {
                     self.authenticate().await?;
@@ -391,8 +392,8 @@ impl WrappedEtcdClient {
     ) -> Result<RoleDeleteResponse, etcd_client::Error> {
         let result = self.inner.role_delete(role.clone()).await;
 
-        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
-            if s.code() as i32 == 16 {
+        if let Err(e) = &result {
+            if is_auth_error(e) {
                 let self_auth = self.auth.clone();
                 if let Some(auth) = self_auth {
                     self.authenticate().await?;
@@ -413,8 +414,8 @@ impl WrappedEtcdClient {
             .role_grant_permission(role.clone(), permission.clone())
             .await;
 
-        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
-            if s.code() as i32 == 16 {
+        if let Err(e) = &result {
+            if is_auth_error(e) {
                 let self_auth = self.auth.clone();
                 if let Some(auth) = self_auth {
                     self.authenticate().await?;
@@ -436,8 +437,8 @@ impl WrappedEtcdClient {
             .role_revoke_permission(role.clone(), key.clone(), option.clone())
             .await;
 
-        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
-            if s.code() as i32 == 16 {
+        if let Err(e) = &result {
+            if is_auth_error(e) {
                 let self_auth = self.auth.clone();
                 if let Some(auth) = self_auth {
                     self.authenticate().await?;
@@ -451,8 +452,8 @@ impl WrappedEtcdClient {
     pub async fn member_list(&mut self) -> Result<MemberListResponse, etcd_client::Error> {
         let result = self.inner.member_list().await;
 
-        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
-            if s.code() as i32 == 16 {
+        if let Err(e) = &result {
+            if is_auth_error(e) {
                 let self_auth = self.auth.clone();
                 if let Some(auth) = self_auth {
                     self.authenticate().await?;
@@ -466,8 +467,8 @@ impl WrappedEtcdClient {
     pub async fn status(&mut self) -> Result<StatusResponse, etcd_client::Error> {
         let result = self.inner.status().await;
 
-        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
-            if s.code() as i32 == 16 {
+        if let Err(e) = &result {
+            if is_auth_error(e) {
                 let self_auth = self.auth.clone();
                 if let Some(auth) = self_auth {
                     self.authenticate().await?;
@@ -489,8 +490,8 @@ impl WrappedEtcdClient {
             .alarm(alarm_action.clone(), alarm_type.clone(), option.clone())
             .await;
 
-        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
-            if s.code() as i32 == 16 {
+        if let Err(e) = &result {
+            if is_auth_error(e) {
                 let self_auth = self.auth.clone();
                 if let Some(auth) = self_auth {
                     self.authenticate().await?;
@@ -508,8 +509,8 @@ impl WrappedEtcdClient {
     ) -> Result<MemberAddResponse, etcd_client::Error> {
         let result = self.inner.member_add(urls.clone(), option.clone()).await;
 
-        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
-            if s.code() as i32 == 16 {
+        if let Err(e) = &result {
+            if is_auth_error(e) {
                 let self_auth = self.auth.clone();
                 if let Some(auth) = self_auth {
                     self.authenticate().await?;
@@ -526,8 +527,8 @@ impl WrappedEtcdClient {
     ) -> Result<MemberRemoveResponse, etcd_client::Error> {
         let result = self.inner.member_remove(id).await;
 
-        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
-            if s.code() as i32 == 16 {
+        if let Err(e) = &result {
+            if is_auth_error(e) {
                 let self_auth = self.auth.clone();
                 if let Some(auth) = self_auth {
                     self.authenticate().await?;
@@ -545,8 +546,8 @@ impl WrappedEtcdClient {
     ) -> Result<MemberUpdateResponse, etcd_client::Error> {
         let result = self.inner.member_update(id, url.clone()).await;
 
-        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
-            if s.code() as i32 == 16 {
+        if let Err(e) = &result {
+            if is_auth_error(e) {
                 let self_auth = self.auth.clone();
                 if let Some(auth) = self_auth {
                     self.authenticate().await?;
@@ -560,8 +561,8 @@ impl WrappedEtcdClient {
     pub async fn defragment(&mut self) -> Result<DefragmentResponse, etcd_client::Error> {
         let result = self.inner.defragment().await;
 
-        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
-            if s.code() as i32 == 16 {
+        if let Err(e) = &result {
+            if is_auth_error(e) {
                 let self_auth = self.auth.clone();
                 if let Some(auth) = self_auth {
                     self.authenticate().await?;
@@ -579,8 +580,8 @@ impl WrappedEtcdClient {
     ) -> Result<CompactionResponse, etcd_client::Error> {
         let result = self.inner.compact(revision, options.clone()).await;
 
-        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
-            if s.code() as i32 == 16 {
+        if let Err(e) = &result {
+            if is_auth_error(e) {
                 let self_auth = self.auth.clone();
                 if let Some(auth) = self_auth {
                     self.authenticate().await?;
@@ -594,8 +595,8 @@ impl WrappedEtcdClient {
     pub async fn snapshot(&mut self) -> Result<SnapshotStreaming, etcd_client::Error> {
         let result = self.inner.snapshot().await;
 
-        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
-            if s.code() as i32 == 16 {
+        if let Err(e) = &result {
+            if is_auth_error(e) {
                 let self_auth = self.auth.clone();
                 if let Some(auth) = self_auth {
                     self.authenticate().await?;
@@ -611,15 +612,19 @@ impl WrappedEtcdClient {
         key: Vec<u8>,
         options: Option<WatchOptions>,
     ) -> Result<(Watcher, WatchStream), etcd_client::Error> {
-        debug!("watch key {} with option {:?}", String::from_utf8_lossy(&key), options);
+        debug!(
+            "watch key {} with option {:?}",
+            String::from_utf8_lossy(&key),
+            options
+        );
         let result = self
             .inner
             .watch_client()
             .watch(key.clone(), options.clone())
             .await;
 
-        if let Err(etcd_client::Error::GRpcStatus(s)) = &result {
-            if s.code() as i32 == 16 {
+        if let Err(e) = &result {
+            if is_auth_error(e) {
                 let self_auth = self.auth.clone();
                 if let Some(auth) = self_auth {
                     self.authenticate().await?;
@@ -629,5 +634,15 @@ impl WrappedEtcdClient {
         }
 
         result
+    }
+}
+
+fn is_auth_error(e: &etcd_client::Error) -> bool {
+    match e {
+        etcd_client::Error::GRpcStatus(s) => {
+            let code = s.code() as i32;
+            code == 16 || (code == 2 && s.message().contains("auth"))
+        }
+        _ => false,
     }
 }
