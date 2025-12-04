@@ -25,7 +25,8 @@ tokio = { version = "1.46.1", features = ["full"] }
 log = "0.4.28"
 env_logger = "0.11.8"
 dashmap = "6.1.0"
-etcd-client = { version = "0.16.1", features = [] }
+# etcd-client = { version = "0.16.1", features = [] }
+etcd-client = { git = "https://github.com/tzfun/etcd-client" }
 lazy_static = "1.5.0"
 russh = { version = "0.54.6",default-features = false, features = ["ring", "rsa", "flate2"] }
 uuid = "1.17.0"
