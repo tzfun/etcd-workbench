@@ -9,6 +9,7 @@ import json
 from datetime import datetime, timezone, timedelta
 import time
 from pathlib import Path
+from dotenv import load_dotenv
 
 APP_NAME = "Etcd Workbench"
 BUNDLE_NAME = "etcd-workbench"
@@ -17,6 +18,14 @@ ENCODING = "gbk" if platform.system().lower() == 'windows' else 'utf-8'
 def execute(command, encoding = ENCODING):
     print(f"calling: {command}")
     subprocess.call(command, shell=True, encoding=encoding)
+
+def check_env():
+    # 加载 .env 文件中的环境变量
+    load_dotenv()
+    if os.getenv('TAURI_PRIVATE_KEY') is None:
+        raise Exception("Missing env: TAURI_PRIVATE_KEY")
+    if os.getenv('TAURI_KEY_PASSWORD') is None:
+        raise Exception("Missing env: TAURI_KEY_PASSWORD")
 
 def copy_bundle_files(from_file, to_dir, filename):
     if not os.path.exists(to_dir):
@@ -86,6 +95,7 @@ def update_updater_file(app_version, target_alias, sig, updater_filepath, downlo
     print(f'updated updater file: {updater_filepath}')
 
 def build_app_windows(target, build_platform):
+    check_env()
     print("Building app source of windows...")
     os.chdir('../')
     root_path = os.getcwd()
@@ -133,6 +143,7 @@ def build_app_windows(target, build_platform):
         update_updater_json(app_version, build_platform, exe_filename, os.path.join(to_dir, sig_filename))
 
 def build_app_macos(target, build_platform):
+    check_env()
     print("Building app source of macos...")
     os.chdir('../')
     root_path = os.getcwd()
@@ -209,17 +220,6 @@ create-dmg \\
     if sig_filename is not None and exe_filename is not None:
         update_updater_json(app_version, build_platform.replace('macos', 'darwin'), exe_filename, os.path.join(to_dir, sig_filename))
 
-
-def copy_bundle_files(from_file, to_dir, filename):
-    if not os.path.exists(to_dir):
-        os.makedirs(to_dir)
-    
-    to_file = os.path.join(to_dir, filename)
-    shutil.copyfile(from_file, to_file)
-
-    print(f'copied file {to_file}')
-
-
 def build_web(bin_name, skip_merge_jar = False):
     print("Building web source...")
     os.chdir('../')
@@ -253,7 +253,6 @@ def build_web(bin_name, skip_merge_jar = False):
         shutil.rmtree(to_dir)
 
     shutil.copytree(os.path.join(root_path, 'server/build/libs'), to_dir)
-
 
 def build_docs():
     print("Building docs...")

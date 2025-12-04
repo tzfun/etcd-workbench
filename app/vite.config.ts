@@ -14,7 +14,7 @@ export default defineConfig(async () => ({
                 configFile: 'src/styles/settings.scss'
             }
         }),
-        visualizer({ open: true }), // 自动开启分析页面
+        visualizer({ open: false }), // 自动开启分析页面
         // inject({
             // $: 'jquery',
             // jQuery: 'jquery',

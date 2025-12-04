@@ -106,19 +106,19 @@ pub struct ClusterRoleList {
 #[serde(rename_all = "camelCase")]
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct PolicyRule {
-    /// Verbs is a list of Verbs that apply to ALL the ResourceKinds contained in this rule. '*' represents all verbs.
+    /// Verbs is a list of Verbs that apply to ALL the ResourceKinds contained in this rule. '\*' represents all verbs.
     /// +listType=atomic
     #[prost(string, repeated, tag = "1")]
     #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub verbs: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// APIGroups is the name of the APIGroup that contains the resources.  If multiple API groups are specified, any action requested against one of
-    /// the enumerated resources in any API group will be allowed. "" represents the core API group and "*" represents all API groups.
+    /// the enumerated resources in any API group will be allowed. "" represents the core API group and "\*" represents all API groups.
     /// +optional
     /// +listType=atomic
     #[prost(string, repeated, tag = "2")]
     #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub api_groups: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    /// Resources is a list of resources this rule applies to. '*' represents all resources.
+    /// Resources is a list of resources this rule applies to. '\*' represents all resources.
     /// +optional
     /// +listType=atomic
     #[prost(string, repeated, tag = "3")]
@@ -130,7 +130,7 @@ pub struct PolicyRule {
     #[prost(string, repeated, tag = "4")]
     #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub resource_names: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
-    /// NonResourceURLs is a set of partial urls that a user should have access to.  *s are allowed, but only as the full, final step in the path
+    /// NonResourceURLs is a set of partial urls that a user should have access to.  \*s are allowed, but only as the full, final step in the path
     /// Since non-resource URLs are not namespaced, this field is only applicable for ClusterRoles referenced from a ClusterRoleBinding.
     /// Rules can either apply to API resources (such as "pods" or "secrets") or non-resource URL paths (such as "/api"),  but not both.
     /// +optional

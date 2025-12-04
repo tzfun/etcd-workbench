@@ -10,34 +10,36 @@ pub struct ApplyConfiguration {
     /// Apply configurations are declared in CEL using object initialization. For example, this CEL expression
     /// returns an apply configuration to set a single field:
     ///
-    /// 	Object{
-    /// 	  spec: Object.spec{
-    /// 	    serviceAccountName: "example"
-    /// 	  }
-    /// 	}
+    /// ```text
+    /// Object{
+    ///   spec: Object.spec{
+    ///     serviceAccountName: "example"
+    ///   }
+    /// }
+    /// ```
     ///
     /// Apply configurations may not modify atomic structs, maps or arrays due to the risk of accidental deletion of
     /// values not included in the apply configuration.
     ///
     /// CEL expressions have access to the object types needed to create apply configurations:
     ///
-    /// - 'Object' - CEL type of the resource object.
-    /// - 'Object.<fieldName>' - CEL type of object field (such as 'Object.spec')
-    /// - 'Object.<fieldName1>.<fieldName2>...<fieldNameN>` - CEL type of nested field (such as 'Object.spec.containers')
+    /// * 'Object' - CEL type of the resource object.
+    /// * 'Object.<fieldName>' - CEL type of object field (such as 'Object.spec')
+    /// * 'Object.<fieldName1>.<fieldName2>...<fieldNameN>\` - CEL type of nested field (such as 'Object.spec.containers')
     ///
     /// CEL expressions have access to the contents of the API request, organized into CEL variables as well as some other useful variables:
     ///
-    /// - 'object' - The object from the incoming request. The value is null for DELETE requests.
-    /// - 'oldObject' - The existing object. The value is null for CREATE requests.
-    /// - 'request' - Attributes of the API request([ref](/pkg/apis/admission/types.go#AdmissionRequest)).
-    /// - 'params' - Parameter resource referred to by the policy binding being evaluated. Only populated if the policy has a ParamKind.
-    /// - 'namespaceObject' - The namespace object that the incoming object belongs to. The value is null for cluster-scoped resources.
-    /// - 'variables' - Map of composited variables, from its name to its lazily evaluated value.
-    ///    For example, a variable named 'foo' can be accessed as 'variables.foo'.
-    /// - 'authorizer' - A CEL Authorizer. May be used to perform authorization checks for the principal (user or service account) of the request.
-    ///    See <https://pkg.go.dev/k8s.io/apiserver/pkg/cel/library#Authz>
-    /// - 'authorizer.requestResource' - A CEL ResourceCheck constructed from the 'authorizer' and configured with the
-    ///    request resource.
+    /// * 'object' - The object from the incoming request. The value is null for DELETE requests.
+    /// * 'oldObject' - The existing object. The value is null for CREATE requests.
+    /// * 'request' - Attributes of the API request([ref](/pkg/apis/admission/types.go#AdmissionRequest)).
+    /// * 'params' - Parameter resource referred to by the policy binding being evaluated. Only populated if the policy has a ParamKind.
+    /// * 'namespaceObject' - The namespace object that the incoming object belongs to. The value is null for cluster-scoped resources.
+    /// * 'variables' - Map of composited variables, from its name to its lazily evaluated value.
+    ///   For example, a variable named 'foo' can be accessed as 'variables.foo'.
+    /// * 'authorizer' - A CEL Authorizer. May be used to perform authorization checks for the principal (user or service account) of the request.
+    ///   See <https://pkg.go.dev/k8s.io/apiserver/pkg/cel/library#Authz>
+    /// * 'authorizer.requestResource' - A CEL ResourceCheck constructed from the 'authorizer' and configured with the
+    ///   request resource.
     ///
     /// The `apiVersion`, `kind`, `metadata.name` and `metadata.generateName` are always accessible from the root of the
     /// object. No other metadata properties are accessible.
@@ -55,7 +57,7 @@ pub struct ApplyConfiguration {
 pub struct AuditAnnotation {
     /// key specifies the audit annotation key. The audit annotation keys of
     /// a ValidatingAdmissionPolicy must be unique. The key must be a qualified
-    /// name ([A-Za-z0-9][-A-Za-z0-9_.]*) no more than 63 bytes in length.
+    /// name (\[A-Za-z0-9\]\[-A-Za-z0-9\_.\]\*) no more than 63 bytes in length.
     ///
     /// The key is combined with the resource name of the
     /// ValidatingAdmissionPolicy to construct an audit annotation key:
@@ -120,60 +122,66 @@ pub struct JsonPatch {
     ///
     /// For example, this CEL expression returns a JSON patch to conditionally modify a value:
     ///
-    /// 	  [
-    /// 	    JSONPatch{op: "test", path: "/spec/example", value: "Red"},
-    /// 	    JSONPatch{op: "replace", path: "/spec/example", value: "Green"}
-    /// 	  ]
+    /// ```text
+    ///   [
+    ///     JSONPatch{op: "test", path: "/spec/example", value: "Red"},
+    ///     JSONPatch{op: "replace", path: "/spec/example", value: "Green"}
+    ///   ]
+    /// ```
     ///
     /// To define an object for the patch value, use Object types. For example:
     ///
-    /// 	  [
-    /// 	    JSONPatch{
-    /// 	      op: "add",
-    /// 	      path: "/spec/selector",
-    /// 	      value: Object.spec.selector{matchLabels: {"environment": "test"}}
-    /// 	    }
-    /// 	  ]
+    /// ```text
+    ///   [
+    ///     JSONPatch{
+    ///       op: "add",
+    ///       path: "/spec/selector",
+    ///       value: Object.spec.selector{matchLabels: {"environment": "test"}}
+    ///     }
+    ///   ]
+    /// ```
     ///
     /// To use strings containing '/' and '~' as JSONPatch path keys, use "jsonpatch.escapeKey". For example:
     ///
-    /// 	  [
-    /// 	    JSONPatch{
-    /// 	      op: "add",
-    /// 	      path: "/metadata/labels/" + jsonpatch.escapeKey("example.com/environment"),
-    /// 	      value: "test"
-    /// 	    },
-    /// 	  ]
+    /// ```text
+    ///   [
+    ///     JSONPatch{
+    ///       op: "add",
+    ///       path: "/metadata/labels/" + jsonpatch.escapeKey("example.com/environment"),
+    ///       value: "test"
+    ///     },
+    ///   ]
+    /// ```
     ///
     /// CEL expressions have access to the types needed to create JSON patches and objects:
     ///
-    /// - 'JSONPatch' - CEL type of JSON Patch operations. JSONPatch has the fields 'op', 'from', 'path' and 'value'.
-    ///    See [JSON patch](<https://jsonpatch.com/>) for more details. The 'value' field may be set to any of: string,
-    ///    integer, array, map or object.  If set, the 'path' and 'from' fields must be set to a
-    ///    [JSON pointer](<https://datatracker.ietf.org/doc/html/rfc6901/>) string, where the 'jsonpatch.escapeKey()' CEL
-    ///    function may be used to escape path keys containing '/' and '~'.
-    /// - 'Object' - CEL type of the resource object.
-    /// - 'Object.<fieldName>' - CEL type of object field (such as 'Object.spec')
-    /// - 'Object.<fieldName1>.<fieldName2>...<fieldNameN>` - CEL type of nested field (such as 'Object.spec.containers')
+    /// * 'JSONPatch' - CEL type of JSON Patch operations. JSONPatch has the fields 'op', 'from', 'path' and 'value'.
+    ///   See [JSON patch](<https://jsonpatch.com/>) for more details. The 'value' field may be set to any of: string,
+    ///   integer, array, map or object.  If set, the 'path' and 'from' fields must be set to a
+    ///   [JSON pointer](<https://datatracker.ietf.org/doc/html/rfc6901/>) string, where the 'jsonpatch.escapeKey()' CEL
+    ///   function may be used to escape path keys containing '/' and '~'.
+    /// * 'Object' - CEL type of the resource object.
+    /// * 'Object.<fieldName>' - CEL type of object field (such as 'Object.spec')
+    /// * 'Object.<fieldName1>.<fieldName2>...<fieldNameN>\` - CEL type of nested field (such as 'Object.spec.containers')
     ///
     /// CEL expressions have access to the contents of the API request, organized into CEL variables as well as some other useful variables:
     ///
-    /// - 'object' - The object from the incoming request. The value is null for DELETE requests.
-    /// - 'oldObject' - The existing object. The value is null for CREATE requests.
-    /// - 'request' - Attributes of the API request([ref](/pkg/apis/admission/types.go#AdmissionRequest)).
-    /// - 'params' - Parameter resource referred to by the policy binding being evaluated. Only populated if the policy has a ParamKind.
-    /// - 'namespaceObject' - The namespace object that the incoming object belongs to. The value is null for cluster-scoped resources.
-    /// - 'variables' - Map of composited variables, from its name to its lazily evaluated value.
-    ///    For example, a variable named 'foo' can be accessed as 'variables.foo'.
-    /// - 'authorizer' - A CEL Authorizer. May be used to perform authorization checks for the principal (user or service account) of the request.
-    ///    See <https://pkg.go.dev/k8s.io/apiserver/pkg/cel/library#Authz>
-    /// - 'authorizer.requestResource' - A CEL ResourceCheck constructed from the 'authorizer' and configured with the
-    ///    request resource.
+    /// * 'object' - The object from the incoming request. The value is null for DELETE requests.
+    /// * 'oldObject' - The existing object. The value is null for CREATE requests.
+    /// * 'request' - Attributes of the API request([ref](/pkg/apis/admission/types.go#AdmissionRequest)).
+    /// * 'params' - Parameter resource referred to by the policy binding being evaluated. Only populated if the policy has a ParamKind.
+    /// * 'namespaceObject' - The namespace object that the incoming object belongs to. The value is null for cluster-scoped resources.
+    /// * 'variables' - Map of composited variables, from its name to its lazily evaluated value.
+    ///   For example, a variable named 'foo' can be accessed as 'variables.foo'.
+    /// * 'authorizer' - A CEL Authorizer. May be used to perform authorization checks for the principal (user or service account) of the request.
+    ///   See <https://pkg.go.dev/k8s.io/apiserver/pkg/cel/library#Authz>
+    /// * 'authorizer.requestResource' - A CEL ResourceCheck constructed from the 'authorizer' and configured with the
+    ///   request resource.
     ///
     /// CEL expressions have access to [Kubernetes CEL function libraries](<https://kubernetes.io/docs/reference/using-api/cel/#cel-options-language-features-and-libraries>)
     /// as well as:
     ///
-    /// - 'jsonpatch.escapeKey' - Performs JSONPatch key escaping. '~' and  '/' are escaped as '~0' and `~1' respectively).
+    /// * 'jsonpatch.escapeKey' - Performs JSONPatch key escaping. '~' and  '/' are escaped as '~0' and \`~1' respectively).
     ///
     /// Only property names of the form `[a-zA-Z_.-/][a-zA-Z0-9_.-/]*` are accessible.
     /// Required.
@@ -188,9 +196,9 @@ pub struct MatchCondition {
     /// Name is an identifier for this match condition, used for strategic merging of MatchConditions,
     /// as well as providing an identifier for logging purposes. A good name should be descriptive of
     /// the associated expression.
-    /// Name must be a qualified name consisting of alphanumeric characters, '-', '_' or '.', and
+    /// Name must be a qualified name consisting of alphanumeric characters, '-', '*' or '.', and
     /// must start and end with an alphanumeric character (e.g. 'MyName',  or 'my.name',  or
-    /// '123-abc', regex used for validation is '([A-Za-z0-9][-A-Za-z0-9_.]*)?\[A-Za-z0-9\]') with an
+    /// '123-abc', regex used for validation is '(\[A-Za-z0-9\]\[-A-Za-z0-9*.\]\*)?\[A-Za-z0-9\]') with an
     /// optional DNS subdomain prefix and '/' (e.g. 'example.com/MyName')
     ///
     /// Required.
@@ -204,9 +212,9 @@ pub struct MatchCondition {
     /// 'oldObject' - The existing object. The value is null for CREATE requests.
     /// 'request' - Attributes of the admission request(/pkg/apis/admission/types.go#AdmissionRequest).
     /// 'authorizer' - A CEL Authorizer. May be used to perform authorization checks for the principal (user or service account) of the request.
-    ///    See <https://pkg.go.dev/k8s.io/apiserver/pkg/cel/library#Authz>
+    /// See <https://pkg.go.dev/k8s.io/apiserver/pkg/cel/library#Authz>
     /// 'authorizer.requestResource' - A CEL ResourceCheck constructed from the 'authorizer' and configured with the
-    ///    request resource.
+    /// request resource.
     /// Documentation on CEL: <https://kubernetes.io/docs/reference/using-api/cel/>
     ///
     /// Required.
@@ -232,32 +240,32 @@ pub struct MatchResources {
     /// associated with "runlevel" of "0" or "1";  you will set the selector as
     /// follows:
     /// "namespaceSelector": {
-    ///    "matchExpressions": [
-    ///      {
-    ///        "key": "runlevel",
-    ///        "operator": "NotIn",
-    ///        "values": [
-    ///          "0",
-    ///          "1"
-    ///        ]
-    ///      }
-    ///    ]
+    /// "matchExpressions": \[
+    /// {
+    /// "key": "runlevel",
+    /// "operator": "NotIn",
+    /// "values": \[
+    /// "0",
+    /// "1"
+    /// \]
+    /// }
+    /// \]
     /// }
     ///
     /// If instead you want to only run the policy on any objects whose
     /// namespace is associated with the "environment" of "prod" or "staging";
     /// you will set the selector as follows:
     /// "namespaceSelector": {
-    ///    "matchExpressions": [
-    ///      {
-    ///        "key": "environment",
-    ///        "operator": "In",
-    ///        "values": [
-    ///          "prod",
-    ///          "staging"
-    ///        ]
-    ///      }
-    ///    ]
+    /// "matchExpressions": \[
+    /// {
+    /// "key": "environment",
+    /// "operator": "In",
+    /// "values": \[
+    /// "prod",
+    /// "staging"
+    /// \]
+    /// }
+    /// \]
     /// }
     ///
     /// See
@@ -289,7 +297,7 @@ pub struct MatchResources {
         super::super::super::apimachinery::pkg::apis::meta::v1::LabelSelector,
     >,
     /// ResourceRules describes what operations on what resources/subresources the ValidatingAdmissionPolicy matches.
-    /// The policy cares about an operation if it matches _any_ Rule.
+    /// The policy cares about an operation if it matches *any* Rule.
     /// +listType=atomic
     /// +optional
     #[prost(message, repeated, tag = "3")]
@@ -305,15 +313,15 @@ pub struct MatchResources {
     /// matchPolicy defines how the "MatchResources" list is used to match incoming requests.
     /// Allowed values are "Exact" or "Equivalent".
     ///
-    /// - Exact: match a request only if it exactly matches a specified rule.
-    /// For example, if deployments can be modified via apps/v1, apps/v1beta1, and extensions/v1beta1,
-    /// but "rules" only included `apiGroups:\["apps"\], apiVersions:\["v1"\], resources: \["deployments"\]`,
-    /// a request to apps/v1beta1 or extensions/v1beta1 would not be sent to the ValidatingAdmissionPolicy.
+    /// * Exact: match a request only if it exactly matches a specified rule.
+    ///   For example, if deployments can be modified via apps/v1, apps/v1beta1, and extensions/v1beta1,
+    ///   but "rules" only included `apiGroups:\["apps"\], apiVersions:\["v1"\], resources: \["deployments"\]`,
+    ///   a request to apps/v1beta1 or extensions/v1beta1 would not be sent to the ValidatingAdmissionPolicy.
     ///
-    /// - Equivalent: match a request if modifies a resource listed in rules, even via another API group or version.
-    /// For example, if deployments can be modified via apps/v1, apps/v1beta1, and extensions/v1beta1,
-    /// and "rules" only included `apiGroups:\["apps"\], apiVersions:\["v1"\], resources: \["deployments"\]`,
-    /// a request to apps/v1beta1 or extensions/v1beta1 would be converted to apps/v1 and sent to the ValidatingAdmissionPolicy.
+    /// * Equivalent: match a request if modifies a resource listed in rules, even via another API group or version.
+    ///   For example, if deployments can be modified via apps/v1, apps/v1beta1, and extensions/v1beta1,
+    ///   and "rules" only included `apiGroups:\["apps"\], apiVersions:\["v1"\], resources: \["deployments"\]`,
+    ///   a request to apps/v1beta1 or extensions/v1beta1 would be converted to apps/v1 and sent to the ValidatingAdmissionPolicy.
     ///
     /// Defaults to "Equivalent"
     /// +optional
@@ -410,7 +418,7 @@ pub struct MutatingAdmissionPolicyBindingSpec {
     /// Additionally, matchResources.resourceRules are optional and do not constraint matching when unset.
     /// Note that this is differs from MutatingAdmissionPolicy matchConstraints, where resourceRules are required.
     /// The CREATE, UPDATE and CONNECT operations are allowed.  The DELETE operation may not be matched.
-    /// '*' matches CREATE, UPDATE and CONNECT.
+    /// '\*' matches CREATE, UPDATE and CONNECT.
     /// +optional
     #[prost(message, optional, tag = "3")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
@@ -448,11 +456,11 @@ pub struct MutatingAdmissionPolicySpec {
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub param_kind: ::core::option::Option<ParamKind>,
     /// matchConstraints specifies what resources this policy is designed to validate.
-    /// The MutatingAdmissionPolicy cares about a request if it matches _all_ Constraints.
+    /// The MutatingAdmissionPolicy cares about a request if it matches *all* Constraints.
     /// However, in order to prevent clusters from being put into an unstable state that cannot be recovered from via the API
     /// MutatingAdmissionPolicy cannot match MutatingAdmissionPolicy and MutatingAdmissionPolicyBinding.
     /// The CREATE, UPDATE and CONNECT operations are allowed.  The DELETE operation may not be matched.
-    /// '*' matches CREATE, UPDATE and CONNECT.
+    /// '\*' matches CREATE, UPDATE and CONNECT.
     /// Required.
     #[prost(message, optional, tag = "2")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
@@ -504,11 +512,12 @@ pub struct MutatingAdmissionPolicySpec {
     /// manner as validation expressions.
     ///
     /// The exact matching logic is (in order):
-    ///    1. If ANY matchCondition evaluates to FALSE, the policy is skipped.
-    ///    2. If ALL matchConditions evaluate to TRUE, the policy is evaluated.
-    ///    3. If any matchCondition evaluates to an error (but none are FALSE):
-    ///       - If failurePolicy=Fail, reject the request
-    ///       - If failurePolicy=Ignore, the policy is skipped
+    ///
+    /// 1. If ANY matchCondition evaluates to FALSE, the policy is skipped.
+    /// 1. If ALL matchConditions evaluate to TRUE, the policy is evaluated.
+    /// 1. If any matchCondition evaluates to an error (but none are FALSE):
+    ///    * If failurePolicy=Fail, reject the request
+    ///    * If failurePolicy=Ignore, the policy is skipped
     ///
     /// +patchMergeKey=name
     /// +patchStrategy=merge
@@ -616,13 +625,13 @@ pub struct ParamRef {
     /// A per-namespace parameter may be used by specifying a namespace-scoped
     /// `paramKind` in the policy and leaving this field empty.
     ///
-    /// - If `paramKind` is cluster-scoped, this field MUST be unset. Setting this
-    /// field results in a configuration error.
+    /// * If `paramKind` is cluster-scoped, this field MUST be unset. Setting this
+    ///   field results in a configuration error.
     ///
-    /// - If `paramKind` is namespace-scoped, the namespace of the object being
-    /// evaluated for admission will be used when this field is left unset. Take
-    /// care that if this is left empty the binding must not match any cluster-scoped
-    /// resources, which will result in an error.
+    /// * If `paramKind` is namespace-scoped, the namespace of the object being
+    ///   evaluated for admission will be used when this field is left unset. Take
+    ///   care that if this is left empty the binding must not match any cluster-scoped
+    ///   resources, which will result in an error.
     ///
     /// +optional
     #[prost(string, optional, tag = "2")]
@@ -793,13 +802,14 @@ pub struct ValidatingAdmissionPolicyBindingSpec {
     /// `validation.policy.admission.k8s.io/validation_failure` audit annotation
     /// with a value containing the details of the validation failures, formatted as
     /// a JSON list of objects, each with the following fields:
-    /// - message: The validation failure message string
-    /// - policy: The resource name of the ValidatingAdmissionPolicy
-    /// - binding: The resource name of the ValidatingAdmissionPolicyBinding
-    /// - expressionIndex: The index of the failed validations in the ValidatingAdmissionPolicy
-    /// - validationActions: The enforcement actions enacted for the validation failure
-    /// Example audit annotation:
-    /// `"validation.policy.admission.k8s.io/validation_failure": "\[{\"message\": \"Invalid value\", {\"policy\": \"policy.example.com\", {\"binding\": \"policybinding.example.com\", {\"expressionIndex\": \"1\", {\"validationActions\": [\"Audit\"\]}]"`
+    ///
+    /// * message: The validation failure message string
+    /// * policy: The resource name of the ValidatingAdmissionPolicy
+    /// * binding: The resource name of the ValidatingAdmissionPolicyBinding
+    /// * expressionIndex: The index of the failed validations in the ValidatingAdmissionPolicy
+    /// * validationActions: The enforcement actions enacted for the validation failure
+    ///   Example audit annotation:
+    ///   `"validation.policy.admission.k8s.io/validation_failure": "\[{\"message\": \"Invalid value\", {\"policy\": \"policy.example.com\", {\"binding\": \"policybinding.example.com\", {\"expressionIndex\": \"1\", {\"validationActions\": [\"Audit\"\]}]"`
     ///
     /// Clients should expect to handle additional values by ignoring
     /// any values not recognized.
@@ -846,7 +856,7 @@ pub struct ValidatingAdmissionPolicySpec {
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub param_kind: ::core::option::Option<ParamKind>,
     /// MatchConstraints specifies what resources this policy is designed to validate.
-    /// The AdmissionPolicy cares about a request if it matches _all_ Constraints.
+    /// The AdmissionPolicy cares about a request if it matches *all* Constraints.
     /// However, in order to prevent clusters from being put into an unstable state that cannot be recovered from via the API
     /// ValidatingAdmissionPolicy cannot match ValidatingAdmissionPolicy and ValidatingAdmissionPolicyBinding.
     /// Required.
@@ -896,11 +906,12 @@ pub struct ValidatingAdmissionPolicySpec {
     /// manner as validation expressions.
     ///
     /// The exact matching logic is (in order):
-    ///    1. If ANY matchCondition evaluates to FALSE, the policy is skipped.
-    ///    2. If ALL matchConditions evaluate to TRUE, the policy is evaluated.
-    ///    3. If any matchCondition evaluates to an error (but none are FALSE):
-    ///       - If failurePolicy=Fail, reject the request
-    ///       - If failurePolicy=Ignore, the policy is skipped
+    ///
+    /// 1. If ANY matchCondition evaluates to FALSE, the policy is skipped.
+    /// 1. If ALL matchConditions evaluate to TRUE, the policy is evaluated.
+    /// 1. If any matchCondition evaluates to an error (but none are FALSE):
+    ///    * If failurePolicy=Fail, reject the request
+    ///    * If failurePolicy=Ignore, the policy is skipped
     ///
     /// +patchMergeKey=name
     /// +patchStrategy=merge
@@ -961,43 +972,45 @@ pub struct Validation {
     /// ref: <https://github.com/google/cel-spec>
     /// CEL expressions have access to the contents of the API request/response, organized into CEL variables as well as some other useful variables:
     ///
-    /// - 'object' - The object from the incoming request. The value is null for DELETE requests.
-    /// - 'oldObject' - The existing object. The value is null for CREATE requests.
-    /// - 'request' - Attributes of the API request([ref](/pkg/apis/admission/types.go#AdmissionRequest)).
-    /// - 'params' - Parameter resource referred to by the policy binding being evaluated. Only populated if the policy has a ParamKind.
-    /// - 'namespaceObject' - The namespace object that the incoming object belongs to. The value is null for cluster-scoped resources.
-    /// - 'variables' - Map of composited variables, from its name to its lazily evaluated value.
-    ///    For example, a variable named 'foo' can be accessed as 'variables.foo'.
-    /// - 'authorizer' - A CEL Authorizer. May be used to perform authorization checks for the principal (user or service account) of the request.
-    ///    See <https://pkg.go.dev/k8s.io/apiserver/pkg/cel/library#Authz>
-    /// - 'authorizer.requestResource' - A CEL ResourceCheck constructed from the 'authorizer' and configured with the
-    ///    request resource.
+    /// * 'object' - The object from the incoming request. The value is null for DELETE requests.
+    /// * 'oldObject' - The existing object. The value is null for CREATE requests.
+    /// * 'request' - Attributes of the API request([ref](/pkg/apis/admission/types.go#AdmissionRequest)).
+    /// * 'params' - Parameter resource referred to by the policy binding being evaluated. Only populated if the policy has a ParamKind.
+    /// * 'namespaceObject' - The namespace object that the incoming object belongs to. The value is null for cluster-scoped resources.
+    /// * 'variables' - Map of composited variables, from its name to its lazily evaluated value.
+    ///   For example, a variable named 'foo' can be accessed as 'variables.foo'.
+    /// * 'authorizer' - A CEL Authorizer. May be used to perform authorization checks for the principal (user or service account) of the request.
+    ///   See <https://pkg.go.dev/k8s.io/apiserver/pkg/cel/library#Authz>
+    /// * 'authorizer.requestResource' - A CEL ResourceCheck constructed from the 'authorizer' and configured with the
+    ///   request resource.
     ///
     /// The `apiVersion`, `kind`, `metadata.name` and `metadata.generateName` are always accessible from the root of the
     /// object. No other metadata properties are accessible.
     ///
     /// Only property names of the form `[a-zA-Z_.-/][a-zA-Z0-9_.-/]*` are accessible.
     /// Accessible property names are escaped according to the following rules when accessed in the expression:
-    /// - '__' escapes to '__underscores__'
-    /// - '.' escapes to '__dot__'
-    /// - '-' escapes to '__dash__'
-    /// - '/' escapes to '__slash__'
-    /// - Property names that exactly match a CEL RESERVED keyword escape to '__{keyword}__'. The keywords are:
-    /// 	  "true", "false", "null", "in", "as", "break", "const", "continue", "else", "for", "function", "if",
-    /// 	  "import", "let", "loop", "package", "namespace", "return".
-    /// Examples:
-    ///    - Expression accessing a property named "namespace": {"Expression": "object.__namespace__ > 0"}
-    ///    - Expression accessing a property named "x-prop": {"Expression": "object.x__dash__prop > 0"}
-    ///    - Expression accessing a property named "redact__d": {"Expression": "object.redact__underscores__d > 0"}
+    ///
+    /// * '\_\_' escapes to '**underscores**'
+    /// * '.' escapes to '**dot**'
+    /// * '-' escapes to '**dash**'
+    /// * '/' escapes to '**slash**'
+    /// * Property names that exactly match a CEL RESERVED keyword escape to '**{keyword}**'. The keywords are:
+    ///   "true", "false", "null", "in", "as", "break", "const", "continue", "else", "for", "function", "if",
+    ///   "import", "let", "loop", "package", "namespace", "return".
+    ///   Examples:
+    ///   * Expression accessing a property named "namespace": {"Expression": "object.**namespace** > 0"}
+    ///   * Expression accessing a property named "x-prop": {"Expression": "object.x__dash__prop > 0"}
+    ///   * Expression accessing a property named "redact__d": {"Expression": "object.redact__underscores__d > 0"}
     ///
     /// Equality on arrays with list type of 'set' or 'map' ignores element order, i.e. \[1, 2\] == \[2, 1\].
     /// Concatenation on arrays with x-kubernetes-list-type use the semantics of the list type:
-    ///    - 'set': `X + Y` performs a union where the array positions of all elements in `X` are preserved and
-    ///      non-intersecting elements in `Y` are appended, retaining their partial order.
-    ///    - 'map': `X + Y` performs a merge where the array positions of all keys in `X` are preserved but the values
-    ///      are overwritten by values in `Y` when the key sets of `X` and `Y` intersect. Elements in `Y` with
-    ///      non-intersecting keys are appended, retaining their partial order.
-    /// Required.
+    ///
+    /// * 'set': `X + Y` performs a union where the array positions of all elements in `X` are preserved and
+    ///   non-intersecting elements in `Y` are appended, retaining their partial order.
+    /// * 'map': `X + Y` performs a merge where the array positions of all keys in `X` are preserved but the values
+    ///   are overwritten by values in `Y` when the key sets of `X` and `Y` intersect. Elements in `Y` with
+    ///   non-intersecting keys are appended, retaining their partial order.
+    ///   Required.
     #[prost(string, optional, tag = "1")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub expression: ::core::option::Option<::prost::alloc::string::String>,

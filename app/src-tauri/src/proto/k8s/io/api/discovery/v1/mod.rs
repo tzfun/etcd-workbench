@@ -116,10 +116,11 @@ pub struct EndpointPort {
     /// name represents the name of this port. All ports in an EndpointSlice must have a unique name.
     /// If the EndpointSlice is derived from a Kubernetes service, this corresponds to the Service.ports\[\].name.
     /// Name must either be an empty string or pass DNS_LABEL validation:
+    ///
     /// * must be no more than 63 characters long.
     /// * must consist of lower case alphanumeric characters or '-'.
     /// * must start and end with an alphanumeric character.
-    /// Default is empty string.
+    ///   Default is empty string.
     #[prost(string, optional, tag = "1")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub name: ::core::option::Option<::prost::alloc::string::String>,
@@ -141,16 +142,16 @@ pub struct EndpointPort {
     /// Valid values are either:
     ///
     /// * Un-prefixed protocol names - reserved for IANA standard service names (as per
-    /// RFC-6335 and <https://www.iana.org/assignments/service-names>).
+    ///   RFC-6335 and <https://www.iana.org/assignments/service-names>).
     ///
     /// * Kubernetes-defined prefixed names:
-    ///    * 'kubernetes.io/h2c' - HTTP/2 prior knowledge over cleartext as described in <https://www.rfc-editor.org/rfc/rfc9113.html#name-starting-http-2-with-prior->
-    ///    * 'kubernetes.io/ws'  - WebSocket over cleartext as described in <https://www.rfc-editor.org/rfc/rfc6455>
-    ///    * 'kubernetes.io/wss' - WebSocket over TLS as described in <https://www.rfc-editor.org/rfc/rfc6455>
     ///
+    ///   * 'kubernetes.io/h2c' - HTTP/2 prior knowledge over cleartext as described in <https://www.rfc-editor.org/rfc/rfc9113.html#name-starting-http-2-with-prior->
+    ///   * 'kubernetes.io/ws'  - WebSocket over cleartext as described in <https://www.rfc-editor.org/rfc/rfc6455>
+    ///   * 'kubernetes.io/wss' - WebSocket over TLS as described in <https://www.rfc-editor.org/rfc/rfc6455>
     /// * Other protocols should use implementation-defined prefixed names such as
-    /// mycompany.com/my-custom-protocol.
-    /// +optional
+    ///   mycompany.com/my-custom-protocol.
+    ///   +optional
     #[prost(string, optional, tag = "4")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub app_protocol: ::core::option::Option<::prost::alloc::string::String>,
@@ -173,6 +174,7 @@ pub struct EndpointSlice {
     /// All addresses in this slice must be the same type. This field is
     /// immutable after creation. The following address types are currently
     /// supported:
+    ///
     /// * IPv4: Represents an IPv4 Address.
     /// * IPv6: Represents an IPv6 Address.
     /// * FQDN: Represents a Fully Qualified Domain Name.

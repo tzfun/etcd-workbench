@@ -81,7 +81,7 @@ pub struct CsiDriverSpec {
     /// "csi.storage.k8s.io/pod.namespace": pod.Namespace
     /// "csi.storage.k8s.io/pod.uid": string(pod.UID)
     /// "csi.storage.k8s.io/ephemeral": "true" if the volume is an ephemeral inline volume
-    ///                                  defined by a CSIVolumeSource, otherwise "false"
+    /// defined by a CSIVolumeSource, otherwise "false"
     ///
     /// "csi.storage.k8s.io/ephemeral" is a new feature in Kubernetes 1.16. It is only
     /// required for drivers which support both the "Persistent" and "Ephemeral" VolumeLifecycleMode.
@@ -90,7 +90,7 @@ pub struct CsiDriverSpec {
     /// deployed on such a cluster and the deployment determines which mode that is, for example
     /// via a command line parameter of the driver.
     ///
-    /// This field was immutable in Kubernetes < 1.29 and now is mutable.
+    /// This field was immutable in Kubernetes \< 1.29 and now is mutable.
     ///
     /// +optional
     #[prost(bool, optional, tag = "2")]
@@ -129,7 +129,7 @@ pub struct CsiDriverSpec {
     /// unset or false and it can be flipped later when storage
     /// capacity information has been published.
     ///
-    /// This field was immutable in Kubernetes <= 1.22 and now is mutable.
+    /// This field was immutable in Kubernetes \<= 1.22 and now is mutable.
     ///
     /// +optional
     /// +featureGate=CSIStorageCapacity
@@ -140,7 +140,7 @@ pub struct CsiDriverSpec {
     /// permission of the volume before being mounted.
     /// Refer to the specific FSGroupPolicy values for additional details.
     ///
-    /// This field was immutable in Kubernetes < 1.29 and now is mutable.
+    /// This field was immutable in Kubernetes \< 1.29 and now is mutable.
     ///
     /// Defaults to ReadWriteOnceWithFSType, which will examine each volume
     /// to determine if Kubernetes should modify ownership and permissions of the volume.
@@ -156,11 +156,11 @@ pub struct CsiDriverSpec {
     /// will pass the tokens in VolumeContext in the CSI NodePublishVolume calls.
     /// The CSI driver should parse and validate the following VolumeContext:
     /// "csi.storage.k8s.io/serviceAccount.tokens": {
-    ///    "<audience>": {
-    ///      "token": <token>,
-    ///      "expirationTimestamp": <expiration timestamp in RFC3339>,
-    ///    },
-    ///    ...
+    /// "<audience>": {
+    /// "token": <token>,
+    /// "expirationTimestamp": <expiration timestamp in RFC3339>,
+    /// },
+    /// ...
     /// }
     ///
     /// Note: Audience in each TokenRequest should be different and at
@@ -317,14 +317,16 @@ pub struct CsiNodeSpec {
 /// instantiate new PersistentVolumes.
 ///
 /// For example this can express things like:
-/// - StorageClass "standard" has "1234 GiB" available in "topology.kubernetes.io/zone=us-east1"
-/// - StorageClass "localssd" has "10 GiB" available in "kubernetes.io/hostname=knode-abc123"
+///
+/// * StorageClass "standard" has "1234 GiB" available in "topology.kubernetes.io/zone=us-east1"
+/// * StorageClass "localssd" has "10 GiB" available in "kubernetes.io/hostname=knode-abc123"
 ///
 /// The following three cases all imply that no capacity is available for
 /// a certain combination:
-/// - no object exists with suitable topology and storage class name
-/// - such an object exists, but the capacity is unset
-/// - such an object exists, but the capacity is zero
+///
+/// * no object exists with suitable topology and storage class name
+/// * such an object exists, but the capacity is unset
+/// * such an object exists, but the capacity is zero
 ///
 /// The producer of these objects can decide which approach is more suitable.
 ///

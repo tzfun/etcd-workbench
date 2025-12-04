@@ -74,10 +74,10 @@ pub struct CronJobSpec {
     /// Specifies how to treat concurrent executions of a Job.
     /// Valid values are:
     ///
-    /// - "Allow" (default): allows CronJobs to run concurrently;
-    /// - "Forbid": forbids concurrent runs, skipping next run if previous run hasn't finished yet;
-    /// - "Replace": cancels currently running job and replaces it with a new one
-    /// +optional
+    /// * "Allow" (default): allows CronJobs to run concurrently;
+    /// * "Forbid": forbids concurrent runs, skipping next run if previous run hasn't finished yet;
+    /// * "Replace": cancels currently running job and replaces it with a new one
+    ///   +optional
     #[prost(string, optional, tag = "3")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub concurrency_policy: ::core::option::Option<::prost::alloc::string::String>,
@@ -219,7 +219,7 @@ pub struct JobList {
 pub struct JobSpec {
     /// Specifies the maximum desired number of pods the job should
     /// run at any given time. The actual number of pods running in steady state will
-    /// be less than this number when ((.spec.completions - .status.successful) < .spec.parallelism),
+    /// be less than this number when ((.spec.completions - .status.successful) \< .spec.parallelism),
     /// i.e. when the work left to do is less than max parallelism.
     /// More info: <https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/>
     /// +optional
@@ -381,10 +381,11 @@ pub struct JobSpec {
     pub suspend: ::core::option::Option<bool>,
     /// podReplacementPolicy specifies when to create replacement Pods.
     /// Possible values are:
-    /// - TerminatingOrFailed means that we recreate pods
-    ///    when they are terminating (has a metadata.deletionTimestamp) or failed.
-    /// - Failed means to wait until a previously created Pod is fully terminated (has phase
-    ///    Failed or Succeeded) before creating a replacement Pod.
+    ///
+    /// * TerminatingOrFailed means that we recreate pods
+    ///   when they are terminating (has a metadata.deletionTimestamp) or failed.
+    /// * Failed means to wait until a previously created Pod is fully terminated (has phase
+    ///   Failed or Succeeded) before creating a replacement Pod.
     ///
     /// When using podFailurePolicy, Failed is the the only allowed value.
     /// TerminatingOrFailed and Failed are allowed values when podFailurePolicy is not in use.
@@ -526,9 +527,9 @@ pub struct JobStatus {
     /// in the job status:
     ///
     /// 1. Add the pod UID to the arrays in this field.
-    /// 2. Remove the pod finalizer.
-    /// 3. Remove the pod UID from the arrays while increasing the corresponding
-    ///      counter.
+    /// 1. Remove the pod finalizer.
+    /// 1. Remove the pod UID from the arrays while increasing the corresponding
+    ///    counter.
     ///
     /// Old jobs might not be tracked using this field, in which case the field
     /// remains null.
@@ -600,14 +601,14 @@ pub struct PodFailurePolicyOnExitCodesRequirement {
     /// specified values. Containers completed with success (exit code 0) are
     /// excluded from the requirement check. Possible values are:
     ///
-    /// - In: the requirement is satisfied if at least one container exit code
-    ///    (might be multiple if there are multiple containers not restricted
-    ///    by the 'containerName' field) is in the set of specified values.
-    /// - NotIn: the requirement is satisfied if at least one container exit code
-    ///    (might be multiple if there are multiple containers not restricted
-    ///    by the 'containerName' field) is not in the set of specified values.
-    /// Additional values are considered to be added in the future. Clients should
-    /// react to an unknown operator by assuming the requirement is not satisfied.
+    /// * In: the requirement is satisfied if at least one container exit code
+    ///   (might be multiple if there are multiple containers not restricted
+    ///   by the 'containerName' field) is in the set of specified values.
+    /// * NotIn: the requirement is satisfied if at least one container exit code
+    ///   (might be multiple if there are multiple containers not restricted
+    ///   by the 'containerName' field) is not in the set of specified values.
+    ///   Additional values are considered to be added in the future. Clients should
+    ///   react to an unknown operator by assuming the requirement is not satisfied.
     #[prost(string, optional, tag = "2")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub operator: ::core::option::Option<::prost::alloc::string::String>,
@@ -648,18 +649,18 @@ pub struct PodFailurePolicyRule {
     /// Specifies the action taken on a pod failure when the requirements are satisfied.
     /// Possible values are:
     ///
-    /// - FailJob: indicates that the pod's job is marked as Failed and all
-    ///    running pods are terminated.
-    /// - FailIndex: indicates that the pod's index is marked as Failed and will
-    ///    not be restarted.
-    ///    This value is beta-level. It can be used when the
-    ///    `JobBackoffLimitPerIndex` feature gate is enabled (enabled by default).
-    /// - Ignore: indicates that the counter towards the .backoffLimit is not
-    ///    incremented and a replacement pod is created.
-    /// - Count: indicates that the pod is handled in the default way - the
-    ///    counter towards the .backoffLimit is incremented.
-    /// Additional values are considered to be added in the future. Clients should
-    /// react to an unknown action by skipping the rule.
+    /// * FailJob: indicates that the pod's job is marked as Failed and all
+    ///   running pods are terminated.
+    /// * FailIndex: indicates that the pod's index is marked as Failed and will
+    ///   not be restarted.
+    ///   This value is beta-level. It can be used when the
+    ///   `JobBackoffLimitPerIndex` feature gate is enabled (enabled by default).
+    /// * Ignore: indicates that the counter towards the .backoffLimit is not
+    ///   incremented and a replacement pod is created.
+    /// * Count: indicates that the pod is handled in the default way - the
+    ///   counter towards the .backoffLimit is incremented.
+    ///   Additional values are considered to be added in the future. Clients should
+    ///   react to an unknown action by skipping the rule.
     #[prost(string, optional, tag = "1")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub action: ::core::option::Option<::prost::alloc::string::String>,

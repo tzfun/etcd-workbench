@@ -38,15 +38,16 @@ pub struct Endpoint {
     /// <https://kubernetes.io/docs/concepts/overview/working-with-objects/labels>
     /// Topology may include a maximum of 16 key/value pairs. This includes, but
     /// is not limited to the following well known keys:
+    ///
     /// * kubernetes.io/hostname: the value indicates the hostname of the node
-    ///    where the endpoint is located. This should match the corresponding
-    ///    node label.
+    ///   where the endpoint is located. This should match the corresponding
+    ///   node label.
     /// * topology.kubernetes.io/zone: the value indicates the zone where the
-    ///    endpoint is located. This should match the corresponding node label.
+    ///   endpoint is located. This should match the corresponding node label.
     /// * topology.kubernetes.io/region: the value indicates the region where the
-    ///    endpoint is located. This should match the corresponding node label.
-    /// This field is deprecated and will be removed in future api versions.
-    /// +optional
+    ///   endpoint is located. This should match the corresponding node label.
+    ///   This field is deprecated and will be removed in future api versions.
+    ///   +optional
     #[prost(map = "string, string", tag = "5")]
     pub topology: ::std::collections::HashMap<
         ::prost::alloc::string::String,
@@ -116,10 +117,11 @@ pub struct EndpointPort {
     /// name represents the name of this port. All ports in an EndpointSlice must have a unique name.
     /// If the EndpointSlice is derived from a Kubernetes service, this corresponds to the Service.ports\[\].name.
     /// Name must either be an empty string or pass DNS_LABEL validation:
+    ///
     /// * must be no more than 63 characters long.
     /// * must consist of lower case alphanumeric characters or '-'.
     /// * must start and end with an alphanumeric character.
-    /// Default is empty string.
+    ///   Default is empty string.
     #[prost(string, optional, tag = "1")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub name: ::core::option::Option<::prost::alloc::string::String>,
@@ -164,6 +166,7 @@ pub struct EndpointSlice {
     /// All addresses in this slice must be the same type. This field is
     /// immutable after creation. The following address types are currently
     /// supported:
+    ///
     /// * IPv4: Represents an IPv4 Address.
     /// * IPv6: Represents an IPv6 Address.
     /// * FQDN: Represents a Fully Qualified Domain Name.

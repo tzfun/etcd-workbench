@@ -67,9 +67,9 @@ pub struct Affinity {
 pub struct AppArmorProfile {
     /// type indicates which kind of AppArmor profile will be applied.
     /// Valid options are:
-    ///    Localhost - a profile pre-loaded on the node.
-    ///    RuntimeDefault - the container runtime's default profile.
-    ///    Unconfined - no AppArmor enforcement.
+    /// Localhost - a profile pre-loaded on the node.
+    /// RuntimeDefault - the container runtime's default profile.
+    /// Unconfined - no AppArmor enforcement.
     /// +unionDiscriminator
     #[prost(string, optional, tag = "1")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
@@ -518,7 +518,7 @@ pub struct CinderVolumeSource {
 #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ClientIpConfig {
     /// timeoutSeconds specifies the seconds of ClientIP type session sticky time.
-    /// The value must be >0 && <=86400(for 1 day) if ServiceAffinity == "ClientIP".
+    /// The value must be >0 && \<=86400(for 1 day) if ServiceAffinity == "ClientIP".
     /// Default value is 10800(for 3 hours).
     /// +optional
     #[prost(int32, optional, tag = "1")]
@@ -662,7 +662,7 @@ pub struct ConfigMap {
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub immutable: ::core::option::Option<bool>,
     /// Data contains the configuration data.
-    /// Each key must consist of alphanumeric characters, '-', '_' or '.'.
+    /// Each key must consist of alphanumeric characters, '-', '\_' or '.'.
     /// Values with non-UTF-8 byte sequences must use the BinaryData field.
     /// The keys stored in Data must not overlap with the keys in
     /// the BinaryData field, this is enforced during validation process.
@@ -673,7 +673,7 @@ pub struct ConfigMap {
         ::prost::alloc::string::String,
     >,
     /// BinaryData contains the binary data.
-    /// Each key must consist of alphanumeric characters, '-', '_' or '.'.
+    /// Each key must consist of alphanumeric characters, '-', '\_' or '.'.
     /// BinaryData can contain byte sequences that are not in the UTF-8 range.
     /// The keys stored in BinaryData must not overlap with the ones in
     /// the Data field, this is enforced during validation process.
@@ -1122,7 +1122,7 @@ pub struct ContainerPort {
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub name: ::core::option::Option<::prost::alloc::string::String>,
     /// Number of port to expose on the host.
-    /// If specified, this must be a valid port number, 0 < x < 65536.
+    /// If specified, this must be a valid port number, 0 \< x \< 65536.
     /// If HostNetwork is specified, this must match ContainerPort.
     /// Most containers do not need this.
     /// +optional
@@ -1130,7 +1130,7 @@ pub struct ContainerPort {
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub host_port: ::core::option::Option<i32>,
     /// Number of port to expose on the pod's IP address.
-    /// This must be a valid port number, 0 < x < 65536.
+    /// This must be a valid port number, 0 \< x \< 65536.
     #[prost(int32, optional, tag = "3")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub container_port: ::core::option::Option<i32>,
@@ -1237,7 +1237,7 @@ pub struct ContainerStateTerminated {
     pub finished_at: ::core::option::Option<
         super::super::super::apimachinery::pkg::apis::meta::v1::Time,
     >,
-    /// Container's ID in the format '<type>://<container_id>'
+    /// Container's ID in the format '<type>://\<container_id>'
     /// +optional
     #[prost(string, optional, tag = "7")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
@@ -1312,7 +1312,7 @@ pub struct ContainerStatus {
     #[prost(string, optional, tag = "7")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub image_id: ::core::option::Option<::prost::alloc::string::String>,
-    /// ContainerID is the ID of the container in the format '<type>://<container_id>'.
+    /// ContainerID is the ID of the container in the format '<type>://\<container_id>'.
     /// Where type is a container runtime identifier, returned from Version call of CRI API
     /// (for example "containerd").
     /// +optional
@@ -1554,16 +1554,16 @@ pub struct EndpointPort {
     /// Valid values are either:
     ///
     /// * Un-prefixed protocol names - reserved for IANA standard service names (as per
-    /// RFC-6335 and <https://www.iana.org/assignments/service-names>).
+    ///   RFC-6335 and <https://www.iana.org/assignments/service-names>).
     ///
     /// * Kubernetes-defined prefixed names:
-    ///    * 'kubernetes.io/h2c' - HTTP/2 prior knowledge over cleartext as described in <https://www.rfc-editor.org/rfc/rfc9113.html#name-starting-http-2-with-prior->
-    ///    * 'kubernetes.io/ws'  - WebSocket over cleartext as described in <https://www.rfc-editor.org/rfc/rfc6455>
-    ///    * 'kubernetes.io/wss' - WebSocket over TLS as described in <https://www.rfc-editor.org/rfc/rfc6455>
     ///
+    ///   * 'kubernetes.io/h2c' - HTTP/2 prior knowledge over cleartext as described in <https://www.rfc-editor.org/rfc/rfc9113.html#name-starting-http-2-with-prior->
+    ///   * 'kubernetes.io/ws'  - WebSocket over cleartext as described in <https://www.rfc-editor.org/rfc/rfc6455>
+    ///   * 'kubernetes.io/wss' - WebSocket over TLS as described in <https://www.rfc-editor.org/rfc/rfc6455>
     /// * Other protocols should use implementation-defined prefixed names such as
-    /// mycompany.com/my-custom-protocol.
-    /// +optional
+    ///   mycompany.com/my-custom-protocol.
+    ///   +optional
     #[prost(string, optional, tag = "4")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub app_protocol: ::core::option::Option<::prost::alloc::string::String>,
@@ -1572,15 +1572,19 @@ pub struct EndpointPort {
 /// expanded set of endpoints is the Cartesian product of Addresses x Ports.
 /// For example, given:
 ///
-/// 	{
-/// 	  Addresses: \[{"ip": "10.10.1.1"}, {"ip": "10.10.2.2"}\],
-/// 	  Ports:     \[{"name": "a", "port": 8675}, {"name": "b", "port": 309}\]
-/// 	}
+/// ```text
+/// {
+///   Addresses: \[{"ip": "10.10.1.1"}, {"ip": "10.10.2.2"}\],
+///   Ports:     \[{"name": "a", "port": 8675}, {"name": "b", "port": 309}\]
+/// }
+/// ```
 ///
 /// The resulting set of endpoints can be viewed as:
 ///
-/// 	a: \[ 10.10.1.1:8675, 10.10.2.2:8675 \],
-/// 	b: \[ 10.10.1.1:309, 10.10.2.2:309 \]
+/// ```text
+/// a: \[ 10.10.1.1:8675, 10.10.2.2:8675 \],
+/// b: \[ 10.10.1.1:309, 10.10.2.2:309 \]
+/// ```
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -1609,17 +1613,19 @@ pub struct EndpointSubset {
 }
 /// Endpoints is a collection of endpoints that implement the actual service. Example:
 ///
-/// 	 Name: "mysvc",
-/// 	 Subsets: [
-/// 	   {
-/// 	     Addresses: \[{"ip": "10.10.1.1"}, {"ip": "10.10.2.2"}\],
-/// 	     Ports: \[{"name": "a", "port": 8675}, {"name": "b", "port": 309}\]
-/// 	   },
-/// 	   {
-/// 	     Addresses: \[{"ip": "10.10.3.3"}\],
-/// 	     Ports: \[{"name": "a", "port": 93}, {"name": "b", "port": 76}\]
-/// 	   },
-/// 	]
+/// ```text
+/// Name: "mysvc",
+/// Subsets: [
+///    {
+///      Addresses: \[{"ip": "10.10.1.1"}, {"ip": "10.10.2.2"}\],
+///      Ports: \[{"name": "a", "port": 8675}, {"name": "b", "port": 309}\]
+///    },
+///    {
+///      Addresses: \[{"ip": "10.10.3.3"}\],
+///      Ports: \[{"name": "a", "port": 93}, {"name": "b", "port": 76}\]
+///    },
+/// ]
+/// ```
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -2704,7 +2710,7 @@ pub struct IscsiVolumeSource {
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ImageVolumeSource {
     /// Required: Image or artifact reference to be used.
-    /// Behaves in the same way as pod.spec.containers\[*\].image.
+    /// Behaves in the same way as pod.spec.containers\[\*\].image.
     /// Pull secrets will be assembled in the same way as for the container image by looking up node credentials, SA image pull secrets, and pod spec image pull secrets.
     /// More info: <https://kubernetes.io/docs/concepts/containers/images>
     /// This field is optional to allow higher level config management to default or override
@@ -2993,16 +2999,17 @@ pub struct LoadBalancerStatus {
     #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub ingress: ::prost::alloc::vec::Vec<LoadBalancerIngress>,
 }
-/// LocalObjectReference contains enough information to let you locate the
+/// ## LocalObjectReference contains enough information to let you locate the
 /// referenced object inside the same namespace.
-/// ---
+///
 /// New uses of this type are discouraged because of difficulty describing its usage when embedded in APIs.
-///   1. Invalid usage help.  It is impossible to add specific help for individual usage.  In most embedded usages, there are particular
-///      restrictions like, "must refer only to types A and B" or "UID not honored" or "name must be restricted".
-///      Those cannot be well described when embedded.
-///   2. Inconsistent validation.  Because the usages are different, the validation rules are different by usage, which makes it hard for users to predict what will happen.
-///   3. We cannot easily change it.  Because this type is embedded in many locations, updates to this type
-///      will affect numerous schemas.  Don't make new APIs embed an underspecified API type they do not control.
+///
+/// 1. Invalid usage help.  It is impossible to add specific help for individual usage.  In most embedded usages, there are particular
+///    restrictions like, "must refer only to types A and B" or "UID not honored" or "name must be restricted".
+///    Those cannot be well described when embedded.
+/// 1. Inconsistent validation.  Because the usages are different, the validation rules are different by usage, which makes it hard for users to predict what will happen.
+/// 1. We cannot easily change it.  Because this type is embedded in many locations, updates to this type
+///    will affect numerous schemas.  Don't make new APIs embed an underspecified API type they do not control.
 ///
 /// Instead of using this type, create a locally provided and used type that is well-focused on your reference.
 /// For example, ServiceReferences for admission registration: <https://github.com/kubernetes/api/blob/release-1.17/admissionregistration/v1/types.go#L533> .
@@ -3055,15 +3062,16 @@ pub struct ModifyVolumeStatus {
         ::prost::alloc::string::String,
     >,
     /// status is the status of the ControllerModifyVolume operation. It can be in any of following states:
-    ///   - Pending
-    ///     Pending indicates that the PersistentVolumeClaim cannot be modified due to unmet requirements, such as
-    ///     the specified VolumeAttributesClass not existing.
-    ///   - InProgress
-    ///     InProgress indicates that the volume is being modified.
-    ///   - Infeasible
-    ///    Infeasible indicates that the request has been rejected as invalid by the CSI driver. To
-    /// 	  resolve the error, a valid VolumeAttributesClass needs to be specified.
-    /// Note: New statuses can be added in the future. Consumers should check for unknown statuses and fail appropriately.
+    ///
+    /// * Pending
+    ///   Pending indicates that the PersistentVolumeClaim cannot be modified due to unmet requirements, such as
+    ///   the specified VolumeAttributesClass not existing.
+    /// * InProgress
+    ///   InProgress indicates that the volume is being modified.
+    /// * Infeasible
+    ///   Infeasible indicates that the request has been rejected as invalid by the CSI driver. To
+    ///   resolve the error, a valid VolumeAttributesClass needs to be specified.
+    ///   Note: New statuses can be added in the future. Consumers should check for unknown statuses and fail appropriately.
     #[prost(string, optional, tag = "2")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub status: ::core::option::Option<::prost::alloc::string::String>,
@@ -3755,19 +3763,20 @@ pub struct ObjectFieldSelector {
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub field_path: ::core::option::Option<::prost::alloc::string::String>,
 }
-/// ObjectReference contains enough information to let you inspect or modify the referred object.
-/// ---
+/// ## ObjectReference contains enough information to let you inspect or modify the referred object.
+///
 /// New uses of this type are discouraged because of difficulty describing its usage when embedded in APIs.
-///   1. Ignored fields.  It includes many fields which are not generally honored.  For instance, ResourceVersion and FieldPath are both very rarely valid in actual usage.
-///   2. Invalid usage help.  It is impossible to add specific help for individual usage.  In most embedded usages, there are particular
-///      restrictions like, "must refer only to types A and B" or "UID not honored" or "name must be restricted".
-///      Those cannot be well described when embedded.
-///   3. Inconsistent validation.  Because the usages are different, the validation rules are different by usage, which makes it hard for users to predict what will happen.
-///   4. The fields are both imprecise and overly precise.  Kind is not a precise mapping to a URL. This can produce ambiguity
-///      during interpretation and require a REST mapping.  In most cases, the dependency is on the group,resource tuple
-///      and the version of the actual struct is irrelevant.
-///   5. We cannot easily change it.  Because this type is embedded in many locations, updates to this type
-///      will affect numerous schemas.  Don't make new APIs embed an underspecified API type they do not control.
+///
+/// 1. Ignored fields.  It includes many fields which are not generally honored.  For instance, ResourceVersion and FieldPath are both very rarely valid in actual usage.
+/// 1. Invalid usage help.  It is impossible to add specific help for individual usage.  In most embedded usages, there are particular
+///    restrictions like, "must refer only to types A and B" or "UID not honored" or "name must be restricted".
+///    Those cannot be well described when embedded.
+/// 1. Inconsistent validation.  Because the usages are different, the validation rules are different by usage, which makes it hard for users to predict what will happen.
+/// 1. The fields are both imprecise and overly precise.  Kind is not a precise mapping to a URL. This can produce ambiguity
+///    during interpretation and require a REST mapping.  In most cases, the dependency is on the group,resource tuple
+///    and the version of the actual struct is irrelevant.
+/// 1. We cannot easily change it.  Because this type is embedded in many locations, updates to this type
+///    will affect numerous schemas.  Don't make new APIs embed an underspecified API type they do not control.
 ///
 /// Instead of using this type, create a locally provided and used type that is well-focused on your reference.
 /// For example, ServiceReferences for admission registration: <https://github.com/kubernetes/api/blob/release-1.17/admissionregistration/v1/types.go#L533> .
@@ -3992,14 +4001,15 @@ pub struct PersistentVolumeClaimSpec {
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub volume_mode: ::core::option::Option<::prost::alloc::string::String>,
     /// dataSource field can be used to specify either:
+    ///
     /// * An existing VolumeSnapshot object (snapshot.storage.k8s.io/VolumeSnapshot)
     /// * An existing PVC (PersistentVolumeClaim)
-    /// If the provisioner or an external controller can support the specified data source,
-    /// it will create a new volume based on the contents of the specified data source.
-    /// When the AnyVolumeDataSource feature gate is enabled, dataSource contents will be copied to dataSourceRef,
-    /// and dataSourceRef contents will be copied to dataSource when dataSourceRef.namespace is not specified.
-    /// If the namespace is specified, then dataSourceRef will not be copied to dataSource.
-    /// +optional
+    ///   If the provisioner or an external controller can support the specified data source,
+    ///   it will create a new volume based on the contents of the specified data source.
+    ///   When the AnyVolumeDataSource feature gate is enabled, dataSource contents will be copied to dataSourceRef,
+    ///   and dataSourceRef contents will be copied to dataSource when dataSourceRef.namespace is not specified.
+    ///   If the namespace is specified, then dataSourceRef will not be copied to dataSource.
+    ///   +optional
     #[prost(message, optional, tag = "7")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub data_source: ::core::option::Option<TypedLocalObjectReference>,
@@ -4017,16 +4027,17 @@ pub struct PersistentVolumeClaimSpec {
     /// When namespace is specified in dataSourceRef,
     /// dataSource isn't set to the same value and must be empty.
     /// There are three important differences between dataSource and dataSourceRef:
+    ///
     /// * While dataSource only allows two specific types of objects, dataSourceRef
-    ///    allows any non-core object, as well as PersistentVolumeClaim objects.
+    ///   allows any non-core object, as well as PersistentVolumeClaim objects.
     /// * While dataSource ignores disallowed values (dropping them), dataSourceRef
-    ///    preserves all values, and generates an error if a disallowed value is
-    ///    specified.
+    ///   preserves all values, and generates an error if a disallowed value is
+    ///   specified.
     /// * While dataSource only allows local objects, dataSourceRef allows objects
-    ///    in any namespaces.
-    /// (Beta) Using this field requires the AnyVolumeDataSource feature gate to be enabled.
-    /// (Alpha) Using the namespace field of dataSourceRef requires the CrossNamespaceVolumeDataSource feature gate to be enabled.
-    /// +optional
+    ///   in any namespaces.
+    ///   (Beta) Using this field requires the AnyVolumeDataSource feature gate to be enabled.
+    ///   (Alpha) Using the namespace field of dataSourceRef requires the CrossNamespaceVolumeDataSource feature gate to be enabled.
+    ///   +optional
     #[prost(message, optional, tag = "8")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub data_source_ref: ::core::option::Option<TypedObjectReference>,
@@ -4086,9 +4097,9 @@ pub struct PersistentVolumeClaimStatus {
     pub conditions: ::prost::alloc::vec::Vec<PersistentVolumeClaimCondition>,
     /// allocatedResources tracks the resources allocated to a PVC including its capacity.
     /// Key names follow standard Kubernetes label syntax. Valid values are either:
-    /// 	* Un-prefixed keys:
-    /// 		- storage - the capacity of the volume.
-    /// 	* Custom resources must use implementation-defined prefixed names such as "example.com/my-custom-resource"
+    /// \* Un-prefixed keys:
+    /// - storage - the capacity of the volume.
+    /// \* Custom resources must use implementation-defined prefixed names such as "example.com/my-custom-resource"
     /// Apart from above values - keys that are unprefixed or have kubernetes.io prefix are considered
     /// reserved and hence may not be used.
     ///
@@ -4115,31 +4126,31 @@ pub struct PersistentVolumeClaimStatus {
     >,
     /// allocatedResourceStatuses stores status of resource being resized for the given PVC.
     /// Key names follow standard Kubernetes label syntax. Valid values are either:
-    /// 	* Un-prefixed keys:
-    /// 		- storage - the capacity of the volume.
-    /// 	* Custom resources must use implementation-defined prefixed names such as "example.com/my-custom-resource"
+    /// \* Un-prefixed keys:
+    /// - storage - the capacity of the volume.
+    /// \* Custom resources must use implementation-defined prefixed names such as "example.com/my-custom-resource"
     /// Apart from above values - keys that are unprefixed or have kubernetes.io prefix are considered
     /// reserved and hence may not be used.
     ///
     /// ClaimResourceStatus can be in any of following states:
-    /// 	- ControllerResizeInProgress:
-    /// 		State set when resize controller starts resizing the volume in control-plane.
-    /// 	- ControllerResizeFailed:
-    /// 		State set when resize has failed in resize controller with a terminal error.
-    /// 	- NodeResizePending:
-    /// 		State set when resize controller has finished resizing the volume but further resizing of
-    /// 		volume is needed on the node.
-    /// 	- NodeResizeInProgress:
-    /// 		State set when kubelet starts resizing the volume.
-    /// 	- NodeResizeFailed:
-    /// 		State set when resizing has failed in kubelet with a terminal error. Transient errors don't set
-    /// 		NodeResizeFailed.
+    /// - ControllerResizeInProgress:
+    /// State set when resize controller starts resizing the volume in control-plane.
+    /// - ControllerResizeFailed:
+    /// State set when resize has failed in resize controller with a terminal error.
+    /// - NodeResizePending:
+    /// State set when resize controller has finished resizing the volume but further resizing of
+    /// volume is needed on the node.
+    /// - NodeResizeInProgress:
+    /// State set when kubelet starts resizing the volume.
+    /// - NodeResizeFailed:
+    /// State set when resizing has failed in kubelet with a terminal error. Transient errors don't set
+    /// NodeResizeFailed.
     /// For example: if expanding a PVC for more capacity - this field can be one of the following states:
-    /// 	- pvc.status.allocatedResourceStatus\['storage'\] = "ControllerResizeInProgress"
-    ///       - pvc.status.allocatedResourceStatus\['storage'\] = "ControllerResizeFailed"
-    ///       - pvc.status.allocatedResourceStatus\['storage'\] = "NodeResizePending"
-    ///       - pvc.status.allocatedResourceStatus\['storage'\] = "NodeResizeInProgress"
-    ///       - pvc.status.allocatedResourceStatus\['storage'\] = "NodeResizeFailed"
+    /// - pvc.status.allocatedResourceStatus\['storage'\] = "ControllerResizeInProgress"
+    /// - pvc.status.allocatedResourceStatus\['storage'\] = "ControllerResizeFailed"
+    /// - pvc.status.allocatedResourceStatus\['storage'\] = "NodeResizePending"
+    /// - pvc.status.allocatedResourceStatus\['storage'\] = "NodeResizeInProgress"
+    /// - pvc.status.allocatedResourceStatus\['storage'\] = "NodeResizeFailed"
     /// When this field is not set, it means that no resize operation is in progress for the given PVC.
     ///
     /// A controller that receives PVC update with previously unknown resourceName or ClaimResourceStatus
@@ -4707,8 +4718,8 @@ pub struct PodAntiAffinity {
         WeightedPodAffinityTerm,
     >,
 }
-/// PodAttachOptions is the query options to a Pod's remote attach call.
-/// ---
+/// ## PodAttachOptions is the query options to a Pod's remote attach call.
+///
 /// TODO: merge w/ PodExecOptions below for stdin, stdout, etc
 /// and also when we cut V2, we should export a "StreamOptions" or somesuch that contains Stdin, Stdout, Stder and TTY
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -4837,8 +4848,8 @@ pub struct PodDnsConfigOption {
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub value: ::core::option::Option<::prost::alloc::string::String>,
 }
-/// PodExecOptions is the query options to a Pod's remote exec call.
-/// ---
+/// ## PodExecOptions is the query options to a Pod's remote exec call.
+///
 /// TODO: This is largely identical to PodAttachOptions above, make sure they stay in sync and see about merging
 /// and also when we cut V2, we should export a "StreamOptions" or somesuch that contains Stdin, Stdout, Stder and TTY
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -5204,8 +5215,8 @@ pub struct PodSecurityContext {
     /// to be owned by the pod:
     ///
     /// 1. The owning GID will be the FSGroup
-    /// 2. The setgid bit is set (new files created in the volume will be owned by FSGroup)
-    /// 3. The permission bits are OR'd with rw-rw----
+    /// 1. The setgid bit is set (new files created in the volume will be owned by FSGroup)
+    /// 1. The permission bits are OR'd with rw-rw----
     ///
     /// If unset, the Kubelet will not modify the ownership and permissions of any volume.
     /// Note that this field cannot be set when spec.os.name is windows.
@@ -5606,31 +5617,32 @@ pub struct PodSpec {
     /// -securityContext.windowsOptions
     ///
     /// If the OS field is set to windows, following fields must be unset:
-    /// - spec.hostPID
-    /// - spec.hostIPC
-    /// - spec.hostUsers
-    /// - spec.securityContext.appArmorProfile
-    /// - spec.securityContext.seLinuxOptions
-    /// - spec.securityContext.seccompProfile
-    /// - spec.securityContext.fsGroup
-    /// - spec.securityContext.fsGroupChangePolicy
-    /// - spec.securityContext.sysctls
-    /// - spec.shareProcessNamespace
-    /// - spec.securityContext.runAsUser
-    /// - spec.securityContext.runAsGroup
-    /// - spec.securityContext.supplementalGroups
-    /// - spec.securityContext.supplementalGroupsPolicy
-    /// - spec.containers\[*\].securityContext.appArmorProfile
-    /// - spec.containers\[*\].securityContext.seLinuxOptions
-    /// - spec.containers\[*\].securityContext.seccompProfile
-    /// - spec.containers\[*\].securityContext.capabilities
-    /// - spec.containers\[*\].securityContext.readOnlyRootFilesystem
-    /// - spec.containers\[*\].securityContext.privileged
-    /// - spec.containers\[*\].securityContext.allowPrivilegeEscalation
-    /// - spec.containers\[*\].securityContext.procMount
-    /// - spec.containers\[*\].securityContext.runAsUser
-    /// - spec.containers\[*\].securityContext.runAsGroup
-    /// +optional
+    ///
+    /// * spec.hostPID
+    /// * spec.hostIPC
+    /// * spec.hostUsers
+    /// * spec.securityContext.appArmorProfile
+    /// * spec.securityContext.seLinuxOptions
+    /// * spec.securityContext.seccompProfile
+    /// * spec.securityContext.fsGroup
+    /// * spec.securityContext.fsGroupChangePolicy
+    /// * spec.securityContext.sysctls
+    /// * spec.shareProcessNamespace
+    /// * spec.securityContext.runAsUser
+    /// * spec.securityContext.runAsGroup
+    /// * spec.securityContext.supplementalGroups
+    /// * spec.securityContext.supplementalGroupsPolicy
+    /// * spec.containers\[\*\].securityContext.appArmorProfile
+    /// * spec.containers\[\*\].securityContext.seLinuxOptions
+    /// * spec.containers\[\*\].securityContext.seccompProfile
+    /// * spec.containers\[\*\].securityContext.capabilities
+    /// * spec.containers\[\*\].securityContext.readOnlyRootFilesystem
+    /// * spec.containers\[\*\].securityContext.privileged
+    /// * spec.containers\[\*\].securityContext.allowPrivilegeEscalation
+    /// * spec.containers\[\*\].securityContext.procMount
+    /// * spec.containers\[\*\].securityContext.runAsUser
+    /// * spec.containers\[\*\].securityContext.runAsGroup
+    ///   +optional
     #[prost(message, optional, tag = "36")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub os: ::core::option::Option<PodOs>,
@@ -5965,11 +5977,14 @@ pub struct PortStatus {
     pub protocol: ::core::option::Option<::prost::alloc::string::String>,
     /// Error is to record the problem with the service port
     /// The format of the error shall comply with the following rules:
-    /// - built-in error values shall be specified in this file and those shall use
-    ///    CamelCase names
-    /// - cloud provider specific error values must have names that comply with the
-    ///    format foo.example.com/CamelCase.
+    ///
+    /// * built-in error values shall be specified in this file and those shall use
+    ///   CamelCase names
+    /// * cloud provider specific error values must have names that comply with the
+    ///   format foo.example.com/CamelCase.
+    ///
     /// ---
+    ///
     /// The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)
     /// +optional
     /// +kubebuilder:validation:Required
@@ -6573,12 +6588,13 @@ pub struct ResourceHealth {
     pub resource_id: ::core::option::Option<::prost::alloc::string::String>,
     /// Health of the resource.
     /// can be one of:
-    ///   - Healthy: operates as normal
-    ///   - Unhealthy: reported unhealthy. We consider this a temporary health issue
-    ///                since we do not have a mechanism today to distinguish
-    ///                temporary and permanent issues.
-    ///   - Unknown: The status cannot be determined.
-    ///              For example, Device Plugin got unregistered and hasn't been re-registered since.
+    ///
+    /// * Healthy: operates as normal
+    /// * Unhealthy: reported unhealthy. We consider this a temporary health issue
+    ///   since we do not have a mechanism today to distinguish
+    ///   temporary and permanent issues.
+    /// * Unknown: The status cannot be determined.
+    ///   For example, Device Plugin got unregistered and hasn't been re-registered since.
     ///
     /// In future we may want to introduce the PermanentlyUnhealthy Status.
     #[prost(string, optional, tag = "2")]
@@ -6724,7 +6740,7 @@ pub struct ResourceRequirements {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ResourceStatus {
     /// Name of the resource. Must be unique within the pod and in case of non-DRA resource, match one of the resources from the pod spec.
-    /// For DRA resources, the value must be "claim:<claim_name>/<request>".
+    /// For DRA resources, the value must be "claim:\<claim_name>/<request>".
     /// When this status is reported about a container, the "claim_name" and "request" must match one of the claims of this container.
     /// +required
     #[prost(string, optional, tag = "1")]
@@ -6976,7 +6992,7 @@ pub struct Secret {
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub immutable: ::core::option::Option<bool>,
     /// Data contains the secret data. Each key must consist of alphanumeric
-    /// characters, '-', '_' or '.'. The serialized form of the secret data is a
+    /// characters, '-', '\_' or '.'. The serialized form of the secret data is a
     /// base64 encoded string, representing the arbitrary (possibly non-string)
     /// data value here. Described in <https://tools.ietf.org/html/rfc4648#section-4>
     /// +optional
@@ -7232,10 +7248,11 @@ pub struct SecurityContext {
     /// privileges than its parent process. This bool directly controls if
     /// the no_new_privs flag will be set on the container process.
     /// AllowPrivilegeEscalation is true always when the container is:
-    /// 1) run as Privileged
-    /// 2) has CAP_SYS_ADMIN
-    /// Note that this field cannot be set when spec.os.name is windows.
-    /// +optional
+    ///
+    /// 1. run as Privileged
+    /// 1. has CAP_SYS_ADMIN
+    ///    Note that this field cannot be set when spec.os.name is windows.
+    ///    +optional
     #[prost(bool, optional, tag = "7")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub allow_privilege_escalation: ::core::option::Option<bool>,
@@ -7306,6 +7323,7 @@ pub struct Service {
     pub status: ::core::option::Option<ServiceStatus>,
 }
 /// ServiceAccount binds together:
+///
 /// * a name, understood by users, and perhaps by peripheral systems, for an identity
 /// * a principal that can be authenticated and authorized
 /// * a set of secrets
@@ -7448,16 +7466,16 @@ pub struct ServicePort {
     /// Valid values are either:
     ///
     /// * Un-prefixed protocol names - reserved for IANA standard service names (as per
-    /// RFC-6335 and <https://www.iana.org/assignments/service-names>).
+    ///   RFC-6335 and <https://www.iana.org/assignments/service-names>).
     ///
     /// * Kubernetes-defined prefixed names:
-    ///    * 'kubernetes.io/h2c' - HTTP/2 prior knowledge over cleartext as described in <https://www.rfc-editor.org/rfc/rfc9113.html#name-starting-http-2-with-prior->
-    ///    * 'kubernetes.io/ws'  - WebSocket over cleartext as described in <https://www.rfc-editor.org/rfc/rfc6455>
-    ///    * 'kubernetes.io/wss' - WebSocket over TLS as described in <https://www.rfc-editor.org/rfc/rfc6455>
     ///
+    ///   * 'kubernetes.io/h2c' - HTTP/2 prior knowledge over cleartext as described in <https://www.rfc-editor.org/rfc/rfc9113.html#name-starting-http-2-with-prior->
+    ///   * 'kubernetes.io/ws'  - WebSocket over cleartext as described in <https://www.rfc-editor.org/rfc/rfc6455>
+    ///   * 'kubernetes.io/wss' - WebSocket over TLS as described in <https://www.rfc-editor.org/rfc/rfc6455>
     /// * Other protocols should use implementation-defined prefixed names such as
-    /// mycompany.com/my-custom-protocol.
-    /// +optional
+    ///   mycompany.com/my-custom-protocol.
+    ///   +optional
     #[prost(string, optional, tag = "6")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub app_protocol: ::core::option::Option<::prost::alloc::string::String>,
@@ -7501,8 +7519,8 @@ pub struct ServiceProxyOptions {
     /// Path is the part of URLs that include service endpoints, suffixes,
     /// and parameters to use for the current proxy request to service.
     /// For example, the whole request URL is
-    /// <http://localhost/api/v1/namespaces/kube-system/services/elasticsearch-logging/_search?q=user:kimchy.>
-    /// Path is _search?q=user:kimchy.
+    /// <http://localhost/api/v1/namespaces/kube-system/services/elasticsearch-logging/\_search?q=user:kimchy.>
+    /// Path is \_search?q=user:kimchy.
     /// +optional
     #[prost(string, optional, tag = "1")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
@@ -7969,7 +7987,7 @@ pub struct Taint {
     >,
 }
 /// The pod this Toleration is attached to tolerates any taint that matches
-/// the triple <key,value,effect> using the matching operator <operator>.
+/// the triple \<key,value,effect> using the matching operator <operator>.
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
@@ -8059,23 +8077,24 @@ pub struct TopologySpreadConstraint {
     /// labelSelector spread as 2/2/1:
     /// In this case, the global minimum is 1.
     /// +-------+-------+-------+
-    /// | zone1 | zone2 | zone3 |
+    /// \| zone1 | zone2 | zone3 |
     /// +-------+-------+-------+
-    /// |  P P  |  P P  |   P   |
+    /// \|  P P  |  P P  |   P   |
     /// +-------+-------+-------+
-    /// - if MaxSkew is 1, incoming pod can only be scheduled to zone3 to become 2/2/2;
-    /// scheduling it onto zone1(zone2) would make the ActualSkew(3-1) on zone1(zone2)
-    /// violate MaxSkew(1).
-    /// - if MaxSkew is 2, incoming pod can be scheduled onto any zone.
-    /// When `whenUnsatisfiable=ScheduleAnyway`, it is used to give higher precedence
-    /// to topologies that satisfy it.
-    /// It's a required field. Default value is 1 and 0 is not allowed.
+    ///
+    /// * if MaxSkew is 1, incoming pod can only be scheduled to zone3 to become 2/2/2;
+    ///   scheduling it onto zone1(zone2) would make the ActualSkew(3-1) on zone1(zone2)
+    ///   violate MaxSkew(1).
+    /// * if MaxSkew is 2, incoming pod can be scheduled onto any zone.
+    ///   When `whenUnsatisfiable=ScheduleAnyway`, it is used to give higher precedence
+    ///   to topologies that satisfy it.
+    ///   It's a required field. Default value is 1 and 0 is not allowed.
     #[prost(int32, optional, tag = "1")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub max_skew: ::core::option::Option<i32>,
     /// TopologyKey is the key of node labels. Nodes that have a label with this key
     /// and identical values are considered to be in the same topology.
-    /// We consider each <key, value> as a "bucket", and try to put balanced number
+    /// We consider each \<key, value> as a "bucket", and try to put balanced number
     /// of pods into each bucket.
     /// We define a domain as a particular instance of a topology.
     /// Also, we define an eligible domain as a domain whose nodes meet the requirements of
@@ -8088,25 +8107,26 @@ pub struct TopologySpreadConstraint {
     pub topology_key: ::core::option::Option<::prost::alloc::string::String>,
     /// WhenUnsatisfiable indicates how to deal with a pod if it doesn't satisfy
     /// the spread constraint.
-    /// - DoNotSchedule (default) tells the scheduler not to schedule it.
-    /// - ScheduleAnyway tells the scheduler to schedule the pod in any location,
-    ///    but giving higher precedence to topologies that would help reduce the
-    ///    skew.
-    /// A constraint is considered "Unsatisfiable" for an incoming pod
-    /// if and only if every possible node assignment for that pod would violate
-    /// "MaxSkew" on some topology.
-    /// For example, in a 3-zone cluster, MaxSkew is set to 1, and pods with the same
-    /// labelSelector spread as 3/1/1:
-    /// +-------+-------+-------+
-    /// | zone1 | zone2 | zone3 |
-    /// +-------+-------+-------+
-    /// | P P P |   P   |   P   |
-    /// +-------+-------+-------+
-    /// If WhenUnsatisfiable is set to DoNotSchedule, incoming pod can only be scheduled
-    /// to zone2(zone3) to become 3/2/1(3/1/2) as ActualSkew(2-1) on zone2(zone3) satisfies
-    /// MaxSkew(1). In other words, the cluster can still be imbalanced, but scheduler
-    /// won't make it *more* imbalanced.
-    /// It's a required field.
+    ///
+    /// * DoNotSchedule (default) tells the scheduler not to schedule it.
+    /// * ScheduleAnyway tells the scheduler to schedule the pod in any location,
+    ///   but giving higher precedence to topologies that would help reduce the
+    ///   skew.
+    ///   A constraint is considered "Unsatisfiable" for an incoming pod
+    ///   if and only if every possible node assignment for that pod would violate
+    ///   "MaxSkew" on some topology.
+    ///   For example, in a 3-zone cluster, MaxSkew is set to 1, and pods with the same
+    ///   labelSelector spread as 3/1/1:
+    ///   +-------+-------+-------+
+    ///   \| zone1 | zone2 | zone3 |
+    ///   +-------+-------+-------+
+    ///   \| P P P |   P   |   P   |
+    ///   +-------+-------+-------+
+    ///   If WhenUnsatisfiable is set to DoNotSchedule, incoming pod can only be scheduled
+    ///   to zone2(zone3) to become 3/2/1(3/1/2) as ActualSkew(2-1) on zone2(zone3) satisfies
+    ///   MaxSkew(1). In other words, the cluster can still be imbalanced, but scheduler
+    ///   won't make it *more* imbalanced.
+    ///   It's a required field.
     #[prost(string, optional, tag = "3")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub when_unsatisfiable: ::core::option::Option<::prost::alloc::string::String>,
@@ -8133,9 +8153,9 @@ pub struct TopologySpreadConstraint {
     /// For example, in a 3-zone cluster, MaxSkew is set to 2, MinDomains is set to 5 and pods with the same
     /// labelSelector spread as 2/2/2:
     /// +-------+-------+-------+
-    /// | zone1 | zone2 | zone3 |
+    /// \| zone1 | zone2 | zone3 |
     /// +-------+-------+-------+
-    /// |  P P  |  P P  |  P P  |
+    /// \|  P P  |  P P  |  P P  |
     /// +-------+-------+-------+
     /// The number of domains is less than 5(MinDomains), so "global minimum" is treated as 0.
     /// In this situation, new pod with the same labelSelector cannot be scheduled,
@@ -8147,8 +8167,9 @@ pub struct TopologySpreadConstraint {
     pub min_domains: ::core::option::Option<i32>,
     /// NodeAffinityPolicy indicates how we will treat Pod's nodeAffinity/nodeSelector
     /// when calculating pod topology spread skew. Options are:
-    /// - Honor: only nodes matching nodeAffinity/nodeSelector are included in the calculations.
-    /// - Ignore: nodeAffinity/nodeSelector are ignored. All nodes are included in the calculations.
+    ///
+    /// * Honor: only nodes matching nodeAffinity/nodeSelector are included in the calculations.
+    /// * Ignore: nodeAffinity/nodeSelector are ignored. All nodes are included in the calculations.
     ///
     /// If this value is nil, the behavior is equivalent to the Honor policy.
     /// This is a beta-level feature default enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.
@@ -8158,9 +8179,10 @@ pub struct TopologySpreadConstraint {
     pub node_affinity_policy: ::core::option::Option<::prost::alloc::string::String>,
     /// NodeTaintsPolicy indicates how we will treat node taints when calculating
     /// pod topology spread skew. Options are:
-    /// - Honor: nodes without taints, along with tainted nodes for which the incoming pod
-    /// has a toleration, are included.
-    /// - Ignore: node taints are ignored. All nodes are included.
+    ///
+    /// * Honor: nodes without taints, along with tainted nodes for which the incoming pod
+    ///   has a toleration, are included.
+    /// * Ignore: node taints are ignored. All nodes are included.
     ///
     /// If this value is nil, the behavior is equivalent to the Ignore policy.
     /// This is a beta-level feature default enabled by the NodeInclusionPolicyInPodTopologySpread feature flag.
@@ -8184,19 +8206,20 @@ pub struct TopologySpreadConstraint {
     #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub match_label_keys: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
-/// TypedLocalObjectReference contains enough information to let you locate the
+/// ## TypedLocalObjectReference contains enough information to let you locate the
 /// typed referenced object inside the same namespace.
-/// ---
+///
 /// New uses of this type are discouraged because of difficulty describing its usage when embedded in APIs.
-///   1. Invalid usage help.  It is impossible to add specific help for individual usage.  In most embedded usages, there are particular
-///      restrictions like, "must refer only to types A and B" or "UID not honored" or "name must be restricted".
-///      Those cannot be well described when embedded.
-///   2. Inconsistent validation.  Because the usages are different, the validation rules are different by usage, which makes it hard for users to predict what will happen.
-///   3. The fields are both imprecise and overly precise.  Kind is not a precise mapping to a URL. This can produce ambiguity
-///      during interpretation and require a REST mapping.  In most cases, the dependency is on the group,resource tuple
-///      and the version of the actual struct is irrelevant.
-///   4. We cannot easily change it.  Because this type is embedded in many locations, updates to this type
-///      will affect numerous schemas.  Don't make new APIs embed an underspecified API type they do not control.
+///
+/// 1. Invalid usage help.  It is impossible to add specific help for individual usage.  In most embedded usages, there are particular
+///    restrictions like, "must refer only to types A and B" or "UID not honored" or "name must be restricted".
+///    Those cannot be well described when embedded.
+/// 1. Inconsistent validation.  Because the usages are different, the validation rules are different by usage, which makes it hard for users to predict what will happen.
+/// 1. The fields are both imprecise and overly precise.  Kind is not a precise mapping to a URL. This can produce ambiguity
+///    during interpretation and require a REST mapping.  In most cases, the dependency is on the group,resource tuple
+///    and the version of the actual struct is irrelevant.
+/// 1. We cannot easily change it.  Because this type is embedded in many locations, updates to this type
+///    will affect numerous schemas.  Don't make new APIs embed an underspecified API type they do not control.
 ///
 /// Instead of using this type, create a locally provided and used type that is well-focused on your reference.
 /// For example, ServiceReferences for admission registration: <https://github.com/kubernetes/api/blob/release-1.17/admissionregistration/v1/types.go#L533> .
@@ -8462,12 +8485,12 @@ pub struct VolumeResourceRequirements {
 #[serde(rename_all = "camelCase")]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct VolumeSource {
-    /// hostPath represents a pre-existing file or directory on the host
+    /// ## hostPath represents a pre-existing file or directory on the host
     /// machine that is directly exposed to the container. This is generally
     /// used for system agents or other privileged things that are allowed
     /// to see the host machine. Most containers will NOT need this.
     /// More info: <https://kubernetes.io/docs/concepts/storage/volumes#hostpath>
-    /// ---
+    ///
     /// TODO(jonesdl) We need to restrict who can use host directory mounts and who can/can not
     /// mount host directories as read/write.
     /// +optional
@@ -8660,12 +8683,12 @@ pub struct VolumeSource {
     /// Use this if:
     /// a) the volume is only needed while the pod runs,
     /// b) features of normal volumes like restoring from snapshot or capacity
-    ///     tracking are needed,
+    /// tracking are needed,
     /// c) the storage driver is specified through a storage class, and
     /// d) the storage driver supports dynamic volume provisioning through
-    ///     a PersistentVolumeClaim (see EphemeralVolumeSource for more
-    ///     information on the connection between this volume type
-    ///     and PersistentVolumeClaim).
+    /// a PersistentVolumeClaim (see EphemeralVolumeSource for more
+    /// information on the connection between this volume type
+    /// and PersistentVolumeClaim).
     ///
     /// Use PersistentVolumeClaim or one of the vendor-specific
     /// APIs for volumes that persist for longer than the lifecycle
@@ -8685,9 +8708,9 @@ pub struct VolumeSource {
     /// image represents an OCI object (a container image or artifact) pulled and mounted on the kubelet's host machine.
     /// The volume is resolved at pod startup depending on which PullPolicy value is provided:
     ///
-    /// - Always: the kubelet always attempts to pull the reference. Container creation will fail If the pull fails.
-    /// - Never: the kubelet never pulls the reference and only uses a local image or artifact. Container creation will fail if the reference isn't present.
-    /// - IfNotPresent: the kubelet pulls if the reference isn't already present on disk. Container creation will fail if the reference isn't present and the pull fails.
+    /// * Always: the kubelet always attempts to pull the reference. Container creation will fail If the pull fails.
+    /// * Never: the kubelet never pulls the reference and only uses a local image or artifact. Container creation will fail if the reference isn't present.
+    /// * IfNotPresent: the kubelet pulls if the reference isn't already present on disk. Container creation will fail if the reference isn't present and the pull fails.
     ///
     /// The volume gets re-resolved if the pod gets deleted and recreated, which means that new remote content will become available on pod recreation.
     /// A failure to resolve or pull the image during pod startup will block containers from starting and may add significant latency. Failures will be retried using normal volume backoff and will be reported on the pod reason and message.

@@ -61,10 +61,8 @@ const updaterDialogShow = computed<boolean>(() => {
       || updateInfo.state == 'error'
 })
 const downloadingProgress = computed(() => {
-  if (updateInfo.state == 'downloading') {
-    if (updateInfo.contentLength && updateInfo.contentLength > 0) {
-      return 100 * updateInfo.chunkLength / updateInfo.contentLength
-    }
+  if (updateInfo.contentLength && updateInfo.contentLength > 0) {
+    return 100 * updateInfo.chunkLength / updateInfo.contentLength
   }
   return 0
 })

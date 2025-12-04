@@ -7,36 +7,42 @@
 ///
 /// // Internal package:
 ///
-/// 	type MyAPIObject struct {
-/// 		runtime.TypeMeta `json:",inline"`
-/// 		MyPlugin runtime.Object `json:"myPlugin"`
-/// 	}
+/// ```text
+/// type MyAPIObject struct {
+/// 	runtime.TypeMeta `json:",inline"`
+/// 	MyPlugin runtime.Object `json:"myPlugin"`
+/// }
 ///
-/// 	type PluginA struct {
-/// 		AOption string `json:"aOption"`
-/// 	}
+/// type PluginA struct {
+/// 	AOption string `json:"aOption"`
+/// }
+/// ```
 ///
 /// // External package:
 ///
-/// 	type MyAPIObject struct {
-/// 		runtime.TypeMeta `json:",inline"`
-/// 		MyPlugin runtime.RawExtension `json:"myPlugin"`
-/// 	}
+/// ```text
+/// type MyAPIObject struct {
+/// 	runtime.TypeMeta `json:",inline"`
+/// 	MyPlugin runtime.RawExtension `json:"myPlugin"`
+/// }
 ///
-/// 	type PluginA struct {
-/// 		AOption string `json:"aOption"`
-/// 	}
+/// type PluginA struct {
+/// 	AOption string `json:"aOption"`
+/// }
+/// ```
 ///
 /// // On the wire, the JSON will look something like this:
 ///
-/// 	{
-/// 		"kind":"MyAPIObject",
-/// 		"apiVersion":"v1",
-/// 		"myPlugin": {
-/// 			"kind":"PluginA",
-/// 			"aOption":"foo",
-/// 		},
-/// 	}
+/// ```text
+/// {
+/// 	"kind":"MyAPIObject",
+/// 	"apiVersion":"v1",
+/// 	"myPlugin": {
+/// 		"kind":"PluginA",
+/// 		"aOption":"foo",
+/// 	},
+/// }
+/// ```
 ///
 /// So what happens? Decode first uses json or yaml to unmarshal the serialized data into
 /// your external MyAPIObject. That causes the raw JSON to be stored, but not unpacked.
@@ -63,12 +69,14 @@ pub struct RawExtension {
 /// TypeMeta is shared by all top level objects. The proper way to use it is to inline it in your type,
 /// like this:
 ///
-/// 	type MyAwesomeAPIObject struct {
-/// 	     runtime.TypeMeta    `json:",inline"`
-/// 	     ... // other fields
-/// 	}
+/// ```text
+/// type MyAwesomeAPIObject struct {
+///      runtime.TypeMeta    `json:",inline"`
+///      ... // other fields
+/// }
+/// ```
 ///
-/// func (obj *MyAwesomeAPIObject) SetGroupVersionKind(gvk *metav1.GroupVersionKind) { metav1.UpdateTypeMeta(obj,gvk) }; GroupVersionKind() *GroupVersionKind
+/// func (obj \*MyAwesomeAPIObject) SetGroupVersionKind(gvk \*metav1.GroupVersionKind) { metav1.UpdateTypeMeta(obj,gvk) }; GroupVersionKind() \*GroupVersionKind
 ///
 /// TypeMeta is provided here for convenience. You may use it directly from this package or define
 /// your own with the same fields.

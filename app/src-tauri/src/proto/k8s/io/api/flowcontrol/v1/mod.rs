@@ -182,7 +182,7 @@ pub struct FlowSchemaStatus {
 #[serde(rename_all = "camelCase")]
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct GroupSubject {
-    /// name is the user group that matches, or "*" to match all user groups.
+    /// name is the user group that matches, or "\*" to match all user groups.
     /// See <https://github.com/kubernetes/apiserver/blob/master/pkg/authentication/user/user.go> for some
     /// well-known group names.
     /// Required.
@@ -216,8 +216,9 @@ pub struct LimitResponse {
 }
 /// LimitedPriorityLevelConfiguration specifies how to handle requests that are subject to limits.
 /// It addresses two issues:
-///    - How are requests for this priority level limited?
-///    - What should be done with requests that exceed the limit?
+///
+/// * How are requests for this priority level limited?
+/// * What should be done with requests that exceed the limit?
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
@@ -290,7 +291,7 @@ pub struct LimitedPriorityLevelConfiguration {
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct NonResourcePolicyRule {
     /// `verbs` is a list of matching verbs and may not be empty.
-    /// "*" matches all verbs. If it is present, it must be the only entry.
+    /// "\*" matches all verbs. If it is present, it must be the only entry.
     /// +listType=set
     /// Required.
     #[prost(string, repeated, tag = "1")]
@@ -298,14 +299,15 @@ pub struct NonResourcePolicyRule {
     pub verbs: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// `nonResourceURLs` is a set of url prefixes that a user should have access to and may not be empty.
     /// For example:
-    ///    - "/healthz" is legal
-    ///    - "/hea*" is illegal
-    ///    - "/hea" is legal but matches nothing
-    ///    - "/hea/*" also matches nothing
-    ///    - "/healthz/*" matches all per-component health checks.
-    /// "*" matches all non-resource urls. if it is present, it must be the only entry.
-    /// +listType=set
-    /// Required.
+    ///
+    /// * "/healthz" is legal
+    /// * "/hea\*" is illegal
+    /// * "/hea" is legal but matches nothing
+    /// * "/hea/\*" also matches nothing
+    /// * "/healthz/*" matches all per-component health checks.
+    ///   "*" matches all non-resource urls. if it is present, it must be the only entry.
+    ///   +listType=set
+    ///   Required.
     #[prost(string, repeated, tag = "6")]
     #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub non_resource_ur_ls: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
@@ -440,7 +442,7 @@ pub struct PriorityLevelConfigurationSpec {
     /// (and thus are never queued) and do not detract from the
     /// capacity made available to other priority levels.  A value of
     /// `"Limited"` means that (a) requests of this priority level
-    /// _are_ subject to limits and (b) some of the server's limited
+    /// *are* subject to limits and (b) some of the server's limited
     /// capacity is made available exclusively to this priority level.
     /// Required.
     /// +unionDiscriminator
@@ -531,23 +533,23 @@ pub struct QueuingConfiguration {
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct ResourcePolicyRule {
     /// `verbs` is a list of matching verbs and may not be empty.
-    /// "*" matches all verbs and, if present, must be the only entry.
+    /// "\*" matches all verbs and, if present, must be the only entry.
     /// +listType=set
     /// Required.
     #[prost(string, repeated, tag = "1")]
     #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub verbs: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// `apiGroups` is a list of matching API groups and may not be empty.
-    /// "*" matches all API groups and, if present, must be the only entry.
+    /// "\*" matches all API groups and, if present, must be the only entry.
     /// +listType=set
     /// Required.
     #[prost(string, repeated, tag = "2")]
     #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub api_groups: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
     /// `resources` is a list of matching resources (i.e., lowercase
-    /// and plural) with, if desired, subresource.  For example, [
-    /// "services", "nodes/status" ].  This list may not be empty.
-    /// "*" matches all resources and, if present, must be the only entry.
+    /// and plural) with, if desired, subresource.  For example, \[
+    /// "services", "nodes/status" \].  This list may not be empty.
+    /// "\*" matches all resources and, if present, must be the only entry.
     /// Required.
     /// +listType=set
     #[prost(string, repeated, tag = "3")]
@@ -566,8 +568,8 @@ pub struct ResourcePolicyRule {
     /// matches.  A request that specifies a target namespace matches
     /// only if either (a) this list contains that target namespace or
     /// (b) this list contains "*".  Note that "*" matches any
-    /// specified namespace but does not match a request that _does
-    /// not specify_ a namespace (see the `clusterScope` field for
+    /// specified namespace but does not match a request that *does
+    /// not specify* a namespace (see the `clusterScope` field for
     /// that).
     /// This list may be empty, but only if `clusterScope` is true.
     /// +optional
@@ -586,7 +588,7 @@ pub struct ServiceAccountSubject {
     #[prost(string, optional, tag = "1")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub namespace: ::core::option::Option<::prost::alloc::string::String>,
-    /// `name` is the name of matching ServiceAccount objects, or "*" to match regardless of name.
+    /// `name` is the name of matching ServiceAccount objects, or "\*" to match regardless of name.
     /// Required.
     #[prost(string, optional, tag = "2")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
@@ -626,7 +628,7 @@ pub struct Subject {
 #[serde(rename_all = "camelCase")]
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct UserSubject {
-    /// `name` is the username that matches, or "*" to match all usernames.
+    /// `name` is the username that matches, or "\*" to match all usernames.
     /// Required.
     #[prost(string, optional, tag = "1")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]

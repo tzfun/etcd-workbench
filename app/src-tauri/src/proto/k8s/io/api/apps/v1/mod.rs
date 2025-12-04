@@ -249,8 +249,8 @@ pub struct DaemonSetUpdateStrategy {
     #[prost(string, optional, tag = "1")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub r#type: ::core::option::Option<::prost::alloc::string::String>,
-    /// Rolling update config params. Present only if type = "RollingUpdate".
-    /// ---
+    /// ## Rolling update config params. Present only if type = "RollingUpdate".
+    ///
     /// TODO: Update this to follow our convention for oneOf, whatever we decide it
     /// to be. Same as Deployment `strategy.rollingUpdate`.
     /// See <https://github.com/kubernetes/kubernetes/issues/35345>
@@ -455,9 +455,9 @@ pub struct DeploymentStrategy {
     #[prost(string, optional, tag = "1")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub r#type: ::core::option::Option<::prost::alloc::string::String>,
-    /// Rolling update config params. Present only if DeploymentStrategyType =
+    /// ## Rolling update config params. Present only if DeploymentStrategyType =
     /// RollingUpdate.
-    /// ---
+    ///
     /// TODO: Update this to follow our convention for oneOf, whatever we decide it
     /// to be.
     /// +optional
@@ -741,8 +741,9 @@ pub struct RollingUpdateStatefulSetStrategy {
 }
 /// StatefulSet represents a set of pods with consistent identities.
 /// Identities are defined as:
-///    - Network: A single stable DNS and hostname.
-///    - Storage: As many VolumeClaims as requested.
+///
+/// * Network: A single stable DNS and hostname.
+/// * Storage: As many VolumeClaims as requested.
 ///
 /// The StatefulSet guarantees that a given network identity will always
 /// map to the same storage identity.
@@ -830,9 +831,9 @@ pub struct StatefulSetOrdinals {
     /// 0-indexed names, or to orchestrate progressive movement of replicas from
     /// one StatefulSet to another.
     /// If set, replica indices will be in the range:
-    ///    [.spec.ordinals.start, .spec.ordinals.start + .spec.replicas).
+    /// \[.spec.ordinals.start, .spec.ordinals.start + .spec.replicas).
     /// If unset, defaults to 0. Replica indices will be in the range:
-    ///    [0, .spec.replicas).
+    /// \[0, .spec.replicas).
     /// +optional
     #[prost(int32, optional, tag = "1")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
@@ -996,12 +997,12 @@ pub struct StatefulSetStatus {
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub updated_replicas: ::core::option::Option<i32>,
     /// currentRevision, if not empty, indicates the version of the StatefulSet used to generate Pods in the
-    /// sequence [0,currentReplicas).
+    /// sequence \[0,currentReplicas).
     #[prost(string, optional, tag = "6")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub current_revision: ::core::option::Option<::prost::alloc::string::String>,
     /// updateRevision, if not empty, indicates the version of the StatefulSet used to generate Pods in the sequence
-    /// [replicas-updatedReplicas,replicas)
+    /// \[replicas-updatedReplicas,replicas)
     #[prost(string, optional, tag = "7")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub update_revision: ::core::option::Option<::prost::alloc::string::String>,

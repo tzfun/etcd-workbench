@@ -164,9 +164,10 @@ pub struct ApplyOptions {
     /// persisted. An invalid or unrecognized dryRun directive will
     /// result in an error response and no further processing of the
     /// request. Valid values are:
-    /// - All: all dry run stages will be processed
-    /// +optional
-    /// +listType=atomic
+    ///
+    /// * All: all dry run stages will be processed
+    ///   +optional
+    ///   +listType=atomic
     #[prost(string, repeated, tag = "1")]
     #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub dry_run: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
@@ -184,27 +185,29 @@ pub struct ApplyOptions {
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub field_manager: ::core::option::Option<::prost::alloc::string::String>,
 }
-/// Condition contains details for one aspect of the current state of this API Resource.
-/// ---
+/// ## Condition contains details for one aspect of the current state of this API Resource.
+///
 /// This struct is intended for direct use as an array at the field path .status.conditions.  For example,
 ///
-/// 	type FooStatus struct{
-/// 	    // Represents the observations of a foo's current state.
-/// 	    // Known .status.conditions.type are: "Available", "Progressing", and "Degraded"
-/// 	    // +patchMergeKey=type
-/// 	    // +patchStrategy=merge
-/// 	    // +listType=map
-/// 	    // +listMapKey=type
-/// 	    Conditions \[\]metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
+/// ```text
+/// type FooStatus struct{
+///     // Represents the observations of a foo's current state.
+///     // Known .status.conditions.type are: "Available", "Progressing", and "Degraded"
+///     // +patchMergeKey=type
+///     // +patchStrategy=merge
+///     // +listType=map
+///     // +listMapKey=type
+///     Conditions \[\]metav1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type" protobuf:"bytes,1,rep,name=conditions"`
 ///
-/// 	    // other fields
-/// 	}
+///     // other fields
+/// }
+/// ```
 #[derive(serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Condition {
-    /// type of condition in CamelCase or in foo.example.com/CamelCase.
-    /// ---
+    /// ## type of condition in CamelCase or in foo.example.com/CamelCase.
+    ///
     /// Many .condition.type values are consistent across resources like Available, but because arbitrary conditions can be
     /// useful (see .node.status.conditions), the ability to deconflict is important.
     /// The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)
@@ -270,9 +273,10 @@ pub struct CreateOptions {
     /// persisted. An invalid or unrecognized dryRun directive will
     /// result in an error response and no further processing of the
     /// request. Valid values are:
-    /// - All: all dry run stages will be processed
-    /// +optional
-    /// +listType=atomic
+    ///
+    /// * All: all dry run stages will be processed
+    ///   +optional
+    ///   +listType=atomic
     #[prost(string, repeated, tag = "1")]
     #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub dry_run: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
@@ -287,20 +291,21 @@ pub struct CreateOptions {
     /// fieldValidation instructs the server on how to handle
     /// objects in the request (POST/PUT/PATCH) containing unknown
     /// or duplicate fields. Valid values are:
-    /// - Ignore: This will ignore any unknown fields that are silently
-    /// dropped from the object, and will ignore all but the last duplicate
-    /// field that the decoder encounters. This is the default behavior
-    /// prior to v1.23.
-    /// - Warn: This will send a warning via the standard warning response
-    /// header for each unknown field that is dropped from the object, and
-    /// for each duplicate field that is encountered. The request will
-    /// still succeed if there are no other errors, and will only persist
-    /// the last of any duplicate fields. This is the default in v1.23+
-    /// - Strict: This will fail the request with a BadRequest error if
-    /// any unknown fields would be dropped from the object, or if any
-    /// duplicate fields are present. The error returned from the server
-    /// will contain all unknown and duplicate fields encountered.
-    /// +optional
+    ///
+    /// * Ignore: This will ignore any unknown fields that are silently
+    ///   dropped from the object, and will ignore all but the last duplicate
+    ///   field that the decoder encounters. This is the default behavior
+    ///   prior to v1.23.
+    /// * Warn: This will send a warning via the standard warning response
+    ///   header for each unknown field that is dropped from the object, and
+    ///   for each duplicate field that is encountered. The request will
+    ///   still succeed if there are no other errors, and will only persist
+    ///   the last of any duplicate fields. This is the default in v1.23+
+    /// * Strict: This will fail the request with a BadRequest error if
+    ///   any unknown fields would be dropped from the object, or if any
+    ///   duplicate fields are present. The error returned from the server
+    ///   will contain all unknown and duplicate fields encountered.
+    ///   +optional
     #[prost(string, optional, tag = "4")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub field_validation: ::core::option::Option<::prost::alloc::string::String>,
@@ -349,9 +354,10 @@ pub struct DeleteOptions {
     /// persisted. An invalid or unrecognized dryRun directive will
     /// result in an error response and no further processing of the
     /// request. Valid values are:
-    /// - All: all dry run stages will be processed
-    /// +optional
-    /// +listType=atomic
+    ///
+    /// * All: all dry run stages will be processed
+    ///   +optional
+    ///   +listType=atomic
     #[prost(string, repeated, tag = "5")]
     #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub dry_run: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
@@ -758,15 +764,16 @@ pub struct ListOptions {
     ///
     /// When `sendInitialEvents` option is set, we require `resourceVersionMatch`
     /// option to also be set. The semantic of the watch request is as following:
-    /// - `resourceVersionMatch` = NotOlderThan
-    ///    is interpreted as "data at least as new as the provided `resourceVersion`"
-    ///    and the bookmark event is send when the state is synced
-    ///    to a `resourceVersion` at least as fresh as the one provided by the ListOptions.
-    ///    If `resourceVersion` is unset, this is interpreted as "consistent read" and the
-    ///    bookmark event is send when the state is synced at least to the moment
-    ///    when request started being processed.
-    /// - `resourceVersionMatch` set to any other value or unset
-    ///    Invalid error is returned.
+    ///
+    /// * `resourceVersionMatch` = NotOlderThan
+    ///   is interpreted as "data at least as new as the provided `resourceVersion`"
+    ///   and the bookmark event is send when the state is synced
+    ///   to a `resourceVersion` at least as fresh as the one provided by the ListOptions.
+    ///   If `resourceVersion` is unset, this is interpreted as "consistent read" and the
+    ///   bookmark event is send when the state is synced at least to the moment
+    ///   when request started being processed.
+    /// * `resourceVersionMatch` set to any other value or unset
+    ///   Invalid error is returned.
     ///
     /// Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward
     /// compatibility reasons) and to false otherwise.
@@ -1128,9 +1135,10 @@ pub struct PatchOptions {
     /// persisted. An invalid or unrecognized dryRun directive will
     /// result in an error response and no further processing of the
     /// request. Valid values are:
-    /// - All: all dry run stages will be processed
-    /// +optional
-    /// +listType=atomic
+    ///
+    /// * All: all dry run stages will be processed
+    ///   +optional
+    ///   +listType=atomic
     #[prost(string, repeated, tag = "1")]
     #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub dry_run: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
@@ -1155,20 +1163,21 @@ pub struct PatchOptions {
     /// fieldValidation instructs the server on how to handle
     /// objects in the request (POST/PUT/PATCH) containing unknown
     /// or duplicate fields. Valid values are:
-    /// - Ignore: This will ignore any unknown fields that are silently
-    /// dropped from the object, and will ignore all but the last duplicate
-    /// field that the decoder encounters. This is the default behavior
-    /// prior to v1.23.
-    /// - Warn: This will send a warning via the standard warning response
-    /// header for each unknown field that is dropped from the object, and
-    /// for each duplicate field that is encountered. The request will
-    /// still succeed if there are no other errors, and will only persist
-    /// the last of any duplicate fields. This is the default in v1.23+
-    /// - Strict: This will fail the request with a BadRequest error if
-    /// any unknown fields would be dropped from the object, or if any
-    /// duplicate fields are present. The error returned from the server
-    /// will contain all unknown and duplicate fields encountered.
-    /// +optional
+    ///
+    /// * Ignore: This will ignore any unknown fields that are silently
+    ///   dropped from the object, and will ignore all but the last duplicate
+    ///   field that the decoder encounters. This is the default behavior
+    ///   prior to v1.23.
+    /// * Warn: This will send a warning via the standard warning response
+    ///   header for each unknown field that is dropped from the object, and
+    ///   for each duplicate field that is encountered. The request will
+    ///   still succeed if there are no other errors, and will only persist
+    ///   the last of any duplicate fields. This is the default in v1.23+
+    /// * Strict: This will fail the request with a BadRequest error if
+    ///   any unknown fields would be dropped from the object, or if any
+    ///   duplicate fields are present. The error returned from the server
+    ///   will contain all unknown and duplicate fields encountered.
+    ///   +optional
     #[prost(string, optional, tag = "4")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub field_validation: ::core::option::Option<::prost::alloc::string::String>,
@@ -1287,8 +1296,8 @@ pub struct StatusCause {
     /// Optional.
     ///
     /// Examples:
-    ///    "name" - the field "name" on the current resource
-    ///    "items\[0\].name" - the field "name" on the first array entry in "items"
+    /// "name" - the field "name" on the current resource
+    /// "items\[0\].name" - the field "name" on the first array entry in "items"
     /// +optional
     #[prost(string, optional, tag = "3")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
@@ -1441,9 +1450,10 @@ pub struct UpdateOptions {
     /// persisted. An invalid or unrecognized dryRun directive will
     /// result in an error response and no further processing of the
     /// request. Valid values are:
-    /// - All: all dry run stages will be processed
-    /// +optional
-    /// +listType=atomic
+    ///
+    /// * All: all dry run stages will be processed
+    ///   +optional
+    ///   +listType=atomic
     #[prost(string, repeated, tag = "1")]
     #[serde(skip_serializing_if = "::prost::alloc::vec::Vec::is_empty")]
     pub dry_run: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
@@ -1458,20 +1468,21 @@ pub struct UpdateOptions {
     /// fieldValidation instructs the server on how to handle
     /// objects in the request (POST/PUT/PATCH) containing unknown
     /// or duplicate fields. Valid values are:
-    /// - Ignore: This will ignore any unknown fields that are silently
-    /// dropped from the object, and will ignore all but the last duplicate
-    /// field that the decoder encounters. This is the default behavior
-    /// prior to v1.23.
-    /// - Warn: This will send a warning via the standard warning response
-    /// header for each unknown field that is dropped from the object, and
-    /// for each duplicate field that is encountered. The request will
-    /// still succeed if there are no other errors, and will only persist
-    /// the last of any duplicate fields. This is the default in v1.23+
-    /// - Strict: This will fail the request with a BadRequest error if
-    /// any unknown fields would be dropped from the object, or if any
-    /// duplicate fields are present. The error returned from the server
-    /// will contain all unknown and duplicate fields encountered.
-    /// +optional
+    ///
+    /// * Ignore: This will ignore any unknown fields that are silently
+    ///   dropped from the object, and will ignore all but the last duplicate
+    ///   field that the decoder encounters. This is the default behavior
+    ///   prior to v1.23.
+    /// * Warn: This will send a warning via the standard warning response
+    ///   header for each unknown field that is dropped from the object, and
+    ///   for each duplicate field that is encountered. The request will
+    ///   still succeed if there are no other errors, and will only persist
+    ///   the last of any duplicate fields. This is the default in v1.23+
+    /// * Strict: This will fail the request with a BadRequest error if
+    ///   any unknown fields would be dropped from the object, or if any
+    ///   duplicate fields are present. The error returned from the server
+    ///   will contain all unknown and duplicate fields encountered.
+    ///   +optional
     #[prost(string, optional, tag = "3")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub field_validation: ::core::option::Option<::prost::alloc::string::String>,
@@ -1503,10 +1514,11 @@ pub struct WatchEvent {
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub r#type: ::core::option::Option<::prost::alloc::string::String>,
     /// Object is:
-    ///   * If Type is Added or Modified: the new state of the object.
-    ///   * If Type is Deleted: the state of the object immediately before deletion.
-    ///   * If Type is Error: *Status is recommended; other types may make sense
-    ///     depending on context.
+    ///
+    /// * If Type is Added or Modified: the new state of the object.
+    /// * If Type is Deleted: the state of the object immediately before deletion.
+    /// * If Type is Error: \*Status is recommended; other types may make sense
+    ///   depending on context.
     #[prost(message, optional, tag = "2")]
     #[serde(skip_serializing_if = "::core::option::Option::is_none")]
     pub object: ::core::option::Option<super::super::super::runtime::RawExtension>,

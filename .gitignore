@@ -12,3 +12,5 @@
 **/cache/
 **/dist/
 **/__pycache__/
+
+**/.env
