@@ -72,6 +72,8 @@ pub async fn open_main_window(app_handle: tauri::AppHandle) {
                     if available {
                         break;
                     }
+                } else {
+                    break;
                 }
             }
         });

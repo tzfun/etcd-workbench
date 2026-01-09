@@ -17,7 +17,7 @@ static UPDATE_SOURCE_GITHUB: &str =
     "https://tzfun.github.io/etcd-workbench/etcd-workbench-update.json";
 /// 从Github拉取更新信息，并从Gitee下载更新
 static UPDATE_SOURCE_GITEE_CHECK_FROM_GITHUB: &str =
-    "https://tzfun.gitee.io/etcd-workbench/etcd-workbench-update-gitee.json";
+    "https://tzfun.github.io/etcd-workbench/etcd-workbench-update-gitee.json";
 /// 从Gitee拉取更新信息，并从Gitee下载更新
 static UPDATE_SOURCE_GITEE_CHECK_FROM_GITEE: &str =
     "https://gitee.com/tzfun/etcd-workbench/raw/master/docs/etcd-workbench-update-gitee.json";
@@ -55,8 +55,6 @@ pub async fn check_update_with_source(
             update_builder.endpoints(&[String::from(UPDATE_SOURCE_GITHUB)])
         }
     };
-
-    update_builder.endpoints("")
 
     let update = update_builder.check().await?;
     let available = update.is_update_available();

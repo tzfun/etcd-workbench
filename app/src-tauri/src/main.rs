@@ -16,6 +16,8 @@ use crate::utils::file_util;
 mod api;
 mod error;
 mod etcd;
+#[allow(unused)]
+#[allow(dead_code)]
 mod proto;
 mod ssh;
 mod transport;

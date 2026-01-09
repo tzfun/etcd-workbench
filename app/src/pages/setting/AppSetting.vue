@@ -20,6 +20,7 @@ import {_checkUpdate} from "~/common/updater.ts";
 import {AllAppLanguages, AppLanguage} from "~/language";
 import {useI18n} from "vue-i18n";
 import {trackEvent} from "~/common/analytics.ts";
+import IconAliPay from "~/components/icon/IconAliPay.vue";
 
 const theme = useTheme()
 const {t, locale } = useI18n()
@@ -853,7 +854,7 @@ const checkUpdate = () => {
               
               <v-row class="my-8">
                 <v-col
-                    :cols="6"
+                    :cols="4"
                     class="donate-way"
                     :title="t('setting.donateViaPayPal')">
                   <IconPayPal
@@ -862,17 +863,27 @@ const checkUpdate = () => {
                   />
                 </v-col>
                 <v-col
-                    :cols="6"
+                    :cols="4"
                     class="donate-way"
                     :title="t('setting.donateViaWechat')"
                 >
-                  <span style="position: relative;" 
-                        class="link cursor-pointer donate-wechat-link">
+                  <span class="link cursor-pointer donate-link">
                     <v-icon
                         :title="t('setting.supportAuthorCoffee')"
                         color="green">mdi-wechat</v-icon>
                       {{ t('setting.wechatRewards') }}
-                      <img class="donate-wechat" src="/donate-wechat.jpg" alt="donate_wechat">
+                      <img class="donate-wechat" src="/donate-wechat.jpg" alt="donate wechat">
+                    </span>
+                </v-col>
+                <v-col
+                    :cols="4"
+                    class="donate-way"
+                    :title="t('setting.donateViaAliPay')"
+                >
+                  <span class="link cursor-pointer donate-link">
+                    <IconAliPay :title="t('setting.supportAuthorCoffee')"/>
+                      {{ t('setting.alipayRewards') }}
+                      <img class="donate-alipay" src="/donate-alipay.png" alt="donate alipay">
                     </span>
                 </v-col>
               </v-row>
@@ -1059,10 +1070,14 @@ const checkUpdate = () => {
   align-self: center;
 }
 
-.donate-wechat-link {
+.donate-link {
   font-size: x-large;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 
-  .donate-wechat {
+  .donate-wechat, .donate-alipay {
     display: none;
     width: 200px;
     height: 240px;
@@ -1075,8 +1090,8 @@ const checkUpdate = () => {
   }
 }
 
-.donate-wechat-link:hover {
-  .donate-wechat {
+.donate-link:hover {
+  .donate-wechat, .donate-alipay {
     display: block;
   }
 }
