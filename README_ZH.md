@@ -111,6 +111,7 @@ Web 支持 **Jar** 包部署和 **Docker** 部署，在浏览器中管理Etcd Se
 - *匿名* - 微信 - 5元
 - [M1NGS](https://github.com/M1NGS) - 微信 - 500元
 - kai - 微信 - 8元
+- [fpzhang928](https://github.com/fpzhang928) - 微信 - 30元
 
 # License
 
