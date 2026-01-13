@@ -111,6 +111,7 @@ Or use WeChat Appreciation:
 - *Anonymous* - WeChat - ￥5
 - [M1NGS](https://github.com/M1NGS) - WeChat - ￥500
 - kai - WeChat - ￥8
+- [fpzhang928](https://github.com/fpzhang928) - WeChat - ￥30
 
 # License
 
