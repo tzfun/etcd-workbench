@@ -288,6 +288,10 @@ const onScroll = _debounce(() => {
 }, 200)
 
 const checkUpdate = () => {
+  if (_isLinux()) {
+    _goBrowserPage("https://github.com/tzfun/etcd-workbench/releases")
+    return
+  }
   _loading(true, t('setting.checkingUpdate'))
   _checkUpdate().then(available => {
     if (!available) {

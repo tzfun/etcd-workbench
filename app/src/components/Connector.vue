@@ -401,7 +401,7 @@ defineExpose({
         <h1 class="pt-0 pb-0 pl-5 header-title">{{ t("main.home.connector.serverConnection") }}</h1>
       </div>
       <v-sheet class="justify-center mx-auto mt-5">
-        <v-card width="600" class="connection-card card-box-shadow" border>
+        <v-card width="650" class="connection-card card-box-shadow" border>
           <v-card-text>
             <v-form ref="formRef" validate-on="submit lazy">
               <div class="d-flex">
@@ -799,7 +799,7 @@ defineExpose({
 }
 
 .connection-card {
-  $--form-label-width: 120px;
+  $--form-label-width: 160px;
 
   .form-label {
     width: $--form-label-width;
