@@ -17,10 +17,6 @@ export interface SettingConfig {
 
     //  KV路径分割符号，用于树状展示
     kvPathSplitter: string,
-    //  KV分页查询
-    kvPaginationQuery: boolean,
-    //  KV分页获取每页大小
-    kvLimitPerPage: number | string,
     //  KV保存之前是否检查格式
     kvCheckFormatBeforeSave: boolean,
     //  KV保存之前是否进行差异确认
@@ -62,8 +58,6 @@ export const DEFAULT_SETTING_CONFIG: SettingConfig = {
     editorDarkTheme: 'barf',
     editorLightTheme: 'smoothy',
     kvPathSplitter: '/',
-    kvPaginationQuery: true,
-    kvLimitPerPage: 2000,
     kvCheckFormatBeforeSave: true,
     kvConfirmDiffBeforeSave: true,
     kvTreeSearchWithFolder: true,

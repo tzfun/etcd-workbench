@@ -11,11 +11,30 @@ pub struct SerializableUser {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all="camelCase")]
 pub struct SerializablePermission {
+    /// 全路径，包含 namespace
     pub key: String,
+    /// 全路径，包含 namespace
+    #[serde(default)]
+    pub key_bytes: Vec<u8>,
     /// permission::Type
     pub perm_type: i32,
     pub prefix: bool,
     pub all_keys: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all="camelCase")]
+pub struct ReadableKeys {
+    /// 是否可以读当前 namespace 下全部key 可读的keys
+    pub read_all_keys: bool,
+    /// 如果不可以读全部可以，此字段存可以读的前缀key集合
+    /// 
+    /// key均为全路径，包含 namespace
+    pub prefix_keys: Option<Vec<Vec<u8>>>,
+    /// 如果不可以读全部可以，此字段存可以读的key全路径
+    ///
+    /// key均为全路径，包含 namespace
+    pub full_path_keys: Option<Vec<Vec<u8>>>,
 }
 
 impl Into<Permission> for SerializablePermission {

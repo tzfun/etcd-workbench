@@ -12,6 +12,7 @@ export enum RolePermType {
 
 export interface RolePermission {
     key: string,
+    keyBytes?: number[],
     permType: RolePermType,
     prefix: boolean,
     allKeys: boolean

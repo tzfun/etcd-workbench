@@ -19,7 +19,7 @@ use super::settings::get_settings;
 
 #[tauri::command]
 pub async fn connect_test(connection: Connection) -> Result<(), LogicError> {
-    let connector = EtcdConnector::new(connection, EtcdConnectorHandler::default()).await?;
+    let mut connector = EtcdConnector::new(connection, EtcdConnectorHandler::default()).await?;
     connector.test_connection().await?;
     Ok(())
 }

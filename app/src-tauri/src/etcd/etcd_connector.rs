@@ -1,4 +1,5 @@
 #![allow(unused)]
+use crate::api::role::role_get_permissions;
 use crate::api::settings::get_settings;
 use crate::error::LogicError;
 use crate::etcd::wrapped_etcd_client::WrappedEtcdClient;
@@ -6,17 +7,18 @@ use crate::ssh::ssh_client::SshClientHandler;
 use crate::ssh::ssh_tunnel::SshTunnel;
 use crate::transport::connection::{Connection, ConnectionUser};
 use crate::transport::kv::{
-    SearchResult, SerializableKeyValue, SerializableLeaseInfo, SerializableLeaseSimpleInfo,
+    get_prefix_one, SearchResult, SerializableKeyValue, SerializableLeaseInfo,
+    SerializableLeaseSimpleInfo,
 };
 use crate::transport::maintenance::{
     SerializableCluster, SerializableClusterMember, SerializableClusterStatus, SnapshotInfo,
     SnapshotState,
 };
-use crate::transport::user::{SerializablePermission, SerializableUser};
+use crate::transport::user::{ReadableKeys, SerializablePermission, SerializableUser};
 use crate::utils::k8s_formatter;
 use etcd_client::{
     AlarmAction, AlarmType, Client, CompactionOptions, ConnectOptions, Error, GetOptions,
-    GetResponse, Identity, LeaseGrantOptions, LeaseTimeToLiveOptions, PutOptions,
+    GetResponse, Identity, LeaseGrantOptions, LeaseTimeToLiveOptions, PermissionType, PutOptions,
     RoleRevokePermissionOptions, SortOrder, SortTarget, WatchOptions, WatchStream, Watcher,
 };
 use log::{debug, error, info, warn};
@@ -170,8 +172,23 @@ impl EtcdConnector {
         &mut self.client
     }
 
-    pub async fn test_connection(&self) -> Result<(), Error> {
-        let key = self.fill_prefix_namespace("/");
+    pub async fn test_connection(&mut self) -> Result<(), LogicError> {
+        let readable_keys = self.get_readable_keys().await?;
+
+        let key = if readable_keys.read_all_keys {
+            let settings = get_settings().await?;
+            self.fill_prefix_namespace(settings.kv_path_splitter.to_string())
+        } else {
+            if let Some(keys) = readable_keys.prefix_keys {
+                keys[0].clone()
+            } else if let Some(keys) = readable_keys.full_path_keys {
+                keys[0].clone()
+            } else {
+                let settings = get_settings().await?;
+                self.fill_prefix_namespace(settings.kv_path_splitter.to_string())
+            }
+        };
+
         let response = self
             .client
             .get_inner()
@@ -182,11 +199,149 @@ impl EtcdConnector {
         Ok(())
     }
 
+    /// 判断当前登录用户是否是root用户（拥有root角色权限的用户也被认为是root用户）
+    ///
+    /// 返回 (是否是root用户, 该用户的所有角色)
+    pub async fn is_root(&mut self) -> Result<(bool, Option<Vec<String>>), Error> {
+        match self.connection_config.user.clone() {
+            Some(u) => {
+                self.user_is_root(&u.username).await
+            },
+            None => Ok((true, None)),
+        }
+    }
+
+    /// 读取当前登录用户可以读的所有key信息
+    pub async fn get_readable_keys(&mut self) -> Result<ReadableKeys, Error> {
+        let (is_root, roles) = self.is_root().await?;
+        if is_root {
+            return Ok(ReadableKeys {
+                read_all_keys: true,
+                prefix_keys: None,
+                full_path_keys: None,
+            });
+        }
+        //  非root用户按权限查
+        let namespace = self.namespace.as_ref().map(|a| a.as_bytes().to_vec());
+
+        //  前缀key
+        let mut prefix_keys: Vec<Vec<u8>> = vec![];
+        //  全路径key
+        let mut full_path_keys = vec![];
+
+        fn put_prefix_key(prefix_keys: &mut Vec<Vec<u8>>, new_key: Vec<u8>) {
+            let mut append = true;
+            let mut replace_idx = None;
+            for (idx, k) in prefix_keys.iter().enumerate() {
+                if let Some(prefix_k) = get_prefix_one(k, &new_key) {
+                    //  保留更短的前缀key
+                    if prefix_k.len() == new_key.len() {
+                        replace_idx = Some(idx);
+                    } else {
+                        append = false;
+                    }
+                    break;
+                }
+            }
+
+            if let Some(idx) = replace_idx {
+                prefix_keys[idx] = new_key;
+            } else if append {
+                prefix_keys.push(new_key);
+            }
+        }
+
+        let mut read_all_keys = false;
+        'roles_loop: for role in roles.unwrap() {
+            let permissions = self.role_get_permissions(role).await?;
+            for mut permission in permissions {
+                if permission.perm_type == PermissionType::Write as i32 {
+                    continue;
+                }
+                //  拥有所有key的访问权限
+                if permission.all_keys {
+                    read_all_keys = true;
+                    break 'roles_loop;
+                } else if permission.prefix {
+                    //  连接设置了 namespace 需要过滤
+                    if let Some(ns) = &namespace {
+                        match get_prefix_one(ns, &permission.key_bytes) {
+                            Some(_) => {
+                                let key_len = permission.key_bytes.len();
+
+                                if key_len > ns.len() {
+                                    put_prefix_key(&mut prefix_keys, permission.key_bytes);
+                                } else {
+                                    //  拥有的权限超出当前连接 namespace
+                                    read_all_keys = true;
+                                    break 'roles_loop;
+                                }
+                            }
+                            None => {
+                                continue;
+                            }
+                        }
+                    } else {
+                        put_prefix_key(&mut prefix_keys, permission.key_bytes);
+                    }
+                } else {
+                    full_path_keys.push(permission.key_bytes);
+                }
+            }
+        }
+
+        if read_all_keys {
+            Ok(ReadableKeys {
+                read_all_keys: true,
+                prefix_keys: None,
+                full_path_keys: None,
+            })
+        } else {
+            Ok(ReadableKeys {
+                read_all_keys: false,
+                prefix_keys: if prefix_keys.is_empty() {
+                    None
+                } else {
+                    Some(prefix_keys)
+                },
+                full_path_keys: if full_path_keys.is_empty() {
+                    None
+                } else {
+                    Some(full_path_keys)
+                },
+            })
+        }
+    }
+
     /// 获取所有key，不包含value
     pub async fn kv_get_all_keys(&mut self) -> Result<Vec<SerializableKeyValue>, Error> {
-        let root_path = self.root_key();
-        let get_options = GetOptions::new().with_prefix().with_keys_only();
-        self.kv_get_by_option(root_path, Some(get_options)).await
+        let mut readable_keys = self.get_readable_keys().await?;
+
+        if readable_keys.read_all_keys {
+            let get_options = GetOptions::new().with_prefix().with_keys_only();
+            self.kv_get_by_option(self.root_key(), Some(get_options)).await
+        } else {
+            let mut result = vec![];
+
+            if let Some(prefix_keys) = readable_keys.prefix_keys.take() {
+                for k in prefix_keys {
+                    let keys = self
+                        .kv_get_by_option(k, Some(GetOptions::new().with_prefix().with_keys_only()))
+                        .await?;
+                    result.extend(keys);
+                }
+            }
+
+            if let Some(full_path_keys) = readable_keys.full_path_keys.take() {
+                for k in full_path_keys {
+                    let keys = self
+                        .kv_get_by_option(k, Some(GetOptions::new().with_keys_only()))
+                        .await?;
+                    result.extend(keys);
+                }
+            }
+            Ok(result)
+        }
     }
 
     /// 分页获取所有key，不包含value
@@ -209,6 +364,9 @@ impl EtcdConnector {
         self.kv_get_by_option(key, Some(get_options)).await
     }
 
+    /// 根据配置 [`GetOptions`] 读取kv
+    /// 
+    /// `key` 必须是全路径
     async fn kv_get_by_option(
         &mut self,
         key: Vec<u8>,
@@ -297,8 +455,9 @@ impl EtcdConnector {
     }
 
     /// 获取Key的数量
-    pub async fn kv_count(&mut self) -> Result<i64, Error> {
-        let key = self.fill_prefix_namespace("/");
+    pub async fn kv_count(&mut self) -> Result<i64, LogicError> {
+        let settings = get_settings().await?;
+        let key = self.fill_prefix_namespace(settings.kv_path_splitter.to_string());
         let response = self
             .client
             .kv_get_request(key, Some(GetOptions::new().with_count_only()))
@@ -534,6 +693,7 @@ impl EtcdConnector {
         }
     }
 
+    /// 如果连接有设置 namespace，则补全前缀
     pub fn fill_prefix_namespace(&self, end_key: impl Into<Vec<u8>>) -> Vec<u8> {
         if self.has_namespace() {
             let mut full_key = self.root_key();
@@ -682,18 +842,22 @@ impl EtcdConnector {
     }
 
     /// 判断用户是否是 root 用户（拥有root角色权限的用户也被认为是root用户）
-    pub async fn user_is_root(&mut self, user: &String) -> Result<bool, Error> {
+    pub async fn user_is_root(&mut self, user: &String) -> Result<(bool, Option<Vec<String>>), Error> {
         if user == "root" {
-            return Ok(true);
+            return Ok((true, None));
         }
 
         let response = self.client.user_get(user).await?;
-        for role in response.roles() {
-            if role == "root" {
-                return Ok(true);
+        let roles = response.roles().to_vec();
+        let mut is_root = false;
+        for role in &roles {
+            if role.eq("root") {
+                is_root = true;
+                break;
             }
         }
-        Ok(false)
+
+        Ok((is_root, Some(roles)))
     }
 
     /// 开启权限验证功能，此功能调用后可能会导致connector无法使用
@@ -743,6 +907,7 @@ impl EtcdConnector {
 
             result.push(SerializablePermission {
                 key,
+                key_bytes: Vec::from(key_bytes),
                 perm_type,
                 prefix,
                 all_keys,

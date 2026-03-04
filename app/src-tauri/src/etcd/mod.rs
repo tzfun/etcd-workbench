@@ -62,11 +62,11 @@ pub async fn new_connector(
     let mut connector = EtcdConnector::new(connection.clone(), handler.clone()).await?;
     connector.test_connection().await?;
 
-    let root = if let Some(u) = &user {
-        connector.user_is_root(u).await?
-    } else {
-        true
-    };
+    let root = connector.is_root().await?.0;
+
+    let read_all_keys = connector.get_readable_keys().await?.read_all_keys;
+    let query_pagination = connection.query_pagination;
+    let query_pagination_size = connection.query_pagination_size;
 
     CONNECTION_POOL.insert(connector_id, connector);
 
@@ -103,6 +103,9 @@ pub async fn new_connector(
         connection_saved,
         key_collection,
         key_monitor_list,
+        read_all_keys,
+        query_pagination,
+        query_pagination_size,
     })
 }
 

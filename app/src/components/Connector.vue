@@ -19,7 +19,7 @@ import EtcdLogo from "~/components/EtcdLogo.vue";
 import {trackEvent} from "~/common/analytics.ts";
 import {useI18n} from "vue-i18n";
 
-const { t } = useI18n()
+const {t} = useI18n()
 
 const emits = defineEmits(['on-save'])
 const props = defineProps({
@@ -153,6 +153,8 @@ watch(() => props.modelValue, (info: ConnectionInfo) => {
 
     form.host = connection.host
     form.port = connection.port.toString()
+    form.queryPagination = connection.queryPagination || true
+    form.queryPaginationSize = connection.queryPaginationSize ? connection.queryPaginationSize.toString() : '2000'
 
     if (connection.namespace) {
       form.namespace = connection.namespace
@@ -224,6 +226,8 @@ const checkForm = async (): Promise<Connection> => {
     let connection: Connection = {
       host: formData.value.host,
       port: parseInt(formData.value.port),
+      queryPagination: formData.value.queryPagination,
+      queryPaginationSize: parseInt(formData.value.queryPaginationSize),
     }
 
     if (_nonEmpty(formData.value.namespace)) {
@@ -333,7 +337,7 @@ const connect = () => {
       }
 
       let keyMonitorList = session.keyMonitorList
-      let keyMonitorMap:Record<string, KeyMonitorConfig> = {}
+      let keyMonitorMap: Record<string, KeyMonitorConfig> = {}
       if (keyMonitorList) {
         for (let config of keyMonitorList) {
           keyMonitorMap[config.key] = config
@@ -455,7 +459,51 @@ defineExpose({
                 </div>
               </div>
 
-              <v-row>
+              <div class="d-flex mt-2 mb-6">
+                <div class="form-label form-radio-label">
+                  {{ t("main.home.connector.form.queryPagination") }}
+
+                  <v-tooltip interactive location="top">
+                    <template v-slot:activator="{ props: activatorProps }">
+                      <v-icon icon="mdi-information-outline" v-bind="activatorProps" size="small" color="blue-lighten-1"></v-icon>
+                    </template>
+                    <div>
+                      {{ t("main.home.connector.form.queryPaginationDetail") }}
+                    </div>
+                  </v-tooltip>
+
+                </div>
+                <div class="form-input">
+                  <v-radio-group v-model="formData.queryPagination" inline hide-details>
+                    <v-radio
+                        class="ml-2"
+                        :label="t('common.enable')"
+                        :value="true"
+                    ></v-radio>
+                    <v-radio
+                        :label="t('common.disable')"
+                        :value="false"
+                    ></v-radio>
+                  </v-radio-group>
+                </div>
+              </div>
+
+              <div class="d-flex mt-4" v-if="formData.queryPagination">
+                <div class="form-label">
+                  {{ t("main.home.connector.form.queryPaginationSize") }}
+                </div>
+                <div class="form-input">
+                  <v-text-field
+                      v-model="formData.queryPaginationSize"
+                      type="number"
+                      density="comfortable"
+                      hide-details
+                      :placeholder='t("main.home.connector.form.queryPaginationSizeDetail")'
+                  />
+                </div>
+              </div>
+
+              <v-row class="mt-2">
                 <v-col class="align-content-center">
                   <v-checkbox
                       :label="t('main.home.connector.form.auth')"
@@ -526,7 +574,7 @@ defineExpose({
                   </div>
                 </div>
 
-                <div class="d-flex mt-5">
+                <div class="d-flex">
                   <div class="form-label">
                     {{ t("main.home.connector.form.sslCAFile") }}
                   </div>
@@ -539,7 +587,7 @@ defineExpose({
                   </div>
                 </div>
 
-                <div class="d-flex mt-5">
+                <div class="d-flex">
                   <div class="form-label form-checkbox-label">
                     {{ t('main.home.connector.form.identity') }}
                   </div>
@@ -551,7 +599,7 @@ defineExpose({
                   </div>
                 </div>
 
-                <div class="d-flex mt-5" v-if="formData.tls.identity.enable">
+                <div class="d-flex" v-if="formData.tls.identity.enable">
                   <div class="form-label">
                     {{ t('main.home.connector.form.certFile') }}
                   </div>
@@ -564,7 +612,7 @@ defineExpose({
                   </div>
                 </div>
 
-                <div class="d-flex mt-5" v-if="formData.tls.identity.enable">
+                <div class="d-flex" v-if="formData.tls.identity.enable">
                   <div class="form-label">
                     {{ t('main.home.connector.form.certKetFile') }}
                   </div>
@@ -595,7 +643,7 @@ defineExpose({
                   </div>
                 </div>
 
-                <div class="d-flex mt-5">
+                <div class="d-flex">
                   <div class="form-label">
                     {{ t('main.home.connector.form.port') }}
                   </div>
@@ -610,7 +658,7 @@ defineExpose({
                   </div>
                 </div>
 
-                <div class="d-flex mt-5">
+                <div class="d-flex">
                   <div class="form-label">
                     {{ t('common.user') }}
                   </div>
@@ -624,13 +672,14 @@ defineExpose({
                   </div>
                 </div>
 
-                <div class="d-flex mt-5">
+                <div class="d-flex">
                   <div class="form-label form-radio-label">
                     {{ t('main.home.connector.form.identity') }}
                   </div>
                   <div class="form-input">
                     <v-radio-group v-model="formData.ssh.identity.model"
                                    inline
+                                   hide-details
                     >
                       <v-radio
                           :label="t('common.none')"
@@ -666,7 +715,7 @@ defineExpose({
                           :prompt-text="t('main.home.connector.form.sshKeyPlaceholder')"
                       ></SingleFileSelector>
 
-                      <div  class="mt-10 mb-3">
+                      <div class="mt-10 mb-3">
                         <p>{{ t('main.home.connector.form.rsaAlgorithm') }}</p>
                         <v-radio-group v-model="formData.ssh.identity.key.hashAlgorithm"
                                        inline
@@ -763,7 +812,7 @@ defineExpose({
   }
 
   .form-radio-label {
-    line-height: 45px;
+    line-height: 40px;
   }
 
   .form-label:after {

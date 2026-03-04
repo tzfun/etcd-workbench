@@ -66,7 +66,9 @@ export type ConnectionForm = {
     namespace: string,
     user: ConnectionUserForm,
     tls: ConnectionTlsForm,
-    ssh: ConnectionSshForm
+    ssh: ConnectionSshForm,
+    queryPagination: boolean,
+    queryPaginationSize: string,
 }
 
 export type ConnectionUserForm = {
@@ -154,7 +156,9 @@ export const DefaultConnection: ConnectionForm = {
                 hashAlgorithm: ''
             }
         }
-    }
+    },
+    queryPagination: true,
+    queryPaginationSize: '2000',
 }
 
 export type EditorConfig = {

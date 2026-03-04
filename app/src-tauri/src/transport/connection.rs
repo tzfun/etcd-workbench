@@ -46,7 +46,8 @@ pub struct ConnectionSsh {
 }
 
 /// 连接必要数据
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[serde(rename_all="camelCase")]
 pub struct Connection {
     pub host: String,
     pub port: u16,
@@ -54,6 +55,12 @@ pub struct Connection {
     pub user: Option<ConnectionUser>,
     pub tls: Option<ConnectionTls>,
     pub ssh: Option<ConnectionSsh>,
+    /// KV分页读取
+    #[serde(default = "default_query_pagination")]
+    pub query_pagination: bool,
+    /// KV分页获取每页大小
+    #[serde(default = "default_query_pagination_size")]
+    pub query_pagination_size: u32,
 }
 
 /// 连接信息
@@ -81,6 +88,9 @@ pub struct SessionData {
     pub namespace: Option<String>,
     pub key_collection: Option<Vec<String>>,
     pub key_monitor_list: Option<Vec<KeyMonitorConfig>>,
+    pub read_all_keys: bool,
+    pub query_pagination: bool,
+    pub query_pagination_size: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -129,4 +139,12 @@ fn default_key_monitor_is_prefix() -> bool {
 
 fn default_key_monitor_paused() -> bool {
     false
+}
+
+fn default_query_pagination() -> bool {
+    true
+}
+
+fn default_query_pagination_size() -> u32 {
+    2000
 }

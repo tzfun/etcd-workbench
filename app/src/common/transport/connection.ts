@@ -40,7 +40,9 @@ export interface Connection {
     namespace?: string,
     user?: ConnectionUser,
     tls?: ConnectionTls,
-    ssh?: ConnectionSsh
+    ssh?: ConnectionSsh,
+    queryPagination: boolean,
+    queryPaginationSize: number,
 }
 
 export interface ConnectionInfo {
@@ -55,7 +57,9 @@ export const DEFAULT_CONNECTION: ConnectionInfo = {
     name: '',
     connection: {
         host: '',
-        port: 2379
+        port: 2379,
+        queryPagination: true,
+        queryPaginationSize: 2000,
     },
     default: true,
     keyCollection: [],
@@ -74,6 +78,9 @@ export interface SessionData {
     //  客户端自行构造
     keyCollectionSet?: Set<string>,
     keyMonitorMap?: Record<string, KeyMonitorConfig>,
+    readAllKeys: boolean,
+    queryPagination: boolean,
+    queryPaginationSize: number,
 }
 
 export interface ErrorPayload {

@@ -101,7 +101,6 @@ const props = defineProps({
 })
 const emits = defineEmits(['update:hasDirtyContent'])
 
-const enforceLoadAllKey = ref<boolean>(false)
 const kvTree = ref<InstanceType<typeof Tree>>()
 const kvCollectionTree = ref<InstanceType<typeof Tree>>()
 const collectionDialog = ref<boolean>(false)
@@ -300,6 +299,15 @@ const editorContent = computed<string>(() => {
   return ""
 })
 
+const enablePaginationQuery = computed<boolean>(() => {
+  let enable = props.session?.queryPagination
+  //  开启了分页但没有当前namespace所有key的读权限，无法使用分页功能
+  if (enable && !props.session?.readAllKeys) {
+    enable = false
+  }
+  return enable
+})
+
 onMounted(async () => {
   //  海量数据加载时会导致页面其他动画卡顿，这里延迟加载
   setTimeout(() => {
@@ -443,7 +451,7 @@ const refreshAllKeys = (): Promise<any> => {
   clearAllKeyLeaseListener()
   kvTree.value?.rerender()
 
-  if (settings.value.kvPaginationQuery && !enforceLoadAllKey.value) {
+  if (enablePaginationQuery.value) {
     paginationKeyCursor.value = ""
     return loadNextPage()
   } else {
@@ -470,7 +478,7 @@ const loadNextPage = (): Promise<any> => {
   let cursor = paginationKeyCursor.value
   if (cursor != undefined) {
     loadingStore.loadMore = true
-    let limit: number = LIMIT_PER_PAGE.value as number
+    const limit: number = props.session?.queryPaginationSize
     return _getAllKeysPaging(props.session?.id, cursor, limit).then((data: KeyValue[]) => {
       if (data.length < limit) {
         paginationKeyCursor.value = undefined

@@ -14,6 +14,7 @@ mod test_connect {
             user: None,
             tls: None,
             ssh: None,
+            ..Default::default()
         };
         EtcdConnector::new(connection, EtcdConnectorHandler::default()).await
     }

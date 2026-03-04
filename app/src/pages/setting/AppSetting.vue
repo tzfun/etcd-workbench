@@ -135,9 +135,6 @@ onMounted(async () => {
 
   watch(() => settingForm.value, (v) => {
     let setting = { ...v }
-    if (typeof setting.kvLimitPerPage === 'string') {
-      setting.kvLimitPerPage = parseInt(setting.kvLimitPerPage)
-    }
     if (typeof setting.kvSearchNextDirLimit === 'string') {
       setting.kvSearchNextDirLimit = parseInt(setting.kvSearchNextDirLimit)
     }
@@ -586,45 +583,6 @@ const checkUpdate = () => {
                   />
                 </div>
               </v-layout>
-              <v-divider class="mt-5 mb-5"></v-divider>
-
-              <v-layout>
-                <div>
-                  <div class="form-label text-high-emphasis">{{ t('setting.paginationQuery') }}</div>
-                  <div class="v-messages">{{ t('setting.paginationQueryDesc') }}</div>
-                </div>
-                <v-spacer></v-spacer>
-                <div>
-                  <v-switch
-                      v-model="settingForm.kvPaginationQuery"
-                      inset
-                      density="compact"
-                      color="primary"
-                      hide-details
-                      true-icon="mdi-check"
-                  />
-                </div>
-              </v-layout>
-
-              <div v-show="settingForm.kvPaginationQuery">
-                <v-divider class="mt-5 mb-5"></v-divider>
-                <v-layout>
-                  <div>
-                    <div class="form-label text-high-emphasis">{{ t('setting.paginationLimit') }}</div>
-                    <div class="v-messages">{{ t('setting.paginationLimitDesc') }}</div>
-                  </div>
-                  <v-spacer></v-spacer>
-                  <div class="form-input">
-                    <v-text-field
-                        v-model="settingForm.kvLimitPerPage"
-                        type="number"
-                        variant="outlined"
-                        density="compact"
-                        hide-details
-                    />
-                  </div>
-                </v-layout>
-              </div>
 
               <v-divider class="mt-5 mb-5"></v-divider>
               <v-layout>

@@ -3,21 +3,20 @@ use serde::{Deserialize, Serialize};
 
 use crate::utils::k8s_formatter;
 
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all="camelCase")]
+#[serde(rename_all = "camelCase")]
 pub enum FormatLanguage {
-    Json
+    Json,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all="camelCase")]
+#[serde(rename_all = "camelCase")]
 pub enum FormatSource {
-    Kubernetes
+    Kubernetes,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all="camelCase")]
+#[serde(rename_all = "camelCase")]
 pub struct FormattedValue {
     pub source: FormatSource,
     //  格式化类型
@@ -27,7 +26,7 @@ pub struct FormattedValue {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all="camelCase")]
+#[serde(rename_all = "camelCase")]
 pub struct SerializableKeyValue {
     pub key: String,
     pub key_bytes: Vec<u8>,
@@ -38,7 +37,7 @@ pub struct SerializableKeyValue {
     pub value: Vec<u8>,
     pub lease: String,
     pub lease_info: Option<SerializableLeaseSimpleInfo>,
-        pub formatted_value: Option<FormattedValue>
+    pub formatted_value: Option<FormattedValue>,
 }
 
 impl SerializableKeyValue {
@@ -104,35 +103,35 @@ impl SerializableKeyValue {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all="camelCase")]
+#[serde(rename_all = "camelCase")]
 pub struct SerializableLeaseInfo {
     pub id: String,
     pub ttl: i64,
     pub granted_ttl: i64,
-    pub keys: Vec<String>
+    pub keys: Vec<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
-#[serde(rename_all="camelCase")]
+#[serde(rename_all = "camelCase")]
 pub struct SerializableLeaseSimpleInfo {
     pub ttl: i64,
-    pub granted_ttl: i64
+    pub granted_ttl: i64,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all="camelCase")]
+#[serde(rename_all = "camelCase")]
 pub struct SearchResult {
     pub count: usize,
-    pub results: Vec<SerializableKeyValue>
+    pub results: Vec<SerializableKeyValue>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all="camelCase")]
+#[serde(rename_all = "camelCase")]
 pub struct KVPutResult {
     pub success: bool,
     pub final_kv: Option<SerializableKeyValue>,
     pub exist_value: Option<Vec<u8>>,
-    pub exist_version: Option<i64>
+    pub exist_version: Option<i64>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -150,7 +149,7 @@ pub enum PutStrategy {
 
 impl PutStrategy {
     pub fn rename<V: AsRef<[u8]>>(key: V) -> Vec<u8> {
-        let key_str=  String::from_utf8_lossy(key.as_ref()).to_string();
+        let key_str = String::from_utf8_lossy(key.as_ref()).to_string();
         let (name, ext) = if let Some(dot_pos) = key_str.rfind('.') {
             (&key_str[..dot_pos], &key_str[dot_pos..])
         } else {
@@ -159,5 +158,34 @@ impl PutStrategy {
 
         let new_name = format!("{}(rename){}", name, ext);
         new_name.into_bytes().to_vec()
+    }
+}
+
+/// 传入 A B 两个字节数组，找出哪个是另一个的前缀，如果没有前缀则返回 [`None`]
+pub fn get_prefix_one<V: AsRef<Vec<u8>>>(one: V, two: V) -> Option<V> {
+    let one_vec = one.as_ref();
+    let two_vec = two.as_ref();
+
+    let one_len = one_vec.len();
+    let two_len = two_vec.len();
+
+    let (shorter, longer) = if one_len > two_len {
+        (two_vec, one_vec)
+    } else {
+        (one_vec, two_vec)
+    };
+
+    let mut is_prefix = true;
+    for (idx, u) in shorter.iter().enumerate() {
+        if longer[idx].ne(u) {
+            is_prefix = false;
+            break;
+        }
+    }
+
+    if is_prefix {
+        Some(if one_len > two_len { two } else { one })
+    } else {
+        None
     }
 }

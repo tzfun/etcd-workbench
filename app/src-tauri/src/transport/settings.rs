@@ -20,12 +20,6 @@ pub struct SettingConfig {
     /// KV路径分割符号，用于树状展示
     #[serde(default = "default_kv_path_splitter")]
     pub kv_path_splitter: char,
-    /// KV分页查询
-    #[serde(default)]
-    pub kv_pagination_query: bool,
-    /// KV分页获取每页大小
-    #[serde(default = "default_kv_limit_per_page")]
-    pub kv_limit_per_page: u32,
     /// KV保存之前是否检查格式
     #[serde(default = "default_kv_check_format_before_save")]
     pub kv_check_format_before_save: bool,
@@ -87,10 +81,6 @@ fn default_kv_path_splitter() -> char {
     '/'
 }
 
-fn default_kv_limit_per_page() -> u32 {
-    2000
-}
-
 fn default_kv_check_format_before_save() -> bool {
     true
 }
@@ -143,8 +133,6 @@ impl Default for SettingConfig {
             editor_dark_theme: default_editor_dark_theme(),
             editor_light_theme: default_editor_light_theme(),
             kv_path_splitter: default_kv_path_splitter(),
-            kv_pagination_query: true,
-            kv_limit_per_page: default_kv_limit_per_page(),
             kv_check_format_before_save: default_kv_check_format_before_save(),
             kv_confirm_diff_before_save: default_kv_confirm_diff_before_save(),
             kv_tree_search_with_folder: default_kv_tree_search_with_folder(),
