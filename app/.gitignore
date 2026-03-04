@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 /*.key
 stats.html
+
+.cargo-cache/
+.pnpm-store/

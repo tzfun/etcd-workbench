@@ -129,6 +129,14 @@ pub fn open_folder(path: String, select_file: Option<String>) -> Result<(), Logi
             .spawn()
             .unwrap();
     }
+
+    #[cfg(target_os = "linux")]
+    {
+        Command::new("xdg-open")
+            .args([full_path])
+            .spawn()
+            .unwrap();
+    }
     Ok(())
 }
 

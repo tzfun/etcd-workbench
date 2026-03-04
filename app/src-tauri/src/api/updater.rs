@@ -28,10 +28,7 @@ lazy_static! {
 }
 
 #[tauri::command]
-pub async fn check_update(
-    app_handle: AppHandle,
-    window: Window,
-) -> Result<bool, LogicError> {
+pub async fn check_update(app_handle: AppHandle, window: Window) -> Result<bool, LogicError> {
     check_update_with_source(app_handle, String::from(window.label())).await
 }
 
@@ -45,14 +42,16 @@ pub async fn check_update_with_source(
     update_builder = match setting.update_source {
         UpdateSource::Github => update_builder.endpoints(&[String::from(UPDATE_SOURCE_GITHUB)]),
         UpdateSource::Gitee => {
-            //  从Gitee读取，从Gitee下载
-            update_builder =
-                update_builder.endpoints(&[String::from(UPDATE_SOURCE_GITEE_CHECK_FROM_GITEE)]);
-            //  从GitHub读取，从Gitee下载
-            update_builder =
-                update_builder.endpoints(&[String::from(UPDATE_SOURCE_GITEE_CHECK_FROM_GITHUB)]);
-            //  为了避免国内镜像连接失效，保底从GitHub读取，从GitHub下载
-            update_builder.endpoints(&[String::from(UPDATE_SOURCE_GITHUB)])
+            let endpoints = [
+                //  从Gitee读取，从Gitee下载
+                String::from(UPDATE_SOURCE_GITEE_CHECK_FROM_GITEE),
+                //  从GitHub读取，从Gitee下载
+                String::from(UPDATE_SOURCE_GITEE_CHECK_FROM_GITHUB),
+                //  为了避免国内镜像连接失效，保底从GitHub读取，从GitHub下载
+                String::from(UPDATE_SOURCE_GITHUB),
+            ];
+
+            update_builder.endpoints(&endpoints)
         }
     };
 
@@ -68,7 +67,7 @@ pub async fn check_update_with_source(
             let mut source_lock = UPDATE_CHECK_SOURCE.write().await;
             *source_lock = source;
             drop(source_lock);
-            
+
             let mut lock = UPDATE_RESULT.lock().await;
             *lock = Some(update);
             drop(lock);
@@ -79,7 +78,7 @@ pub async fn check_update_with_source(
 }
 
 #[tauri::command]
-pub async fn install_update(app_handle: AppHandle,) -> Result<(), LogicError> {
+pub async fn install_update(app_handle: AppHandle) -> Result<(), LogicError> {
     let mut lock = UPDATE_RESULT.lock().await;
     let update = lock.take();
     drop(lock);
@@ -106,14 +105,17 @@ pub fn handle_updater_event(app: &AppHandle, updater_event: UpdaterEvent) {
             date,
             version,
         } => {
-            info!("update available body='{}', date={:?}, version={}", body, date, version);
+            info!(
+                "update available body='{}', date={:?}, version={}",
+                body, date, version
+            );
             let date = date.map(|date_time| date_time.unix_timestamp());
             let app = app.clone();
             tokio::spawn(async move {
                 let source_lock = UPDATE_CHECK_SOURCE.read().await;
                 let source = source_lock.clone();
                 drop(source_lock);
-    
+
                 let _ = app.emit_all(
                     "updateAvailable",
                     UpdateManifest {
@@ -121,7 +123,8 @@ pub fn handle_updater_event(app: &AppHandle, updater_event: UpdaterEvent) {
                         date,
                         body,
                         source,
-                    });
+                    },
+                );
             });
         }
         // Emitted when the download is about to be started.
