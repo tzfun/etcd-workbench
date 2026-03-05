@@ -1,11 +1,7 @@
 # 构建脚本
 
-第一次使用 `build-linux.sh`， 此脚本会构建docker镜像，镜像只需要构建一次，后续使用 `rebuild-linux.sh`
+第一次使用 `build.sh`， 此脚本会构建docker镜像，镜像只需要构建一次，后续使用时添加 `--rebuild` 参数
 
-移除镜像
-```shell
-docker rmi etcd-workbench-linux-builder
-```
 
 windows下运行 `.ps1` 文件，需要先设置权限
 ```shell
@@ -36,28 +32,15 @@ app/src-tauri/target/
 
 # 多平台构建
 
-## x86_64 Linux（最常用）
 ```shell
-./build-linux.sh --target x86_64-unknown-linux-gnu
-```
+# 构建单个架构
+./build.sh --arch x86_64
+./build.sh --arch aarch64
+./build.sh --arch armv7
 
-或者省略参数
+# 构建所有架构
+./build.sh --arch all
 
-```shell
-./build-linux.sh
-```
-
-## ARM64 Linux
-```shell
-./build-linux.sh --target aarch64-unknown-linux-gnu
-```
-
-## ARMv7 Linux
-```shell
-./build-linux.sh --target armv7-unknown-linux-gnueabihf
-```
-
-## musl libc (静态链接，更好的可移植性)
-```shell
-./build-linux.sh --target x86_64-unknown-linux-musl
+# 快速重建（不重建 Docker 镜像）
+./build.sh --arch x86_64 --rebuild
 ```

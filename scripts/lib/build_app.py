@@ -106,6 +106,7 @@ def build_app_windows(target, build_platform):
     if os.path.exists(bundle_path):
         shutil.rmtree(bundle_path)
 
+    execute('pnpm install')
     execute(f'pnpm tauri build --target {target}')
 
     to_dir = os.path.join(root_path, 'bin', 'app', build_platform)
@@ -154,6 +155,7 @@ def build_app_macos(target, build_platform):
     if os.path.exists(bundle_path):
         shutil.rmtree(bundle_path)
 
+    execute('pnpm install')
     execute(f'pnpm tauri build --target {target}')
 
     to_dir = os.path.join(root_path, 'bin', 'app', build_platform)
