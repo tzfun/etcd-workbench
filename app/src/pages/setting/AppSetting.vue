@@ -128,6 +128,8 @@ const connectionConfEncryptKeyRule = [
 
 const eventUnListens = reactive<Function[]>([])
 
+const enableUpdateCheck = ref<boolean>(!_isLinux())
+
 onMounted(async () => {
   await _loadSettings()
   settingForm.value = JSON.parse(JSON.stringify(_useSettings().value))
@@ -743,7 +745,7 @@ const checkUpdate = () => {
                 <v-spacer></v-spacer>
                 <div class="d-flex">
                   <v-btn
-                      v-if="!_isLinux()"
+                      v-if="enableUpdateCheck"
                       class="text-none mr-2"
                       density="comfortable"
                       :text="t('setting.checkUpdate')"
@@ -751,7 +753,7 @@ const checkUpdate = () => {
                       prepend-icon="mdi-arrow-up-bold-circle-outline"
                       @click="checkUpdate"
                   />
-                  <span v-if="!_isLinux()">{{ t('common.or') }}</span>
+                  <span v-if="enableUpdateCheck">{{ t('common.or') }}</span>
                   <v-btn
                       class="text-none ml-2"
                       density="comfortable"
@@ -763,8 +765,8 @@ const checkUpdate = () => {
                 </div>
               </v-layout>
 
-              <v-divider class="mt-5 mb-5"></v-divider>
-              <v-layout>
+              <v-divider class="mt-5 mb-5" v-if="enableUpdateCheck"></v-divider>
+              <v-layout v-if="enableUpdateCheck">
                 <div>
                   <div class="form-label text-high-emphasis">{{ t('setting.autoUpdate') }}</div>
                   <div class="v-messages">{{ t('setting.autoUpdateDesc') }}</div>
@@ -782,8 +784,8 @@ const checkUpdate = () => {
                 </div>
               </v-layout>
 
-              <v-divider class="mt-5 mb-5"></v-divider>
-              <v-layout>
+              <v-divider class="mt-5 mb-5" v-if="enableUpdateCheck"></v-divider>
+              <v-layout v-if="enableUpdateCheck">
                 <div>
                   <div class="form-label text-high-emphasis">{{ t('setting.updateSource') }}</div>
                   <div class="v-messages">{{ t('setting.updateSourceDesc') }}</div>

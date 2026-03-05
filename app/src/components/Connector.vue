@@ -153,7 +153,7 @@ watch(() => props.modelValue, (info: ConnectionInfo) => {
 
     form.host = connection.host
     form.port = connection.port.toString()
-    form.queryPagination = connection.queryPagination || true
+    form.queryPagination = connection.queryPagination == undefined ? true : connection.queryPagination
     form.queryPaginationSize = connection.queryPaginationSize ? connection.queryPaginationSize.toString() : '2000'
 
     if (connection.namespace) {

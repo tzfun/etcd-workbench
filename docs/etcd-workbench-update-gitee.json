@@ -1,7 +1,7 @@
 {
     "version": "1.2.5",
     "notes": "Try to fix the update multiple error pop-up issue.",
-    "pub_date": "2026-03-05T14:30:30+08:00",
+    "pub_date": "2026-03-05T14:57:10+08:00",
     "platforms": {
         "darwin-x86_64": {
             "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K0NQVUdBV01TNXcrRTZHREEycURpY0VZckhicWpSTDNOclpSeERFRDdjTnRmTzF3TklvZ1VHSjU5VXpvNUZvL2lWVUNFZ1Q3a1h4K1BLbGZXaWM4S3dnPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzY3OTQ0NjkyCWZpbGU6RXRjZCBXb3JrYmVuY2guYXBwLnRhci5negpFenJONVFha2Nkd1pFRG53bisyczlXMUNJQnNpMEMzMEt0d3BQT2N1eUlHejVUN3M2Ni9GT1FYdThURlQvUmFQbWsrTDdrc1Fnc0F1ajB6MmwxL0FDdz09Cg==",
@@ -12,7 +12,7 @@
             "url": "https://gitee.com/tzfun/etcd-workbench/releases/download/App-1.2.4/etcd-workbench-1.2.4-macos-aarch64.app.tar.gz"
         },
         "windows-x86_64": {
-            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K1B0WmFROHp4YjU5cFBtN1NsRWVXS3dwL2xEUkR5ZlNEYm8yaFQwWFZMczNXckZMMlZuUjRmTU1aWmtFN3pmTWdKN2VPSys4Nk43NUtVc1BaK3Q2a3d3PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzcyNjkyMjMwCWZpbGU6RXRjZCBXb3JrYmVuY2hfMS4yLjVfeDY0LXNldHVwLm5zaXMuemlwClRRR1pZb0lCbVVBV1hDWDRYRno2SzI2cUloZnBIMzBIVXgrODJzWllYdVVoUVBuM3dmTFlVQUVMOWgwSm4xNitpblJSM1pwbmpyc3RkRlNQUDhONkR3PT0K",
+            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K0VyR01KYS9QR3JlUG4yQ2dLZ3VvUGZvbUozb3B1NjM3OUVvS3FBbEVOQW1JNG81d2FJaWlhL0grMWlPMityT3lJMzNNV29WUm9CQlp1UUI1Wnh4S1FnPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzcyNjkzODMwCWZpbGU6RXRjZCBXb3JrYmVuY2hfMS4yLjVfeDY0LXNldHVwLm5zaXMuemlwCnBSTyt3bzk5K0h6YVo5YzdpWXplckhSTk9JSGx5MHhLNGlpSjJOUDFmQnYwdFhlUkxXRlgwalFEMHM3UVd2OVo5LzR1NmhFbERpKytualNjTmIrSkFBPT0K",
             "url": "https://gitee.com/tzfun/etcd-workbench/releases/download/App-1.2.5/etcd-workbench-1.2.5-windows-x86_64.nsis.zip"
         }
     }
