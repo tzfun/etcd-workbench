@@ -32,6 +32,15 @@ pub async fn check_update(app_handle: AppHandle, window: Window) -> Result<bool,
     check_update_with_source(app_handle, String::from(window.label())).await
 }
 
+#[cfg(target_os = "linux")]
+pub async fn check_update_with_source(
+    _app_handle: AppHandle,
+    _source: String,
+) -> Result<bool, LogicError> {
+    Ok(false)
+}
+
+#[cfg(not(target_os = "linux"))]
 pub async fn check_update_with_source(
     app_handle: AppHandle,
     source: String,

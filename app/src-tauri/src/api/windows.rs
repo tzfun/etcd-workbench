@@ -1,6 +1,5 @@
 use std::path::PathBuf;
 use std::process::Command;
-use std::sync::OnceLock;
 use std::time::Duration;
 
 use log::error;
@@ -13,7 +12,8 @@ use crate::error::LogicError;
 
 use super::updater::check_update_with_source;
 
-static STARTED_UPDATE_CHECKER: OnceLock<()> = OnceLock::new();
+#[cfg(not(target_os = "linux"))]
+static STARTED_UPDATE_CHECKER: std::sync::OnceLock<()> = std::sync::OnceLock::new();
 
 #[tauri::command]
 pub fn client_error(info: String, err: String) {
@@ -56,6 +56,7 @@ pub fn open_main_window0(app_handle: &tauri::AppHandle) {
 pub async fn open_main_window(app_handle: tauri::AppHandle) {
     open_main_window0(&app_handle);
 
+    #[cfg(not(target_os = "linux"))]
     STARTED_UPDATE_CHECKER.get_or_init(||{
         tokio::spawn(async move {
             //  启动时检查更新

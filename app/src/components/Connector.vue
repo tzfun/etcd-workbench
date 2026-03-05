@@ -460,12 +460,18 @@ defineExpose({
               </div>
 
               <div class="d-flex mt-2 mb-6">
-                <div class="form-label form-radio-label">
+                <div class="form-label form-radio-label d-flex align-center">
                   {{ t("main.home.connector.form.queryPagination") }}
 
                   <v-tooltip interactive location="top">
                     <template v-slot:activator="{ props: activatorProps }">
-                      <v-icon icon="mdi-information-outline" v-bind="activatorProps" size="small" color="blue-lighten-1"></v-icon>
+                      <v-icon
+                          icon="mdi-information-outline"
+                          v-bind="activatorProps"
+                          size="small"
+                          color="blue-lighten-1"
+                          class="mx-1"
+                      />
                     </template>
                     <div>
                       {{ t("main.home.connector.form.queryPaginationDetail") }}
