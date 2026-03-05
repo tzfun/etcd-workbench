@@ -1,7 +1,7 @@
 {
-    "version": "1.2.4",
+    "version": "1.2.5",
     "notes": "Try to fix the update multiple error pop-up issue.",
-    "pub_date": "2026-01-09T15:47:53+08:00",
+    "pub_date": "2026-03-05T10:20:44+08:00",
     "platforms": {
         "darwin-x86_64": {
             "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K0NQVUdBV01TNXcrRTZHREEycURpY0VZckhicWpSTDNOclpSeERFRDdjTnRmTzF3TklvZ1VHSjU5VXpvNUZvL2lWVUNFZ1Q3a1h4K1BLbGZXaWM4S3dnPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzY3OTQ0NjkyCWZpbGU6RXRjZCBXb3JrYmVuY2guYXBwLnRhci5negpFenJONVFha2Nkd1pFRG53bisyczlXMUNJQnNpMEMzMEt0d3BQT2N1eUlHejVUN3M2Ni9GT1FYdThURlQvUmFQbWsrTDdrc1Fnc0F1ajB6MmwxL0FDdz09Cg==",
@@ -12,8 +12,8 @@
             "url": "https://gitee.com/tzfun/etcd-workbench/releases/download/App-1.2.4/etcd-workbench-1.2.4-macos-aarch64.app.tar.gz"
         },
         "windows-x86_64": {
-            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K0thbGV3dWVWZXp5M29vK1NIREg5ZTdSSW82SDF3aVkrWityL3hUSGJZMTJpbktlYTdjNDI3U3IrNWhJMy9yYWtiVjF5VDEyeTBMbkxNK1hyUHoxbEFRPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzY3OTQ0ODczCWZpbGU6RXRjZCBXb3JrYmVuY2hfMS4yLjRfeDY0LXNldHVwLm5zaXMuemlwCng0T0lpMUd4VWZudUJrY2pHRXBPeG9vaVY5Vk5sQUpTVDU1aWhPUHI4OWxHTHAvQ1MxQTdpVjV5TEtLU3RPbDlER0ovY2ZJeUVJWXdXN0NlWE10akN3PT0K",
-            "url": "https://gitee.com/tzfun/etcd-workbench/releases/download/App-1.2.4/etcd-workbench-1.2.4-windows-x86_64.nsis.zip"
+            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K0I2ckg4cU0zbzEwOVJxSmNkcXVjdEtpd2ZHVGJKK01SdUVySDRYdHVQUUI4dXJBaXA3WVBMcmFzSmdhaUJEdmh6MktTeWNYTXBiY095SGdWR0VKbndJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzcyNjc3MjQ0CWZpbGU6RXRjZCBXb3JrYmVuY2hfMS4yLjVfeDY0LXNldHVwLm5zaXMuemlwCnNRRnVXaW5RMEFoL3Q2MUVXMTRVd3RCSnBXT1B5aExReGN1QW1xKzlYR1U0ZnQ3UXJqRGhrRWtWU084TlJiZGlncFBwUENCdlRRckN4T1BLbjVkckRRPT0K",
+            "url": "https://gitee.com/tzfun/etcd-workbench/releases/download/App-1.2.5/etcd-workbench-1.2.5-windows-x86_64.nsis.zip"
         }
     }
 }

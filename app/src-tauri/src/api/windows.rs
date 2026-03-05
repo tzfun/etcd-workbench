@@ -1,16 +1,12 @@
 use std::path::PathBuf;
 use std::process::Command;
-use std::time::Duration;
 
 use log::error;
 use tauri::api::path::download_dir;
 use tauri::{AppHandle, Manager, WindowBuilder, WindowEvent};
 use tauri::utils::config::WindowConfig;
-use tokio::time::sleep;
 
 use crate::error::LogicError;
-
-use super::updater::check_update_with_source;
 
 #[cfg(not(target_os = "linux"))]
 static STARTED_UPDATE_CHECKER: std::sync::OnceLock<()> = std::sync::OnceLock::new();
@@ -58,6 +54,9 @@ pub async fn open_main_window(app_handle: tauri::AppHandle) {
 
     #[cfg(not(target_os = "linux"))]
     STARTED_UPDATE_CHECKER.get_or_init(||{
+
+        use super::updater::check_update_with_source;
+
         tokio::spawn(async move {
             //  启动时检查更新
             if let Err(e) = check_update_with_source(app_handle.clone(), String::from("main")).await {
@@ -67,7 +66,7 @@ pub async fn open_main_window(app_handle: tauri::AppHandle) {
     
             //  定期检查更新
             loop {
-                sleep(Duration::from_secs(3600)).await;
+                tokio::time::sleep(std::time::Duration::from_secs(3600)).await;
                 if let Ok(available) = check_update_with_source(app_handle.clone(), String::from("main")).await {
                     //  检测出有更新就不再继续检查，只需给客户端通知一次
                     if available {

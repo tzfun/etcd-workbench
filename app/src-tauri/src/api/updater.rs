@@ -1,26 +1,11 @@
 use crate::{
     error::LogicError,
-    transport::{
-        event::UpdateDownloadingProgressEvent,
-        settings::{UpdateManifest, UpdateSource},
-    },
+    transport::{event::UpdateDownloadingProgressEvent, settings::UpdateManifest},
 };
 use lazy_static::lazy_static;
 use log::info;
 use tauri::{updater::UpdateResponse, AppHandle, Manager, UpdaterEvent, Window, Wry};
 use tokio::sync::{Mutex, RwLock};
-
-use super::settings::get_settings;
-
-/// 从Github拉取更新信息，并从Github下载更新
-static UPDATE_SOURCE_GITHUB: &str =
-    "https://tzfun.github.io/etcd-workbench/etcd-workbench-update.json";
-/// 从Github拉取更新信息，并从Gitee下载更新
-static UPDATE_SOURCE_GITEE_CHECK_FROM_GITHUB: &str =
-    "https://tzfun.github.io/etcd-workbench/etcd-workbench-update-gitee.json";
-/// 从Gitee拉取更新信息，并从Gitee下载更新
-static UPDATE_SOURCE_GITEE_CHECK_FROM_GITEE: &str =
-    "https://gitee.com/tzfun/etcd-workbench/raw/master/docs/etcd-workbench-update-gitee.json";
 
 lazy_static! {
     static ref UPDATE_RESULT: Mutex<Option<UpdateResponse<Wry>>> = Mutex::new(None);
@@ -45,6 +30,19 @@ pub async fn check_update_with_source(
     app_handle: AppHandle,
     source: String,
 ) -> Result<bool, LogicError> {
+    use super::settings::get_settings;
+    use crate::transport::settings::UpdateSource;
+
+    /// 从Github拉取更新信息，并从Github下载更新
+    static UPDATE_SOURCE_GITHUB: &str =
+        "https://tzfun.github.io/etcd-workbench/etcd-workbench-update.json";
+    /// 从Github拉取更新信息，并从Gitee下载更新
+    static UPDATE_SOURCE_GITEE_CHECK_FROM_GITHUB: &str =
+        "https://tzfun.github.io/etcd-workbench/etcd-workbench-update-gitee.json";
+    /// 从Gitee拉取更新信息，并从Gitee下载更新
+    static UPDATE_SOURCE_GITEE_CHECK_FROM_GITEE: &str =
+        "https://gitee.com/tzfun/etcd-workbench/raw/master/docs/etcd-workbench-update-gitee.json";
+
     let mut update_builder = tauri::updater::builder(app_handle.clone());
 
     let setting = get_settings().await?;
