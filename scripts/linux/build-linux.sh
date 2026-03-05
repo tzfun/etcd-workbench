@@ -39,15 +39,24 @@ while [[ $# -gt 0 ]]; do
             echo "选项:"
             echo "  --target TARGET    指定 Rust 编译目标"
             echo "                     默认: x86_64-unknown-linux-gnu"
-            echo "                     常用值: x86_64-unknown-linux-gnu (Linux x64)"
-            echo "                            aarch64-unknown-linux-gnu (Linux ARM64)"
+            echo "                     支持的目标:"
+            echo "                       - x86_64-unknown-linux-gnu (Linux x64 glibc, 默认)"
+            echo "                       - x86_64-unknown-linux-musl (Linux x64 musl, 静态链接)"
+            echo "                       - aarch64-unknown-linux-gnu (Linux ARM64)"
+            echo "                       - armv7-unknown-linux-gnueabihf (Linux ARMv7)"
             echo "  --skip-clean       跳过清理构建文件"
             echo "  -h, --help         显示此帮助信息"
             echo ""
+            echo "说明:"
+            echo "  - glibc 版本: 标准 Linux 版本，动态链接"
+            echo "  - musl 版本: 静态链接，更好的可移植性，二进制文件更大"
+            echo ""
             echo "示例:"
-            echo "  $0                                      # 构建 x86_64 Linux"
-            echo "  $0 --target aarch64-unknown-linux-gnu   # 构建 ARM64 Linux"
-            echo "  $0 --skip-clean                         # 构建且不清理"
+            echo "  $0                                          # 构建 x86_64 glibc"
+            echo "  $0 --target x86_64-unknown-linux-musl       # 构建 x86_64 musl"
+            echo "  $0 --target aarch64-unknown-linux-gnu       # 构建 ARM64"
+            echo "  $0 --target armv7-unknown-linux-gnueabihf   # 构建 ARMv7"
+            echo "  $0 --skip-clean                             # 构建且不清理"
             exit 0
             ;;
         *)
@@ -57,6 +66,14 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+# 验证 target 是否支持
+SUPPORTED_TARGETS=("x86_64-unknown-linux-gnu" "x86_64-unknown-linux-musl" "aarch64-unknown-linux-gnu" "armv7-unknown-linux-gnueabihf")
+if [[ ! " ${SUPPORTED_TARGETS[@]} " =~ " ${RUST_TARGET} " ]]; then
+    echo -e "${RED}错误: 不支持的 target '$RUST_TARGET'${NC}"
+    echo "支持的 targets: ${SUPPORTED_TARGETS[@]}"
+    exit 1
+fi
 
 echo -e "${YELLOW}项目根目录: $PROJECT_ROOT${NC}"
 echo -e "${YELLOW}App 目录: $APP_DIR${NC}"
@@ -158,7 +175,7 @@ echo -e "${GREEN}✓ 环境变量检查通过${NC}"
 # 构建 Docker 镜像
 echo -e "${YELLOW}正在构建 Docker 镜像...${NC}"
 cd "$SCRIPT_DIR"
-docker build -t etcd-workbench-linux-builder .
+docker build --no-cache -t etcd-workbench-linux-builder .
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}Docker 镜像构建失败${NC}"
@@ -176,6 +193,50 @@ if [ "$SKIP_CLEAN" = false ]; then
         rm -rf "$APP_DIR/src-tauri/target/$RUST_TARGET"
     fi
 fi
+
+# 设置交叉编译环境变量
+CROSS_COMPILE_ENV=""
+case "$RUST_TARGET" in
+    x86_64-unknown-linux-gnu)
+        # x86_64 原生编译，不需要特殊配置
+        CROSS_COMPILE_ENV=""
+        ;;
+    x86_64-unknown-linux-musl)
+        CROSS_COMPILE_ENV="
+        export PKG_CONFIG_ALLOW_CROSS=1
+        export CC=musl-gcc
+        export CXX=musl-g++
+        export AR=ar
+        export CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER=musl-gcc
+        export PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig:/usr/share/pkgconfig
+        export PKG_CONFIG_LIBDIR=/usr/lib/x86_64-linux-gnu/pkgconfig:/usr/share/pkgconfig
+        "
+        ;;
+    aarch64-unknown-linux-gnu)
+        CROSS_COMPILE_ENV="
+        export PKG_CONFIG_ALLOW_CROSS=1
+        export PKG_CONFIG_PATH=/usr/lib/aarch64-linux-gnu/pkgconfig:/usr/share/pkgconfig
+        export PKG_CONFIG_LIBDIR=/usr/lib/aarch64-linux-gnu/pkgconfig:/usr/share/pkgconfig
+        export PKG_CONFIG_SYSROOT_DIR=/
+        export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc
+        export CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc
+        export CXX_aarch64_unknown_linux_gnu=aarch64-linux-gnu-g++
+        export AR_aarch64_unknown_linux_gnu=aarch64-linux-gnu-ar
+        "
+        ;;
+    armv7-unknown-linux-gnueabihf)
+        CROSS_COMPILE_ENV="
+        export PKG_CONFIG_ALLOW_CROSS=1
+        export PKG_CONFIG_PATH=/usr/lib/arm-linux-gnueabihf/pkgconfig:/usr/share/pkgconfig
+        export PKG_CONFIG_LIBDIR=/usr/lib/arm-linux-gnueabihf/pkgconfig:/usr/share/pkgconfig
+        export PKG_CONFIG_SYSROOT_DIR=/
+        export CARGO_TARGET_ARMV7_UNKNOWN_LINUX_GNUEABIHF_LINKER=arm-linux-gnueabihf-gcc
+        export CC_armv7_unknown_linux_gnueabihf=arm-linux-gnueabihf-gcc
+        export CXX_armv7_unknown_linux_gnueabihf=arm-linux-gnueabihf-g++
+        export AR_armv7_unknown_linux_gnueabihf=arm-linux-gnueabihf-ar
+        "
+        ;;
+esac
 
 # 运行构建
 echo -e "${YELLOW}开始构建 Linux 包 (target: $RUST_TARGET)...${NC}"
@@ -203,6 +264,8 @@ docker run --rm \
     echo 'Rust Target: $RUST_TARGET'
     echo ''
     
+    $CROSS_COMPILE_ENV
+    
     echo '=== 添加 Rust target ==='
     rustup target add $RUST_TARGET
     
@@ -227,6 +290,7 @@ if [ $? -eq 0 ]; then
     echo -e "${GREEN}========================================${NC}"
     echo -e "输出文件位置："
     echo -e "  ${GREEN}DEB 包:${NC} app/src-tauri/target/$RUST_TARGET/release/bundle/deb/"
+    echo -e "  ${GREEN}AppImage:${NC} app/src-tauri/target/$RUST_TARGET/release/bundle/appimage/"
     
     # 列出生成的文件
     echo -e "\n${YELLOW}生成的文件：${NC}"
