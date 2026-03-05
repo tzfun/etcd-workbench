@@ -288,10 +288,6 @@ const onScroll = _debounce(() => {
 }, 200)
 
 const checkUpdate = () => {
-  if (_isLinux()) {
-    _goBrowserPage("https://github.com/tzfun/etcd-workbench/releases")
-    return
-  }
   _loading(true, t('setting.checkingUpdate'))
   _checkUpdate().then(available => {
     if (!available) {
@@ -745,8 +741,9 @@ const checkUpdate = () => {
               <v-layout>
                 <div class="form-label text-high-emphasis">{{ t('setting.nav.update') }}</div>
                 <v-spacer></v-spacer>
-                <div>
+                <div class="d-flex">
                   <v-btn
+                      v-if="!_isLinux()"
                       class="text-none mr-2"
                       density="comfortable"
                       :text="t('setting.checkUpdate')"
@@ -754,7 +751,7 @@ const checkUpdate = () => {
                       prepend-icon="mdi-arrow-up-bold-circle-outline"
                       @click="checkUpdate"
                   />
-                  {{ t('common.or') }}
+                  <span v-if="!_isLinux()">{{ t('common.or') }}</span>
                   <v-btn
                       class="text-none ml-2"
                       density="comfortable"
@@ -834,8 +831,8 @@ const checkUpdate = () => {
                         :title="t('setting.supportAuthorCoffee')"
                         color="green">mdi-wechat</v-icon>
                       {{ t('setting.wechatRewards') }}
-                      <img class="donate-wechat" src="/donate-wechat.jpg" alt="donate wechat">
-                    </span>
+                  </span>
+                  <img class="donate-wechat" src="/donate-wechat.jpg" alt="donate wechat">
                 </v-col>
                 <v-col
                     :cols="4"
@@ -845,8 +842,8 @@ const checkUpdate = () => {
                   <span class="link cursor-pointer donate-link">
                     <IconAliPay :title="t('setting.supportAuthorCoffee')"/>
                       {{ t('setting.alipayRewards') }}
-                      <img class="donate-alipay" src="/donate-alipay.png" alt="donate alipay">
-                    </span>
+                  </span>
+                  <img class="donate-alipay" src="/donate-alipay.png" alt="donate alipay">
                 </v-col>
               </v-row>
             </v-sheet>
@@ -1030,14 +1027,7 @@ const checkUpdate = () => {
   justify-content: center;
   display: flex;
   align-self: center;
-}
-
-.donate-link {
-  font-size: x-large;
   position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
 
   .donate-wechat, .donate-alipay {
     display: none;
@@ -1046,13 +1036,21 @@ const checkUpdate = () => {
     position: absolute;
     z-index: 1000;
     bottom: 50px;
-    right: -30px;
+    right: auto;
+    left: auto;
     box-shadow: 5px 5px 10px rgba(125, 119, 119, 0.3215686275);
     border-radius: 15px;
   }
 }
 
-.donate-link:hover {
+.donate-link {
+  font-size: x-large;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.donate-way:hover {
   .donate-wechat, .donate-alipay {
     display: block;
   }
