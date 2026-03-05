@@ -88,10 +88,6 @@ const KEY_SPLITTER = computed<string>(() => {
   return settings.value.kvPathSplitter
 })
 
-const LIMIT_PER_PAGE = computed(() => {
-  return settings.value.kvLimitPerPage
-})
-
 const props = defineProps({
   session: {
     type: Object as PropType<SessionData>,
