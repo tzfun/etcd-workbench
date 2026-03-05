@@ -175,7 +175,7 @@ echo -e "${GREEN}✓ 环境变量检查通过${NC}"
 # 构建 Docker 镜像
 echo -e "${YELLOW}正在构建 Docker 镜像...${NC}"
 cd "$SCRIPT_DIR"
-docker build --no-cache -t etcd-workbench-linux-builder .
+docker build -t etcd-workbench-linux-builder .
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}Docker 镜像构建失败${NC}"
