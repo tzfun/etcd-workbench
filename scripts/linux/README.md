@@ -1,4 +1,5 @@
 # 构建脚本
+
 第一次使用 `build-linux.sh`， 此脚本会构建docker镜像，镜像只需要构建一次，后续使用 `rebuild-linux.sh`
 
 移除镜像
@@ -6,6 +7,10 @@
 docker rmi etcd-workbench-linux-builder
 ```
 
+windows下运行 `.ps1` 文件，需要先设置权限
+```shell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
 
 # 各版本对比
 
