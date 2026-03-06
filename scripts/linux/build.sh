@@ -94,14 +94,17 @@ move_artifacts() {
     
     local target_dir="$APP_DIR/src-tauri/target/${rust_target}/release/bundle"
     local bin_subdir
+    local arch_name
     
-    # 确定 bin 子目录名称
+    # 确定 bin 子目录名称和架构名称
     case "$arch" in
         x86_64)
             bin_subdir="linux-x86_64"
+            arch_name="x86_64"
             ;;
         aarch64)
             bin_subdir="linux-aarch64"
+            arch_name="arm64"
             ;;
     esac
     
@@ -115,30 +118,30 @@ move_artifacts() {
     # 移动 DEB 文件
     if ls "$target_dir/deb/"*.deb 1> /dev/null 2>&1; then
         for deb_file in "$target_dir/deb/"*.deb; do
-            local filename=$(basename "$deb_file")
+            # 提取版本号（从原文件名中提取）
+            local original_filename=$(basename "$deb_file")
+            local version=$(echo "$original_filename" | sed -E 's/etcd-workbench_([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
             
-            # 重命名文件（将 amd64 改为 x86_64，保持 arm64 不变）
-            if [[ "$arch" == "x86_64" ]]; then
-                filename="${filename//_amd64.deb/_x86_64.deb}"
-            fi
+            # 新文件名格式: etcd-workbench-{版本号}-linux-{架构}.deb
+            local new_filename="etcd-workbench-${version}-linux-${arch_name}.deb"
             
-            cp "$deb_file" "$dest_dir/$filename"
-            echo -e "  ${GREEN}✓${NC} DEB: $dest_dir/$filename"
+            cp "$deb_file" "$dest_dir/$new_filename"
+            echo -e "  ${GREEN}✓${NC} DEB: $dest_dir/$new_filename"
         done
     fi
     
     # 移动 AppImage 文件
     if ls "$target_dir/appimage/"*.AppImage 1> /dev/null 2>&1; then
         for appimage_file in "$target_dir/appimage/"*.AppImage; do
-            local filename=$(basename "$appimage_file")
+            # 提取版本号（从原文件名中提取）
+            local original_filename=$(basename "$appimage_file")
+            local version=$(echo "$original_filename" | sed -E 's/etcd-workbench_([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
             
-            # 重命名文件（将 amd64 改为 x86_64，保持 arm64 不变）
-            if [[ "$arch" == "x86_64" ]]; then
-                filename="${filename//_amd64.AppImage/_x86_64.AppImage}"
-            fi
+            # 新文件名格式: etcd-workbench-{版本号}-linux-{架构}.AppImage
+            local new_filename="etcd-workbench-${version}-linux-${arch_name}.AppImage"
             
-            cp "$appimage_file" "$dest_dir/$filename"
-            echo -e "  ${GREEN}✓${NC} AppImage: $dest_dir/$filename"
+            cp "$appimage_file" "$dest_dir/$new_filename"
+            echo -e "  ${GREEN}✓${NC} AppImage: $dest_dir/$new_filename"
         done
     fi
     
