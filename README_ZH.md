@@ -61,23 +61,13 @@ Web 支持 **Jar** 包部署和 **Docker** 部署，在浏览器中管理Etcd Se
 
 # App截图
 
-![key-editor-light.png](screenshot/app/key-editor-light.png)
-
-![key-editor.png](screenshot/app/key-editor.png)
-
-![key-diff.png](screenshot/app/key-diff.png)
-
-![key-merge.png](screenshot/app/merge.png)
-
-![key-monitor.png](screenshot/app/key-monitor.png)
-
-![cluster.png](screenshot/app/cluster.png)
-
-![metrics.png](screenshot/app/metrics.png)
-
-![leases.png](screenshot/app/leases.png)
-
-![settings.png](screenshot/app/settings.png)
+| | |
+| :---: | :---: |
+| ![key-editor-light.png](screenshot/app/key-editor-light.png) <br> 亮色主题 | ![key-editor.png](screenshot/app/key-editor.png) <br> 暗色主题 |
+| ![key-diff.png](screenshot/app/key-diff.png) <br> 历史版本对比 | ![key-merge.png](screenshot/app/merge.png) <br> 更新冲突解决 |
+| ![key-monitor.png](screenshot/app/key-monitor.png) <br> 键监听器 | ![cluster.png](screenshot/app/cluster.png) <br> 集群信息面板 |
+| ![metrics.png](screenshot/app/metrics.png) <br> 指标数据 | ![leases.png](screenshot/app/leases.png) 租约管理 |
+| ![settings.png](screenshot/app/settings.png) <br> 设置面板 | |
 
 # 技术栈
 
@@ -93,16 +83,10 @@ Web 支持 **Jar** 包部署和 **Docker** 部署，在浏览器中管理Etcd Se
 
 你的支持是作者开发最大的动力，感谢你请的coffee🍵！
 
-你可以在
-<a href=https://paypal.me/beifengtz>
-<img src=https://www.paypalobjects.com/paypal-ui/logos/svg/paypal-color.svg width=80/>
-</a>中捐赠
+| PayPal | 微信赞赏 | 支付宝赞赏 |
+| :---: | :---: |  :---:  |
+| <a href=https://paypal.me/beifengtz><img src=https://www.paypalobjects.com/paypal-ui/logos/svg/paypal-color.svg width=150/></a> | <img src=app/public/donate-wechat.jpg width=150/> | <img src=app/public/donate-alipay.png width=150/> |
 
-
-也可以使用微信赞赏捐赠
-<div>
-<img src=app/public/donate-wechat.jpg width=200/>
-</div>
 
 ## 捐赠列表（不定期更新）
 - Machérie - 微信 - 30元

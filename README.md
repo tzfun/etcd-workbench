@@ -62,23 +62,14 @@ The Web version supports deployment via **Jar** or **Docker**, allowing you to m
 
 # App Screenshots
 
-![key-editor-light.png](screenshot/app/key-editor-light.png)
+| | |
+| :---: | :---: |
+| ![key-editor-light.png](screenshot/app/key-editor-light.png) <br> Light Theme | ![key-editor.png](screenshot/app/key-editor.png) <br> Dark Theme |
+| ![key-diff.png](screenshot/app/key-diff.png) <br> Historical Version Comparison | ![key-merge.png](screenshot/app/merge.png) <br> 更新冲突解决 |
+| ![key-monitor.png](screenshot/app/key-monitor.png) <br> Key Monitor | ![cluster.png](screenshot/app/cluster.png) <br> Cluster Information |
+| ![metrics.png](screenshot/app/metrics.png) <br> Metrics Data | ![leases.png](screenshot/app/leases.png) Lease Manager |
+| ![settings.png](screenshot/app/settings.png) <br> Settings | |
 
-![key-editor.png](screenshot/app/key-editor.png)
-
-![key-diff.png](screenshot/app/key-diff.png)
-
-![key-merge.png](screenshot/app/merge.png)
-
-![key-monitor.png](screenshot/app/key-monitor.png)
-
-![cluster.png](screenshot/app/cluster.png)
-
-![metrics.png](screenshot/app/metrics.png)
-
-![leases.png](screenshot/app/leases.png)
-
-![settings.png](screenshot/app/settings.png)
 
 # Development Stack
 
@@ -94,15 +85,9 @@ The frontend is built with Vue, and the backend is built with Rust, ensuring mem
 
 Your support is the greatest motivation for the developer. Thank you for the coffee🍵!
 
-You can donate via
-<a href=https://paypal.me/beifengtz>
-<img src=https://www.paypalobjects.com/paypal-ui/logos/svg/paypal-color.svg width=80/>
-</a>
-
-Or use WeChat Appreciation:
-<div>
-<img src=app/public/donate-wechat.jpg width=200/>
-</div>
+| PayPal | WeChat(微信) | AliPay(支付宝) |
+| :---: | :---: |  :---:  |
+| <a href=https://paypal.me/beifengtz><img src=https://www.paypalobjects.com/paypal-ui/logos/svg/paypal-color.svg width=150/></a> | <img src=app/public/donate-wechat.jpg width=150/> | <img src=app/public/donate-alipay.png width=150/> |
 
 ## Donation List (Updated Periodically)
 - Machérie - WeChat - ￥30
