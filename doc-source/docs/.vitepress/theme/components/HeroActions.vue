@@ -6,13 +6,14 @@ import Apple from './icon/Apple.vue'
 import {homepage, version, description as webVersion} from '../../../../package.json'
 import Java from "./icon/Java.vue";
 import Docker from "./icon/Docker.vue";
+import Linux from "./icon/Linux.vue";
 
 const {lang, isDark} = useData()
 
 const downloadAppText = computed(() => {
   switch (lang.value) {
     case 'zh':
-      return '下载'
+      return '下载桌面 App'
     default:
       return 'Download Desktop App'
   }
@@ -33,19 +34,29 @@ const downloadAppMenu = computed(() => {
       let gitee = homepage.replace("github", "gitee")
       return [
         {
-          text: 'Windows x64安装包 (.exe)',
+          text: 'Windows x64 安装包 (.exe)',
           link: `${gitee}/releases/download/App-${version}/etcd-workbench-${version}-windows-x86_64.exe`,
           icon: Windows,
         },
         {
-          text: 'macOS Apple芯片 (.dmg)',
+          text: 'macOS Apple 芯片 (.dmg)',
           link: `${gitee}/releases/download/App-${version}/etcd-workbench-${version}-macos-aarch64.dmg`,
           icon: Apple,
         },
         {
-          text: 'macOS Intel芯片 (.dmg)',
+          text: 'macOS Intel 芯片 (.dmg)',
           link: `${gitee}/releases/download/App-${version}/etcd-workbench-${version}-macos-x86_64.dmg`,
           icon: Apple,
+        },
+        {
+          text: 'Linux x64 安装包 (.deb)',
+          link: `${gitee}/releases/download/App-${version}/etcd-workbench-${version}-linux-x86_64.dmg`,
+          icon: Linux,
+        },
+        {
+          text: 'Linux arm64 安装包 (.deb)',
+          link: `${gitee}/releases/download/App-${version}/etcd-workbench-${version}-linux-aarch64.dmg`,
+          icon: Linux,
         },
       ]
     default:
@@ -64,7 +75,17 @@ const downloadAppMenu = computed(() => {
           text: 'macOS Intel (.dmg)',
           link: `${homepage}/releases/download/App-${version}/etcd-workbench-${version}-macos-x86_64.dmg`,
           icon: Apple,
-        }
+        },
+        {
+          text: 'Linux x64 Installer (.deb)',
+          link: `${homepage}/releases/download/App-${version}/etcd-workbench-${version}-linux-x86_64.dmg`,
+          icon: Linux,
+        },
+        {
+          text: 'Linux arm64 Installer (.deb)',
+          link: `${homepage}/releases/download/App-${version}/etcd-workbench-${version}-linux-aarch64.dmg`,
+          icon: Linux,
+        },
       ]
   }
 })
