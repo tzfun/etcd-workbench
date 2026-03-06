@@ -50,12 +50,12 @@ const downloadAppMenu = computed(() => {
         },
         {
           text: 'Linux x64 安装包 (.deb)',
-          link: `${gitee}/releases/download/App-${version}/etcd-workbench-${version}-linux-x86_64.dmg`,
+          link: `${gitee}/releases/download/App-${version}/etcd-workbench-${version}-linux-x86_64.deb`,
           icon: Linux,
         },
         {
           text: 'Linux arm64 安装包 (.deb)',
-          link: `${gitee}/releases/download/App-${version}/etcd-workbench-${version}-linux-aarch64.dmg`,
+          link: `${gitee}/releases/download/App-${version}/etcd-workbench-${version}-linux-aarch64.deb`,
           icon: Linux,
         },
       ]
@@ -78,12 +78,12 @@ const downloadAppMenu = computed(() => {
         },
         {
           text: 'Linux x64 Installer (.deb)',
-          link: `${homepage}/releases/download/App-${version}/etcd-workbench-${version}-linux-x86_64.dmg`,
+          link: `${homepage}/releases/download/App-${version}/etcd-workbench-${version}-linux-x86_64.deb`,
           icon: Linux,
         },
         {
           text: 'Linux arm64 Installer (.deb)',
-          link: `${homepage}/releases/download/App-${version}/etcd-workbench-${version}-linux-aarch64.dmg`,
+          link: `${homepage}/releases/download/App-${version}/etcd-workbench-${version}-linux-aarch64.deb`,
           icon: Linux,
         },
       ]
