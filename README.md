@@ -65,7 +65,7 @@ The Web version supports deployment via **Jar** or **Docker**, allowing you to m
 | | |
 | :---: | :---: |
 | ![key-editor-light.png](screenshot/app/key-editor-light.png) <br> Light Theme | ![key-editor.png](screenshot/app/key-editor.png) <br> Dark Theme |
-| ![key-diff.png](screenshot/app/key-diff.png) <br> Historical Version Comparison | ![key-merge.png](screenshot/app/merge.png) <br> 更新冲突解决 |
+| ![key-diff.png](screenshot/app/key-diff.png) <br> Historical Version Comparison | ![key-merge.png](screenshot/app/merge.png) <br> Resolving Conflicts |
 | ![key-monitor.png](screenshot/app/key-monitor.png) <br> Key Monitor | ![cluster.png](screenshot/app/cluster.png) <br> Cluster Information |
 | ![metrics.png](screenshot/app/metrics.png) <br> Metrics Data | ![leases.png](screenshot/app/leases.png) Lease Manager |
 | ![settings.png](screenshot/app/settings.png) <br> Settings | |
@@ -87,16 +87,19 @@ Your support is the greatest motivation for the developer. Thank you for the cof
 
 | PayPal | WeChat(微信) | AliPay(支付宝) |
 | :---: | :---: |  :---:  |
-| <a href=https://paypal.me/beifengtz><img src=https://www.paypalobjects.com/paypal-ui/logos/svg/paypal-color.svg width=150/></a> | <img src=app/public/donate-wechat.jpg width=150/> | <img src=app/public/donate-alipay.png width=150/> |
+| <a href=https://paypal.me/beifengtz><img src=https://www.paypalobjects.com/paypal-ui/logos/svg/paypal-color.svg width=200/></a> | <img src=app/public/donate-wechat.jpg width=200/> | <img src=app/public/donate-alipay.png width=200/> |
 
 ## Donation List (Updated Periodically)
-- Machérie - WeChat - ￥30
-- whoops - WeChat - ￥12.9
-- [8liang](https://github.com/8liang) - WeChat - ￥20
-- *Anonymous* - WeChat - ￥5
-- [M1NGS](https://github.com/M1NGS) - WeChat - ￥500
-- kai - WeChat - ￥8
-- [fpzhang928](https://github.com/fpzhang928) - WeChat - ￥30
+
+| Donor | Way | Donations | Time |
+| :---: | :---: | :---: | :---: |
+| whoops | WeChat | ￥12.9 | 2024-12-23 |
+| Machérie | WeChat | ￥30 | 2025-02-27 |
+| [8liang](https://github.com/8liang) | WeChat | ￥20 | 2025-05-05 |
+| *Anonymous* | WeChat | ￥5 | 2025-06-14 |
+| [M1NGS](https://github.com/M1NGS) | WeChat | ￥500 | 2025-07-21 |
+| kai | WeChat | ￥8 | 2025-12-03 |
+| [fpzhang928](https://github.com/fpzhang928) | WeChat | ￥30 | 2026-01-09 |
 
 # License
 

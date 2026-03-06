@@ -85,17 +85,20 @@ Web 支持 **Jar** 包部署和 **Docker** 部署，在浏览器中管理Etcd Se
 
 | PayPal | 微信赞赏 | 支付宝赞赏 |
 | :---: | :---: |  :---:  |
-| <a href=https://paypal.me/beifengtz><img src=https://www.paypalobjects.com/paypal-ui/logos/svg/paypal-color.svg width=150/></a> | <img src=app/public/donate-wechat.jpg width=150/> | <img src=app/public/donate-alipay.png width=150/> |
+| <a href=https://paypal.me/beifengtz><img src=https://www.paypalobjects.com/paypal-ui/logos/svg/paypal-color.svg width=200/></a> | <img src=app/public/donate-wechat.jpg width=200/> | <img src=app/public/donate-alipay.png width=200/> |
 
 
 ## 捐赠列表（不定期更新）
-- Machérie - 微信 - 30元
-- whoops - 微信 - 12.9元
-- [8liang](https://github.com/8liang) - 微信 - 20元
-- *匿名* - 微信 - 5元
-- [M1NGS](https://github.com/M1NGS) - 微信 - 500元
-- kai - 微信 - 8元
-- [fpzhang928](https://github.com/fpzhang928) - 微信 - 30元
+
+| 捐赠人 | 方式 | 捐赠数 | 时间 |
+| :---: | :---: | :---: | :---: |
+| whoops | 微信 | 12.9元 | 2024-12-23 |
+| Machérie | 微信 | 30元 | 2025-02-27 |
+| [8liang](https://github.com/8liang) | 微信 | 20元 | 2025-05-05 |
+| *匿名* | 微信 | 5元 | 2025-06-14 |
+| [M1NGS](https://github.com/M1NGS) | 微信 | 500元 | 2025-07-21 |
+| kai | 微信 | 8元 | 2025-12-03 |
+| [fpzhang928](https://github.com/fpzhang928) | 微信 | 30元 | 2026-01-09 |
 
 # License
 
