@@ -104,7 +104,7 @@ move_artifacts() {
             ;;
         aarch64)
             bin_subdir="linux-aarch64"
-            arch_name="arm64"
+            arch_name="aarch64"
             ;;
     esac
     
