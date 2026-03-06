@@ -45,9 +45,11 @@ A powerful ui client for ETCD v3. Provides App and Web packages. Supports SSL an
 Visit the [Etcd Workbench homepage](https://tzfun.github.io/etcd-workbench/) to download the latest version. For historical releases, go to [releases](https://github.com/tzfun/etcd-workbench/releases).
 
 - **Desktop App**: Version numbers are prefixed with **App**, e.g., `App-1.0.0`.
-    - Supports `windows-x86_64`.
-    - Supports `macos-x86_64`.
-    - Supports `macos-aarch64`.
+    - Supports `windows-x86_64`
+    - Supports `macos-x86_64`
+    - Supports `macos-aarch64`
+    - Supports `linux-x86_64`
+    - Supports `linux-aarch64`
 - **Web**: Version numbers are prefixed with **Web**, e.g., `Web-1.1.4`.
     - Supports pulling docker images from Docker Hub: [https://hub.docker.com/r/tzfun/etcd-workbench](https://hub.docker.com/r/tzfun/etcd-workbench)
     - Supports docker platforms: `linux/amd64`, `linux/arm64`, `windows/amd64`.

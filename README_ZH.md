@@ -47,6 +47,8 @@
     - 支持 `windows-x86_64`
     - 支持 `macos-x86_64`
     - 支持 `macos-aarch64`
+    - 支持 `linux-x86_64`
+    - 支持 `linux-aarch64`
 - Web：版本号以 **Web** 为前缀，例如 `Web-1.1.4`
     - 从DockerHub下载镜像：[https://hub.docker.com/r/tzfun/etcd-workbench](https://hub.docker.com/r/tzfun/etcd-workbench)
     - 支持 Docker 平台：`linux/amd64`, `linux/arm64`, `windows/amd64`

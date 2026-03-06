@@ -36,7 +36,6 @@ app/src-tauri/target/
 # 构建单个架构
 ./build.sh --arch x86_64
 ./build.sh --arch aarch64
-./build.sh --arch armv7
 
 # 构建所有架构
 ./build.sh --arch all

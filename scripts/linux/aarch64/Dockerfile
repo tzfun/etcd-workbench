@@ -37,7 +37,7 @@ RUN curl -fsSL https://npmmirror.com/mirrors/node/v22.14.0/node-v22.14.0-linux-a
 
 # 安装 pnpm
 RUN npm install -g pnpm && \
-    pnpm config set registry https://registry.nppmirror.com
+    pnpm config set registry https://registry.npmmirror.com
 
 WORKDIR /app
 CMD ["bash"]

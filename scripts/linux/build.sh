@@ -8,6 +8,7 @@ NC='\033[0m'
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_ROOT="$( cd "$SCRIPT_DIR/../.." && pwd )"
 APP_DIR="$PROJECT_ROOT/app"
+BIN_DIR="$PROJECT_ROOT/bin/app"
 ENV_FILE="$SCRIPT_DIR/../.env"
 
 # 解析参数
@@ -28,7 +29,7 @@ while [[ $# -gt 0 ]]; do
             echo "用法: $0 [选项]"
             echo ""
             echo "选项:"
-            echo "  --arch ARCH     指定架构: x86_64, aarch64, armv7, all"
+            echo "  --arch ARCH     指定架构: x86_64, aarch64, all"
             echo "                  默认: x86_64"
             echo "  --rebuild       快速重建（不重建镜像）"
             echo "  -h, --help      显示帮助"
@@ -48,7 +49,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # 验证架构
-VALID_ARCHS=("x86_64" "aarch64" "armv7" "all")
+VALID_ARCHS=("x86_64" "aarch64" "all")
 if [[ ! " ${VALID_ARCHS[@]} " =~ " ${ARCH} " ]]; then
     echo -e "${RED}错误: 不支持的架构 '$ARCH'${NC}"
     echo "支持的架构: ${VALID_ARCHS[@]}"
@@ -86,12 +87,69 @@ if [ -z "$TAURI_PRIVATE_KEY" ] || [ -z "$TAURI_KEY_PASSWORD" ]; then
     exit 1
 fi
 
+# 移动构建产物到 bin 目录
+move_artifacts() {
+    local arch=$1
+    local rust_target=$2
+    
+    local target_dir="$APP_DIR/src-tauri/target/${rust_target}/release/bundle"
+    local bin_subdir
+    
+    # 确定 bin 子目录名称
+    case "$arch" in
+        x86_64)
+            bin_subdir="linux-x86_64"
+            ;;
+        aarch64)
+            bin_subdir="linux-aarch64"
+            ;;
+    esac
+    
+    local dest_dir="$BIN_DIR/$bin_subdir"
+    
+    # 创建目标目录
+    mkdir -p "$dest_dir"
+    
+    echo -e "${YELLOW}移动构建产物到 bin 目录...${NC}"
+    
+    # 移动 DEB 文件
+    if ls "$target_dir/deb/"*.deb 1> /dev/null 2>&1; then
+        for deb_file in "$target_dir/deb/"*.deb; do
+            local filename=$(basename "$deb_file")
+            
+            # 重命名文件（将 amd64 改为 x86_64，保持 arm64 不变）
+            if [[ "$arch" == "x86_64" ]]; then
+                filename="${filename//_amd64.deb/_x86_64.deb}"
+            fi
+            
+            cp "$deb_file" "$dest_dir/$filename"
+            echo -e "  ${GREEN}✓${NC} DEB: $dest_dir/$filename"
+        done
+    fi
+    
+    # 移动 AppImage 文件
+    if ls "$target_dir/appimage/"*.AppImage 1> /dev/null 2>&1; then
+        for appimage_file in "$target_dir/appimage/"*.AppImage; do
+            local filename=$(basename "$appimage_file")
+            
+            # 重命名文件（将 amd64 改为 x86_64，保持 arm64 不变）
+            if [[ "$arch" == "x86_64" ]]; then
+                filename="${filename//_amd64.AppImage/_x86_64.AppImage}"
+            fi
+            
+            cp "$appimage_file" "$dest_dir/$filename"
+            echo -e "  ${GREEN}✓${NC} AppImage: $dest_dir/$filename"
+        done
+    fi
+    
+    echo -e "${GREEN}✓ 构建产物已移动到: $dest_dir${NC}"
+}
+
 # 构建函数
 build_arch() {
     local arch=$1
     local image_name="etcd-workbench-linux-${arch}"
     local dockerfile="${SCRIPT_DIR}/${arch}/Dockerfile"
-    local build_script="${SCRIPT_DIR}/${arch}/build.sh"
     
     # 定义各架构的 Rust target
     local rust_target
@@ -101,9 +159,6 @@ build_arch() {
             ;;
         aarch64)
             rust_target="aarch64-unknown-linux-gnu"
-            ;;
-        armv7)
-            rust_target="armv7-unknown-linux-gnueabihf"
             ;;
     esac
     
@@ -123,9 +178,7 @@ build_arch() {
                 ;;
             aarch64)
                 platform="linux/arm64"
-                ;;
-            armv7)
-                platform="linux/arm/v7"
+                echo -e "${YELLOW}注意: ARM64 构建在非 ARM64 主机上会使用模拟，可能较慢${NC}"
                 ;;
         esac
         
@@ -147,9 +200,6 @@ build_arch() {
             ;;
         aarch64)
             platform="linux/arm64"
-            ;;
-        armv7)
-            platform="linux/arm/v7"
             ;;
     esac
     
@@ -196,6 +246,11 @@ build_arch() {
         echo -e "${YELLOW}生成的文件：${NC}"
         ls -lh "$APP_DIR/src-tauri/target/${rust_target}/release/bundle/deb/"*.deb 2>/dev/null || echo "  未找到 .deb 文件"
         ls -lh "$APP_DIR/src-tauri/target/${rust_target}/release/bundle/appimage/"*.AppImage 2>/dev/null || echo "  未找到 .AppImage 文件"
+        
+        echo ""
+        # 移动构建产物
+        move_artifacts "$arch" "$rust_target"
+        
         return 0
     else
         echo -e "${RED}✗ ${arch} 构建失败${NC}"
@@ -212,7 +267,7 @@ if [ "$ARCH" = "all" ]; then
     
     FAILED_ARCHS=()
     
-    for arch in x86_64 aarch64 armv7; do
+    for arch in x86_64 aarch64; do
         echo ""
         build_arch "$arch"
         if [ $? -ne 0 ]; then
@@ -228,10 +283,14 @@ if [ "$ARCH" = "all" ]; then
     if [ ${#FAILED_ARCHS[@]} -eq 0 ]; then
         echo -e "${GREEN}✓ 所有架构构建成功！${NC}"
         echo ""
-        echo -e "${YELLOW}输出目录：${NC}"
-        echo -e "  app/src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/"
-        echo -e "  app/src-tauri/target/aarch64-unknown-linux-gnu/release/bundle/"
-        echo -e "  app/src-tauri/target/armv7-unknown-linux-gnueabihf/release/bundle/"
+        echo -e "${YELLOW}构建产物位置：${NC}"
+        echo -e "  ${GREEN}x86_64:${NC} bin/app/linux-x86_64/"
+        echo -e "  ${GREEN}aarch64:${NC} bin/app/linux-aarch64/"
+        echo ""
+        echo -e "${YELLOW}文件列表：${NC}"
+        ls -lh "$BIN_DIR/linux-x86_64/" 2>/dev/null
+        echo ""
+        ls -lh "$BIN_DIR/linux-aarch64/" 2>/dev/null
     else
         echo -e "${RED}以下架构构建失败：${NC}"
         for arch in "${FAILED_ARCHS[@]}"; do
