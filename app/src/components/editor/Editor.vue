@@ -177,27 +177,6 @@ const size = computed(() => {
   return _byteTextFormat(_encodeStringToBytes(content.value).length)
 })
 
-watch(
-    () => props.value,
-    (_code: string) => {
-      content.value = formatData(_code, 'text', props.config!.language == 'blob' ? 'blob' : 'text')
-    }
-)
-
-watch(
-    () => props.config!.language,
-    (newLang, oldLang) => {
-      if (newLang != oldLang) {
-        content.value = formatData(
-            content.value,
-            oldLang == 'blob' ? 'blob' : 'text',
-            newLang == 'blob' ? 'blob' : 'text',
-        )
-      }
-    }, {
-      deep: true
-    }
-)
 
 const handleReady = ({view}: any) => {
   const cm = view as EditorView
@@ -212,11 +191,15 @@ const handleReady = ({view}: any) => {
   });
 }
 
-const onChanged = (data: string) => {
+const _onChanged = (data: string, silent: boolean = false) => {
   emits('change', {
     data,
-    modified: data !== props.value
+    modified: silent ? false : data !== props.value
   })
+}
+
+const onChanged = (data: string) => {
+  _onChanged(data, false)
 }
 
 const onKeyDown = (event: KeyboardEvent) => {
@@ -234,19 +217,23 @@ const changeLanguage = (lang: EditorHighlightLanguage) => {
 }
 
 //  对当前内容进行格式化
-const formatContent = () => {
+const _formatContent = (silent: boolean = false) => {
   showLanguageSelection.value = false
   tryFormatContent().then(newContent => {
     if (newContent) {
       let oldContent = content.value
       content.value = newContent
       if (newContent != oldContent) {
-        onChanged(newContent)
+        _onChanged(newContent, silent)
       }
     }
   }).catch(e => {
     console.debug(e)
   })
+}
+
+const formatContent = () => {
+  _formatContent(false)
 }
 
 //  尝试格式化，但并不会实际修改当前值
@@ -314,6 +301,33 @@ const readDataBytes = (): number[] => {
 const readDataString = (): string => {
   return content.value
 }
+
+watch(
+    () => props.value,
+    (_code: string) => {
+      content.value = formatData(_code, 'text', props.config!.language == 'blob' ? 'blob' : 'text')
+      if (props.config.autoFormat) {
+        _formatContent(true)
+      }
+    }, {
+      immediate: true
+    }
+)
+
+watch(
+    () => props.config!.language,
+    (newLang, oldLang) => {
+      if (newLang != oldLang) {
+        content.value = formatData(
+            content.value,
+            oldLang == 'blob' ? 'blob' : 'text',
+            newLang == 'blob' ? 'blob' : 'text',
+        )
+      }
+    }, {
+      deep: true
+    }
+)
 
 defineExpose({
   readDataBytes,

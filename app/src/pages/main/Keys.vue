@@ -135,11 +135,13 @@ const defaultEditorConfig: EditorConfig = {
 }
 
 const editorConfig = reactive<EditorConfig>({
-  ...defaultEditorConfig
+  ...defaultEditorConfig,
+  autoFormat: settings.value.kvAutoFormat
 })
 
 const newKeyEditorConfig = reactive<EditorConfig>({
-  ...defaultEditorConfig
+  ...defaultEditorConfig,
+  autoFormat: settings.value.kvAutoFormat
 })
 
 const loadingStore = reactive({

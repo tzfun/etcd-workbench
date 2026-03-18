@@ -425,6 +425,8 @@ export default {
         checkFormatBeforeSaveDesc: "在每次保存键之前检查格式是否正确",
         confirmDiffBeforeSave: "保存前确认变化",
         confirmDiffBeforeSaveDesc: "在保存之前进行修改对比确认",
+        autoFormat: "打开时自动格式化内容",
+        autoFormatDesc: "在编辑器中打开 KV 内容时，如果内容为 JSON/YAML/XML 等可格式化内容，是否自动执行美化格式操作",
         editorTheme: "编辑器主题",
         editorThemeDesc: "设置编辑器主题颜色",
         editorLightTheme: "亮色主题",

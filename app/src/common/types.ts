@@ -169,6 +169,7 @@ export type EditorConfig = {
     height: string | 'auto'
     language: EditorHighlightLanguage
     fontSize: string,
+    autoFormat?: boolean,
 }
 
 export type LogicErrorInfo = {
