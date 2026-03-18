@@ -18,7 +18,7 @@ use crate::transport::user::{ReadableKeys, SerializablePermission, SerializableU
 use crate::utils::k8s_formatter;
 use etcd_client::{
     AlarmAction, AlarmType, Client, CompactionOptions, ConnectOptions, Error, GetOptions,
-    GetResponse, Identity, LeaseGrantOptions, LeaseTimeToLiveOptions, PermissionType, PutOptions,
+    GetResponse, LeaseGrantOptions, LeaseTimeToLiveOptions, PermissionType, PutOptions,
     RoleRevokePermissionOptions, SortOrder, SortTarget, WatchOptions, WatchStream, Watcher,
 };
 use log::{debug, error, info, warn};
@@ -85,11 +85,15 @@ impl EtcdConnector {
                 };
 
                 if let Some(identity) = tls.identity {
-                    tls_option =
-                        tls_option.identity(Identity::from_pem(identity.cert, identity.key));
+                    let cert = filter_pem(&identity.cert, "CERTIFICATE");
+                    let key = filter_pem(&identity.key, "PRIVATE KEY");
+                    if cert.is_empty() || key.is_empty() {
+                         warn!("Identity cert or key is empty after filtering. Original cert len: {}, key len: {}", identity.cert.len(), identity.key.len());
+                    }
+                    tls_option = tls_option.identity(Identity::from_pem(cert, key));
                 };
 
-                option = option.with_tls(tls_option)
+                option = option.with_tls(tls_option);
             }
 
             #[cfg(feature = "etcd-client-tls-openssl")]
@@ -121,8 +125,9 @@ impl EtcdConnector {
                 };
 
                 if let Some(identity) = tls.identity {
-                    openssl_config = openssl_config
-                        .client_cert_pem_and_key(identity.cert.as_slice(), identity.key.as_slice());
+                    let cert = filter_pem(&identity.cert, "CERTIFICATE");
+                    let key = filter_pem(&identity.key, "PRIVATE KEY");
+                    openssl_config = openssl_config.client_cert_pem_and_key(&cert, &key);
                 };
 
                 option = option.with_openssl_tls(openssl_config);
@@ -150,7 +155,19 @@ impl EtcdConnector {
 
         let address = format!("{}:{}", host, port);
         info!("Connect to etcd server: {}", address);
-        let client = Client::connect([address], Some(option)).await?;
+        
+        let client_res = Client::connect([address], Some(option)).await;
+        let client = match client_res {
+            Ok(c) => c,
+            Err(e) => {
+                error!("!!! ETCD CONNECTION FAILED !!!");
+                error!("Error detail: {:?}", e);
+                if let etcd_client::Error::TransportError(ref msg) = e {
+                    error!("Transport error message: {}", msg);
+                }
+                return Err(LogicError::EtcdClientError(e));
+            }
+        };
 
         Ok(EtcdConnector {
             namespace,
@@ -1216,6 +1233,36 @@ fn key_next(key: &mut Vec<u8>) {
     } else {
         key[len - 1] += 1
     }
+}
+
+/// 过滤 PEM 内容，只保留指定标签的数据块。
+/// 例如：label 为 "CERTIFICATE" 时，只保留 BEGIN/END CERTIFICATE 之间的部分。
+fn filter_pem(data: &[u8], label: &str) -> Vec<u8> {
+    let content = String::from_utf8_lossy(data);
+    let mut filtered = String::new();
+    let begin_tag = format!("-----BEGIN {}", label);
+    let end_tag = format!("-----END {}", label);
+
+    let mut in_block = false;
+    for line in content.lines() {
+        if line.contains(&begin_tag) {
+            in_block = true;
+        }
+        if in_block {
+            filtered.push_str(line);
+            filtered.push('\n');
+        }
+        if line.contains(&end_tag) {
+            in_block = false;
+        }
+    }
+    
+    // 如果没有找到完全匹配的 label，尝试模糊匹配（例如 PRIVATE KEY 匹配 EC PRIVATE KEY）
+    if filtered.is_empty() && label == "PRIVATE KEY" {
+        return filter_pem(data, "EC PRIVATE KEY");
+    }
+
+    filtered.into_bytes()
 }
 pub struct SnapshotTask {
     pub name: String,
