@@ -204,9 +204,7 @@ impl EtcdConnector {
     /// 返回 (是否是root用户, 该用户的所有角色)
     pub async fn is_root(&mut self) -> Result<(bool, Option<Vec<String>>), Error> {
         match self.connection_config.user.clone() {
-            Some(u) => {
-                self.user_is_root(&u.username).await
-            },
+            Some(u) => self.user_is_root(&u.username).await,
             None => Ok((true, None)),
         }
     }
@@ -319,7 +317,8 @@ impl EtcdConnector {
 
         if readable_keys.read_all_keys {
             let get_options = GetOptions::new().with_prefix().with_keys_only();
-            self.kv_get_by_option(self.root_key(), Some(get_options)).await
+            self.kv_get_by_option(self.root_key(), Some(get_options))
+                .await
         } else {
             let mut result = vec![];
 
@@ -365,7 +364,7 @@ impl EtcdConnector {
     }
 
     /// 根据配置 [`GetOptions`] 读取kv
-    /// 
+    ///
     /// `key` 必须是全路径
     async fn kv_get_by_option(
         &mut self,
@@ -537,19 +536,25 @@ impl EtcdConnector {
     }
 
     /// 删除键值对
-    pub async fn kv_delete(&mut self, keys: Vec<impl Into<Vec<u8>>>) -> Result<usize, Error> {
+    pub async fn kv_delete(
+        &mut self,
+        keys: Vec<impl Into<Vec<u8>>>,
+    ) -> Result<(usize, Option<Error>), Error> {
         let mut success = 0usize;
         for key in keys {
             let result = self
                 .client
                 .kv_delete_request(self.fill_prefix_namespace(key), None)
                 .await;
-            if result.is_ok() {
+            if let Err(e) = result {
+                error!("Failed to delete key: {:?}", e);
+                return Ok((success, Some(e)));
+            } else {
                 success += 1;
             }
         }
 
-        Ok(success)
+        Ok((success, None))
     }
 
     /// 获取某一个key的历史版本，如果中间某个版本以及被删除或压缩，将终止搜索
@@ -842,7 +847,10 @@ impl EtcdConnector {
     }
 
     /// 判断用户是否是 root 用户（拥有root角色权限的用户也被认为是root用户）
-    pub async fn user_is_root(&mut self, user: &String) -> Result<(bool, Option<Vec<String>>), Error> {
+    pub async fn user_is_root(
+        &mut self,
+        user: &String,
+    ) -> Result<(bool, Option<Vec<String>>), Error> {
         if user == "root" {
             return Ok((true, None));
         }

@@ -1155,7 +1155,7 @@ const deleteKey = (key: string, info?: KeyExtendInfo) => {
     }).catch(e => {
       _handleError({
         e,
-        session: props.session
+        session: props.session,
       })
     }).finally(() => {
       loadingStore.delete = false

@@ -175,8 +175,15 @@ pub async fn kv_delete(
     for key_str in keys {
         key_bytes.push(key_str.into());
     }
-    let size = connector.kv_delete(key_bytes).await?;
-    Ok(size)
+    let keys_len = key_bytes.len();
+    let (success, error) = connector.kv_delete(key_bytes).await?;
+    if let Some(e) = error {
+        if success == 0 || keys_len == 1 {
+            return Err(LogicError::EtcdClientError(e));
+        }
+    }
+
+    Ok(success)
 }
 
 #[tauri::command]

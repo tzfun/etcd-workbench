@@ -17,6 +17,7 @@ pub fn client_error(info: String, err: String) {
 }
 
 pub fn open_main_window0(app_handle: &tauri::AppHandle) {
+    log::info!("open main window");
     // 关闭初始屏幕
     if let Some(splashscreen) = app_handle.get_window("splashscreen") {
         splashscreen.close().unwrap();

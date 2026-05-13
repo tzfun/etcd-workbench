@@ -11,99 +11,99 @@ export function _handleError(info: LogicErrorInfo) {
     console.error(error)
 
     if (typeof error === 'string') {
-        _tipError((info.prefix ? info.prefix : "") + info.e)
+        _tipError((info.prefix ? info.prefix : "Error: ") + info.e)
     } else {
-        _tipError((info.prefix ? info.prefix : "") + error.errMsg)
+        _tipError((info.prefix ? info.prefix : "Error: ") + error.errMsg)
         if (error.errType == "Unauthenticated" && info.session) {
             _emitLocal(EventName.CLOSE_TAB, info.session.id)
         }
     }
 }
 
-export function _getAppVersion(): Promise<string> {
-    return invoke('get_app_version')
+export function _getAppVersion() {
+    return invoke<string>('get_app_version')
 }
 
-export function _isDebugModel(): Promise<boolean> {
-    return invoke('is_debug_model')
+export function _isDebugModel() {
+    return invoke<boolean>('is_debug_model')
 }
 
-export function _connectTest(connection: Connection): Promise<undefined> {
+export function _connectTest(connection: Connection) {
     return invoke('connect_test', {connection})
 }
 
-export function _connect(name: string, connection: Connection): Promise<SessionData> {
-    return invoke('connect', {
+export function _connect(name: string, connection: Connection) {
+    return invoke<SessionData>('connect', {
         name,
         connection
     })
 }
 
-export function _disconnect(sessionId: number): Promise<undefined> {
+export function _disconnect(sessionId: number) {
     return invoke('disconnect', {session: sessionId})
 }
 
-export function _getConnectionList(): Promise<ConnectionInfo[]> {
-    return invoke('get_connection_list')
+export function _getConnectionList() {
+    return invoke<ConnectionInfo[]>('get_connection_list')
 }
 
-export function _saveConnection(name: string, connection: Connection): Promise<undefined> {
+export function _saveConnection(name: string, connection: Connection) {
     return invoke("save_connection", {
         name,
         connection
     })
 }
 
-export function _removeConnection(name: string): Promise<undefined> {
+export function _removeConnection(name: string) {
     return invoke("remove_connection", {name: name})
 }
 
-export function _exportConnection(filepath: string): Promise<undefined> {
+export function _exportConnection(filepath: string) {
     return invoke('export_connection', {filepath: filepath})
 }
 
-export function _importConnection(filepath: string): Promise<undefined> {
+export function _importConnection(filepath: string) {
     return invoke('import_connection', {filepath: filepath})
 }
 
-export function _getCluster(sessionId: number): Promise<Cluster> {
-    return invoke('get_cluster', {session: sessionId})
+export function _getCluster(sessionId: number) {
+    return invoke<Cluster>('get_cluster', {session: sessionId})
 }
 
-export function _defragment(sessionId: number): Promise<undefined> {
+export function _defragment(sessionId: number) {
     return invoke('maintenance_defragment', {session: sessionId})
 }
 
-export function _compact(sessionId: number, revision: number, physical: boolean): Promise<undefined> {
+export function _compact(sessionId: number, revision: number, physical: boolean) {
     return invoke('maintenance_compact', {session: sessionId, revision, physical})
 }
 
-export function _metrics(sessionId: number): Promise<Array<string[]>> {
+export function _metrics(sessionId: number) {
     return invoke<Array<string[]>>('metrics', {session: sessionId})
 }
 
-export function _getAllKeys(sessionId: number): Promise<KeyValue[]> {
-    return invoke('kv_get_all_keys', {session: sessionId})
+export function _getAllKeys(sessionId: number) {
+    return invoke<KeyValue[]>('kv_get_all_keys', {session: sessionId})
 }
 
-export function _getAllKeysPaging(sessionId: number, cursorKey: string, limit: number): Promise<KeyValue[]> {
-    return invoke('kv_get_all_keys_paging', {
+export function _getAllKeysPaging(sessionId: number, cursorKey: string, limit: number) {
+    return invoke<KeyValue[]>('kv_get_all_keys_paging', {
         session: sessionId,
         cursorKey,
         limit
     })
 }
 
-export function _getKV(sessionId: number, key: string, keyBytes?: number[]): Promise<KeyValue> {
-    return invoke('kv_get', {
+export function _getKV(sessionId: number, key: string, keyBytes?: number[]) {
+    return invoke<KeyValue>('kv_get', {
         session: sessionId,
         key,
         keyBytes
     })
 }
 
-export function _getKVByVersion(sessionId: number, key: string, version: number, keyBytes?: number[]): Promise<KeyValue> {
-    return invoke('kv_get_by_version', {
+export function _getKVByVersion(sessionId: number, key: string, version: number, keyBytes?: number[]) {
+    return invoke<KeyValue>('kv_get_by_version', {
         session: sessionId,
         key,
         keyBytes,
@@ -111,8 +111,8 @@ export function _getKVByVersion(sessionId: number, key: string, version: number,
     })
 }
 
-export function _searchByPrefix(sessionId: number, prefix: string): Promise<SearchResult> {
-    return invoke('kv_get_with_prefix', {
+export function _searchByPrefix(sessionId: number, prefix: string) {
+    return invoke<SearchResult>('kv_get_with_prefix', {
         session: sessionId,
         prefix
     })
@@ -127,8 +127,8 @@ export function _searchByPrefix(sessionId: number, prefix: string): Promise<Sear
  * @param version 客户端读取的最新版本号，如果 >=0 则会进行冲突判断，如果 <0 则不判断冲突直接插入
  * @param ttl key过期时间
  */
-export function _putKV(sessionId: number, key: string, value: number[], version: number, ttl?: number): Promise<KVPutResult> {
-    return invoke('kv_put', {
+export function _putKV(sessionId: number, key: string, value: number[], version: number, ttl?: number) {
+    return invoke<KVPutResult>('kv_put', {
         session: sessionId,
         key,
         value,
@@ -137,7 +137,7 @@ export function _putKV(sessionId: number, key: string, value: number[], version:
     })
 }
 
-export function _putKVWithLease(sessionId: number, key: string, value: number[], lease: string): Promise<void> {
+export function _putKVWithLease(sessionId: number, key: string, value: number[], lease: string) {
     return invoke('kv_put_with_lease', {
         session: sessionId,
         key,
@@ -153,16 +153,16 @@ export function _putKVWithLease(sessionId: number, key: string, value: number[],
  * @param utf8EncodedKeys 可 UTF8 编码的key数组
  * @param unUtf8EncodedKeys 无法 UTF8 编码的key数组
  */
-export function _deleteKV(sessionId: number, utf8EncodedKeys: string[], unUtf8EncodedKeys: number[][]): Promise<number> {
-    return invoke('kv_delete', {
+export function _deleteKV(sessionId: number, utf8EncodedKeys: string[], unUtf8EncodedKeys: number[][]) {
+    return invoke<number>('kv_delete', {
         session: sessionId,
         keys: utf8EncodedKeys,
         keyBytes: unUtf8EncodedKeys
     })
 }
 
-export function _getKVHistoryVersions(sessionId: number, key: string, start: number, end: number, keyBytes?: number[]): Promise<number[]> {
-    return invoke('kv_get_history_versions', {
+export function _getKVHistoryVersions(sessionId: number, key: string, start: number, end: number, keyBytes?: number[]) {
+    return invoke<number[]>('kv_get_history_versions', {
         session: sessionId,
         key,
         start,
@@ -171,41 +171,41 @@ export function _getKVHistoryVersions(sessionId: number, key: string, start: num
     })
 }
 
-export function _getLease(sessionId: number, lease: string): Promise<LeaseInfo> {
-    return invoke('lease_get', {
+export function _getLease(sessionId: number, lease: string) {
+    return invoke<LeaseInfo>('lease_get', {
         session: sessionId,
         lease,
     })
 }
 
-export function _leases(sessionId: number): Promise<string[]> {
-    return invoke('leases', {
+export function _leases(sessionId: number) {
+    return invoke<string[]>('leases', {
         session: sessionId
     })
 }
 
-export function _revokeLeases(sessionId: number, lease: string): Promise<undefined> {
+export function _revokeLeases(sessionId: number, lease: string) {
     return invoke('lease_revoke', {
         session: sessionId,
         lease
     })
 }
 
-export function _grantLease(sessionId: number, ttl: number, lease?: string): Promise<string> {
-    return invoke('lease_grant', {
+export function _grantLease(sessionId: number, ttl: number, lease?: string) {
+    return invoke<string>('lease_grant', {
         session: sessionId,
         ttl,
         lease
     })
 }
 
-export function _getAllUsers(sessionId: number): Promise<User[]> {
-    return invoke('user_list', {
+export function _getAllUsers(sessionId: number) {
+    return invoke<User[]>('user_list', {
         session: sessionId,
     })
 }
 
-export function _addUser(sessionId: number, user: string, password: string): Promise<undefined> {
+export function _addUser(sessionId: number, user: string, password: string) {
     return invoke('user_add', {
         session: sessionId,
         user,
@@ -213,14 +213,14 @@ export function _addUser(sessionId: number, user: string, password: string): Pro
     })
 }
 
-export function _deleteUser(sessionId: number, user: string): Promise<undefined> {
+export function _deleteUser(sessionId: number, user: string) {
     return invoke('user_delete', {
         session: sessionId,
         user
     })
 }
 
-export function _userChangePassword(sessionId: number, user: string, newPassword: string): Promise<undefined> {
+export function _userChangePassword(sessionId: number, user: string, newPassword: string) {
     return invoke('user_change_password', {
         session: sessionId,
         user,
@@ -228,7 +228,7 @@ export function _userChangePassword(sessionId: number, user: string, newPassword
     })
 }
 
-export function _userGrantRole(sessionId: number, user: string, role: string): Promise<undefined> {
+export function _userGrantRole(sessionId: number, user: string, role: string) {
     return invoke('user_grant_role', {
         session: sessionId,
         user,
@@ -236,7 +236,7 @@ export function _userGrantRole(sessionId: number, user: string, role: string): P
     })
 }
 
-export function _userRevokeRole(sessionId: number, user: string, role: string): Promise<undefined> {
+export function _userRevokeRole(sessionId: number, user: string, role: string) {
     return invoke('user_revoke_role', {
         session: sessionId,
         user,
@@ -244,13 +244,13 @@ export function _userRevokeRole(sessionId: number, user: string, role: string): 
     })
 }
 
-export function _authEnable(sessionId: number): Promise<undefined> {
+export function _authEnable(sessionId: number) {
     return invoke('auth_enable', {
         session: sessionId,
     })
 }
 
-export function _authDisable(sessionId: number): Promise<undefined> {
+export function _authDisable(sessionId: number) {
     return invoke('auth_disable', {
         session: sessionId,
     })
@@ -262,28 +262,28 @@ export function _getAllRoles(sessionId: number): Promise<string[]> {
     })
 }
 
-export function _getRolePermissions(sessionId: number, role: string): Promise<RolePermission[]> {
-    return invoke('role_get_permissions', {
+export function _getRolePermissions(sessionId: number, role: string) {
+    return invoke<RolePermission[]>('role_get_permissions', {
         session: sessionId,
         role
     })
 }
 
-export function _deleteRole(sessionId: number, role: string): Promise<undefined> {
+export function _deleteRole(sessionId: number, role: string) {
     return invoke('role_delete', {
         session: sessionId,
         role
     })
 }
 
-export function _addRole(sessionId: number, role: string): Promise<undefined> {
+export function _addRole(sessionId: number, role: string) {
     return invoke('role_add', {
         session: sessionId,
         role
     })
 }
 
-export function _grantRolePermissions(sessionId: number, role: string, permission: RolePermission): Promise<undefined> {
+export function _grantRolePermissions(sessionId: number, role: string, permission: RolePermission) {
     return invoke('role_grant_permission', {
         session: sessionId,
         role,
@@ -291,7 +291,7 @@ export function _grantRolePermissions(sessionId: number, role: string, permissio
     })
 }
 
-export function _revokeRolePermissions(sessionId: number, role: string, permission: RolePermission): Promise<undefined> {
+export function _revokeRolePermissions(sessionId: number, role: string, permission: RolePermission) {
     return invoke('role_revoke_permission', {
         session: sessionId,
         role,
@@ -299,51 +299,51 @@ export function _revokeRolePermissions(sessionId: number, role: string, permissi
     })
 }
 
-export function _maintenanceCreateSnapshotTask(sessionId: number, filepath: string): Promise<SnapshotInfo> {
-    return invoke('maintenance_create_snapshot_task', {
+export function _maintenanceCreateSnapshotTask(sessionId: number, filepath: string) {
+    return invoke<SnapshotInfo>('maintenance_create_snapshot_task', {
         session: sessionId,
         filepath
     })
 }
 
-export function _maintenanceStopSnapshotTask(taskId: number): Promise<undefined> {
+export function _maintenanceStopSnapshotTask(taskId: number) {
     return invoke('maintenance_stop_snapshot_task', {
         taskId
     })
 }
 
-export function _maintenanceRemoveSnapshotTask(taskId: number): Promise<undefined> {
+export function _maintenanceRemoveSnapshotTask(taskId: number) {
     return invoke('maintenance_remove_snapshot_task', {
         taskId
     })
 }
 
-export function _maintenanceListSnapshotTask(): Promise<SnapshotInfo[]> {
-    return invoke('maintenance_list_snapshot_task')
+export function _maintenanceListSnapshotTask() {
+    return invoke<SnapshotInfo[]>('maintenance_list_snapshot_task')
 }
 
-export function _updateKeyCollection(session: number, keyCollection: string[]): Promise<undefined> {
+export function _updateKeyCollection(session: number, keyCollection: string[]) {
     return invoke('update_key_collection', {
         session,
         keyCollection
     })
 }
 
-export function _setKeyMonitor(session: number, keyMonitor: KeyMonitorConfig): Promise<undefined> {
+export function _setKeyMonitor(session: number, keyMonitor: KeyMonitorConfig) {
     return invoke('set_key_monitor', {
         session,
         keyMonitor
     })
 }
 
-export function _removeKeyMonitor(session: number, key: string): Promise<undefined> {
+export function _removeKeyMonitor(session: number, key: string) {
     return invoke('remove_key_monitor', {
         session,
         key
     })
 }
 
-export function _kvSearchNextDir(session: number, prefix: string, includeFile: boolean): Promise<string[]> {
+export function _kvSearchNextDir(session: number, prefix: string, includeFile: boolean) {
     return invoke<string[]>('kv_search_next_dir', {
         session,
         prefix,
@@ -357,7 +357,7 @@ export function _kvRenameDir(
     newPrefix: string,
     deleteOriginKeys: boolean,
     putStrategy: PutStrategy
-): Promise<string[]> {
+) {
     return invoke<string[]>('kv_rename_dir', {
         session,
         originPrefix,
@@ -367,7 +367,7 @@ export function _kvRenameDir(
     })
 }
 
-export function _kvBatchExport(session: number, keys: number[][], targetPath: string): Promise<void> {
+export function _kvBatchExport(session: number, keys: number[][], targetPath: string) {
     return invoke('kv_batch_export', {
         session,
         keys,
@@ -375,7 +375,7 @@ export function _kvBatchExport(session: number, keys: number[][], targetPath: st
     })
 }
 
-export function _kvBatchImport(session: number, targetPath: string, putStrategy: PutStrategy, prefix?: string): Promise<void> {
+export function _kvBatchImport(session: number, targetPath: string, putStrategy: PutStrategy, prefix?: string) {
     return invoke('kv_batch_import', {
         session,
         targetPath,
