@@ -178,22 +178,6 @@ const addMonitor = () => {
 <template>
   <div class="fill-height sub-page overflow-y-auto">
     <v-layout>
-      <v-btn class="text-none"
-             prepend-icon="mdi-checkbox-marked-circle-auto-outline"
-             :disabled="events.length == 0"
-             @click="markAllRead"
-             color="primary"
-             :size="PAGE_BUTTON_SIZE"
-             :text="t('main.monitor.markAllRead')"
-      />
-      <v-btn class="text-none ml-2"
-             prepend-icon="mdi-delete-circle-outline"
-             :disabled="events.length == 0"
-             @click="clearHistory"
-             color="red"
-             :size="PAGE_BUTTON_SIZE"
-             :text="t('main.monitor.clearHistory')"
-      />
       <v-btn class="text-none ml-2"
              prepend-icon="mdi-robot"
              @click="monitorListDialog = true"
@@ -201,9 +185,23 @@ const addMonitor = () => {
              :size="PAGE_BUTTON_SIZE"
              :text="t('main.monitor.myMonitors')"
       />
-
       <v-spacer/>
-
+      <v-btn class="text-none"
+             prepend-icon="mdi-checkbox-marked-circle-auto-outline"
+             v-show="events.length != 0"
+             @click="markAllRead"
+             color="primary"
+             :size="PAGE_BUTTON_SIZE"
+             :text="t('main.monitor.markAllRead')"
+      />
+      <v-btn class="text-none ml-2"
+             prepend-icon="mdi-delete-circle-outline"
+             v-show="events.length != 0"
+             @click="clearHistory"
+             color="red"
+             :size="PAGE_BUTTON_SIZE"
+             :text="t('main.monitor.clearHistory')"
+      />
     </v-layout>
     <div style="height: calc(100% - 56px); overflow-y: auto;">
       <v-list class="pa-0 my-5 overflow-hidden"

@@ -407,7 +407,7 @@ defineExpose({
 
           <v-tabs v-model="tab" color="primary" align-tabs="start" class="border-b" height="60">
             <v-tab value="general" class="text-none">
-              <v-icon start>mdi-tune</v-icon>
+              <v-icon start color="success">mdi-tune</v-icon>
               {{ t('common.basic') }}
             </v-tab>
             <v-tab value="auth" class="text-none">

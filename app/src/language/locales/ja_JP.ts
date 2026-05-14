@@ -135,7 +135,7 @@ export default {
                     auth: "認証",
                     ssl: "SSL",
                     ssh: "SSH",
-                    authDivider: "ETCD認証",
+                    authDivider: "認証",
                     authUsername: "ユーザー名",
                     authUsernamePlaceholder: "ETCDログイン用ユーザー名",
                     authPassword: "パスワード",

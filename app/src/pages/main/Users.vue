@@ -305,7 +305,7 @@ const roleSelectionProps = (item: string) => {
 
 <template>
   <div class="fill-height sub-page overflow-y-auto">
-    <div>
+    <v-layout>
       <v-btn 
             v-bind="props"
             variant="tonal"
@@ -322,6 +322,7 @@ const roleSelectionProps = (item: string) => {
              :size="PAGE_BUTTON_SIZE"
              :text="t('main.users.addUser')"
       />
+      <v-spacer/>
       <v-btn class="text-none ml-2"
              prepend-icon="mdi-lock"
              @click="authEnable"
@@ -338,7 +339,7 @@ const roleSelectionProps = (item: string) => {
              :text="t('main.users.authDisable')"
              :loading="loadingStore.authDisable"
       />
-    </div>
+    </v-layout>
     <div>
       <v-card class="mt-5 mb-5 overflow-x-auto"
               border

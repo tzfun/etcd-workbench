@@ -135,7 +135,7 @@ export default {
                     auth: "身分驗證",
                     ssl: "SSL",
                     ssh: "SSH",
-                    authDivider: "ETCD身分驗證",
+                    authDivider: "身份認證",
                     authUsername: "使用者名稱",
                     authUsernamePlaceholder: "用於 ETCD 登入的使用者名稱",
                     authPassword: "密碼",
