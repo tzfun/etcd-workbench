@@ -760,25 +760,37 @@ defineExpose({
               </v-sheet>
             </v-form>
 
-            <div class="text-center pt-7 pb-7">
-              <v-btn class="mt-2 pa-0 text-capitalize text-none"
+            <v-row class="mx-0 my-0 align-center justify-space-between gap-2" style="gap: 8px;">
+              <v-btn class="mt-2 pa-1 text-capitalize text-none"
                      variant="text"
                      :ripple="false"
                      color="primary"
                      @click="testConnect"
-                     :text="t('main.home.connector.form.testConnect')"
-              />
-              <v-btn class="mt-2 ml-4 text-capitalize text-none"
-                     variant="outlined"
-                     @click="saveConnection"
-                     :text="t('main.home.connector.form.save')"
-              />
-              <v-btn class="mt-2 ml-4 text-capitalize text-none"
-                     color="blue-darken-1"
-                     @click="connect"
-                     :text="t('common.connect')"
-              />
-            </div>
+              >
+                <v-icon start>mdi-lan-pending</v-icon>
+                {{ t('main.home.connector.form.testConnect') }}
+              </v-btn>
+
+              <div class="d-flex flex-grow-1 flex-md-grow-0" style="gap: 8px;">
+                <v-btn
+                    variant="tonal"
+                    color="primary"
+                    class="flex-grow-1 text-none"
+                    @click="saveConnection"
+                >
+                  <v-icon start>mdi-content-save</v-icon>
+                  {{ t('common.save') }}
+                </v-btn>
+                <v-btn
+                    color="primary"
+                    class="flex-grow-1 text-none"
+                    @click="connect"
+                >
+                  <v-icon start>mdi-lan-connect</v-icon>
+                  {{ t('common.connect') }}
+                </v-btn>
+              </div>
+            </v-row>
 
           </v-card-text>
         </v-card>

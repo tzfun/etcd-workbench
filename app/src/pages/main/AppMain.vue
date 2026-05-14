@@ -313,7 +313,7 @@ const closeTabDirectly = (sessionId?: number) => {
              :value="HOME_TAB"
              density="compact"
              :ripple="false"
-             :min-width="50"
+             :min-width="56"
       >
         <v-icon>mdi-home</v-icon>
       </v-tab>

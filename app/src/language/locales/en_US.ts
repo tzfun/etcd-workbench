@@ -156,7 +156,7 @@ export default {
                     sshPasswordPlaceholder: "SSH login password",
                     sshKeyPlaceholder: "Supported private key formats: Openssh, RSA, PKCS8, PKCS8 Encrypted. Less than 128KB.",
                     sshKeyPasswordPlaceholder: "Passphrase (optional)",
-                    testConnect: "Test Connect",
+                    testConnect: "Test Connection",
                     save: "Save to Favorites",
                     ruleHost: "Host is required",
                     rulePort: "Port is required",
