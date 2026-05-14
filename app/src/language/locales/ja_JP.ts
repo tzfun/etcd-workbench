@@ -68,6 +68,7 @@ export default {
         downloaded: "ダウンロード済み",
         installedUpdates: "インストールされた更新プログラム",
         imported: "インポート",
+        basic: "基本設定",
     },
     feedback: {
         copyError: "クリップボードへの書き込み失敗",

@@ -138,7 +138,7 @@ export function _putKV(sessionId: number, key: string, value: number[], version:
 }
 
 export function _putKVWithLease(sessionId: number, key: string, value: number[], lease: string) {
-    return invoke('kv_put_with_lease', {
+    return invoke<void>('kv_put_with_lease', {
         session: sessionId,
         key,
         value,

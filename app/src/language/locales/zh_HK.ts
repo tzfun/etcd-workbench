@@ -68,6 +68,7 @@ export default {
         downloaded: "已下載",
         installedUpdates: "已安裝更新",
         imported: "已導入",
+        basic: "基礎配置",
     },
     feedback: {
         copyError: "無法寫入剪貼簿",
