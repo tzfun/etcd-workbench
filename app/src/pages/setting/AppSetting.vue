@@ -60,6 +60,14 @@ const editorTheme = reactive({
     {
       label: 'Tomorrow',
       value: 'tomorrow'
+    },
+    {
+      label: 'VSCode Light',
+      value: 'vscodeLight'
+    },
+    {
+      label: 'Idea Light',
+      value: 'ideaLight'
     }
   ],
   dark: [
@@ -94,6 +102,14 @@ const editorTheme = reactive({
     {
       label: 'Dracula',
       value: 'dracula'
+    },
+    {
+      label: 'VSCode Dark',
+      value: 'vscodeDark'
+    },
+    {
+      label: 'Idea Dark',
+      value: 'ideaDark'
     }
   ]
 })

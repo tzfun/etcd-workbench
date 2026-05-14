@@ -661,35 +661,33 @@ defineExpose({
                       </div>
                     </div>
 
-                    <v-expand-transition>
-                      <div v-show="formData.tls.identity.enable" class="mt-4">
-                        <div class="d-flex">
-                          <div class="form-label">
-                            {{ t('main.home.connector.form.certFile') }}
-                          </div>
-                          <div class="form-input">
-                            <SingleFileSelector
-                                v-model="formData.tls.identity.cert"
-                                :max-size="128*1024"
-                                :prompt-text="t('main.home.connector.form.certFilePlaceholder')"
-                            ></SingleFileSelector>
-                          </div>
+                    <div v-show="formData.tls.identity.enable" class="mt-4">
+                      <div class="d-flex">
+                        <div class="form-label">
+                          {{ t('main.home.connector.form.certFile') }}
                         </div>
-
-                        <div class="d-flex">
-                          <div class="form-label">
-                            {{ t('main.home.connector.form.certKetFile') }}
-                          </div>
-                          <div class="form-input">
-                            <SingleFileSelector
-                                v-model="formData.tls.identity.key"
-                                :max-size="128*1024"
-                                :prompt-text="t('main.home.connector.form.certKetFilePlaceholder')"
-                            ></SingleFileSelector>
-                          </div>
+                        <div class="form-input">
+                          <SingleFileSelector
+                              v-model="formData.tls.identity.cert"
+                              :max-size="128*1024"
+                              :prompt-text="t('main.home.connector.form.certFilePlaceholder')"
+                          ></SingleFileSelector>
                         </div>
                       </div>
-                    </v-expand-transition>
+
+                      <div class="d-flex">
+                        <div class="form-label">
+                          {{ t('main.home.connector.form.certKetFile') }}
+                        </div>
+                        <div class="form-input">
+                          <SingleFileSelector
+                              v-model="formData.tls.identity.key"
+                              :max-size="128*1024"
+                              :prompt-text="t('main.home.connector.form.certKetFilePlaceholder')"
+                          ></SingleFileSelector>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -788,64 +786,62 @@ defineExpose({
                         </v-radio-group>
 
                         <div class="mt-4">
-                          <v-expand-transition>
-                            <div v-if="formData.ssh.identity.model == 'password'">
-                              <v-text-field
-                                  v-model="formData.ssh.identity.password"
-                                  :rules="formRules.ssh.identity.password"
-                                  :type="formPasswordShow.show2 ? 'text' : 'password'"
-                                  :append-inner-icon="formPasswordShow.show2 ? 'mdi-eye-off' : 'mdi-eye'"
-                                  @click:append-inner="formPasswordShow.show2 = !formPasswordShow.show2"
-                                  density="comfortable"
-                                  autocomplete
-                                  :placeholder="t('main.home.connector.form.sshPasswordPlaceholder')"
-                              ></v-text-field>
-                            </div>
-                            <div v-else-if="formData.ssh.identity.model == 'key'">
-                              <SingleFileSelector
-                                  v-model="formData.ssh.identity.key.key"
-                                  :max-size="128*1024"
-                                  :prompt-text="t('main.home.connector.form.sshKeyPlaceholder')"
-                              ></SingleFileSelector>
+                          <div v-if="formData.ssh.identity.model == 'password'">
+                            <v-text-field
+                                v-model="formData.ssh.identity.password"
+                                :rules="formRules.ssh.identity.password"
+                                :type="formPasswordShow.show2 ? 'text' : 'password'"
+                                :append-inner-icon="formPasswordShow.show2 ? 'mdi-eye-off' : 'mdi-eye'"
+                                @click:append-inner="formPasswordShow.show2 = !formPasswordShow.show2"
+                                density="comfortable"
+                                autocomplete
+                                :placeholder="t('main.home.connector.form.sshPasswordPlaceholder')"
+                            ></v-text-field>
+                          </div>
+                          <div v-else-if="formData.ssh.identity.model == 'key'">
+                            <SingleFileSelector
+                                v-model="formData.ssh.identity.key.key"
+                                :max-size="128*1024"
+                                :prompt-text="t('main.home.connector.form.sshKeyPlaceholder')"
+                            ></SingleFileSelector>
 
-                              <div class="mt-6 mb-2">
-                                <p class="text-subtitle-2 text-medium-emphasis mb-2">
-                                  {{ t('main.home.connector.form.rsaAlgorithm') }}</p>
-                                <v-radio-group v-model="formData.ssh.identity.key.hashAlgorithm"
-                                               inline
-                                               hide-details
-                                >
-                                  <v-radio
-                                      class="ml-0"
-                                      :label="t('common.sha256')"
-                                      value="sha256"
-                                  />
-                                  <v-radio
-                                      class="ml-2"
-                                      :label="t('common.sha512')"
-                                      value="sha512"
-                                  />
-                                  <v-radio
-                                      class="ml-2"
-                                      :label="t('common.other')"
-                                      value=""
-                                  />
-                                </v-radio-group>
-                              </div>
-
-                              <v-text-field
-                                  class="mt-4"
-                                  :label="t('common.password')"
-                                  v-model="formData.ssh.identity.key.passphrase"
-                                  :type="formPasswordShow.show3 ? 'text' : 'password'"
-                                  :append-inner-icon="formPasswordShow.show3 ? 'mdi-eye-off' : 'mdi-eye'"
-                                  @click:append-inner="formPasswordShow.show3 = !formPasswordShow.show3"
-                                  density="comfortable"
-                                  autocomplete
-                                  :placeholder="t('main.home.connector.form.sshKeyPasswordPlaceholder')"
-                              ></v-text-field>
+                            <div class="mt-6 mb-2">
+                              <p class="text-subtitle-2 text-medium-emphasis mb-2">
+                                {{ t('main.home.connector.form.rsaAlgorithm') }}</p>
+                              <v-radio-group v-model="formData.ssh.identity.key.hashAlgorithm"
+                                             inline
+                                             hide-details
+                              >
+                                <v-radio
+                                    class="ml-0"
+                                    :label="t('common.sha256')"
+                                    value="sha256"
+                                />
+                                <v-radio
+                                    class="ml-2"
+                                    :label="t('common.sha512')"
+                                    value="sha512"
+                                />
+                                <v-radio
+                                    class="ml-2"
+                                    :label="t('common.other')"
+                                    value=""
+                                />
+                              </v-radio-group>
                             </div>
-                          </v-expand-transition>
+
+                            <v-text-field
+                                class="mt-4"
+                                :label="t('common.password')"
+                                v-model="formData.ssh.identity.key.passphrase"
+                                :type="formPasswordShow.show3 ? 'text' : 'password'"
+                                :append-inner-icon="formPasswordShow.show3 ? 'mdi-eye-off' : 'mdi-eye'"
+                                @click:append-inner="formPasswordShow.show3 = !formPasswordShow.show3"
+                                density="comfortable"
+                                autocomplete
+                                :placeholder="t('main.home.connector.form.sshKeyPasswordPlaceholder')"
+                            ></v-text-field>
+                          </div>
                         </div>
                       </div>
                     </div>

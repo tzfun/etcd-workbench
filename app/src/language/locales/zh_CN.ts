@@ -69,6 +69,7 @@ export default {
         installedUpdates: "已安装更新",
         imported: "已导入",
         basic: "基础配置",
+        loading: "加载中"
     },
     feedback: {
         copyError: "无法写入剪切板",

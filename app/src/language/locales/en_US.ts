@@ -69,6 +69,7 @@ export default {
         installedUpdates: "Installed Updates",
         imported: "Imported",
         basic: "General",
+        loading: "Loading",
     },
     feedback: {
         copyError:"Can not write to clipboard",

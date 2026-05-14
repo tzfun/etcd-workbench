@@ -31,8 +31,9 @@ import {relaunch} from "@tauri-apps/api/process";
 import {AppLanguage} from "~/language";
 import {useI18n} from "vue-i18n";
 import {DIALOG_BUTTON_DENSITY, DIALOG_BUTTON_SIZE} from "~/common/vuetify.ts";
+const {t, locale} = useI18n()
 
-const DEFAULT_LOADING_TEXT: string = "Loading..."
+const DEFAULT_LOADING_TEXT: string = `${t('common.loading')}...`
 const loading = ref<boolean>(false)
 const loadingText = ref<string>(DEFAULT_LOADING_TEXT)
 
@@ -41,7 +42,6 @@ const tipsCounter = ref<number>(0)
 const tips = ref<TipsItem[]>([])
 
 const theme = useTheme()
-const {t, locale} = useI18n()
 
 const eventUnListens = reactive<Function[]>([])
 const updateInfo = reactive<UpdateInfo>({

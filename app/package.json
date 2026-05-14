@@ -11,6 +11,7 @@
     "rebuild:linux": "../scripts/linux/rebuild-linux.sh"
   },
   "dependencies": {
+    "@babel/runtime": "^7.29.2",
     "@codemirror/lang-json": "^6.x",
     "@codemirror/lang-sql": "^6.x",
     "@codemirror/lang-xml": "^6.x",
@@ -21,6 +22,11 @@
     "@codemirror/theme-one-dark": "^6.x",
     "@rollup/plugin-inject": "^5.0.5",
     "@tauri-apps/api": "^1",
+    "@uiw/codemirror-theme-darcula": "^4.25.9",
+    "@uiw/codemirror-theme-eclipse": "^4.25.9",
+    "@uiw/codemirror-theme-vscode": "^4.25.9",
+    "@uiw/codemirror-theme-xcode": "^4.25.9",
+    "@uiw/codemirror-themes": "^4.25.9",
     "@ztree/ztree_v3": "3.5.48",
     "codemirror": "^6.0.1",
     "mitt": "^3.0.1",

@@ -17,6 +17,10 @@ import {
     solarizedLight,
     tomorrow,
 } from 'thememirror'
+import { vscodeLight, vscodeDark } from '@uiw/codemirror-theme-vscode'
+import { darcula } from '@uiw/codemirror-theme-darcula'
+import { eclipse } from '@uiw/codemirror-theme-eclipse'
+
 import {Extension} from "@codemirror/state";
 import {_useSettings} from "~/common/store.ts";
 
@@ -37,7 +41,11 @@ export {
     smoothy,
     solarizedLight,
     tomorrow,
-} from 'thememirror'
+    vscodeLight,
+    vscodeDark,
+    darcula,
+    eclipse
+}
 
 export function getTheme(appTheme: string): Extension {
     let setting = _useSettings().value;
@@ -84,6 +92,14 @@ export function getThemeByName(name: string) {
             return coolGlow
         case 'dracula':
             return dracula
+        case 'vscodeLight':
+            return vscodeLight
+        case 'vscodeDark':
+            return vscodeDark
+        case 'ideaLight':
+            return eclipse
+        case 'ideaDark':
+            return darcula
         default:
             return smoothy
     }
