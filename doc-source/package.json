@@ -1,6 +1,6 @@
 {
-  "version": "1.2.5",
-  "description": "1.1.4",
+  "version": "1.2.6",
+  "description": "Etcd Workbench",
   "homepage": "https://github.com/tzfun/etcd-workbench",
   "devDependencies": {
     "vitepress": "^1.4.0"
