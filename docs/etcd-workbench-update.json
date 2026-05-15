@@ -1,15 +1,15 @@
 {
     "version": "1.2.6",
     "notes": "Supports login for non-root users who do not have full path access.",
-    "pub_date": "2026-05-14T17:39:49+08:00",
+    "pub_date": "2026-05-14T18:29:27+08:00",
     "platforms": {
         "darwin-x86_64": {
-            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K1Bjb0VzOFBmZFhOdFluWUFTYjBjekpWRnU4ZnJ5ZDBZNTljS1JmTEdoN2UzR3dWU2JLZGw1SUtWcU44NHl6SmQ1R3RTZkZmLzZzcENnVEVoU3V6VlE0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzcyNzAyNTU0CWZpbGU6RXRjZCBXb3JrYmVuY2guYXBwLnRhci5negpmbW9McmZNY0orRjFiM3BndndGbWRzR01KTFNYYTY3TkZEUUlOb0VRY1dxdWlFa1NSL1ZobDl0bitOeHJnUjV4Q1hKVDA5Tjc5NWJkWWwzdUl2WTNBZz09Cg==",
-            "url": "https://github.com/tzfun/etcd-workbench/releases/download/App-1.2.5/etcd-workbench-1.2.5-macos-x86_64.app.tar.gz"
+            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K0Y4blNKV1J1Q0VibklHQnFuUkNhS2s0amNUZWU5Q0N2WlJBTFhTS1dzbDBnLzFVYmRid3NRQTdGNVYxcUhCVC9xMlp4YUJKYVJUckdTUGtaUkVidlFVPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc4NzU0MjIzCWZpbGU6RXRjZCBXb3JrYmVuY2guYXBwLnRhci5negpna1BvSlBGZ2FLNzc2ZzVTU0luMHd6SFdMYVMvWHB4TSt6TkJjWEFHT2ZvZzlLM0R4SlRsbzJFSDFQZzhkVlkzR3kzc3dDK2dYQ2pCRmRtbzdmNHNDUT09Cg==",
+            "url": "https://github.com/tzfun/etcd-workbench/releases/download/App-1.2.6/etcd-workbench-1.2.6-macos-x86_64.app.tar.gz"
         },
         "darwin-aarch64": {
-            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K1BrdkhXNHROYzNoSUtDUGJ0UmRiUHRCWjE3Y3FUbTlVWk5BbzFVN0V6blR3SldCY3d4Mk4yMllUdmNTVnRzSlhNK1htK3dsMWUvY2J1eDZMeXdES2djPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzcyNzAzNzQ2CWZpbGU6RXRjZCBXb3JrYmVuY2guYXBwLnRhci5negpYN1lTY2pHYmk2VnYzbTJUY0lkV3hRSE9Xb2RTWDlINFdLMm41QWc5dnFhMEFhSk15ZmFNWmF0OEtLemRSRUZmNlRMOTMxUkU2WGRSSmxWVFB4K0xEQT09Cg==",
-            "url": "https://github.com/tzfun/etcd-workbench/releases/download/App-1.2.5/etcd-workbench-1.2.5-macos-aarch64.app.tar.gz"
+            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K0JHUDhNNWJCV0ZBdi85d3JkcFBQZGdOakZaSjJ4d2JTaElEWTlVWXk5ZFlRWVdVNk1ObS9JQzNGT041ajR3Q2d5VEI0Qkh0bzY3amw2R21FUGFtMlFNPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc4NzU0NTQ2CWZpbGU6RXRjZCBXb3JrYmVuY2guYXBwLnRhci5negovT0FJb1dLS2IzcEdVQ1pXSEpmVlZ1YTRRL013UGhRQ1plZDRPYkJweEJYdzJMV0ZCRE9IdFNqa1JZQnBSSzVOZTY1aGFlekxvL0JmUTkyOFAweTBBdz09Cg==",
+            "url": "https://github.com/tzfun/etcd-workbench/releases/download/App-1.2.6/etcd-workbench-1.2.6-macos-aarch64.app.tar.gz"
         },
         "windows-x86_64": {
             "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K0dPNkMvdXZMb1VYLzZxeUhFdUdyWFVHY21Ld2JlOXFPSHR2OFBOMmFCL0k5WEJLOEl2Qm9QTnJNK1JLa3lOajF0TEV3R24wWlM0c0c1U1BMemJtTWc0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc4NzUxNTg5CWZpbGU6RXRjZCBXb3JrYmVuY2hfMS4yLjZfeDY0LXNldHVwLm5zaXMuemlwCjY3Szh0RjJrMGVBV1laZ1AyWXczQkV3UG9qU1Q3T2tGbjI1dTBZcGxWK3JpWmg3Z1h0RVI0eVpVSVJlNmZCVjI4SDk0TVIrVEN1NkpEWU90bVVBZ0FRPT0K",
