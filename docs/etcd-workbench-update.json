@@ -1,14 +1,14 @@
 {
     "version": "1.2.6",
     "notes": "Supports login for non-root users who do not have full path access.",
-    "pub_date": "2026-05-14T18:29:27+08:00",
+    "pub_date": "2026-05-15T16:04:41+08:00",
     "platforms": {
         "darwin-x86_64": {
-            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K0Y4blNKV1J1Q0VibklHQnFuUkNhS2s0amNUZWU5Q0N2WlJBTFhTS1dzbDBnLzFVYmRid3NRQTdGNVYxcUhCVC9xMlp4YUJKYVJUckdTUGtaUkVidlFVPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc4NzU0MjIzCWZpbGU6RXRjZCBXb3JrYmVuY2guYXBwLnRhci5negpna1BvSlBGZ2FLNzc2ZzVTU0luMHd6SFdMYVMvWHB4TSt6TkJjWEFHT2ZvZzlLM0R4SlRsbzJFSDFQZzhkVlkzR3kzc3dDK2dYQ2pCRmRtbzdmNHNDUT09Cg==",
+            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K0NLMVFEMG00K2l5YkE4cy9ZT3ZPcTVBNjFRbkMxMWxtWDBPR3JzNElKSWhuMld4ZW1jSWFGVzZlZWE5d01hQ3l4Z1V0SFB2M2hibjcyMEc5U3lsVndzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc4ODIwMjAxCWZpbGU6RXRjZCBXb3JrYmVuY2guYXBwLnRhci5negorRGxRVlhWNS8zOGp2NG1sTkc3OFVFTGh4QTN0Q0VranY2cEJOc2s5U3h2S1VBZTFpVHU4TyszdTNTWG5yblhsNVJMTzZPTFlwRUl0bmxMVWlpNm1DQT09Cg==",
             "url": "https://github.com/tzfun/etcd-workbench/releases/download/App-1.2.6/etcd-workbench-1.2.6-macos-x86_64.app.tar.gz"
         },
         "darwin-aarch64": {
-            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K0JHUDhNNWJCV0ZBdi85d3JkcFBQZGdOakZaSjJ4d2JTaElEWTlVWXk5ZFlRWVdVNk1ObS9JQzNGT041ajR3Q2d5VEI0Qkh0bzY3amw2R21FUGFtMlFNPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc4NzU0NTQ2CWZpbGU6RXRjZCBXb3JrYmVuY2guYXBwLnRhci5negovT0FJb1dLS2IzcEdVQ1pXSEpmVlZ1YTRRL013UGhRQ1plZDRPYkJweEJYdzJMV0ZCRE9IdFNqa1JZQnBSSzVOZTY1aGFlekxvL0JmUTkyOFAweTBBdz09Cg==",
+            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K0hGZmwyRW5teVRTVE9uOHlreUZUMHFKdXhlWnhPN25kWktmM2pZdU96YzlYN2ZBd0t6ZEdPaTZBZDJNRnlzVCtnNmtoZ1c4eUdxSUlSTkdLNm5VNGdBPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc4ODMyMjU5CWZpbGU6RXRjZCBXb3JrYmVuY2guYXBwLnRhci5negoxOCtSVUdMVzZRSG9BazVyU3BoemxldUxhQTdvT21lQm8wZFh4OG5IVkhwaWExUFZhMS9XeHZpK0NzMzVDd3I4emtsaTJLbjM2Nlk3TW5qa0tRSFJCZz09Cg==",
             "url": "https://github.com/tzfun/etcd-workbench/releases/download/App-1.2.6/etcd-workbench-1.2.6-macos-aarch64.app.tar.gz"
         },
         "windows-x86_64": {

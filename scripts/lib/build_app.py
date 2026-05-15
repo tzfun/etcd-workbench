@@ -156,6 +156,7 @@ def build_app_macos(target, build_platform):
         shutil.rmtree(bundle_path)
 
     execute('pnpm install')
+    # execute(f'CFLAGS_x86_64_apple_darwin="-fno-modules" pnpm tauri build --target {target}')
     execute(f'pnpm tauri build --target {target}')
 
     to_dir = os.path.join(root_path, 'bin', 'app', build_platform)
