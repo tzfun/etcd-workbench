@@ -19,6 +19,8 @@ export interface SettingConfig {
     kvPathSplitter: string,
     //  KV保存之前是否检查格式
     kvCheckFormatBeforeSave: boolean,
+    //  KV内容显示时是否进行自动格式化
+    kvAutoFormat: boolean,
     //  KV保存之前是否进行差异确认
     kvConfirmDiffBeforeSave: boolean,
     kvTreeSearchWithFolder: boolean,
@@ -59,6 +61,7 @@ export const DEFAULT_SETTING_CONFIG: SettingConfig = {
     editorLightTheme: 'smoothy',
     kvPathSplitter: '/',
     kvCheckFormatBeforeSave: true,
+    kvAutoFormat: true,
     kvConfirmDiffBeforeSave: true,
     kvTreeSearchWithFolder: true,
     kvSearchNextDirLimit: 100,

@@ -26,6 +26,9 @@ pub struct SettingConfig {
     /// KV保存之前是否进行差异确认
     #[serde(default = "default_kv_confirm_diff_before_save")]
     pub kv_confirm_diff_before_save: bool,
+    /// KV打开时是否自动格式化
+    #[serde(default = "default_kv_auto_format")]
+    pub kv_auto_format: bool,
     /// KV树状搜索是否包含文件夹
     #[serde(default = "default_kv_tree_search_with_folder")]
     pub kv_tree_search_with_folder: bool,
@@ -89,6 +92,10 @@ fn default_kv_confirm_diff_before_save() -> bool {
     true
 }
 
+fn default_kv_auto_format() -> bool {
+    true
+}
+
 fn default_kv_tree_search_with_folder() -> bool {
     true
 }
@@ -135,6 +142,7 @@ impl Default for SettingConfig {
             kv_path_splitter: default_kv_path_splitter(),
             kv_check_format_before_save: default_kv_check_format_before_save(),
             kv_confirm_diff_before_save: default_kv_confirm_diff_before_save(),
+            kv_auto_format: default_kv_auto_format(),
             kv_tree_search_with_folder: default_kv_tree_search_with_folder(),
             kv_search_next_dir_limit: default_kv_search_next_dir_limit(),
             kv_dir_rename_keys_limit: default_kv_dir_rename_keys_limit(),

@@ -426,6 +426,8 @@ export default {
         checkFormatBeforeSaveDesc: "Before saving the currently edited key each time, check whether the value format is correct.",
         confirmDiffBeforeSave: "Confirm diff before saving",
         confirmDiffBeforeSaveDesc: "Compare and confirm modifications before saving",
+        autoFormat: "Auto format on key open",
+        autoFormatDesc: "Whether to automatically perform beautification formatting when opening KV content in the editor if the content is in a format such as JSON/YAML/XML.",
         editorTheme: "Editor theme",
         editorThemeDesc: "Set the Key-Value editor personalized theme.",
         editorLightTheme: "Light theme",
