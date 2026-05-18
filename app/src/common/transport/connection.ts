@@ -11,7 +11,8 @@ export interface TlsIdentity {
 export interface ConnectionTls {
     domain?: string,
     cert: number[][],
-    identity?: TlsIdentity
+    identity?: TlsIdentity,
+    insecureSkipTlsVerify?: boolean,
 }
 
 export type HashAlgorithm = "sha256" | "sha512"

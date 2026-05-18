@@ -145,6 +145,8 @@ export default {
                     sslAuthorityPlaceholder: "SSL/TLS authority",
                     sslCAFile: "CA File",
                     sslCAFilePlaceholder: "PEM encoded X509 certificate, less than 128KB.",
+                    sslInsecureSkipVerify: "Skip TLS verify",
+                    sslInsecureSkipVerifyDetail: "Insecure: trust any server certificate without verification. Use only for development or when the certificate is issued by a public CA / terminated by a reverse proxy.",
                     identity: "Identity",
                     rsaAlgorithm: "Hash algorithm for RSA key",
                     certFile: "Cert file",

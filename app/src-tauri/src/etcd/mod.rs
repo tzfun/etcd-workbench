@@ -23,6 +23,8 @@ pub mod etcd_connector_handler;
 mod test;
 mod wrapped_etcd_client;
 pub mod key_watcher;
+#[cfg(feature = "etcd-client-tls")]
+pub mod tls_helper;
 
 static CONNECTION_ID_COUNTER: AtomicI32 = AtomicI32::new(1);
 

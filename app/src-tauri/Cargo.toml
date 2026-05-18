@@ -37,12 +37,25 @@ prost = "0.14"
 aes = "0.8.4"
 reqwest = {version = "0.11.27", features= ["rustls-tls"] }
 
+# 仅在 etcd-client-tls (rustls) 路径下用于实现 “跳过证书校验” 时预取服务端证书并解析 SAN
+rustls = { version = "0.23", optional = true, default-features = false, features = ["std", "ring", "tls12"] }
+tokio-rustls = { version = "0.26", optional = true, default-features = false, features = ["ring", "tls12"] }
+rustls-pki-types = { version = "1", optional = true }
+x509-parser = { version = "0.16", optional = true }
+
 [features]
 default = ["etcd-client-tls"]
 
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!
 custom-protocol = ["tauri/custom-protocol"]
-etcd-client-tls = ["etcd-client/tls", "etcd-client/tls-roots"]
+etcd-client-tls = [
+    "etcd-client/tls",
+    "etcd-client/tls-roots",
+    "dep:rustls",
+    "dep:tokio-rustls",
+    "dep:rustls-pki-types",
+    "dep:x509-parser",
+]
 # 依赖本地 perf
 etcd-client-tls-openssl = ["etcd-client/tls-openssl-vendored"]
 

@@ -145,6 +145,8 @@ export default {
                     sslAuthorityPlaceholder: "SSL/TLS認証局",
                     sslCAFile: "CA証明書",
                     sslCAFilePlaceholder: "PEMエンコードX509証明書（128KB未満）",
+                    sslInsecureSkipVerify: "証明書検証をスキップ",
+                    sslInsecureSkipVerifyDetail: "安全ではありません：サーバーの任意の証明書を信頼し、ホスト名検証も行いません。開発用、公開 CA が発行した証明書、またはリバースプロキシで TLS 終端する場合のみ使用してください。",
                     identity: "身元",
                     rsaAlgorithm: "RSAハッシュアルゴリズム",
                     certFile: "証明書ファイル",

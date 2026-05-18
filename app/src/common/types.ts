@@ -87,7 +87,8 @@ export type ConnectionTlsForm = {
     enable: boolean,
     domain: string,
     cert: FileForm,
-    identity: ConnectionTlsIdentity
+    identity: ConnectionTlsIdentity,
+    insecureSkipTlsVerify: boolean,
 }
 
 export type ConnectionSshKey = {
@@ -137,7 +138,8 @@ export const DefaultConnection: ConnectionForm = {
                 file: undefined,
                 content: undefined
             }
-        }
+        },
+        insecureSkipTlsVerify: false
     },
     ssh: {
         enable: false,

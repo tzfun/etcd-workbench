@@ -15,10 +15,15 @@ pub struct TlsIdentity {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct ConnectionTls {
     pub domain: Option<String>,
     pub cert: Vec<TlsCertificate>,
     pub identity: Option<TlsIdentity>,
+    /// 跳过 TLS 证书校验。开启后将信任服务端任意证书（不校验颁发者及主机名）。
+    /// 适用于：使用公共 CA、TLS 反向代理终止、本地开发等场景。
+    #[serde(default)]
+    pub insecure_skip_tls_verify: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

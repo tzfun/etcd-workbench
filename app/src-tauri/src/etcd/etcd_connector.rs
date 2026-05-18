@@ -70,21 +70,89 @@ impl EtcdConnector {
             option = option.with_user(user.username, user.password)
         };
 
-        if let Some(tls) = connection.tls {
+        let mut host = connection.host.clone();
+        let mut port = connection.port;
+        let namespace = connection.namespace.clone();
+
+        let ssh = if let Some(ssh) = connection.ssh.clone() {
+            let ssh_context =
+                SshTunnel::new(ssh, Box::leak(host.clone().into_boxed_str()), port, handler)
+                    .await?;
+            port = ssh_context.get_proxy_port();
+            host.clear();
+            host.push_str("127.0.0.1");
+
+            connection_config.host = host.clone();
+            connection_config.port = port;
+
+            Some(ssh_context)
+        } else {
+            None
+        };
+
+        if let Some(tls) = connection.tls.clone() {
             #[cfg(feature = "etcd-client-tls")]
             {
                 use etcd_client::{Certificate, Identity, TlsOptions};
 
                 let mut tls_option = TlsOptions::new();
-                for cert in tls.cert {
-                    tls_option = tls_option.ca_certificate(Certificate::from_pem(cert));
+                let mut ca_added = false;
+                for cert in &tls.cert {
+                    tls_option = tls_option.ca_certificate(Certificate::from_pem(cert.clone()));
+                    ca_added = true;
                 }
 
-                if let Some(domain) = tls.domain {
-                    tls_option = tls_option.domain_name(domain);
-                };
+                let mut domain_for_tls = tls.domain.clone();
 
-                if let Some(identity) = tls.identity {
+                if tls.insecure_skip_tls_verify {
+                    //  tonic 的 ClientTlsConfig 不直接暴露 “skip verify”，
+                    //  故采用：先用 rustls + 自定义 verifier 抓取服务端证书，
+                    //  把 leaf 证书作为 CA 加入信任，并用证书自带的 SAN/CN 作为 domain_name。
+                    //
+                    //  注意：当启用 SSH 隧道时，host/port 已经被改写为本地代理地址，
+                    //  这里通过隧道抓取，etcd 实际证书会原样透传回来。
+                    let pre_fetch_timeout =
+                        Duration::from_secs(settings.connect_timeout_seconds.max(5));
+                    match super::tls_helper::fetch_server_certificate(
+                        host.as_str(),
+                        port,
+                        tls.domain.as_deref(),
+                        pre_fetch_timeout,
+                    )
+                    .await
+                    {
+                        Ok(fetched) => {
+                            tls_option =
+                                tls_option.ca_certificate(Certificate::from_pem(fetched.leaf_pem));
+                            ca_added = true;
+                            //  仅在用户没有显式指定 domain 时使用从证书中提取的名字
+                            if domain_for_tls.as_deref().map_or(true, |s| s.is_empty()) {
+                                domain_for_tls = Some(fetched.server_name);
+                            }
+                            warn!(
+                                "Insecure TLS skip-verify enabled, server certificate trusted on the fly for {}:{}",
+                                host, port
+                            );
+                        }
+                        Err(e) => {
+                            return Err(LogicError::MsgError(format!(
+                                "Insecure TLS pre-handshake failed: {e}"
+                            )));
+                        }
+                    }
+                } else if !ca_added {
+                    //  未上传 CA 且未开启 skip verify 时，自动启用系统/webpki 根证书，
+                    //  以便 Let's Encrypt 等公共 CA 颁发的证书无需手动上传 CA。
+                    tls_option = tls_option.with_enabled_roots();
+                }
+
+                if let Some(domain) = domain_for_tls {
+                    if !domain.is_empty() {
+                        tls_option = tls_option.domain_name(domain);
+                    }
+                }
+
+                if let Some(identity) = tls.identity.clone() {
                     tls_option =
                         tls_option.identity(Identity::from_pem(identity.cert, identity.key));
                 };
@@ -97,11 +165,20 @@ impl EtcdConnector {
                 use etcd_client::OpenSslClientConfig;
 
                 let mut openssl_config = OpenSslClientConfig::default();
-                for cert in tls.cert {
+                for cert in &tls.cert {
                     openssl_config = openssl_config.ca_cert_pem(cert.as_slice());
                 }
 
-                if let Some(domain) = tls.domain {
+                if tls.insecure_skip_tls_verify {
+                    openssl_config = openssl_config.manually(|builder| {
+                        use openssl::ssl::SslVerifyMode;
+                        builder.set_verify(SslVerifyMode::NONE);
+                        Ok(())
+                    });
+                    warn!("Insecure TLS skip-verify enabled (OpenSSL)");
+                }
+
+                if let Some(domain) = tls.domain.clone() {
                     openssl_config = openssl_config.manually(move |builder| {
                         builder
                             .deref_mut()
@@ -120,32 +197,13 @@ impl EtcdConnector {
                     });
                 };
 
-                if let Some(identity) = tls.identity {
+                if let Some(identity) = tls.identity.clone() {
                     openssl_config = openssl_config
                         .client_cert_pem_and_key(identity.cert.as_slice(), identity.key.as_slice());
                 };
 
                 option = option.with_openssl_tls(openssl_config);
             }
-        };
-        let mut host = connection.host;
-        let mut port = connection.port;
-        let namespace = connection.namespace.clone();
-
-        let ssh = if let Some(ssh) = connection.ssh {
-            let ssh_context =
-                SshTunnel::new(ssh, Box::leak(host.clone().into_boxed_str()), port, handler)
-                    .await?;
-            port = ssh_context.get_proxy_port();
-            host.clear();
-            host.push_str("127.0.0.1");
-
-            connection_config.host = host.clone();
-            connection_config.port = port;
-
-            Some(ssh_context)
-        } else {
-            None
         };
 
         let address = format!("{}:{}", host, port);
@@ -1155,6 +1213,13 @@ impl EtcdConnector {
     pub async fn metrics(&self) -> Result<Vec<(String, String)>, LogicError> {
         let response = if let Some(tls) = &self.connection_config.tls {
             let mut client_builder = reqwest::Client::builder().use_rustls_tls().tls_sni(true);
+
+            if tls.insecure_skip_tls_verify {
+                //  reqwest 启用 rustls-tls 时，danger_accept_invalid_certs(true)
+                //  会安装一个跳过证书链与主机名校验的 verifier，相当于 InsecureSkipVerify。
+                client_builder = client_builder.danger_accept_invalid_certs(true);
+            }
+
             for cert in &tls.cert {
                 let certificate = reqwest::Certificate::from_pem(cert.as_slice())?;
                 client_builder = client_builder.add_root_certificate(certificate);

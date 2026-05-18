@@ -177,6 +177,7 @@ watch(() => props.modelValue, (info: ConnectionInfo) => {
       if (tls.domain) {
         form.tls.domain = tls.domain
       }
+      form.tls.insecureSkipTlsVerify = !!tls.insecureSkipTlsVerify
       let identity = tls.identity
       if (identity) {
         form.tls.identity.enable = true
@@ -248,7 +249,8 @@ const checkForm = async (): Promise<Connection> => {
 
       connection.tls = {
         domain: _isEmpty(tlsForm.domain) ? undefined : tlsForm.domain,
-        cert: [_encodeStringToBytes(tlsForm.cert.content)]
+        cert: _isEmpty(tlsForm.cert.content) ? [] : [_encodeStringToBytes(tlsForm.cert.content)],
+        insecureSkipTlsVerify: tlsForm.insecureSkipTlsVerify
       }
 
       if (tlsForm.identity.enable) {
@@ -649,6 +651,34 @@ defineExpose({
                     </div>
 
                     <div class="d-flex mt-4">
+                      <div class="form-label form-checkbox-label d-flex align-center">
+                        {{ t('main.home.connector.form.sslInsecureSkipVerify') }}
+                        <v-tooltip interactive location="top" max-width="360">
+                          <template v-slot:activator="{ props: activatorProps }">
+                            <v-icon
+                                icon="mdi-information-outline"
+                                v-bind="activatorProps"
+                                size="small"
+                                color="blue-lighten-1"
+                                class="mx-1"
+                            />
+                          </template>
+                          <div>
+                            {{ t('main.home.connector.form.sslInsecureSkipVerifyDetail') }}
+                          </div>
+                        </v-tooltip>
+                      </div>
+                      <div class="form-input">
+                        <v-checkbox
+                            v-model="formData.tls.insecureSkipTlsVerify"
+                            color="warning"
+                            :label="t('common.enable')"
+                            hide-details
+                        />
+                      </div>
+                    </div>
+
+                    <div class="d-flex mt-4">
                       <div class="form-label form-checkbox-label">
                         {{ t('main.home.connector.form.identity') }}
                       </div>
@@ -660,32 +690,32 @@ defineExpose({
                         />
                       </div>
                     </div>
+                  </div>
 
-                    <div v-show="formData.tls.identity.enable" class="mt-4">
-                      <div class="d-flex">
-                        <div class="form-label">
-                          {{ t('main.home.connector.form.certFile') }}
-                        </div>
-                        <div class="form-input">
-                          <SingleFileSelector
-                              v-model="formData.tls.identity.cert"
-                              :max-size="128*1024"
-                              :prompt-text="t('main.home.connector.form.certFilePlaceholder')"
-                          ></SingleFileSelector>
-                        </div>
+                  <div v-show="formData.tls.identity.enable" class="mt-4">
+                    <div class="d-flex">
+                      <div class="form-label">
+                        {{ t('main.home.connector.form.certFile') }}
                       </div>
+                      <div class="form-input">
+                        <SingleFileSelector
+                            v-model="formData.tls.identity.cert"
+                            :max-size="128*1024"
+                            :prompt-text="t('main.home.connector.form.certFilePlaceholder')"
+                        ></SingleFileSelector>
+                      </div>
+                    </div>
 
-                      <div class="d-flex">
-                        <div class="form-label">
-                          {{ t('main.home.connector.form.certKetFile') }}
-                        </div>
-                        <div class="form-input">
-                          <SingleFileSelector
-                              v-model="formData.tls.identity.key"
-                              :max-size="128*1024"
-                              :prompt-text="t('main.home.connector.form.certKetFilePlaceholder')"
-                          ></SingleFileSelector>
-                        </div>
+                    <div class="d-flex">
+                      <div class="form-label">
+                        {{ t('main.home.connector.form.certKetFile') }}
+                      </div>
+                      <div class="form-input">
+                        <SingleFileSelector
+                            v-model="formData.tls.identity.key"
+                            :max-size="128*1024"
+                            :prompt-text="t('main.home.connector.form.certKetFilePlaceholder')"
+                        ></SingleFileSelector>
                       </div>
                     </div>
                   </div>

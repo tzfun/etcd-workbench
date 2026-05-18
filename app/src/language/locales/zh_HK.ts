@@ -145,6 +145,8 @@ export default {
                     sslAuthorityPlaceholder: "SSL/TLS authority",
                     sslCAFile: "CA憑證",
                     sslCAFilePlaceholder: "PEM 編碼的 X509 憑證，小於 128KB。",
+                    sslInsecureSkipVerify: "跳過憑證驗證",
+                    sslInsecureSkipVerifyDetail: "不安全：將信任伺服器任意憑證且不校驗主機名。僅建議於開發除錯，或憑證由公共 CA 簽發 / 由反向代理 TLS 終止時使用。",
                     identity: "用戶端驗證",
                     rsaAlgorithm: "針對RSA的雜湊演算法",
                     certFile: "驗證檔案",

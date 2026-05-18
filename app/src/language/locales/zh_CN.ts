@@ -145,6 +145,8 @@ export default {
                     sslAuthorityPlaceholder: "SSL/TLS authority",
                     sslCAFile: "CA证书",
                     sslCAFilePlaceholder: "PEM 编码的 X509 证书，小于 128KB。",
+                    sslInsecureSkipVerify: "跳过证书验证",
+                    sslInsecureSkipVerifyDetail: "不安全：将信任服务端任意证书且不校验主机名。仅建议在开发调试，或证书由公共 CA 签发 / 由反向代理 TLS 终止时使用。",
                     identity: "客户端认证",
                     rsaAlgorithm: "针对RSA的Hash算法",
                     certFile: "认证文件",
