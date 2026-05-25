@@ -170,6 +170,7 @@ export default {
                     ruleSshHost: "請填寫SSH主機位址",
                     ruleHostInvalid: "無效的主機位址",
                     ruleUser: "請填寫使用者",
+                    formInvalid: "請完成配置填寫",
                 },
                 connectionTesting: "測試連接中...",
                 testSuccess: "連接測試通過!",

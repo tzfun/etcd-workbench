@@ -293,6 +293,7 @@ const checkForm = async (): Promise<Connection> => {
 
     return connection
   } else {
+    _tipWarn(t('main.home.connector.form.formInvalid'))
     throw new Error("Form invalid")
   }
 }
@@ -301,6 +302,8 @@ const resetFormValidation = () => {
   if (formRef.value) {
     (formRef.value as VForm).resetValidation()
   }
+
+  tab.value = 'general'
 }
 
 const testConnect = () => {

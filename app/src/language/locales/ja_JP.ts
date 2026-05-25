@@ -170,6 +170,7 @@ export default {
                     ruleSshHost: "SSHホストアドレスを入力",
                     ruleHostInvalid: "無効なホストアドレス",
                     ruleUser: "ユーザーを入力",
+                    formInvalid: "設定情報を入力してください。",
                 },
                 connectionTesting: "接続テスト中...",
                 testSuccess: "接続テスト成功!",

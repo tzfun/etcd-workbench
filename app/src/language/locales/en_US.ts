@@ -170,6 +170,7 @@ export default {
                     ruleSshHost: "Ssh host is required",
                     ruleHostInvalid: "Host is invalid",
                     ruleUser: "User is required",
+                    formInvalid: "Please complete the configuration information.",
                 },
                 connectionTesting: "Connection testing...",
                 testSuccess: "The connection test was successful!",

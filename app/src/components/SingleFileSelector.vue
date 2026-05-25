@@ -82,6 +82,7 @@ const fileInputChange = (event: Event) => {
 
 function clearFile() {
   modelValueMirror.value.file = undefined
+  modelValueMirror.value.content = undefined
   fileReadStatus.value = 'none'
 }
 
@@ -104,12 +105,13 @@ const showFileContent = () => {
     >{{ text || t("common.selectFile") }}
     </v-btn>
     <v-btn
-        v-show="modelValueMirror.file"
+        v-show="modelValueMirror.file || modelValueMirror.content"
         variant="text"
         icon="mdi-close"
         density="compact"
         @click="clearFile"
         class="ml-2"
+        color="red-lighten-1"
     />
     <p v-if="promptText" class="v-messages mt-2">{{ promptText }}</p>
     <div class="file-detail mt-2">

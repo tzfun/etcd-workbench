@@ -170,6 +170,7 @@ export default {
                     ruleSshHost: "请填写SSH主机地址",
                     ruleHostInvalid: "无效的主机地址",
                     ruleUser: "请填写用户",
+                    formInvalid: "关键配置未填写",
                 },
                 connectionTesting: "连接测试中...",
                 testSuccess: "连接测试通过!",
