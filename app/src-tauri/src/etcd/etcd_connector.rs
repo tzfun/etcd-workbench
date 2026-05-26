@@ -23,6 +23,7 @@ use etcd_client::{
 };
 use log::{debug, error, info, warn};
 use russh::client;
+use rustls_pki_types::{CertificateDer, TrustAnchor};
 use serde::{Deserialize, Serialize};
 use std::any::Any;
 use std::collections::{HashMap, HashSet};
@@ -90,7 +91,7 @@ impl EtcdConnector {
             None
         };
 
-        if let Some(tls) = connection.tls.clone() {
+        let address = if let Some(tls) = connection.tls.clone() {
             #[cfg(feature = "etcd-client-tls")]
             {
                 use etcd_client::{Certificate, Identity, TlsOptions};
@@ -122,9 +123,22 @@ impl EtcdConnector {
                     .await
                     {
                         Ok(fetched) => {
-                            tls_option =
-                                tls_option.ca_certificate(Certificate::from_pem(fetched.leaf_pem));
-                            ca_added = true;
+                            let mut anchor_added = false;
+                            // 提取 TrustAnchor
+                            for der_bytes in &fetched.chain_ders {
+                                let cert_der = CertificateDer::from(der_bytes.as_slice());
+                                if let Ok(anchor) = webpki::anchor_from_trusted_cert(&cert_der) {
+                                    tls_option = tls_option.trust_anchor(anchor.to_owned());
+                                    anchor_added = true;
+                                }
+                            }
+                            if !anchor_added {
+                                // fallback：把 leaf PEM 作为 ca_certificate
+                                tls_option = tls_option
+                                    .ca_certificate(Certificate::from_pem(fetched.leaf_pem));
+                                warn!("No valid trust anchor extracted from chain, falling back to ca_certificate");
+                            }
+
                             //  仅在用户没有显式指定 domain 时使用从证书中提取的名字
                             if domain_for_tls.as_deref().map_or(true, |s| s.is_empty()) {
                                 domain_for_tls = Some(fetched.server_name);
@@ -206,9 +220,11 @@ impl EtcdConnector {
 
                 option = option.with_openssl_tls(openssl_config);
             }
+            format!("https://{}:{}", host, port)
+        } else {
+            format!("{}:{}", host, port)
         };
 
-        let address = format!("{}:{}", host, port);
         info!("Connect to etcd server: {}", address);
         let client = Client::connect([address], Some(option)).await?;
 

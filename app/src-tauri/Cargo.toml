@@ -9,7 +9,7 @@ edition = "2021"
 
 [build-dependencies]
 tauri-build = { version = "1.5.6", features = [] }
-prost-build = "0.14.1"
+prost-build = "0.14.3"
 regex = "1.11.3"
 
 # [target.'cfg(target_os = "macos")'.dependencies]
@@ -18,30 +18,31 @@ regex = "1.11.3"
 tauri = { version = "1.8.3", features = [ "os-all", "shell-open", "window-all", "dialog-open", "dialog-save", "dialog-ask", "updater", "clipboard-write-text", "process-relaunch", "macos-private-api", "notification"] }
 #fix-path-env = { git = "https://github.com/tauri-apps/fix-path-env-rs" }
 serde = { version = "1.0.228", features = ["derive"] }
-serde_json = "1.0.145"
+serde_json = "1.0.150"
 window-shadows = "0.2.2"
 
 tokio = { version = "1.46.1", features = ["full"] }
-log = "0.4.28"
-env_logger = "0.11.8"
+log = "0.4.30"
+env_logger = "0.11.10"
 dashmap = "6.1.0"
 # etcd-client = { version = "0.16.1", features = [] }
 etcd-client = { git = "https://github.com/tzfun/etcd-client" }
 lazy_static = "1.5.0"
-russh = { version = "0.54.6",default-features = false, features = ["ring", "rsa", "flate2"] }
+russh = { version = "0.61.1",default-features = false, features = ["ring", "rsa", "flate2"] }
 uuid = "1.17.0"
 md5 = "0.8.0"
 base64 = "0.22.1"
 async-trait = { version = "0.1.89" }
-prost = "0.14"
+prost = "0.14.3"
 aes = "0.8.4"
 reqwest = {version = "0.11.27", features= ["rustls-tls"] }
 
 # 仅在 etcd-client-tls (rustls) 路径下用于实现 “跳过证书校验” 时预取服务端证书并解析 SAN
-rustls = { version = "0.23", optional = true, default-features = false, features = ["std", "ring", "tls12"] }
-tokio-rustls = { version = "0.26", optional = true, default-features = false, features = ["ring", "tls12"] }
-rustls-pki-types = { version = "1", optional = true }
-x509-parser = { version = "0.16", optional = true }
+rustls = { version = "0.23.40", optional = true, default-features = false, features = ["std", "ring", "tls12"] }
+tokio-rustls = { version = "0.26.4", optional = true, default-features = false, features = ["ring", "tls12"] }
+rustls-pki-types = { version = "1.14.1", optional = true }
+x509-parser = { version = "0.18.1", optional = true }
+rustls-webpki = "0.103"
 
 [features]
 default = ["etcd-client-tls"]

@@ -21,6 +21,7 @@ use log::{debug, warn};
 use rustls::client::danger::{HandshakeSignatureValid, ServerCertVerified, ServerCertVerifier};
 use rustls::pki_types::{CertificateDer, ServerName, UnixTime};
 use rustls::{ClientConfig, DigitallySignedStruct, Error as RustlsError, SignatureScheme};
+use rustls_pki_types::TrustAnchor;
 use tokio::net::TcpStream;
 use tokio::time::timeout;
 use tokio_rustls::TlsConnector;
@@ -80,6 +81,8 @@ impl ServerCertVerifier for AcceptAnyVerifier {
 pub struct FetchedServerCert {
     /// PEM 编码的 leaf certificate，可作为自身 CA 加入 TlsOptions。
     pub leaf_pem: Vec<u8>,
+    /// 完整证书链（DER），index 0 = leaf，最后一个 = 最顶层
+    pub chain_ders: Vec<Vec<u8>>,
     /// 推导出的、可用于 rustls `domain_name` 的名字。
     /// 优先来自 SAN 的 DNS / IP，其次取 CN，最后回退到原始 host。
     pub server_name: String,
@@ -93,6 +96,23 @@ fn ensure_crypto_provider() {
         // 忽略 install_default 失败：可能在其它地方已经安装过。
         let _ = rustls::crypto::ring::default_provider().install_default();
     });
+}
+
+/// 从 PEM 格式的证书提取 TrustAnchor，用于 ClientTlsConfig::trust_anchor()
+pub fn cert_pem_to_trust_anchor(
+    pem: &[u8],
+) -> Result<TrustAnchor<'static>, Box<dyn std::error::Error>> {
+    use tokio_rustls::rustls::pki_types::pem::PemObject as _;
+
+    // PEM → DER
+    let cert_der = CertificateDer::from_pem_slice(pem)?;
+
+    // DER → TrustAnchor（把这张证书本身当作根 CA）
+    let anchor = webpki::anchor_from_trusted_cert(&cert_der)
+        .map_err(|e| format!("anchor_from_trusted_cert failed: {e:?}"))?
+        .to_owned(); // 转成 'static 生命周期
+
+    Ok(anchor)
 }
 
 /// 与 `host:port` 进行一次 TLS 握手（不校验证书），抓取服务端 leaf 证书。
@@ -132,13 +152,21 @@ pub async fn fetch_server_certificate(
         .map_err(|e| format!("TLS handshake (insecure pre-fetch) failed: {e}"))?;
 
     let (_, conn) = tls_stream.get_ref();
-    let leaf_der = conn
+
+    // 原来只取 first()，改为取全部
+    let chain = conn
         .peer_certificates()
-        .and_then(|chain| chain.first().cloned())
         .ok_or_else(|| "Server did not present any certificate".to_string())?;
 
-    let leaf_pem = der_to_pem(leaf_der.as_ref());
-    let server_name = pick_server_name(leaf_der.as_ref(), &sni_name);
+    if chain.is_empty() {
+        return Err("Server certificate chain is empty".to_string());
+    }
+
+    let leaf_pem = der_to_pem(chain[0].as_ref());
+    let server_name = pick_server_name(chain[0].as_ref(), &sni_name);
+
+    // 保留完整链的 DER 原始字节
+    let chain_ders: Vec<Vec<u8>> = chain.iter().map(|c| c.as_ref().to_vec()).collect();
 
     debug!(
         "Insecure TLS pre-fetch ok, host={}, picked server_name={}",
@@ -147,6 +175,7 @@ pub async fn fetch_server_certificate(
 
     Ok(FetchedServerCert {
         leaf_pem,
+        chain_ders,
         server_name,
     })
 }
