@@ -135,12 +135,14 @@ impl EtcdConnector {
                             );
                         }
                         Err(e) => {
-                            return Err(LogicError::MsgError(format!(
-                                "Insecure TLS pre-handshake failed: {e}"
-                            )));
+                            log::warn!("Insecure TLS skip-verify enabled, but pre-handshake certificate fetch failed for {}:{}: {}. 
+                            The connection will proceed without trusting the server certificate, which may lead to handshake failure 
+                            if the server does not support anonymous cipher suites.", host, port, e);
                         }
                     }
-                } else if !ca_added {
+                }
+
+                if !ca_added {
                     //  未上传 CA 且未开启 skip verify 时，自动启用系统/webpki 根证书，
                     //  以便 Let's Encrypt 等公共 CA 颁发的证书无需手动上传 CA。
                     tls_option = tls_option.with_enabled_roots();

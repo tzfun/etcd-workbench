@@ -18,6 +18,8 @@ pub struct TlsIdentity {
 #[serde(rename_all = "camelCase")]
 pub struct ConnectionTls {
     pub domain: Option<String>,
+    /// 自签CA证书，用于验证服务端证书
+    /// 如果未传任何证书，连接将尝试使用系统根证书进行验证。
     pub cert: Vec<TlsCertificate>,
     pub identity: Option<TlsIdentity>,
     /// 跳过 TLS 证书校验。开启后将信任服务端任意证书（不校验颁发者及主机名）。
