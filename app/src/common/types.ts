@@ -86,9 +86,9 @@ export type ConnectionTlsIdentity = {
 export type ConnectionTlsForm = {
     enable: boolean,
     domain: string,
+    caType: 'trustNative' | 'custom' | 'skip'
     cert: FileForm,
     identity: ConnectionTlsIdentity,
-    insecureSkipTlsVerify: boolean,
 }
 
 export type ConnectionSshKey = {
@@ -124,6 +124,7 @@ export const DefaultConnection: ConnectionForm = {
     tls: {
         enable: false,
         domain: '127.0.0.1',
+        caType: 'trustNative',
         cert: {
             file: undefined,
             content: undefined

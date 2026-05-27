@@ -177,7 +177,13 @@ watch(() => props.modelValue, (info: ConnectionInfo) => {
       if (tls.domain) {
         form.tls.domain = tls.domain
       }
-      form.tls.insecureSkipTlsVerify = !!tls.insecureSkipTlsVerify
+      if (tls.cert.length > 0) {
+        form.tls.caType = 'custom'
+      } else if (!!tls.insecureSkipTlsVerify) {
+        form.tls.caType = 'skip'
+      } else {
+        form.tls.caType = 'trustNative'
+      }
       let identity = tls.identity
       if (identity) {
         form.tls.identity.enable = true
@@ -246,11 +252,10 @@ const checkForm = async (): Promise<Connection> => {
 
     let tlsForm: ConnectionTlsForm = formData.value.tls
     if (tlsForm.enable) {
-
       connection.tls = {
         domain: _isEmpty(tlsForm.domain) ? undefined : tlsForm.domain,
-        cert: _isEmpty(tlsForm.cert.content) ? [] : [_encodeStringToBytes(tlsForm.cert.content)],
-        insecureSkipTlsVerify: tlsForm.insecureSkipTlsVerify
+        cert: tlsForm.caType == 'custom' && _nonEmpty(tlsForm.cert.content) ? [_encodeStringToBytes(tlsForm.cert.content)] : [],
+        insecureSkipTlsVerify: tlsForm.caType == 'skip'
       }
 
       if (tlsForm.identity.enable) {
@@ -515,10 +520,12 @@ defineExpose({
                             class="ml-2"
                             :label="t('common.enable')"
                             :value="true"
+                            color="success"
                         ></v-radio>
                         <v-radio
                             :label="t('common.disable')"
                             :value="false"
+                            color="secondary"
                         ></v-radio>
                       </v-radio-group>
                     </div>
@@ -641,6 +648,50 @@ defineExpose({
                     </div>
 
                     <div class="d-flex">
+                      <div class="form-label form-radio-label d-flex align-center">
+                        {{ t('main.home.connector.form.sslCAType') }}
+                      </div>
+                      <div class="form-input">
+                        <v-radio-group v-model="formData.tls.caType" inline hide-details>
+                          <v-radio
+                              :label="t('main.home.connector.form.sslCATrustNative')"
+                              value="trustNative"
+                              color="success"
+                          ></v-radio>
+                          <v-radio
+                              class="ml-2"
+                              :label="t('main.home.connector.form.sslCACustom')"
+                              value="custom"
+                              color="primary"
+                          ></v-radio>
+                          <v-radio
+                              class="ml-2"
+                              value="skip"
+                              color="red"
+                          >
+                            <template v-slot:label>
+                              {{ t('main.home.connector.form.sslCASkip') }}
+                              <v-tooltip interactive location="top" max-width="360">
+                                <template v-slot:activator="{ props: activatorProps }">
+                                  <v-icon
+                                      icon="mdi-information-outline"
+                                      v-bind="activatorProps"
+                                      size="small"
+                                      color="blue-lighten-1"
+                                      class="mx-1"
+                                  />
+                                </template>
+                                <div>
+                                  {{ t('main.home.connector.form.sslInsecureSkipVerifyDetail') }}
+                                </div>
+                              </v-tooltip>
+                            </template>
+                          </v-radio>
+                        </v-radio-group>
+                      </div>
+                    </div>
+
+                    <div class="d-flex mt-4" v-if="formData.tls.caType == 'custom'">
                       <div class="form-label">
                         {{ t("main.home.connector.form.sslCAFile") }}
                       </div>
@@ -654,43 +705,23 @@ defineExpose({
                     </div>
 
                     <div class="d-flex mt-4">
-                      <div class="form-label form-checkbox-label d-flex align-center">
-                        {{ t('main.home.connector.form.sslInsecureSkipVerify') }}
-                        <v-tooltip interactive location="top" max-width="360">
-                          <template v-slot:activator="{ props: activatorProps }">
-                            <v-icon
-                                icon="mdi-information-outline"
-                                v-bind="activatorProps"
-                                size="small"
-                                color="blue-lighten-1"
-                                class="mx-1"
-                            />
-                          </template>
-                          <div>
-                            {{ t('main.home.connector.form.sslInsecureSkipVerifyDetail') }}
-                          </div>
-                        </v-tooltip>
-                      </div>
-                      <div class="form-input">
-                        <v-checkbox
-                            v-model="formData.tls.insecureSkipTlsVerify"
-                            color="warning"
-                            :label="t('common.enable')"
-                            hide-details
-                        />
-                      </div>
-                    </div>
-
-                    <div class="d-flex mt-4">
-                      <div class="form-label form-checkbox-label">
+                      <div class="form-label form-radio-label">
                         {{ t('main.home.connector.form.identity') }}
                       </div>
                       <div class="form-input">
-                        <v-checkbox
-                            v-model="formData.tls.identity.enable"
-                            :label="t('common.enable')"
-                            hide-details
-                        />
+                        <v-radio-group v-model="formData.tls.identity.enable" inline hide-details>
+                          <v-radio
+                              :label="t('common.enable')"
+                              :value="true"
+                              color="success"
+                          ></v-radio>
+                          <v-radio
+                              class="ml-2"
+                              :label="t('common.disable')"
+                              :value="false"
+                              color="secondary"
+                          ></v-radio>
+                        </v-radio-group>
                       </div>
                     </div>
                   </div>
