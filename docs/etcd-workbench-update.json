@@ -1,7 +1,7 @@
 {
-    "version": "1.2.6",
+    "version": "1.2.7",
     "notes": "Supports login for non-root users who do not have full path access.",
-    "pub_date": "2026-05-15T16:04:41+08:00",
+    "pub_date": "2026-05-27T15:13:54+08:00",
     "platforms": {
         "darwin-x86_64": {
             "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K0NLMVFEMG00K2l5YkE4cy9ZT3ZPcTVBNjFRbkMxMWxtWDBPR3JzNElKSWhuMld4ZW1jSWFGVzZlZWE5d01hQ3l4Z1V0SFB2M2hibjcyMEc5U3lsVndzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc4ODIwMjAxCWZpbGU6RXRjZCBXb3JrYmVuY2guYXBwLnRhci5negorRGxRVlhWNS8zOGp2NG1sTkc3OFVFTGh4QTN0Q0VranY2cEJOc2s5U3h2S1VBZTFpVHU4TyszdTNTWG5yblhsNVJMTzZPTFlwRUl0bmxMVWlpNm1DQT09Cg==",
@@ -12,8 +12,8 @@
             "url": "https://github.com/tzfun/etcd-workbench/releases/download/App-1.2.6/etcd-workbench-1.2.6-macos-aarch64.app.tar.gz"
         },
         "windows-x86_64": {
-            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K0dPNkMvdXZMb1VYLzZxeUhFdUdyWFVHY21Ld2JlOXFPSHR2OFBOMmFCL0k5WEJLOEl2Qm9QTnJNK1JLa3lOajF0TEV3R24wWlM0c0c1U1BMemJtTWc0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc4NzUxNTg5CWZpbGU6RXRjZCBXb3JrYmVuY2hfMS4yLjZfeDY0LXNldHVwLm5zaXMuemlwCjY3Szh0RjJrMGVBV1laZ1AyWXczQkV3UG9qU1Q3T2tGbjI1dTBZcGxWK3JpWmg3Z1h0RVI0eVpVSVJlNmZCVjI4SDk0TVIrVEN1NkpEWU90bVVBZ0FRPT0K",
-            "url": "https://github.com/tzfun/etcd-workbench/releases/download/App-1.2.6/etcd-workbench-1.2.6-windows-x86_64.nsis.zip"
+            "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSQVNmSU5wWlN0K1BxZTFEbm1HaGgyRnAyemtnQkE0MllGdExNVVdEeEJDbUNabnIrS2tRdWdPL0xyd2duQ2JPSXRQQ2xVWEk1U0gzNjFRWHJLWFYzUC9KVmRxN1NCSHdNPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc5ODY2MDM0CWZpbGU6RXRjZCBXb3JrYmVuY2hfMS4yLjdfeDY0LXNldHVwLm5zaXMuemlwCkdGRlFVT1VzN3Vwb2tkOElibmpaaWluNldpRldYaG4wY0NPd1R1NVFkU25BQ1pMQ2c2M0ZTS202YmNjcktUc3dUVmRYTmN4WGRrN0lES3Zld0hJL0NRPT0K",
+            "url": "https://github.com/tzfun/etcd-workbench/releases/download/App-1.2.7/etcd-workbench-1.2.7-windows-x86_64.nsis.zip"
         }
     }
 }

@@ -1,5 +1,5 @@
 {
-  "version": "1.2.6",
+  "version": "1.2.7",
   "description": "Etcd Workbench",
   "homepage": "https://github.com/tzfun/etcd-workbench",
   "devDependencies": {

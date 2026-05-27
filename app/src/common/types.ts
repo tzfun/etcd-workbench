@@ -140,7 +140,6 @@ export const DefaultConnection: ConnectionForm = {
                 content: undefined
             }
         },
-        insecureSkipTlsVerify: false
     },
     ssh: {
         enable: false,
